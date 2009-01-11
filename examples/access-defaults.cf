@@ -1,0 +1,261 @@
+###
+### access-default.cf
+###
+
+#######################################################################
+### WARNING!!! WARNING!!! WARNING!!! WARNING!!! WARNING!!! WARNING!!!
+###
+### DO NOT MODIFY THIS FILE. ANY CHANGES MADE TO THIS FILE WILL BE
+### LOST THROUGH SOFTWARE UPDATES. PLACE SITE POLICY CHOICES IN THE
+### ACCESS.CF FILE INSTEAD.
+###
+### WARNING!!! WARNING!!! WARNING!!! WARNING!!! WARNING!!! WARNING!!!
+#######################################################################
+
+greetpause:				10000
+commandpause:				1000
+#length-connect:			25M
+rate-connect:				5
+concurrent-connect:			5
+
+grey-connect:netflix.com		0
+grey-connect:scd.yahoo.com		0
+grey-connect:ticketmaster.com		0
+
+#######################################################################
+# Free Mail Providers with known good or problematic mail servers.
+# Partial white listing upto, but not including content filtering.
+#######################################################################
+
+connect:gmail.com			CONTENT
+connect:google.com			CONTENT
+connect:googlegroups.com		CONTENT
+connect:hotmail.com			CONTENT
+connect:yahoo.com			CONTENT
+connect:yahoogroups.com			CONTENT
+connect:brightmail.com			CONTENT
+
+#######################################################################
+# Frequently seen URL domains that are known to be good or undesirable.
+#######################################################################
+
+#body:126.com				REJECT
+#body:163.com				REJECT
+#body:2o7.net				REJECT
+#body:4at1.com				REJECT
+body:about.com				OK
+body:adelphia.net			OK
+body:adobe.com				OK
+#body:advertising.com			REJECT
+body:agora-inc.com			OK
+body:agoramedia.com			OK
+body:akamai.net				OK
+body:akamaitech.net			OK
+body:akamaitechnologies.com		OK
+body:amazon.com				OK
+body:ancestry.com			OK
+body:aol.com				OK
+body:apache.org				OK
+body:apple.com				OK
+body:arcamax.com			OK
+body:astrology.com			OK
+body:atdmt.com				OK
+body:att.net				OK
+body:aweber.com				OK
+body:bbc.co.uk				OK
+body:bcentral.com			OK
+#body:beliefnet.com			REJECT
+body:beliefnet.com			OK
+body:bellsouth.net			OK
+body:bfi0.com				OK
+body:blogspot.com			OK
+body:bridgetrack.com			OK
+body:cafe24.com				OK
+body:charter.net			OK
+body:chtah.com				OK
+body:citibank.com			OK
+body:citizensbank.com			OK
+body:cjb.net				OK
+#body:classmates.com			REJECT
+body:click-url.com			OK
+body:clickbank.net			OK
+body:cnet.com				OK
+body:cnn.com				OK
+body:com.com				OK
+body:com.ne.kr				OK
+body:comcast.net			OK
+body:constantcontact.com		OK
+body:corporate-ir.net			OK
+body:cox.net				OK
+body:cs.com				OK
+body:custhelp.com			OK
+body:daum.net				OK
+body:dd.se				OK
+body:debian.org				OK
+body:dell.com				OK
+#body:directtrack.com			REJECT
+body:domain.com				OK
+#body:doubleclick.net			REJECT
+body:dsbl.org				OK
+body:earthlink.net			OK
+body:ebay.co.uk				OK
+body:ebay.com				OK
+body:ebayimg.com			OK
+body:ebaystatic.com			OK
+body:ed10.net				OK
+body:ed4.net				OK
+body:edgesuite.net			OK
+body:ediets.com				OK
+body:egroups.com			OK
+body:emode.com				OK
+#body:exacttarget.com			REJECT
+body:excite.com				OK
+body:exct.net				OK
+body:f-secure.com			OK
+#body:flowgo.com			REJECT
+body:free.fr				OK
+body:freebsd.org			OK
+body:freelotto.com			OK
+body:fsl.com              		OK
+body:gentoo.org				OK
+body:geocities.com			OK
+body:gmail.com				OK
+body:gmx.net				OK
+body:go.com				OK
+body:google.com				OK
+body:googleadservices.com		OK
+body:grisoft.com			OK
+body:hallmark.com			OK
+body:hinet.net				OK
+body:hotbar.com				OK
+body:hotmail.com			OK
+body:hotpop.com				OK
+body:hp.com				OK
+body:ibm.com				OK
+body:ientrymail.com			OK
+#body:incredimail.com			REJECT
+body:investorplace.com			OK
+body:ivillage.com			OK
+body:joingevalia.com			OK
+body:juno.com				OK
+body:kernel.org				OK
+body:livejournal.com			OK
+body:lycos.com				OK
+body:m0.net				OK
+body:m7z.net				OK
+body:mac.com				OK
+body:macromedia.com			OK
+body:mail.com				OK
+body:mail.ru				OK
+body:mailscanner.info			OK
+body:marketwatch.com			OK
+body:mcafee.com				OK
+body:mchsi.com				OK
+body:mediaplex.com			OK
+body:messagelabs.com			OK
+body:microsoft.com			OK
+
+# Microsoft related domain used for smart tags?
+body:5iantlavalamp.com			OK
+
+body:military.com			OK
+body:mindspring.com			OK
+body:mit.edu				OK
+body:monster.com			OK
+body:msn.com				OK
+body:myspace.com			OK
+body:nate.com				OK
+body:netatlantic.com			OK
+body:netflix.com			OK
+body:netscape.com			OK
+body:netscape.net			OK
+body:netzero.net			OK
+body:norman.com				OK
+body:nytimes.com			OK
+#body:optonline.net			REJECT
+body:osdn.com				OK
+#body:overstock.com			REJECT
+body:p0.com				OK
+body:pacbell.net			OK
+#body:pandasoftware.com			REJECT
+body:partner2profit.com			OK
+body:paypal.com				OK
+body:peoplepc.com			OK
+body:plaxo.com				OK
+body:pm0.net				OK
+body:postdirect.com			OK
+body:prodigy.net			OK
+body:radaruol.com.br			OK
+body:real.com				OK
+body:redhat.com				OK
+body:regions.com			OK
+body:regionsnet.com			OK
+body:rm04.net				OK
+body:rogers.com				OK
+body:rr.com				OK
+body:rs6.net				OK
+body:rsvp0.net				OK
+body:sbcglobal.net			OK
+body:sec.gov				OK
+body:sf.net				OK
+body:shaw.ca				OK
+body:shockwave.com			OK
+body:smileycentral.com			OK
+body:smithbarney.com			OK
+body:snert.com              		OK
+body:snertsoft.com          		OK
+body:sourceforge.net			OK
+body:spamcop.net			OK
+body:speedera.net			OK
+body:sportsline.com			OK
+body:sun.com				OK
+body:suntrust.com			OK
+body:symantec.com			OK
+body:sympatico.ca			OK
+body:t-online.de			OK
+body:tails.nl				OK
+body:telus.net				OK
+body:terra.com.br			OK
+body:ticketmaster.com			OK
+body:tickle.com				OK
+body:tinyurl.com			OK
+body:tiscali.co.uk			OK
+body:tiscali.fr				OK
+body:tiscali.it				OK
+body:tom.com				OK
+body:tone.co.nz				OK
+body:topica.com				OK
+body:tux.org				OK
+body:uol.com.br				OK
+body:ups.com				OK
+body:verizon.net			OK
+body:vistaprint.com			OK
+body:volkswagen.com			OK
+body:w3.org				OK
+body:w3c.org				OK
+body:wamu.com				OK
+body:wanadoo.fr				OK
+body:washingtonpost.com			OK
+body:weatherbug.com			OK
+body:web.de				OK
+body:webshots.com			OK
+body:webtv.net				OK
+body:wsj.com				OK
+body:xing.com				OK
+body:xing.de				OK
+body:xmr3.com				OK
+body:yahoo.ca				OK
+body:yahoo.co.kr			OK
+body:yahoo.co.uk			OK
+body:yahoo.com				OK
+body:yahoo.com.br			OK
+body:yahoogroups.com			OK
+body:yimg.com				OK
+body:yopi.de				OK
+body:yourfreedvds.com			OK
+body:yoursite.com			OK
+body:zdnet.com				OK
+
+#######################################################################
+# END
+#######################################################################

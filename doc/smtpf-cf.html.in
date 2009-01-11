@@ -1,0 +1,1295 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN">
+<!-- $OpenBSD$ -->
+<html>
+<head>
+<title>
+SnertSoft - @PACKAGE_NAME@/@PACKAGE_VERSION@
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+<meta name="keywords" content="SMTP Filter Proxy, call back, call ahead, grey listing, greylisting, RET, Return Encrypted Tag" />
+<meta name="description" content="@PACKAGE_NAME@ sits in front of one or more mail transfer agents (MTA) on SMTP port 25. It acts as a proxy, filtering and forwarding mail to one or more MTAs, which can be on the same machine or different machines." />
+<link rel="stylesheet" type="text/css" href="./style.css" />
+<script language="JavaScript" type="text/javascript" src="./mailto.js"></script>
+</head>
+
+<body>
+<div align="center">
+<table class="page" cellpadding="0" cellspacing="0" border="0">
+<tr><td>
+
+<a href="http://www.snertsoft.com/">
+<img alt="SnertSoft: We Serve Your Server" src="Img/logo-300x74.png" width="300" height="74" border="0" /></a>
+
+<div align="center">
+<h1 class="title">Barricade MX</h1>
+<h2>
+@PACKAGE_NAME@/@PACKAGE_VERSION@
+<br/><span class="large">&laquo;An SMTP Filtering Proxy&raquo;</span>
+</h2>
+</div>
+
+<br/>
+
+<div class="contents">
+<ol type="A" class="toc">
+<li><a href="manual.shtml">Introduction</a></li>
+<li><a href="license.html">License &amp; Support</a></li>
+<li><a href="install.html">Installation</a></li>
+<li>Configuration</li>
+	<ol type="a">
+	<li><a href="route-map.html">The Route Map</a></li>
+		<ul>
+		<li><a href="route-map.html#route_local_mta">Local MTA</a></li>
+		<li><a href="route-map.html#route_local_route_queue">Local Route</a></li>
+		<li><a href="route-map.html#route_relay">FORWARD &amp; RELAY</a></li>
+			<ul>
+			<li><a href="route-map.html#route_by_domain">by domain</a></li>
+			<li><a href="route-map.html#route_by_mail_address">by mail</a></li>
+			</ul>
+		<li><a href="route-map.html#route_call_ahead">Call-Ahead</a></li>
+			<ul>
+			<li><a href="route-map.html#route_dumb_mx">Accept-Then-Bounce</a></li>
+			</ul>
+		<li><a href="route-map.html#route_auth_support">AUTH Support</a></li>
+		<li><a href="route-map.html#route_etrn_support">ETRN Support</a></li>
+		</ul>
+	<li><a href="access-map.html">The Access Map</a></li>
+		<ul>
+		<li><a href="access-map.html#access_lookups">Lookup Sequences</a></li>
+		<li><a href="access-map.html#access_tags">Tags</a></li>
+		<li><a href="access-map.html#access_about_delay_checks">About Delay Checks</a></li>
+		<li><a href="access-map.html#access_simple_value">Right Hand Side Values</a></li>
+		<li><a href="access-map.html#access_action_words">Action Words</a></li>
+		<li><a href="access-map.html#access_pattern_lists">Pattern Lists</a></li>
+		<li><a href="access-map.html#access_simple_pattern">!Simple Patterns!</a></li>
+		<li><a href="access-map.html#access_regex_pattern">/Regular Expression Patterns/</a></li>
+		</ul>
+
+	<li><a href="@PACKAGE_NAME@-cf.html">The @PACKAGE_NAME@.cf File</a></li>
+		<ul>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_avastd">Avast! AV Support</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_cache">Cache Options</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_call_back">Call-Backs</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_clamd">Clam AV Support</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_cli">Command-Line Interface</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_client_is_mx">Client IP Address</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_concurrent">Concurrency &amp; Rate</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_dns_bl">DNS Based Lists</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_delay_checks">Delay Checks</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_emew">EMEW</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_fpscand">F-Prot AV Support</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_grey_list">Grey Listing</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_grey_content">Grey Content</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_helo">SMTP HELO Testing</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_interface">Network Interface</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_length_limit">Length &amp; Limits</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_rfc">RFC Conformance</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_run">Run Settings</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_server">Server Performance</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_siq">SIQ Support</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_smtp">SMTP Options</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_savdid">Sophos AV Support</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_spamd">SpamAssassin Support</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_spf">SPF Support</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_stats">Statistics</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_uri">URI Blacklists</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_verbose">Verbose Logging</a></li>
+		</ul>
+	<li><a href="summary.html">Option Summary</a></li>
+	</ol>
+<li>Runtime</li>
+	<ol type="a">
+	<li><a href="runtime.html#command_options">Command Line Options</a></li>
+	<li><a href="runtime.html#runtime_config">Runtime Configuration</a></li>
+	<li><a href="runtime.html#cache_file">The Cache File</a></li>
+		<ul>
+		<li><a href="runtime.html#cache_structure">The Cache Structure</a></li>
+		</ul>
+	<li><a href="runtime.html#stats_file">The Stats File</a></li>
+		<ul>
+		<li><a href="runtime.html#stats_structure">The Stats Structure</a></li>
+		</ul>
+	<li><a href="syslog.html">Log Messages</a></li>
+	<li><a href="reply.html">SMTP Replies</a></li>
+	</ol>
+<li><a class="glossary" href="glossary.html">Glossary</a></li>
+</ol>
+</div>
+
+<a name="smtpf_cf"></a>
+<h3>@PACKAGE_NAME@.cf</h3>
+<p>
+While there is an example @PACKAGE_NAME@.cf file, it is recommended that you
+generate one in order to have the most up-to-date version. Some options
+maybe dropped or added and the example @PACKAGE_NAME@.cf may not be current.
+Use the command:
+</p>
+<blockquote><pre>
+# @PACKAGE_NAME@ -help &gt; /etc/@PACKAGE_NAME@/@PACKAGE_NAME@.cf
+</pre></blockquote>
+<p>
+If you already have a @PACKAGE_NAME@.cf configured, it will be read and its
+values merged with the default. Values that are different from the defaults
+will appear commented out above the current value.
+</p>
+
+<dl>
+
+<a name="smtpf_avastd"></a>
+<dt>Avast! Anti-Virus</dt>
+<dd>
+@PACKAGE_NAME@ provides support for <a href="http://www.avast.com/">Avast!</a> anti-virus scanner.
+If you have <code>avastd</code> installed and chose to scan message content as it passes through @PACKAGE_NAME@, then
+specify the host:port of the <code>avastd</code> server with the
+<a href="summary.html#opt_avastd_socket">avastd-socket</a> option.
+
+Make sure that the <code>avastd</code> process owner, if running as something other than root,
+<span class="note">must be a member of the same group that @PACKAGE_NAME@ is running as</span>,
+else it will not be able to read any message files; see
+<a href="summary.html#opt_run_group">run-group</a>.
+
+<p>
+When the <a href="summary.html#opt_avastd_socket">avastd-socket</a> is specified, all messages will be
+virus scanned, no exceptions possible. Those servers that use MailScanner may prefer to
+skip virus scanning in @PACKAGE_NAME@.
+</p>
+
+<p>
+Also check the default settings for <a href="summary.html#opt_avastd_timeout">avastd-timeout</a>
+option.
+</p>
+
+<p>
+If a virus is found, then the default setting of <a href="summary.html#opt_avastd_policy">avastd-policy</a>
+is to reject the message, other choices being to discard the message or take no action (ignoring a virus infected
+message is a bad idea). If there is an I/O error between @PACKAGE_NAME@ and <code>avastd</code>, probably caused by
+<code>avastd</code> being restarted, then the message is temporarily rejected and a legitimate SMTP client will retry
+later retry sending the message.
+</p>
+
+</dd>
+
+<a name="smtpf_cache"></a>
+<dt>Cache</dt>
+<dd>
+This family of options control cache management, such as where it lives,
+garbage collection, how long records should be kept, and whether it needs
+to be shared with one or more machines.
+
+<p>
+There are three general time-to-live options which control the maximum life span of a cache record.
+<a href="summary.html#opt_cache_accept_ttl">cache-accept-ttl</a> is used for long term, typically positive,
+results, <a href="summary.html#opt_cache_reject_ttl">cache-reject-ttl</a> is used for negative results,
+and <a href="summary.html#opt_cache_temp_fail_ttl">cache-temp_fail-ttl</a> for temporary failures.
+
+Unless otherwise specified for a particular test like <a href="#smtpf_grey_list">Grey Listing</a> or
+recipient <a href="route-map.html#route_call_ahead">Call-Aheads</a>,
+the life span of cache records are extended every time they are consulted, so that active records can
+remain cached for long periods of time.
+</p>
+
+<p>
+If you have more than one <a class="glossary" href="glossary.html#term_MX">MX</a> on
+the same <em>local network segment</em>
+then it is recommended you specify the same multicast IP group for all MXes with
+<a href="summary.html#opt_cache_multicast_ip">cache-multicast-ip</a>, such as 232.0.0.1 or FF12::0001. As
+local cache records are added or modified, they are broadcast to this multicast IP group
+so that all @PACKAGE_NAME@ listeners can be kept in sync in case an SMTP client later connects
+to one of the other MXes. This is particularly important for grey-listing in order to avoid
+unnecessary delays in mail delivery.
+</p>
+
+<p>
+If you have more than one <a class="glossary" href="glossary.html#term_MX">MX</a> on different network
+segments or different subnets, then specify either a definitive domain that lists all those
+machines as MX servers with <a href="summary.html#opt_cache_unicast_domain">cache-unicast-domain</a>
+or a list of host names and/or IP addresses with <a href="summary.html#opt_cache_unicast_host">cache-unicast-hosts</a>.
+Note these two options are mutually exclusive.
+</p>
+
+<p>
+When using the <a href="summary.html#opt_cache_unicast_domain">cache-unicast-domain</a> option,
+as local cache records are added or modified, they are broadcast to each MX server for the domain in turn.
+Note that unicast cache updates are less efficient than multicast and should only be used in instances
+where multicast is not ideal.
+
+Also note that a current limitation of the DNS client code does not
+support multihomed MX records nor truncated UDP packets, so be sure
+to review your MX setup and make adjustments accordingly.
+</p>
+
+<p>
+Sometimes <a href="summary.html#opt_cache_unicast_domain">cache-unicast-domain</a> is not convient
+to use, in which case <a href="summary.html#opt_cache_unicast_hosts">cache-unicast-hosts</a> is provided
+as a simpler way to specify hosts to which unicast cache packets should be sent. While
+<a href="summary.html#opt_cache_unicast_host">cache-unicast-hosts</a> is easier to use and setup,
+maintaining the list in sync across many machines could be more problematic than
+<a href="summary.html#opt_cache_unicast_domain">cache-unicast-domain</a> and managing the DNS
+records for a single special (sub)domain. <span class="note">Note the list of unicast cache hosts
+is read once when @PACKAGE_NAME@ is started, therefore changes to the list of hosts requires
+that @PACKAGE_NAME@ be restarted.</span>
+</p>
+
+<p>
+When using multicast and/or unicast cache, all participating servers must specify the
+same shared <a href="summary.html#opt_cache_secret">cache-secret</a>. Cache updates
+are broadcast as UDP datagrams in the clear, so in order to authenticate valid
+UDP packets and detect attempts at tampering, an MD5 signature is generated using this
+secret and the packet contents, then included in the packet sent. The receiver
+regenerates an MD5 signature based on what they received and compares the signature
+contained in the packet to see if they match.
+</p>
+
+<p>
+Also note when using the multicast and/or unicast cache, that clocks on all participating
+systems must be in sync, otherwise unusual behaviour will result.
+</p>
+
+<p>
+For information about manipulating the cache manually, please refer to the
+document about <a href="runtime.html#cache_file">The Cache File</a>.
+</p>
+</dd>
+
+<a name="smtpf_call_back"></a>
+<dt>Call-Backs</dt>
+<dd>
+<a href="summary.html#opt_call_back">Call-backs</a> are a form of sender address verification.
+The idea being to contact one of the sender's MX servers to validate if their server and mail address
+is known and in good standing. Accept or reject responses to the test are cached,
+while temp. fail responses are cached typically for a shorter time with
+<a href="summary.html#opt_call_back_temp_fail_ttl">call-back-temp-fail-ttl</a>.
+<p>
+If a call-back
+succeeds and <a href="summary.html#opt_call_back_pass_grey">call-back-pass-grey</a> is enabled, then
+grey-listing will be skipped to avoid any delays. However, with the enhanced grey-listing as
+implemented in @PACKAGE_NAME@, this is not recommended, since spam can forge the sender with
+a valid mail address expressly for this purpose passing the call-back and grey-listing.
+</p>
+<p>
+Call-backs are a <strong>very unpopular</strong> technique with many large mail services. They are seen to consume their system
+resources and as an abuse vector for anonymous proxy dictionary attacks used in harvesting mail addresses.
+As a result, some services may chose to locally black list servers that they think are performing a
+dictionary attack, because there is no means to tell the difference from a call-back.
+</p>
+<p>
+Call-backs as implemented in @PACKAGE_NAME@ are delayed until the <a class="glossary" href="glossary.html#term_SMTP">SMTP DATA</a> command is issued and before the 354 go-ahead response is sent in order to allow as many passive pre-DATA tests the chance to reject
+the message. However, despite these best efforts to make call-backs less intrusive, they could result in your
+mail servers being black listed. <strong>Use with caution</strong>.
+</p>
+</dd>
+
+<a name="smtpf_clamd"></a>
+<dt>Clam Anti-Virus</dt>
+<dd>
+@PACKAGE_NAME@ provides support for the <code>clamd</code> open source <a href="http://www.clamav.net/">anti-virus scanner</a>.
+If you have <code>clamd</code> installed and chose to scan message content as it passes through @PACKAGE_NAME@, then
+specify a unix domain socket path or host:port of the <code>clamd</code> server with the
+<a href="summary.html#opt_clamd_socket">clamd-socket</a> option.
+
+Make sure that the <code>clamd</code> process owner, if running as something other than root,
+<span class="note">must be a member of the same group that @PACKAGE_NAME@ is running as</span>,
+else it will not be able to read any message files; see
+<a href="summary.html#opt_run_group">run-group</a>. In addition, in the
+<code>/etc/clamd.conf</code> specify <code>AllowSupplementaryGroups yes</code> and restart
+<code>clamd</code>.
+
+<p>
+When the <a href="summary.html#opt_clamd_socket">clamd-socket</a> is specified, all messages will be
+virus scanned, no exceptions possible. Those servers that use MailScanner may prefer to
+skip virus scanning in @PACKAGE_NAME@.
+</p>
+
+<p>
+Also be sure to check the default settings for <a href="summary.html#opt_clamd_timeout">clamd-timeout</a>
+and <a href="summary.html#opt_clamd_max_size">clamd-max-size</a> options.
+</p>
+
+<p>
+If a virus is found, then the default setting of <a href="summary.html#opt_clamd_policy">clamd-policy</a>
+is to reject the message, other choices being to discard the message or take no action (ignoring a virus infected
+message is a bad idea). If there is an I/O error between @PACKAGE_NAME@ and <code>clamd</code>, probably caused by
+<code>clamd</code> being restarted, then the message is temporarily rejected and a legitimate SMTP client will retry
+later retry sending the message.
+</p>
+
+</dd>
+
+<!--
+<a name="smtpf_cli"></a>
+<dt>Command Line Interface</dt>
+<dd>
+@PACKAGE_NAME@ provides an ability to invoke programs or scripts in order to
+experiment with and implement new tests. The CLI filters read from standard input
+and write to standard output or standard error (the output from both is merged) and
+return an exit code as to what action @PACKAGE_NAME@ should apply to the
+current message transaction. There are two type of CLI filters possible, one for
+pre-DATA envelope processing and the other for headers and message content.
+<p>
+The <a href="summary.html#opt_cli_envelope">cli-envelope</a> filter is invoked during the
+<a class="glossary" href="glossary.html#term_SMTP">SMTP DATA</a> state after <a href="#smtpf_call_back">call-backs</a>
+and <a href="#smtpf_grey_list">grey-listing</a> and before the 354 go-ahead response is sent. It is
+the last point that can reject or temporarily fail the DATA command. Note that
+RFC <a href="http://www.rfc-editor.org/rfc/rfc2821.txt">2821</a>
+specifies a SMTP client timeout for the DATA command that is shorter than most other commands,
+therefore the cli-envelope filter must take care not to take too long in returning a result.
+</p>
+
+<p>
+The <a href="summary.html#opt_cli_content">cli-content</a> filter is invoked immediately following
+the successful return of the cli-envelope filter. The cli-content filter will then be
+passed the message in chunks. When the end of message is
+reached (<a class="glossary" href="glossary.html#term_SMTP">SMTP dot</a> state), standard input will be closed
+to signal end-of-file to the cli-content filter, which should then complete its processing,
+flush its output, and return an exit code. If the results of all other content filters
+(<a href="#smtpf_clamd">clamd</a>, <a href="#smtpf_spamd">spamd</a>, <a href="#smtpf_uri">URI black lists</a>)
+pass the message, then the result of the cli-content filter is acted on.
+</p>
+
+<p>
+Note that the <a href="summary.html#opt_cli_timeout">cli-timeout</a> applies to lines
+of I/O passed to and from a CLI filter. There is no timeout for the overall processing
+time a CLI filter might take.
+</p>
+</dd>
+-->
+
+<a name="smtpf_client_is_mx"></a>
+<dt>Client IP Address</dt>
+<dd>
+There are a group of tests that deal with the SMTP client IP address. The first,
+<a href="summary.html#opt_client_ptr_required">client-ptr-required</a>, will reject
+the SMTP client if it does not have <a class="glossary" href="glossary.html#term_PTR">DNS PTR</a>
+record.
+
+<p>
+The second, <a href="summary.html#opt_client_ip_in_ptr">client-ip-in-ptr</a>,
+takes the result of the PTR lookup and applies a heuristic that identifies if the client's
+PTR contains octets from the client's IPv4 address (IPv6 is currently ignored) as this
+tends to be a good indicator of an ISP customer connecting from dynamically assigned
+address space when they should be passing through the ISP approved outbound SMTP server.
+</p>
+
+<p>
+The above two tests are <strong>very aggressive</strong> and can often lead to false positives
+when a legitimate ISP customer actually has a static IP address and/or no control over
+ISP assigned PTR name. It is not recommended to use them by themselves.
+</p>
+<p>
+However, the <a href="summary.html#opt_client_is_mx">client-is-mx</a> option
+will temper the above two tests by delaying their application until the
+<a class="glossary" href="glossary.html#term_SMTP">MAIL FROM:</a> is supplied. If the sender address
+does not pass the <a href="#smtpf_spf">SPF</a> check and the client's IP address does
+not correspond to one of the <a class="glossary" href="glossary.html#term_MX">MX</a> records listed for
+the sender's domain, then the MAIL FROM: may be rejected and the connection dropped
+if either of <a href="summary.html#opt_client_ptr_required">client-ptr-required</a> or
+<a href="summary.html#opt_client_ip_in_ptr">client-ip-in-ptr</a> failed.
+</p>
+
+</dd>
+
+<a name="smtpf_concurrent"></a>
+<dt>Concurrent Connections &amp; Connection Rate Controls</dt>
+<dd>
+See the <a href="access-map.html#access_tags">access-map</a> concerning the
+<a href="access-map.html#tag_concurrent_connect"><span class="tag">Concurrent-Connect:</span></a> and
+<a href="access-map.html#tag_rate_connect"><span class="tag">Rate-Connect:</span></a> tags.
+</dd>
+
+<a name="smtpf_dns_bl"></a>
+<dt>DNS Black, Grey, and White Lists</dt>
+<dd>
+When specified the <a href="summary.html#opt_dns_bl">dns-bl</a> is a
+space or comma separated list of DNS black list zone suffixes. For example:
+
+<blockquote><pre>
+dns-bl="sbl-xbl.spamhaus.org bl.spamcop.net"
+</pre></blockquote>
+
+<p>
+When enabled, @PACKAGE_NAME@ will check the SMTP client's IP address
+against each black list specified in the order given. If the black list
+returns a result indicating that client IP is a known source of spam, then the
+connection is dropped.
+</p>
+
+<p>
+Occasionally a SMTP client takes a long time to send one or more messages
+through, possibly due to client CPU load and/or Internet traffic. During
+such connections the <a href="summary.html#opt_idle_retest_timer">idle-retest-timer</a>
+will occasionally reapply some tests like <a href="summary.html#opt_dns_bl">dns-bl</a>.
+The idea being that the <a href="summary.html#opt_dns_bl">dns-bl</a> maybe have
+received new information and updated their databases to include the connected client
+as a new spam source. When this happens the connection is dropped.
+</p>
+
+<p>
+@PACKAGE_NAME@ also supports two other forms of DNS based lists using the same syntax
+as <a href="summary.html#opt_dns_bl">dns-bl</a>. They are
+<a href="summary.html#opt_dns_gl">dns-gl</a> and <a href="summary.html#opt_dns_wl">dns-wl</a>.
+
+The <a href="summary.html#opt_dns_wl">dns-wl</a> option white lists an SMTP client through
+all the tests except anti-virus, <a href="summary.html#opt_dns_gl">dns-gl</a> option
+will grey list an SMTP client through all the pre-DATA tests upto, but not
+including the content based filters
+(anti-virus, attachment types, Digest BL, EMEW, grey content, SpamAssassin, URI filtering, etc.).
+The <a href="summary.html#opt_dns_wl">dns-wl</a> is used when you
+have total confidence in the DNS based white list, while <a href="summary.html#opt_dns_gl">dns-gl</a>
+is intended for use with DNS white lists when you might have less than 100% confidence in the list.
+</p>
+
+</dd>
+
+<a name="smtpf_delay_checks"></a>
+<dt>Delay Checks</dt>
+<dd>
+Sendmail and Postfix MTAs have a concept called "delay-checks", which
+essentially allows for recipient white listing to override possible
+rejections that might occur due to policy tests early in the SMTP session.
+
+<p>
+When the <a href="summary.html#opt_smtp_delay_checks">smtp-delay-checks</a>
+is enabled, all the policy based tests leading up to the recipients
+being specified are still performed, but any rejection or drop result
+is delayed and a "250 2.0.0 proceed" reply given. As each recipient
+address is specified, it is checked whether it is black or white
+listed, in which case the recipient is rejected or accepted (and
+subsequent tests by-passed). Recipient addresses that are neither
+black nor white will either be rejected if there is a previously
+delayed rejection/drop result or simply accepted.
+</p>
+</dd>
+
+
+<!-- -->
+<a name="smtpf_emew"></a>
+<dt>Enhanced Message-ID as Email Watermark (EMEW)</dt>
+<dd>
+EMEW provides a means to filter
+<a class="glossary" href="glossary.html#term_DSN">DSN</a> and
+<a class="glossary" href="glossary.html#term_MDN">MDN</a> backscatter caused when a spammer or virus
+impersonates a mail address of a local mail box. It will also auto-white list replies
+through content filters.
+<p>
+When an outbound message without an EMEW passes through the mail server, the Message-Id header
+is modified with an encoded timestamp and one-way security hash generated from the encoded timestamp,
+the original sender address, the original Message-ID, and the <a href="summary.html#opt_emew_secret">emew-secret</a>.
+An alternative EMEW secret can be specified using an <a href="access-map.html#tag_emew">Emew:</a> tag
+in the access-map for either the sender address or sender domain.
+For EMEW to work correctly all outbound and inbound mail servers for the sender's domain
+must use the same secret.
+</p>
+<p>
+When a recipient later replies, sends a mail delivery notice (<a class="glossary" href="glossary.html#term_MDN">MDN</a>),
+or an error message (<a class="glossary" href="glossary.html#term_DSN">DSN</a>) is sent back to our server, it will contain
+a reference to our enhanced Message-ID that will allow @PACKAGE_NAME@
+to verify if the reply is actually in response to a message that originated
+or transited our systems. If a DSN or MDN does not contain a reference to a valid EMEW
+then apply the <a href="summary.html#opt_emew_dsn_policy">emew-dsn-policy</a>.
+</p>
+
+<p>
+In order to reduce the risk for replay attacks, <a href="summary.html#opt_emew_ttl">emew-ttl</a>
+specifies how long an EMEW remains valid. If a stale EMEW appears in a DSN or MDN, then the
+message is rejected according to <a href="summary.html#opt_emew_dsn_policy">emew-dsn-policy</a>.
+Otherwise if a stale EMEW appears in a recipient reply, then the message
+will be subjected to content filtering as normal.
+</p>
+
+<p>
+Some mail architectures make it impossible or very difficult to deploy
+EMEW. For this reason an alternative facility is available to deal with
+backscatter, the <a href="access-map.html#tag_null_rate_to"><span class="tag">Null-Rate-To:</span></a> tag,
+which monitors the rate of mail from the null sender (MAIL FROM:&lt;&gt;) arrives and imposes a
+threshold. This threshold can be global or varied according to recipient domain or address.
+</P>
+</dd>
+
+<a name="smtpf_fpscand"></a>
+<dt>F-Prot Anti-Virus</dt>
+<dd>
+@PACKAGE_NAME@ provides support for <a href="http://www.f-prot.com/">F-Prot</a> anti-virus scanner.
+If you have <code>fpscand</code> installed and chose to scan message content as it passes through @PACKAGE_NAME@, then
+specify the host:port of the <code>fpscand</code> server with the
+<a href="summary.html#opt_fpscand_socket">fpscand-socket</a> option.
+
+Make sure that the <code>fpscand</code> process owner, if running as something other than root,
+<span class="note">must be a member of the same group that @PACKAGE_NAME@ is running as</span>,
+else it will not be able to read any message files; see
+<a href="summary.html#opt_run_group">run-group</a>.
+
+<p>
+When the <a href="summary.html#opt_fpscand_socket">fpscand-socket</a> is specified, all messages will be
+virus scanned, no exceptions possible. Those servers that use MailScanner may prefer to
+skip virus scanning in @PACKAGE_NAME@.
+</p>
+<p>
+Also check the default settings for <a href="summary.html#opt_fpscand_timeout">fpscand-timeout</a>
+option.
+</p>
+<p>
+If a virus is found, then the default setting of <a href="summary.html#opt_fpscand_policy">fpscand-policy</a>
+is to reject the message, other choices being to discard the message or take no action (ignoring a virus infected
+message is a bad idea). If there is an I/O error between @PACKAGE_NAME@ and <code>fpscand</code>, probably caused by
+<code>fpscand</code> being restarted, then the message is temporarily rejected and a legitimate SMTP client will retry
+later retry sending the message.
+</p>
+
+</dd>
+
+
+<a name="smtpf_grey_list"></a>
+<dt>Grey Listing</dt>
+<dd>
+One of the more significant tests in @PACKAGE_NAME@ is the <em>enhanced grey-listing</em>.
+
+<p>
+The original grey listing method keeps track of key sets consisting of the SMTP client's IP,
+sender's envelope, and recipient's envelope. If a key set does not exist in the cache, then
+a new record is added and kept until it expires and the
+message is temporarily rejected.
+</p>
+<p>
+A legitimate server, when temporarily rejected, is expected to queue the message
+and retry sending it sometime in the near future. The temporary reject policy remains
+in force until the temporary block period
+(<a href="summary.html#opt_grey_temp_fail_period">grey-temp-fail-period</a>) has elapsed, at which point the message
+will be allowed to be delivered until the cache record expires.
+</p>
+<p>
+Our <em>enhanced grey-listing</em> introduces some interesting optimisations. The
+first being that the grey-list key set is configurable with the
+<a href="summary.html#opt_grey_key">grey-key</a> option and that one of the configurable
+key set members can be the SMTP client's <a class="glossary" href="glossary.html#term_PTR">PTR</a>
+information found from a DNS lookup.
+</p>
+<p>
+One of the common problems with grey-listing is that some sending sites use a pool of
+mail servers with a shared mail queue (gmail.com is one such site). This has a negative impact
+on recipient sites using the original grey-listing { ip, sender, recipient } key set.
+The receiving site constantly sees a different IP address, but
+with the same sender and recipient.
+This results in the receiving site greylisting and delaying a
+message multiple times, and may result in a message not being delivered.
+</p>
+<p>
+With the SMTP client's PTR information, we remove the first
+label from the PTR (note this is a generalisation of the process), then use this trimmed PTR as part of the grey-listing key set.
+If no PTR result was found, then the client's IP address is used as with the original grey-list method.
+The net effect of using the trimmed PTR in place of the IP address is that it grey-lists the sender's pool of
+mail servers instead of just a single machine.
+</p>
+<p>
+For example, consider a sender site like:
+</p>
+<blockquote>
+<table border="0" cellspacing="0" cellpadding="0" width="65%">
+<tr><td width="60%">out1.pool1.example.com</td><td width="40%">192.0.2.1</td></tr>
+<tr><td>out2.pool1.example.com</td><td>192.0.2.2</td></tr>
+<tr><td>out3.pool1.example.com</td><td>192.0.2.3</td></tr>
+<tr><td>out4.pool1.example.com</td><td>192.0.2.4</td></tr>
+</table>
+</blockquote>
+<p>
+Using the original grey-list key set, the first time the sending site connects, the receiver
+will record:
+</p>
+<blockquote><pre>
+{ 192.0.2.3, fred@example.com, john@receiver.com }
+</pre></blockquote>
+<p>
+and temporarily reject the mail. When the sending site retries, the
+receiver will likely see a different connecting IP address and record
+a new grey-list key:
+</p>
+<blockquote><pre>
+{ 192.0.2.1, fred@example.com, john@receiver.com }
+</pre></blockquote>
+<p>
+and temporarily reject the mail. This process can repeat itself for as
+many times as there are machines in the sending pool of servers,
+resulting in excessive mail delivery delays.
+</p>
+<p>
+Using our optimisation, if the sender connects from IP address <code>192.0.2.3</code> which has a PTR of
+<code>out3.pool1.example.com</code>, then the receiver would use the trimmed PTR information to record the following
+grey-list key the first time the sender attempts to deliver the message:
+</p>
+<blockquote><pre>
+{ pool1.example.com, fred@example.com, john@receiver.com }
+</pre></blockquote>
+<p>
+and temporarily reject the message. The next time the sending site
+connects to the receiver, <em>no matter from which machine within the same pool</em>,
+the trimmed PTR information will match the previously cached record
+and result in the mail being passed through grey-listing.
+</p>
+
+<p>
+The second optimisation concerns the objective of grey-listing as an anti-spam technique, which is essentially: <i>does
+the remote mail server implement a retry queue</i>? The assumption here being that spam sources do not bother with retry
+queues for speed. Many trivial grey-listing implementations record each and every unique { ip, sender, recipient } set,
+only allowing repeat visits from the same key set to passed without delay. However, once it is determined that a remote mail
+server implements a retry queue, new mail from the same host, but from different senders and/or to different
+recipients will result in additional and redundant grey-listing delays.
+</p>
+<p>
+So in order to improve mail throughput, once a host or pool of hosts is known to implement a retry queue
+and if the <a href="summary.html#opt_grey_key">grey-key</a> specifies either the key set members IP or PTR,
+then we create a new cache record with a shortened key using only the IP or trimmed PTR information and allow all
+subsequent mail from that IP or trimmed PTR group to pass unhindered.
+</p>
+
+<p>
+For example the first time an unknown SMTP client attempts to send a
+message, @PACKAGE_NAME@ records:
+</p>
+
+<blockquote><pre>
+{ pool1.example.com, fred@example.com, john@receiver.com }
+</pre></blockquote>
+
+<p>
+When the sending site later retries to send the message, @PACKAGE_NAME@
+will find the above cached record and shorten that record key to be:
+</p>
+
+<blockquote><pre>
+{ pool1.example.com }
+</pre></blockquote>
+
+<p>
+Now when the sending site connects again in the future, @PACKAGE_NAME@ will
+first look for the shortened key using either the SMTP client's trimmed PTR information or
+IP address and if it finds the record, passes the mail regardless of who
+the sender and recipients are, since we know that the hosts in question
+implement a retry mail queue. If the shortened key is not present, we look
+for the regular grey-list cache record and handle as before.
+</p>
+
+<p>
+By default <a href="summary.html#opt_grey_key">grey-key</a>="ptr,mail,rcpt"
+takes advantage of both optimisations. The original grey-list method can be used by
+specifying <a href="summary.html#opt_grey_key">grey-key</a>="ip,mail,rcpt",
+though the second optimisation is still applied. To disable grey-listing
+specify an empty value <a href="summary.html#opt_grey_key">grey-key</a>="".
+</p>
+
+<a name="smtpf_grey_content"></a>
+<p>
+The <a href="summary.html#opt_grey_content">grey-content</a>
+option provides a variant on grey-listing. When an unknown key set
+is seen, a cache entry is created with the MD5 hash of the message content, and it
+is temporarily rejected. Subsequent attempts to deliver the message result in a
+temporary rejection until the <a href="summary.html#opt_grey_temp_fail_period">grey-temp-fail-period</a>
+has expired, at which point a MD5 hash of the message content is generated and
+compared with that previously saved within the cache. If the compared hashes are equal,
+then the message is allowed to proceed. Otherwise messages from this key set continue to
+be temporarily rejected until the originally message is seen once again.
+</p>
+
+<p>
+The <a href="summary.html#opt_grey_content">grey-content</a> technique is effective against
+spamware that changes the content of their junk messages regularly in an effort to defeat Bayes analysis,
+distributed checksums, and/or simple pattern scanners. If the spammers do not change
+their text, then they will pass this test only to be caught most likely by something else like
+<a href="#smtpf_uri">URI filtering</a> or <a href="#smtpf_spamd">SpamAssassin</a>.
+</p>
+
+</dd>
+
+<a name="smtpf_helo"></a>
+<dt>SMTP HELO, EHLO Argument Testing</dt>
+<dd>
+
+The first test applied verifies that the <a href="glossary.html#term_SMTP">SMTP HELO</a> argument contains only valid
+characters that can appear in a FQDN or IP-domain literal. An invalid character will reject the command and drop the
+connection.
+
+<p>
+The HELO argument is suppose to be a <a href="glossary.html#term_FQDN">FQDN</a>
+or it may be a IP-domain literal, which is technically not allowed by RFC
+<a href="http://www.rfc-editor.org/rfc/rfc2821.txt">2821</a>, but
+is a commonly accepted convention. The option
+<a href="summary.html#opt_rfc2821_strict_helo">rfc2821-strict-helo</a> will reject
+and drop a connection, if the HELO argument is a bare unqualified name.
+</p>
+
+<p>
+When <a href="summary.html#opt_reject_rfc2606">reject-rfc2606</a> is enabled and
+the SMTP client is not one of our <a href="route-map.html#route_relay">relays</a> nor
+a RFC <a href="http://www.rfc-editor.org/rfc/rfc3330.txt">3330</a> private LAN address, then
+@PACKAGE_NAME@ with reject the command and drop the connection if the HELO argument
+is a reserved domain name as defined by RFC <a href="http://www.rfc-editor.org/rfc/rfc2606.txt">2606</a>
+or similar such as <code>.localdomain</code>.
+</p>
+
+<p>
+If <a href="summary.html#opt_helo_ip_mismatch">helo-ip-mismatch</a> is enabled
+and the HELO argument is an IP-domain-literal, then it must match that of the SMTP
+client IP address, otherwise the command is rejected and the connection dropped.
+RFC <a href="http://www.rfc-editor.org/rfc/rfc3330.txt">3330</a> private LAN addresses
+are excluded.
+</p>
+
+<p>
+Another interesting HELO test is <a href="summary.html#opt_helo_claims_us">helo-claims-us</a>
+where the connected client is neither one of our <a href="route-map.html#route_relay">relays</a> nor a
+RFC <a href="http://www.rfc-editor.org/rfc/rfc3330.txt">3330</a> private LAN address, yet
+specifies a HELO argument that claims to be from a domain we are responsible for, in which case
+the command is rejected and the connection dropped.
+</p>
+
+<p>
+Finally if <a href="summary.html#opt_uri_bl_helo">uri-bl-helo</a> is enabled and
+<a href="summary.html#opt_uri_bl">uri-bl</a> and/or <a href="summary.html#opt_uri_dns_bl">uri-dns-bl</a>
+are specified, then the HELO argument is tested against one or more URI black lists, rejecting
+the command and dropping the connection if true.
+</p>
+</dd>
+
+<a name="smtpf_interface"></a>
+<dt>Interface Settings</dt>
+<dd>
+@PACKAGE_NAME@ defaults to connecting to both IPv6 and IPv4 interfaces on port 25 (see
+<a href="summary.html#opt_interfaces">interfaces</a> option). This can be configured to
+be a more restrictive list of hostnames or IP address if necessary in order to exclude
+some interfaces from the "bind to all" default. The canonical hostname for each interface
+will be looked up and used as the hostname in the welcome banner and for the
+HELO/EHLO argument when forwarding connections.
+
+<p>
+When specifying an IPv6 address with a port number, the address
+must appear within square brackets, <code>[</code> and <code>]</code>, for example
+"<code>[2001:DB8::1234]:25</code>". Using an IPv4 address within the square
+brackets is also supported, eg. "<code>[192.0.2.1]:25</code>", in addition to
+the traditional IPv4 dot-colon notation, eg. "<code>192.0.2.1:25</code>".
+</p>
+</dd>
+
+<a name="smtpf_length_limit"></a>
+<dt>Message Length  &amp; Limit Controls</dt>
+<dd>
+See the <a href="access-map.html#access_tags">access-map</a> concerning the
+<a href="access-map.html#tag_length"><span class="tag">Length-*:</span></a> and
+<a href="access-map.html#tag_msg_limit"><span class="tag">Msg-Limit-*:</span></a> tags.
+</dd>
+
+<!--
+<a name="smtpf_misc"></a>
+<dt>Miscellaneous</dt>
+<dd>
+</dd>
+-->
+
+<a name="smtpf_rfc"></a>
+<dt>RFC Compliance Controls</dt>
+<dd>
+There are many <a class="glossary" href="glossary.html#term_RFC">RFC</a> documents that cover many
+aspects of the Internet. @PACKAGE_NAME@ has several options that check for RFC
+conformance pertaining to mail.
+
+<p>
+Probably the most important set of RFC documents pertain
+to how mail travels using <a class="glossary" href="glossary.html#term_SMTP">SMTP</a>
+(RFC <a href="http://www.rfc-editor.org/rfc/rfc2821.txt">2821</a>)
+and the structure of mail messages
+(RFC <a href="http://www.rfc-editor.org/rfc/rfc2822.txt">2822</a>).
+</p>
+
+<p>
+RFC 2821 documents several limits that SMTP servers must be able to support
+and that messages must not exceed, such as the maximum length of the parts that appear before
+(<a href="summary.html#opt_rfc2821_local_length">rfc2821-local-length</a>) and after
+(<a href="summary.html#opt_rfc2821_domain_length">rfc2821-domain-length</a>) the at-sign
+(<code>@</code>) of an mail address, and the maximum length of
+a message line (<a href="summary.html#opt_rfc2821_line_length">rfc2821-line-length</a>) can be.
+When enabled, these length related options will reject mail addresses or messages
+that exceed the documented limits.
+</p>
+
+<p>
+While exceeding these lengths are often a sign of spam or mail born viruses, there are
+also some legitimate, yet badly written mail software throughout the Internet, that also
+exceed them. Therefore the above length controls should be <strong>used with caution</strong> as they could
+result in legitimate mail being rejected.
+</p>
+
+<p>
+SMTP is a protocol that has a well defined grammar and syntax, particularly for specifying
+mail addresses as arguments to the <a class="glossary" href="glossary.html#term_SMTP">MAIL FROM:</a> and
+<a class="glossary" href="glossary.html#term_SMTP">RCPT TO:</a> commands. When <a href="summary.html#opt_rfc2821_angle_brackets">
+rfc2821-angle-brackets</a> is enabled, then mail addresses that don't adhere to this syntax are rejected.
+</p>
+
+<p>
+Sendmail is a very popular <a class="glossary" href="glossary.html#term_MTA">MTA</a>, that uses a
+plus-sign (<code>+</code>) in the local part
+before the at-sign (<code>@</code>) to delimit the mail box name from a folder or tag
+attributed by the mail box user. When
+<a href="summary.html#opt_rfc2821_literal_plus">rfc2821-literal-plus</a>
+is disabled, then any <code>plus-detail</code> appearing in a mail
+address is removed before performing various
+<a href="summary.html#opt_access_map">access-map</a> or
+<a href="summary.html#opt_route_map">route-map</a> lookups. When enabled, the entire
+local-part is used unmodified.
+</p>
+
+<p>
+The option <a href="summary.html#opt_rfc2821_strict_helo">rfc2821-strict-helo</a>
+enforces the requirement that the HELO argument be a FQDN, ie. has two or more
+labels or is an IP-domain-literal. Anything else would be rejected.
+</p>
+
+<p>
+The end of the <a class="glossary" href="glossary.html#term_SMTP">DATA</a> state and message transfer is
+suppose to be denoted by a CRLF-DOT-CRLF sequence, ie. a line consisting only of
+a single period. Enabling <a href="summary.html#opt_rfc2821_strict_dot">rfc2821-strict-dot</a>
+option enforces this, since accepting other newline dot combinations could inadvertently
+terminate the message transfer early and subsequent unknown command errors. When disabled,
+other newline combinations are accepted, such as LF-DOT-LF, CRLF-DOT-LF, and LF-DOT-CRLF.
+Unfortunately, while typically a sign of spam software, there are some badly written
+mail applications that are careless in their handling of newlines and the
+<a class="glossary" href="glossary.html#term_SMTP">final dot</a>.
+</p>
+
+<p>
+Mail messages, in particular the headers, are not suppose to contain unencoded 8-bit data,
+since how those values are interpreted when scanned can vary based on regional language and they
+can cause legacy mail systems to fail. With
+<a href="summary.html#opt_rfc2822_7bit_headers">rfc2822-7bit-headers</a> set, if the
+message headers are not 7-bit ASCII printable, then the message is rejected.
+</p>
+
+<p>
+There are several domains, as described by RFC
+<a href="http://www.rfc-editor.org/rfc/rfc2606.txt">2606</a>, reserved for documentation and special local uses.
+They are the top level domains <code>.test</code>, <code>.example</code>, <code>.invalid</code>, <code>.localhost</code>, and the second level domain <code>.example</code> using any
+<a class="glossary" href="glossary.html#term_TLD">TLD</a>.
+These domains should never appear in domain names from the public Internet. If
+<a href="summary.html#opt_rfc2606_special_domains">rfc2606-special-domains</a> is enabled,
+then various tests are applied at different stages to the SMTP client name, HELO argument,
+sender and recipients. The appearance of a reserved domain will cause a rejection, unless the
+SMTP client is from the LAN or a <a href="route-map.html#route_relay">relay</a>. While not part of RFC 2606,
+<code>.localdomain</code> and <code>.local</code> are also included in the restricted list.
+</p>
+</dd>
+
+<a name="smtpf_run"></a>
+<dt>Run Settings</dt>
+<dd>
+@PACKAGE_NAME@ is normally started by the root user in order to bind to SMTP port 25,
+set its working directory to <a href="summary.html#opt_run_work_dir">run-work-dir</a>,
+create its <a href="summary.html#opt_run_pid_file">run-pid-file</a>, and
+switch to a <code>chroot</code> jail if <a href="summary.html#opt_run_jailed">run-jailed</a> is set.
+Once initialised, the @PACKAGE_NAME@ process drops root privileges and becomes
+the user and group specified by <a href="summary.html#opt_run_user">run-user</a> and <a href="summary.html#opt_run_user">run-group</a> respectively.
+
+<p>
+The <a href="summary.html#opt_run_open_file_limit">run-open-file-limit</a> is used
+to specify the maximum number of open files for the @PACKAGE_NAME@ process. When
+approximately half this number is reached, @PACKAGE_NAME@ will start to refuse
+SMTP connections on the assumption that each SMTP client needs at least two
+file descriptors in order to process the session.
+</p>
+</dd>
+
+<a name="smtpf_server"></a>
+<dt>Server Performance</dt>
+<dd>
+
+The server connection handling uses a collection of pre-spawned server threads
+that are reusable and grow or shrink as load varies. This server design reduces the
+effect of constantly creating and destroying threads by maintaining an
+active pool of waiting threads.
+
+<p>
+<a href="summary.html#opt_server_min_threads">server-min-threads</a>
+sets the lower bound on the number of server threads to keep in circulation.
+
+<a href="summary.html#opt_server_new_threads">server-new-threads</a> specifies
+the number of new servers threads to create when there a no available server
+threads to handle new connections.
+
+The <a href="summary.html#opt_smtp_accept_timeout">smtp-accept-timeout</a> option
+specifies how long a server thread will wait for a new connection before it times
+out and is possibly terminated.
+</p>
+</dd>
+
+<!--
+<a name="smtpf_siq"></a>
+<dt>SIQ Protocol Support</dt>
+<dd>
+@PACKAGE_NAME@ provides support for the SIQ protocol used to query a list of
+<a href="summary.html#opt_siq_servers">siq-servers</a> for a score concerning
+client IP and sender domain pair according to reputation services' criteria.
+Reputation services use such factors as stability, longevity, identifiability,
+SPF match, RHS type grouping, verified
+PTR record matching, etc. One such service is already available from
+<a href="http://outboundindex.org/">Outbound Index</a>.
+Please check with the service(s) available before using them as some require
+registration before they will answer queries.
+
+<p>
+A reputation service will return a score between 0 and 100. If you want to reject
+a message with a low score, then set
+the <a href="summary.html#opt_siq_score_reject">siq-score-reject</a> threshold to
+something between 0 and 99 (-1 to disable). Scores less than or equal to this
+threshold are rejected.
+</p>
+
+<p>
+Similarly the <a href="summary.html#opt_siq_score_tag">siq-score-tag</a>
+can be set to the value below which the message's Subject header would be
+prefixed with the <a href="summary.html#opt_siq_subject_tag">siq-subject-tag</a>.
+</p>
+
+<p>
+It is possible to use both <a href="summary.html#opt_siq_score_reject">siq-score-reject</a>
+and <a href="summary.html#opt_siq_score_tag">siq-score-tag</a> so that clearly dubious
+message sources are rejected, while messages sources with a less definitive score would
+only be tagged as suspect and continue to be delivered.
+A SIQ-Report header containing a summary of any SIQ result is always added.
+</p>
+</dd>
+-->
+
+<a name="smtpf_smtp"></a>
+<dt>SMTP Settings</dt>
+<dd>
+When @PACKAGE_NAME@ binds to SMTP port 25, it can only accept one connection at
+a time, while the kernel queues any other connections that arrive. The
+<a href="summary.html#opt_smtp_server_queue">smtp-server-queue</a> value
+is used to tell the kernel how many connections it should be prepared to handle
+before refusing clients.
+
+<p>
+When an SMTP client connects, it is supposed to wait for the SMTP 220 response and
+welcome message. Some spam software will often assume that the ESMTP pipelining is
+used and simply blast out one or more message transactions, ignoring any responses
+from the server. One or more
+<a href="access-map.html#tag_greetpause"><span class="tag">GreetPause:</span></a> tags, which specify
+a delay in milliseconds, can be added to the <a href="access-map.html#access_tags">access-map</a>.
+If the client sends any data before this delay expires, then the connection
+will be dropped.
+</p>
+
+<p>
+An SMTP client that successfully connects is sent a 220 status code along with
+the SMTP server host name and a welcome message.
+<a href="summary.html#opt_smtp_welcome_file">smtp-welcome-file</a> can be used to
+supply a custom welcome message and it is the file path to a file containing
+one or more lines of text. The 220 status code will be automatically prepended to each line.
+It is recommended that this message be two or more lines as this has been found to foil some
+spam software that fail to handle multiline responses.
+If an empty string is given, a hard coded default is used.
+</p>
+
+<p>
+The <a href="access-map.html#tag_commandpause"><span class="tag">CommandPause:</span></a> tag used in the <a href="access-map.html#access_tags">access-map</a>
+is similar in principal to <a href="access-map.html#tag_greetpause"><span class="tag">GreetPause:</span></a>. It specifies the number of
+milliseconds to pause before processing a SMTP command. If more input arrives before the
+delay passes then the command is rejected and the connection dropped. If a
+<a href="access-map.html#tag_commandpause"><span class="tag">CommandPause:</span></a> lookup returns a value of zero (0), then
+@PACKAGE_NAME@ will allow
+RFC <a href="http://www.rfc-editor.org/rfc/rfc2920.txt">2920</a> SMTP Pipelining after
+a successful EHLO command.
+</p>
+
+<p>
+It is possible to drop a client connection after a certain number of unsuccessful
+SMTP commands with <a href="summary.html#opt_smtp_drop_after">smtp-drop-after</a>.
+</p>
+
+<p>
+The <a href="summary.html#opt_smtp_drop_unknown">smtp-drop-unknown</a> can be used
+to reject and drop a connection that issues an unknown SMTP command. This option
+should be used with care, because it has been seen that Cisco Pix firewalls with
+SMTP filtering enabled, will for some silly reason obfuscate an EHLO command and
+thus trigger this test. <strong>Use with caution</strong>.
+</p>
+
+<p>
+@PACKAGE_NAME@ provides a very simple form of tar pitting when
+<a href="summary.html#opt_smtp_reject_delay">smtp-reject-delay</a> is set.
+For any negative SMTP responses, exponentially delay sending the responses
+to the client. After several temporary failures or rejects, the client connection
+will timeout and be dropped. Particularly interesting in combating dictionary
+harvesting attacks.
+</p>
+
+<p>
+The <a href="summary.html#opt_smtp_connect_timeout">smtp-connect-timeout</a> in seconds is
+used when @PACKAGE_NAME@ attempts to make a connection to a <a href="route-map.html#route_by_domain">FORWARD:</a>
+host. While the <a href="summary.html#opt_smtp_command_timeout">smtp-command-timeout</a> in seconds
+controls how long @PACKAGE_NAME@ will wait for the next client command or server response. Finally
+the <a href="summary.html#opt_smtp_data_line_timeout">smtp-data-line-timeout</a> in seconds
+controls how long to wait for the next message line from the client. If a client takes too long,
+the connection will be dropped.
+</p>
+
+<p>The <a href="summary.html#opt_smtp_enable_esmtp">smtp-enable-esmtp</a> option when disabled
+causes some badly written spam software that fails to fall-back to regular SMTP to
+disconnect or become out-of-sync (see the ehlo-no-helo counter).
+Regular mail software is unaffected and falls-back correctly.
+Other spam software will send an EHLO and when the command is rejected,
+send a HELO, but using a different host/domain argument to the EHLO that was previously sent;
+@PACKAGE_NAME@ will reject and drop these connections (see the helo-schizophrenic counter).
+</p>
+
+</dd>
+
+<a name="smtpf_savdid"></a>
+<dt>Sophos Anti-Virus</dt>
+<dd>
+@PACKAGE_NAME@ provides support for <a href="http://www.sophos.com/">Sophos</a> anti-virus scanner.
+If you have <code>savdid</code> installed and chose to scan message content as it passes through @PACKAGE_NAME@, then
+specify the host:port of the <code>savdid</code> server with the
+<a href="summary.html#opt_savdid_socket">savdid-socket</a> option.
+
+Make sure that the <code>savdid</code> process owner, if running as something other than root,
+<span class="note">must be a member of the same group that @PACKAGE_NAME@ is running as</span>,
+else it will not be able to read any message files; see
+<a href="summary.html#opt_run_group">run-group</a>.
+
+<p>
+When the <a href="summary.html#opt_savdid_socket">savdid-socket</a> is specified, all messages will be
+virus scanned, no exceptions possible. Those servers that use MailScanner may prefer to
+skip virus scanning in @PACKAGE_NAME@.
+</p>
+<p>
+Also check the default settings for <a href="summary.html#opt_savdid_timeout">savdid-timeout</a>
+option.
+</p>
+<p>
+If a virus is found, then the default setting of <a href="summary.html#opt_savdid_policy">savdid-policy</a>
+is to reject the message, other choices being to discard the message or take no action (ignoring a virus infected
+message is a bad idea). If there is an I/O error between @PACKAGE_NAME@ and <code>savdid</code>, probably caused by
+<code>savdid</code> being restarted, then the message is temporarily rejected and a legitimate SMTP client will retry
+later retry sending the message.
+</p>
+
+</dd>
+
+<a name="smtpf_spamd"></a>
+<dt>Spamd Support</dt>
+<dd>
+@PACKAGE_NAME@ provides support for <a href="http://www.spamassassin.org/">SpamAssassin</a>
+the open source message content scanner.
+If you have spamd installed and chose to scan message content as it passes through @PACKAGE_NAME@, then
+specify a unix domain socket path or host:port of the spamd server with the
+<a href="summary.html#opt_spamd_socket">spamd-socket</a> option.
+
+<p>
+Also be sure to check the default settings for <a href="summary.html#opt_spamd_timeout">spamd-timeout</a>
+and <a href="summary.html#opt_spamd_max_size">spamd-max-size</a> options.
+</p>
+
+<p>
+When scanning message content with spamd, the default
+<a href="summary.html#opt_spamd_command">spamd-command</a> is to simply <code>CHECK</code>
+and report the score and a yes/no answer. The other commands possible are
+<code>SYMBOLS</code>, <code>REPORT</code>, and <code>REPORT_IFSPAM</code>, which provide more
+detailed logging if the <a href="summary.html#opt_verbose">verbose</a> spamd flag is set.
+</p>
+
+<p>
+As of @PACKAGE_NAME@ 2.0 it is now possible to tag the Subject: header with a custom
+prefix given by <a href="summary.html#opt_spamd_subject_tag">spamd-subject-tag</a>.
+The Subject: tag is applied when the score returned by SpamAssassin is greater than or equal to
+the <code>required_score</code> defined in the SpamAssassin configuration and less than
+the value given by <a href="summary.html#opt_spamd_score_reject">spamd-score-reject</a>.
+</p>
+
+<p>
+In addition
+<code>X-Spam-Flag</code>,
+<code>X-Spam-Status</code>,
+<code>X-Spam-Level</code>, and
+<code>X-Spam-Report</code> headers may be added depending on the result.
+The <code>X-Spam-Report</code> varies depending on the
+<a href="summary.html#opt_spamd_command">spamd-command</a> applied.
+</p>
+
+<p>
+Some sending sites include <code>X-Spam-Flag: YES</code>
+and/or <code>X-Spam-Status</code> headers that indicate that they already
+thought the message was spam. In such case when the <code>X-Spam-Status</code>
+score exceeds our <a href="summary.html#opt_spamd_score_reject">spamd-score-reject</a>,
+we reject the message. Or if there is only a <code>X-Spam-Flag</code>
+header that states <code>YES</code> (regardless of case), then we reject the
+message. Otherwise we discard previous <code>X-Spam-*</code> headers and content
+filtering proceeds as per usual.
+</p>
+
+<p>
+It is possible to specify a specific SpamAssassin configuration file to use
+through the use of <a href="access-map.html#access_tags">spamd:</a> tag.
+If the message is addressed to a single recipient, then a
+<span class="key"><span class="tag">Spamd:</span>mail</span>
+lookup is done. If the message is for more than one recipient, all of whom
+are within the same domain, then a
+<span class="key"><span class="tag">Spamd:</span>domain</span> lookup is done.
+Otherwise the <span class="key"><span class="tag">Spamd:</span></span> default configuration is used.
+The right hand side must be a user name or address to pass to spamd.
+It can be a <a href="access-map.html#access_pattern_lists">pattern list</a>.
+If the special user name <span class="value">OK</span> is used, then
+the message is not processed by spamd.
+</p>
+
+</dd>
+
+<a name="smtpf_spf"></a>
+<dt>SPF Classic Support</dt>
+<dd>
+<a href="glossary.html#term_SPF">SPF Classic</a> is a means by which a domain documents,
+using DNS TXT records, all the valid sources of mail. SPF is an interesting
+idea, but is considered experimental by the <a href="glossary.html#term_IETF">IETF</a>.
+SPF checks use the SMTP client's IP address, the HELO argument, and MAIL FROM: domain
+to determine whether a message is coming from an acceptable mail source.
+The <a href="summary.html#opt_spf_helo_policy">spf-helo-policy</a> and
+<a href="summary.html#opt_spf_mail_policy">spf-mail-policy</a> options can be set
+to reject messages that result in hard and/or soft failures.
+
+<p>
+Many mail systems have no SPF record or have syntax errors, so when there
+is no SPF pass result from the SPF check, the
+<a href="summary.html#opt_spf_best_guess_txt">spf-best-guess-txt</a> option
+can perform a second SPF using the supplied string (for example
+"v=spf1 a/24 mx/24 ptr") to see if that would yield a pass result. Otherwise
+the result of the first SPF check is retained.
+</p>
+
+<p>
+The <a href="#smtpf_grey_list">enhanced grey-listing</a> and <a href="#smtpf_client_is_mx">client-is-mx</a>
+options will take the SPF results into account.
+
+When <a href="summary.html#opt_spf_received_spf_headers">spf-received-spf-headers</a>
+is set, then Received-SPF headers detailing the results will be added to a message's headers.
+</p>
+</dd>
+
+<a name="smtpf_stats"></a>
+<dt>Statistics</dt>
+<dd>
+@PACKAGE_NAME@ can gather assorted statistics, such as the number of connections,
+how many were intentionally dropped, number of lost client connections, how many times
+a particular test fires, etc. The majority of the counters are grouped by
+category: <code>CLIENTS</code>, <code>SENDERS</code>, <code>RECIPIENTS</code>, and <code>MESSAGES</code>.
+The percentages are computed by dividing a counter by the counter of the category it appears in.
+Note that multiple statistics counters can be incremented during the lifetime of the SMTP connection.
+
+
+<p>
+By default the <a href="summary.html#opt_stats_map">stats-map</a> is disabled.
+When enabling statistics, the SQLite database is the recommended format. Also
+note that it becomes the responsibility of the statistics gathering software to
+age and remove old statistics from the stats-map as it will grow over time.
+</p>
+
+<p>
+The stats-map consists of key-value pairs where the key is given by a string
+of digits indicating the current hour according to "YYYYMMDDHH". The value
+is a space separated list of hex values. The special key "fields:$VERSION",
+where $VERSION is the @PACKAGE_NAME@ version number. The fields key
+is used to obtain the field names and the order they are saved in, since this
+can change between versions of @PACKAGE_NAME@.
+</p>
+
+<p>
+It is possible to observe the raw statistics while @PACKAGE_NAME@ is
+running. See the SMTP <a href="runtime.html#runtime_config">STAT</a> extension.
+</p>
+
+</dd>
+
+<a name="smtpf_uri"></a>
+<dt>URI Black Listing</dt>
+<dd>
+<a href="glossary.html#term_URI">URI</a> can appear in the headers and content of a
+message. They typically take the form of email addresses, machine host names,
+and web page links. When the <a href="summary.html#opt_uri_bl">uri-bl</a> and/or
+<a href="summary.html#opt_uri_dns_bl">uri-dns-bl</a> are specified, @PACKAGE_NAME@
+will parse and MIME decode a message looking for URI and check the domain portion
+against one or more DNS based URI black list services. When a black listed URI is
+found, the <a href="summary.html#opt_uri_bl_policy">uri-bl-policy</a> is then
+applied at the end of the message.
+
+<p>
+By enabling
+<a href="summary.html#opt_uri_sub_domains">uri-sub-domains</a> it is possible to check
+sub-domains against all the URI black lists servers specified by
+<a href="summary.html#opt_uri_bl">uri-bl</a> and/or
+<a href="summary.html#opt_uri_dns_bl">uri-dns-bl</a>.
+Note though that most URI black lists currently only list the top level domains,
+therefore enabling this option will generate more DNS traffic with little result.
+</p>
+
+<p>
+Sometimes spammers will use the same domain that appears in their spam
+content for the their host name or as the domain that appears in either
+the HELO or MAIL FROM: arguments and so it is sometimes possible to
+catch spam early in the SMTP transaction.
+By enabling
+<a href="summary.html#opt_uri_bl_ptr">uri-bl-ptr</a>,
+<a href="summary.html#opt_uri_bl_helo">uri-bl-helo</a>, or
+<a href="summary.html#opt_uri_bl_mail">uri-bl-mail</a> options
+the SMTP client host name, HELO argument, or MAIL FROM: arguments
+repectively are checked against the URI black list services
+given by <a href="summary.html#opt_uri_bl">uri-bl</a> and/or
+<a href="summary.html#opt_uri_dns_bl">uri-dns-bl</a>.
+</p>
+
+<p>
+Some messages, be them spam or HTML formatted news letters for example, will include
+a lot of URI throughout. The
+<a href="summary.html#opt_uri_max_test">uri-max-test</a> option will
+limit the number of unique URI domains that are checked in order to
+avoid possible denial of service situations from looking up too many URI,
+while the <a href="summary.html#opt_uri_max_limit">uri-max-limit</a>
+counts how many URI are present and if over a given threshold a message
+would be rejected.
+</p>
+
+<p>
+Some spam messages intentionally add broken or circular web page links.
+By specifying a <a href="summary.html#opt_uri_links_policy">uri-links-policy</a>
+other than none, each web link will be tested using an <a href="glossary.html#term_HTTP">HTTP</a>
+HEAD request to see if a link is broken or generates a circular loop of HTTP redirects. If true
+the selected policy is applied. The <a href="summary.html#opt_http_timeout">http-timeout</a>
+option specifies how long to wait in seconds before giving up testing a link.
+</p>
+</dd>
+
+<a name="smtpf_verbose"></a>
+<dt>Verbose Logging</dt>
+<dd>
+@PACKAGE_NAME@ is capable of logging a lot of detail about the software's behaviour,
+SMTP transaction details concerning the SMTP client and FORWARD: hosts, and actions
+of various options to the system's mail log. The extra logging can aid in finding software and/or configuration
+issues. However, in day to day operations <code>verbose='error,info'</code> is typically sufficient.
+Note too that the logging level can be adjusted at runtime without having to restart
+the server. See the SMTP <a href="runtime.html#runtime_config">VERB</a> extension.
+</dd>
+
+</dl>
+
+<p style="text-align: center;">
+-<a href="#"> TOP </a>-
+</p>
+
+
+<!-- copyright -->
+<p class="copyright" style="text-align: center;">
+<nobr>@package_copyright@</nobr>
+<br/><nobr>BarricadeMX trademark &amp; patents pending.</nobr>
+</p>
+<!--end copyright-->
+
+</td></tr>
+</table>
+</div>
+</body>
+</html>
+

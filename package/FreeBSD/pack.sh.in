@@ -1,0 +1,7 @@
+#!/bin/sh
+rm -rf /var/tmp/stage
+mkdir /var/tmp/stage
+cd @top_srcdir@
+make DESTDIR=/var/tmp/stage install
+cd -
+pkg_create -S /var/tmp/stage -p /usr/local -c +ONELINE -d +DESC -f +CONTENTS @PACKAGE_NAME@-@PACKAGE_VERSION@.tgz

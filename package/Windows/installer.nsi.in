@@ -1,0 +1,275 @@
+#
+# Copyright 2008 by SnertSoft. All rights reserved.
+#
+# 	$ DESTDIR=d:/stage/ make install
+#
+#	$ ./config.status  package/Windows/installer.nsi
+#	$ cp  package/Windows/installer.nsi d:/stage/smtpf
+#
+!define PRODUCT_NAME "BarricadeMX"
+name "${PRODUCT_NAME} @package_version@"
+outFile "${PRODUCT_NAME}-@package_version@-Setup.exe"
+
+XPStyle on
+AllowRootDirInstall true
+InstallDir "C:\@PACKAGE_NAME@"
+
+!include nsDialogs.nsh
+
+!define MULTIUSER_EXECUTIONLEVEL Admin
+!define MULTIUSER_INIT_TEXT_ADMINREQUIRED
+!include MultiUser.nsh
+
+XPStyle on
+
+!include "MUI2.nsh"
+
+!define MUI_HEADERIMAGE
+!define MUI_HEADERIMAGE_BITMAP "doc\Img\bmx-logo-150x57.bmp"
+
+!insertmacro MUI_PAGE_LICENSE "doc\LICENSE.TXT"
+!insertmacro MUI_PAGE_DIRECTORY
+!insertmacro MUI_PAGE_COMPONENTS
+!insertmacro MUI_PAGE_INSTFILES
+
+!insertmacro MUI_UNPAGE_CONFIRM
+!insertmacro MUI_UNPAGE_INSTFILES
+
+; Remember the installer language
+!define MUI_LANGDLL_REGISTRY_ROOT "HKCU"
+!define MUI_LANGDLL_REGISTRY_KEY "Software\SnertSoft\@PACKAGE_NAME@"
+!define MUI_LANGDLL_REGISTRY_VALUENAME "Installer Language"
+
+!insertmacro MUI_LANGUAGE "English"
+!insertmacro MUI_LANGUAGE "French"
+!insertmacro MUI_LANGUAGE "German"
+!insertmacro MUI_LANGUAGE "Spanish"
+#!insertmacro MUI_LANGUAGE "SpanishInternational"
+#!insertmacro MUI_LANGUAGE "SimpChinese"
+#!insertmacro MUI_LANGUAGE "TradChinese"
+#!insertmacro MUI_LANGUAGE "Japanese"
+#!insertmacro MUI_LANGUAGE "Korean"
+#!insertmacro MUI_LANGUAGE "Italian"
+#!insertmacro MUI_LANGUAGE "Dutch"
+#!insertmacro MUI_LANGUAGE "Danish"
+#!insertmacro MUI_LANGUAGE "Swedish"
+#!insertmacro MUI_LANGUAGE "Norwegian"
+#!insertmacro MUI_LANGUAGE "NorwegianNynorsk"
+#!insertmacro MUI_LANGUAGE "Finnish"
+#!insertmacro MUI_LANGUAGE "Greek"
+#!insertmacro MUI_LANGUAGE "Russian"
+#!insertmacro MUI_LANGUAGE "Portuguese"
+#!insertmacro MUI_LANGUAGE "PortugueseBR"
+#!insertmacro MUI_LANGUAGE "Polish"
+#!insertmacro MUI_LANGUAGE "Ukrainian"
+#!insertmacro MUI_LANGUAGE "Czech"
+#!insertmacro MUI_LANGUAGE "Slovak"
+#!insertmacro MUI_LANGUAGE "Croatian"
+#!insertmacro MUI_LANGUAGE "Bulgarian"
+#!insertmacro MUI_LANGUAGE "Hungarian"
+#!insertmacro MUI_LANGUAGE "Thai"
+#!insertmacro MUI_LANGUAGE "Romanian"
+#!insertmacro MUI_LANGUAGE "Latvian"
+#!insertmacro MUI_LANGUAGE "Macedonian"
+#!insertmacro MUI_LANGUAGE "Estonian"
+#!insertmacro MUI_LANGUAGE "Turkish"
+#!insertmacro MUI_LANGUAGE "Lithuanian"
+#!insertmacro MUI_LANGUAGE "Slovenian"
+#!insertmacro MUI_LANGUAGE "Serbian"
+#!insertmacro MUI_LANGUAGE "SerbianLatin"
+#!insertmacro MUI_LANGUAGE "Arabic"
+#!insertmacro MUI_LANGUAGE "Farsi"
+#!insertmacro MUI_LANGUAGE "Hebrew"
+#!insertmacro MUI_LANGUAGE "Indonesian"
+#!insertmacro MUI_LANGUAGE "Mongolian"
+#!insertmacro MUI_LANGUAGE "Luxembourgish"
+#!insertmacro MUI_LANGUAGE "Albanian"
+#!insertmacro MUI_LANGUAGE "Breton"
+#!insertmacro MUI_LANGUAGE "Belarusian"
+#!insertmacro MUI_LANGUAGE "Icelandic"
+#!insertmacro MUI_LANGUAGE "Malay"
+#!insertmacro MUI_LANGUAGE "Bosnian"
+#!insertmacro MUI_LANGUAGE "Kurdish"
+#!insertmacro MUI_LANGUAGE "Irish"
+#!insertmacro MUI_LANGUAGE "Uzbek"
+#!insertmacro MUI_LANGUAGE "Galician"
+#!insertmacro MUI_LANGUAGE "Afrikaans"
+#!insertmacro MUI_LANGUAGE "Catalan"
+
+;If you are using solid compression, files that are required before
+;the actual installation should be stored first in the data block,
+;because this will make your installer start faster.
+!insertmacro MUI_RESERVEFILE_LANGDLL
+
+#PageEx license
+#	LicenseData doc\LICENSE.TXT
+#PageExEnd
+#Page directory
+#Page components
+#Page instfiles
+#UninstPage uninstConfirm
+#UninstPage instfiles
+
+section
+	System::Call 'kernel32::CreateMutexA(i 0, i 0, t "${PRODUCT_NAME}-@package_version@-Setup.exe") i .r1 ?e'
+	Pop $R0
+	StrCmp $R0 0 +3
+		MessageBox MB_OK|MB_ICONEXCLAMATION "The installer is already running."
+		Abort
+
+	# call userInfo plugin to get user info.  The plugin puts the result in the stack
+	userInfo::getAccountType
+
+	# pop the result from the stack into $0
+	pop $0
+
+	# compare the result with the string "Admin" to see if the user is admin. If match, jump 3 lines down.
+	strCmp $0 "Admin" +3
+		# if there is not a match, print message and return
+		messageBox MB_OK "not admin: $0"
+		return
+
+	SetOutPath "$INSTDIR"
+	CreateDirectory "$INSTDIR\tmp"
+
+	Var /GLOBAL status
+	; net stop exit code: 0 successful stop, 2 was not running
+	nsExec::Exec 'net stop @PACKAGE_NAME@'
+	Pop $status
+	IntCmpU $status 0 0 +2 +2
+		DetailPrint "Stopped @PACKAGE_NAME@ service"
+
+	File @PACKAGE_NAME@.exe
+	nsExec::Exec '"$INSTDIR\@PACKAGE_NAME@.exe" +service'
+	Pop $0
+
+	; Always replace this file.
+	File access-defaults.cf
+
+	; These are site local configuration files and
+	; should not modified if they exist.
+	IfFileExists "$INSTDIR\access.cf" +2
+		File access.cf
+	IfFileExists "$INSTDIR\route.cf" +2
+		File route.cf
+
+	; Merge existing options with new .cf file.
+	nsExec::Exec '"$INSTDIR\@PACKAGE_NAME@.exe" help="$INSTDIR/@PACKAGE_NAME@.cf" file="$INSTDIR/@PACKAGE_NAME@.cf"'
+	Pop $0
+
+	IntCmpU $status 0 0 +6 +6
+		DetailPrint "Restarting @PACKAGE_NAME@ service"
+		; net start exit code: 0 successful start, 2 already running
+		nsExec::Exec 'net start @PACKAGE_NAME@'
+		Pop $status
+		IntCmpU $status 0 +2
+			DetailPrint "FAILED to restart @PACKAGE_NAME@ service, exit=$status"
+
+	WriteUninstaller "$INSTDIR\uninstaller.exe"
+sectionEnd
+
+section "Command Line Tools"
+	SetOutPath "$INSTDIR"
+	File kvmap.exe
+	File kvmc.exe
+	File kvmd.exe
+	File mcc.exe
+	File uri.exe
+	File spf.exe
+	File show.exe
+	File sqlite3.exe
+sectionEnd
+
+section "Documentation"
+	SetOutPath "$INSTDIR\doc"
+	File doc\BarricadeMX.html
+	File doc\access-map.html
+	File doc\route-map.html
+	File doc\@PACKAGE_NAME@-cf.html
+	File doc\glossary.html
+	File doc\license.html
+	File doc\install.html
+	File doc\manual.shtml
+	File doc\runtime.html
+	File doc\summary.html
+	File doc\reply.html
+	File doc\syslog.html
+	File doc\mailto.js
+	File doc\style.css
+	File doc\LICENSE.TXT
+
+	SetOutPath "$INSTDIR\doc\Img"
+	File doc\Img\logo-300x74.png
+	File doc\Img\mrpixel.gif
+	File doc\Img\BarricadeMX.jpg
+	File doc\Img\BarricadeMX.png
+	File doc\Img\BarricadeMX0.jpg
+sectionEnd
+
+section "Supplimental"
+	SetOutPath "$INSTDIR\examples"
+	File examples\welcome.txt
+#	File examples\access.cf
+#	File examples\access-defaults.cf
+
+	SetOutPath "$INSTDIR\examples\extra"
+	File examples\extra\bmx-antiphishingreply-update.pl
+	File examples\extra\bmx-uribl-update.pl
+
+	SetOutPath "$INSTDIR\examples\spamassassin"
+	File examples\spamassassin\barricademx.cf
+	File examples\spamassassin\smf.cf
+	File examples\spamassassin\smf.pm
+sectionEnd
+
+section "-License Key"
+	IfSilent done
+	IfFileExists "$INSTDIR\lickey.txt" check_lickey 0
+		MessageBox MB_YESNO|MB_ICONQUESTION 'Do you have a license key (lickey.txt) file?' IDNO get_lickey
+			nsDialogs::SelectFileDialog open "$DOCUMENTS" "*.txt"
+			Pop $0
+			ClearErrors
+			CopyFiles "$0" "$INSTDIR"
+			IfErrors 0 check_lickey
+get_lickey:
+		MessageBox MB_OK 'You need obtain and place a license key (lickey.txt) in the install directory:$\n$\n$\t$\"$INSTDIR$\"$\n$\nThis is required before the software will run.'
+		DetailPrint "Licence key missing!"
+		Goto done
+check_lickey:
+	nsExec::Exec '"$INSTDIR\@PACKAGE_NAME@.exe" +test-lickey lickey-file="$INSTDIR/lickey.txt"'
+	Pop $0
+	IntCmpU $0 0 done done
+		DetailPrint "Licence key has expired; new licence key required."
+		MessageBox MB_OK 'Your licence key (lickey.txt) has expired or is invalid. Please$\nobtain a new license key and place it in the install directory:$\n$\n$\t$\"$INSTDIR$\"$\n$\nThis is required before the software will run.'
+done:
+sectionEnd
+
+Function .onInit
+	!insertmacro MULTIUSER_INIT
+	!define MUI_LANGDLL_ALWAYSSHOW
+	!insertmacro MUI_LANGDLL_DISPLAY
+FunctionEnd
+
+section "Uninstall"
+	ExecWait 'net stop @PACKAGE_NAME@'
+	Sleep 2000
+	ExecWait '"$INSTDIR\@PACKAGE_NAME@.exe" -service'
+	Delete $INSTDIR\*.exe
+	Delete $INSTDIR\*.sq3
+	Delete $INSTDIR\*.log
+	Rmdir /r $INSTDIR\doc
+	Rmdir /r $INSTDIR\tmp
+
+	MessageBox MB_YESNO|MB_ICONQUESTION "Do you wish to delete your configuration files?" /SD IDNO IDNO +4
+		Delete $INSTDIR\lickey.txt
+		Delete $INSTDIR\*.cf
+		Rmdir /REBOOTOK $INSTDIR
+
+	MessageBox MB_YESNO|MB_ICONQUESTION "Do you wish to reboot now to complete the uninstall?" /SD IDYES IDNO +2
+		Reboot
+sectionEnd
+
+Function un.onInit
+	!insertmacro MULTIUSER_UNINIT
+	!insertmacro MUI_UNGETLANGUAGE
+FunctionEnd

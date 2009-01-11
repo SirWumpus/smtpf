@@ -1,0 +1,301 @@
+#
+# @package_copyright@
+#
+# @configure_input@
+#
+
+.POSIX :
+
+########################################################################
+### Pick one that best suits your system.
+########################################################################
+
+.SUFFIXES :
+O = .@OBJEXT@
+E = @EXEEXT@
+.SUFFIXES : .h .c .i $O $E
+
+platform	= @platform@
+prefix 		= @prefix@
+exec_prefix 	= @exec_prefix@
+
+#
+# Paths for supporting headers and libraries.
+#
+top_srcdir	= @top_srcdir@
+abs_top_srcdir 	= @top_srcdir@
+SNERT_TARDIR	= ../@rel_tardir@
+SNERT_INCDIR	= ../@rel_incdir@
+SNERT_LIBDIR	= ../@rel_libdir@
+
+SRCDIR  	= @abs_srcdir@
+TOPDIR  	= @top_srcdir@
+TARNAME 	= @PACKAGE_TARNAME@
+MAJOR   	= @package_major@
+MINOR   	= @package_minor@
+BUILD		= `cat BUILD_ID.TXT`
+VERSION 	= ${MAJOR}.${MINOR}
+
+CC		= @CC@
+CC_E		= @CC_E@
+CC_O		= @CC_O@
+CFLAGS		= ${CFLAGS_PREFIX} @CFLAGS@
+DEFINES 	= -D_VERSION_STRING='"'${MAJOR}'.'${MINOR}'.'${BUILD}'"'
+LDFLAGS		= ${LDFLAGS_PREFIX} @LDFLAGS@
+LIBS		= ${LIBS_PREFIX} @LIBS@
+MD5SUM		= @MD5SUM@
+AUTOCONF	= @AUTOCONF@
+
+LIB_PTHREAD	= @HAVE_LIB_PTHREAD@
+LIB_SQLITE3	= @HAVE_LIB_SQLITE3@
+LIB_RT		= @HAVE_LIB_RT@
+
+########################################################################
+### No further configuration beyond this point.
+########################################################################
+
+.c.i:
+	${CC} -E ${CFLAGS} $*.c >$*.i
+
+.MAIN : build
+
+build : title ${TARNAME}$E
+	@echo
+	@echo '***************************************************************'
+	@echo "Build ${TARNAME} ${MAJOR}.${MINOR}.${BUILD} DONE"
+	@echo '***************************************************************'
+	@echo
+
+clean : title _clean
+	@echo
+
+distclean: title _distclean
+	@echo
+
+realclean : title _realclean
+	@echo
+
+strip: build
+	strip ${TARNAME}$E
+
+_clean :
+	-rm -f *.o *.obj *.i *.map *.tds *.TR2 *.ilc *.ild *.ilf *.ils *.pid
+	-rm -f *.log *.tmp *.stackdump core *.core core.* ${TARNAME}.exe ${TARNAME} d-${TARNAME} lickey$E
+	-rm -f nsnxdomain$E
+
+_distclean : _clean
+	-rm -f config.h config.h.in makefile
+
+_realclean : _distclean
+
+predefines:
+	gcc ${CFLAGS} -dM -E -xc /dev/null
+
+title :
+	@echo
+	@echo '***************************************************************'
+	@echo '==>' ${SRCDIR}
+	@echo '***************************************************************'
+	@echo
+
+MODULE_H = access.h attachment.h avastd.h clamd.h cli.h click.h concurrent.h \
+	digest.h dupmsg.h emew.h four21.h fpscand.h grey.h misc.h msglimit.h null.h pad.h \
+	p0f.h rate.h rbl.h sav.h save.h savdid.h siq.h size.h spamd.h spamd2.h spf.h \
+	timelimit.h uribl.h
+
+MODULE_O = access$O attachment$O avastd$O clamd$O cli$O click$O concurrent$O \
+	digest$O dupmsg$O emew$O four21$O fpscand$O grey$O misc$O msglimit$O null$O pad$O \
+	p0f$O rate$O rbl$O sav$O save$O savdid$O siq$O size$O spamd$O spamd2$O spf$O \
+	timelimit$O uribl$O
+
+CORE = server$O smtpf$O cache$O cmd$O dsn$O filter$O mx$O options$O \
+       route$O reply$O stats$O summary$O verbose$O
+
+OBJS = ${CORE} ${MODULE_O}
+
+${TARNAME}: BUILD_ID.TXT ${OBJS} unix$O lickey$O
+	${CC} ${LDFLAGS} ${CC_E}${TARNAME}$E ${OBJS} unix$O lickey$O ${LIBS}
+
+d-${TARNAME}: BUILD_ID.TXT ${OBJS} unix$O lickey$O
+	${CC} ${LDFLAGS} ${CC_E}d-${TARNAME}$E ${OBJS} unix$O lickey$O ${LIBS} ../../lib/util/DebugMalloc$O
+
+# Build native Windows app. using gcc under Cygwin, without cygwin1.dll.
+#
+# 	-s		strip, no symbols
+#	-mno-cygwin	native windows console app
+#	-mwindows	native windows gui app
+#	-lws2_32	WinSock2 library
+#	-lwsock32	WinSock library
+#	-Wl,--subsystem,windows,-e,_mainCRTStartup = -mwindows
+#	-Wl,--heap,1024,--stack,4096
+#
+# NOTE this produces smaller code than Borland C++ 5.5 command line tools.
+#
+${TARNAME}.exe: BUILD_ID.TXT ${OBJS} windows$O lickey$O
+	gcc ${LDFLAGS} -mno-cygwin -Wl,--heap,131072,--stack,32768 ${CC_E}${TARNAME}.exe ${OBJS} windows$O lickey$O ${LIBS}
+
+#-ladvapi32
+
+# Make sure you use a Bourne or Korn shell to build.
+config.h : config.h.in.in
+	cd ${TOPDIR} && ./config.status src/config.h.in src/config.h
+
+filter.h: ${MODULE_H}
+
+${TARNAME}.h :	filter.h lickey.h options.h reply.h stats.h summary.h verbose.h
+
+access$O : config.h ${TARNAME}.h access.c
+	${CC} ${CFLAGS} -c access.c
+
+attachment$O : config.h ${TARNAME}.h attachment.c
+	${CC} ${CFLAGS} -c attachment.c
+
+cache$O : config.h ${TARNAME}.h cache.c
+	${CC} ${CFLAGS} -c cache.c
+
+avastd$O : config.h ${TARNAME}.h avastd.c
+	${CC} ${CFLAGS} -c avastd.c
+
+clamd$O : config.h ${TARNAME}.h clamd.c
+	${CC} ${CFLAGS} -c clamd.c
+
+click$O : config.h ${TARNAME}.h click.c
+	${CC} ${CFLAGS} -c click.c
+
+fpscand$O : config.h ${TARNAME}.h fpscand.c
+	${CC} ${CFLAGS} -c fpscand.c
+
+savdid$O : config.h ${TARNAME}.h savdid.c
+	${CC} ${CFLAGS} -c savdid.c
+
+cli$O : config.h ${TARNAME}.h cli.c
+	${CC} ${CFLAGS} -c cli.c
+
+cmd$O : config.h ${TARNAME}.h cmd.c
+	${CC} ${CFLAGS} -c cmd.c
+
+concurrent$O : config.h ${TARNAME}.h concurrent.c
+	${CC} ${CFLAGS} -c concurrent.c
+
+digest$O : config.h ${TARNAME}.h digest.c
+	${CC} ${CFLAGS} -c digest.c
+
+dsn$O : config.h ${TARNAME}.h dsn.c
+	${CC} ${CFLAGS} -c dsn.c
+
+dupmsg$O : config.h ${TARNAME}.h dupmsg.c
+	${CC} ${CFLAGS} -c dupmsg.c
+
+emew$O : config.h ${TARNAME}.h emew.c
+	${CC} ${CFLAGS} -c emew.c
+
+filter$O : config.h ${TARNAME}.h filter.c
+	${CC} ${CFLAGS} -c filter.c
+
+filter2$O : config.h ${TARNAME}.h filter2.c
+	${CC} ${CFLAGS} -c filter2.c
+
+four21$O : config.h ${TARNAME}.h four21.c
+	${CC} ${CFLAGS} -c four21.c
+
+grey$O : config.h ${TARNAME}.h grey.c
+	${CC} ${CFLAGS} -c grey.c
+
+lickey$O : config.h ${TARNAME}.h lickey.c
+	${CC} ${CFLAGS} -c lickey.c
+
+lickey$E : config.h ${TARNAME}.h lickey.c ${OBJS}
+	$(CC) -DTEST ${CFLAGS} ${LDFLAGS} $(CC_E)lickey$E lickey.c ${OBJS} $(LIBSNERT) ${LIBS}
+
+misc$O : config.h ${TARNAME}.h misc.c
+	${CC} ${CFLAGS} -c misc.c
+
+msglimit$O : config.h ${TARNAME}.h msglimit.c
+	${CC} ${CFLAGS} -c msglimit.c
+
+null$O : config.h ${TARNAME}.h null.c
+	${CC} ${CFLAGS} -c null.c
+
+mx$O : config.h ${TARNAME}.h mx.c
+	${CC} ${CFLAGS} -c mx.c
+
+reply$O : config.h ${TARNAME}.h reply.c
+	${CC} ${CFLAGS} -c reply.c
+
+options$O : config.h ${TARNAME}.h options.c
+	${CC} ${CFLAGS} ${DEFINES} -c options.c
+
+pad$O : config.h ${TARNAME}.h pad.c
+	${CC} ${CFLAGS} -c pad.c
+
+p0f$O : config.h ${TARNAME}.h p0f.c
+	${CC} ${CFLAGS} -c p0f.c
+
+rate$O : config.h ${TARNAME}.h rate.c
+	${CC} ${CFLAGS} -c rate.c
+
+rbl$O : config.h ${TARNAME}.h rbl.c
+	${CC} ${CFLAGS} -c rbl.c
+
+sav$O : config.h ${TARNAME}.h sav.c
+	${CC} ${CFLAGS} -c sav.c
+
+save$O : config.h ${TARNAME}.h save.c
+	${CC} ${CFLAGS} -c save.c
+
+server$O : config.h ${TARNAME}.h server.c
+	${CC} ${CFLAGS} -c server.c
+
+siq$O : config.h ${TARNAME}.h siq.c
+	${CC} ${CFLAGS} -c siq.c
+
+size$O : config.h ${TARNAME}.h size.c
+	${CC} ${CFLAGS} -c size.c
+
+smtpf$O : config.h ${TARNAME}.h smtpf.c
+	${CC} ${CFLAGS} -c smtpf.c
+
+spamd$O : config.h ${TARNAME}.h spamd.c
+	${CC} ${CFLAGS} -c spamd.c
+
+spamd2$O : config.h ${TARNAME}.h spamd2.c
+	${CC} ${CFLAGS} -c spamd2.c
+
+spf$O : config.h ${TARNAME}.h spf.c
+	${CC} ${CFLAGS} -c spf.c
+
+timelimit$O : config.h ${TARNAME}.h timelimit.c
+	${CC} ${CFLAGS} -c timelimit.c
+
+stats$O : config.h ${TARNAME}.h stats.c
+	${CC} ${CFLAGS} -c stats.c
+
+summary$O : config.h ${TARNAME}.h summary.c
+	${CC} ${CFLAGS} -c summary.c
+
+route$O : config.h ${TARNAME}.h route.c
+	${CC} ${CFLAGS} -c route.c
+
+unix$O : config.h ${TARNAME}.h unix.c
+	${CC} ${CFLAGS} -c unix.c
+
+uribl$O : config.h ${TARNAME}.h uribl.c
+	${CC} ${CFLAGS} -c uribl.c
+
+verbose$O : config.h ${TARNAME}.h verbose.c
+	${CC} ${CFLAGS} -c verbose.c
+
+windows$O : config.h ${TARNAME}.h windows.c
+	${CC} ${CFLAGS} -c windows.c
+
+testsmtpzero$E : testsmtpzero.c
+	${CC} ${CFLAGS} ${LDFLAGS} -otestsmtpzero$E testsmtpzero.c ${LIBS}
+
+greycontent$E : greycontent.c
+	${CC} ${CFLAGS} ${LDFLAGS} -ogreycontent$E greycontent.c -lsnert
+
+greybody$E : greybody.c
+	${CC} ${CFLAGS} ${LDFLAGS} -ogreybody$E greybody.c -lsnert
+
+nsnxdomain$E : nxdomain.c
+	${CC} ${CFLAGS} ${LDFLAGS} -onsnxdomain$E nxdomain.c -lsnert

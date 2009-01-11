@@ -1,0 +1,216 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN">
+<!-- $OpenBSD$ -->
+<html>
+<head>
+<title>
+SnertSoft - @PACKAGE_NAME@/@PACKAGE_VERSION@
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+<meta name="keywords" content="SMTP Filter Proxy, call back, call ahead, grey listing, greylisting, RET, Return Encrypted Tag" />
+<meta name="description" content="@PACKAGE_NAME@ sits in front of one or more mail transfer agents (MTA) on SMTP port 25. It acts as a proxy, filtering and forwarding mail to one or more MTAs, which can be on the same machine or different machines." />
+<link rel="stylesheet" type="text/css" href="./style.css" />
+<script language="JavaScript" type="text/javascript" src="./mailto.js"></script>
+</head>
+
+<body>
+<div align="center">
+<table class="page" cellpadding="0" cellspacing="0" border="0">
+<tr><td>
+
+<a href="http://www.snertsoft.com/">
+<img alt="SnertSoft: We Serve Your Server" src="Img/logo-300x74.png" width="300" height="74" border="0" /></a>
+
+<div align="center">
+<h1 class="title">Barricade MX</h1>
+<h2>
+@PACKAGE_NAME@/@PACKAGE_VERSION@
+<br/><span class="large">&laquo;An SMTP Filtering Proxy&raquo;</span>
+</h2>
+</div>
+
+<div class="contents">
+<ol type="A" class="toc">
+<li><a href="manual.shtml">Introduction</a></li>
+<li><a href="license.html">License &amp; Support</a></li>
+<li><a href="install.html">Installation</a></li>
+<li>Configuration</li>
+	<ol type="a">
+	<li><a href="route-map.html">The Route Map</a></li>
+	<li><a href="access-map.html">The Access Map</a></li>
+	<li><a href="@PACKAGE_NAME@-cf.html">The @PACKAGE_NAME@.cf File</a></li>
+	<li><a href="summary.html">Option Summary</a></li>
+	</ol>
+<li>Runtime</li>
+	<ol type="a">
+	<li><a href="runtime.html#command_options">Command Line Options</a></li>
+	<li><a href="runtime.html#runtime_config">Runtime Configuration</a></li>
+	<li><a href="runtime.html#cache_file">The Cache File</a></li>
+	<li><a href="runtime.html#stats_file">The Stats File</a></li>
+	<li><a href="syslog.html">Log Messages</a></li>
+	<li><a href="reply.html">SMTP Replies</a></li>
+	</ol>
+<li><a class="glossary" href="glossary.html">Glossary</a></li>
+</ol>
+</div>
+
+
+<a name="install_package"></a>
+<h3>Installation Pre-Built Binary Package</h3>
+
+<h4>Centos &amp; Redhat Linux</h4>
+
+<blockquote><pre>
+# rpm -i @PACKAGE_NAME@-@PACKAGE_VERSION@.rpm
+</pre></blockquote>
+
+<h4>OpenBSD &amp; FreeBSD</h4>
+
+<!-- name-version-os-osver-arch.tar.gz -->
+<blockquote><pre>
+# pkg_add -v @PACKAGE_NAME@-@PACKAGE_VERSION@.tgz
+</pre></blockquote>
+
+<!--
+<h4>Solaris</h4>
+
+<blockquote><pre>
+# tar -zxf @PACKAGE_NAME@-@PACKAGE_VERSION@.tar.gz
+# cd @PACKAGE_NAME@-@PACKAGE_VERSION@
+# ./install
+</pre></blockquote>
+
+<h4>Windows</h4>
+
+<p>
+Double-click on <code>@PACKAGE_NAME@-@PACKAGE_VERSION@-install.exe</code> to install and follow the prompts. It is
+recommended that the software be placed in a <code>C:\@PACKAGE_NAME@</code> directory for easy accessibility to the
+configuration files, though other locations are possible if preferred.
+</p>
+
+<a name="install_source"></a>
+<h3>Installation From Source</h3>
+
+<blockquote><pre>
+$ tar -zxf libsnert-1.64.tar.gz
+$ tar -zxf @PACKAGE_NAME@-@PACKAGE_VERSION@-src.tar.gz
+$ cd com/snert/src/lib
+$ ./configure - -without-db [- -enable-debug][- -enable-fcntl-locks]
+$ make clean build
+$ cd ../@PACKAGE_NAME@
+$ ./configure
+$ make clean build
+$ sudo make install
+</pre></blockquote>
+ -->
+
+<a href="unix_permissions"></a>
+<h3>Files Installed (unix)</h3>
+
+<pre>
+# When using the web user interface, the web
+# server user should be a member of the smtpf
+# group in order to be able to update the .cf
+# and .sq3 files.
+
+drwxrws--- root @PACKAGE_NAME@ /etc/@PACKAGE_NAME@/
+-r--r----- root @PACKAGE_NAME@ /etc/@PACKAGE_NAME@/Makefile
+-rw-rw---- root @PACKAGE_NAME@ /etc/@PACKAGE_NAME@/access.cf
+-rw-rw---- root @PACKAGE_NAME@ /etc/@PACKAGE_NAME@/access.sq3
+-r--r----- root @PACKAGE_NAME@ /etc/@PACKAGE_NAME@/dump.mk
+-r--r----- root @PACKAGE_NAME@ /etc/@PACKAGE_NAME@/lickey.txt
+-rw-rw---- root @PACKAGE_NAME@ /etc/@PACKAGE_NAME@/route.cf
+-rw-rw---- root @PACKAGE_NAME@ /etc/@PACKAGE_NAME@/route.sq3
+-rw-rw---- root @PACKAGE_NAME@ /etc/@PACKAGE_NAME@/@PACKAGE_NAME@.cf
+
+# The start-up script is placed in one of the following depending on OS.
+# For OpenBSD you modify your /etc/rc.conf.local file instead. Note that
+# group *BSD group wheel (gid 0) is equivalent to Linux group root (gid 0).
+
+-r-xr-xr-- root wheel /etc/init.d/@PACKAGE_NAME@
+-r-xr-xr-- root wheel /etc/rc.d/init.d/@PACKAGE_NAME@
+-r-xr-xr-- root wheel /usr/local/etc/rc.d/@PACKAGE_NAME@
+
+-r-xr-xr-x root wheel /usr/local/sbin/kvmap
+-r-xr-xr-x root wheel /usr/local/sbin/kvmc
+-r-xr-xr-x root wheel /usr/local/sbin/kvmd
+-r-xr-xr-x root wheel /usr/local/sbin/mcc
+-r-xr-x--- root wheel /usr/local/sbin/@PACKAGE_NAME@
+
+# Note the version of SQLite3 supplied is built with --enabled-threadsafe
+
+-r-xr-xr-x root wheel /usr/local/bin/sqlite3t
+
+# Linux only
+
+-rwsrws--- @PACKAGE_NAME@ @PACKAGE_NAME@ /var/cache/@PACKAGE_NAME@/
+
+# Created by smtpf at startup.
+
+-rw-rw-r-- @PACKAGE_NAME@ @PACKAGE_NAME@ /var/cache/cache.sq3
+-rw-rw-r-- @PACKAGE_NAME@ @PACKAGE_NAME@ /var/cache/stats.sq3
+
+# *BSD only
+
+-rwsrws--- @PACKAGE_NAME@ @PACKAGE_NAME@ /var/db/@PACKAGE_NAME@/
+
+# Created by smtpf at startup.
+
+-rw-rw---- @PACKAGE_NAME@ @PACKAGE_NAME@ /var/db/cache.sq3
+-rw-rw---- @PACKAGE_NAME@ @PACKAGE_NAME@ /var/db/stats.sq3
+
+-r-xr-xr-x root wheel /usr/local/share/examples/@PACKAGE_NAME@/Makefile
+-r-xr-xr-x root wheel /usr/local/share/examples/@PACKAGE_NAME@/access.cf
+-r-xr-xr-x root wheel /usr/local/share/examples/@PACKAGE_NAME@/route.cf
+-r-xr-xr-x root wheel /usr/local/share/examples/@PACKAGE_NAME@/@PACKAGE_NAME@.cf
+-r-xr-xr-x root wheel /usr/local/share/examples/@PACKAGE_NAME@/startup.sh
+-r-xr-xr-x root wheel /usr/local/share/examples/@PACKAGE_NAME@/welcome.txt
+
+# A copy of the SnertSoft online documentation.
+
+-r-xr-xr-x root wheel /usr/local/share/doc/@PACKAGE_NAME@/manual.shtml
+-r-xr-xr-x root wheel /usr/local/share/doc/@PACKAGE_NAME@/*
+
+-r-xr-xr-x root wheel /usr/local/share/man/cat1/@PACKAGE_NAME@.0
+</pre>
+
+
+<!--
+<h3>Files Installed (Windows)</h3>
+
+<pre>
+C:/@PACKAGE_NAME@/access.cf
+C:/@PACKAGE_NAME@/route.cf
+C:/@PACKAGE_NAME@/@PACKAGE_NAME@.cf
+C:/@PACKAGE_NAME@/kvmap.exe
+C:/@PACKAGE_NAME@/kvmc.exe
+C:/@PACKAGE_NAME@/kvmd.exe
+C:/@PACKAGE_NAME@/mcc.exe
+C:/@PACKAGE_NAME@/@PACKAGE_NAME@.exe
+C:/@PACKAGE_NAME@/sqlite3.exe
+C:/@PACKAGE_NAME@/examples/Makefile
+C:/@PACKAGE_NAME@/examples/access.cf
+C:/@PACKAGE_NAME@/examples/route.cf
+C:/@PACKAGE_NAME@/examples/@PACKAGE_NAME@.cf
+C:/@PACKAGE_NAME@/examples/welcome.txt
+C:/@PACKAGE_NAME@/doc/manual.shtml
+C:/@PACKAGE_NAME@/doc/*
+</pre>
+-->
+
+<p style="text-align: center;">
+-<a href="#"> TOP </a>-
+</p>
+
+
+<!-- copyright -->
+<p class="copyright" style="text-align: center;">
+<nobr>@package_copyright@</nobr>
+<br/><nobr>BarricadeMX trademark &amp; patents pending.</nobr>
+</p>
+<!--end copyright-->
+
+</td></tr>
+</table>
+</div>
+</body>
+</html>

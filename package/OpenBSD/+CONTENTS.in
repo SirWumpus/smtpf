@@ -1,0 +1,87 @@
+@name @PACKAGE_NAME@-@PACKAGE_VERSION@
+@comment cd com/snert/src/lib
+@comment ./configure --without-db --disable-debug
+@comment make clean build
+@comment cd @PACKAGE_NAME@-@PACKAGE_VERSION@
+@comment ./configure --sysconfdir=/etc --localstatedir='/var'
+@comment make clean build
+@comment mkdir /var/tmp/stage
+@comment make DESTDIR=/var/tmp/stage install
+@comment pkg_create -B /var/tmp/stage -p /usr/local -M +DISPLAY -c +COMMENT -d +DESC -f +CONTENTS @PACKAGE_NAME@-@PACKAGE_VERSION@.tgz
+@arch i386
+@newgroup @PACKAGE_NAME@:
+@newuser @PACKAGE_NAME@::@PACKAGE_NAME@::Barricade MX daemon:/var/empty:/sbin/nologin
+@mode 6770
+@owner @PACKAGE_NAME@
+@group @PACKAGE_NAME@
+@cwd /
+@extra var/db/@PACKAGE_NAME@/cache.sq3
+@extra var/db/@PACKAGE_NAME@/stats.sq3
+var/db/@PACKAGE_NAME@/
+@owner root
+@mode 2770
+@extra etc/@PACKAGE_NAME@/access.sq3
+@extra etc/@PACKAGE_NAME@/access.cf.bak
+@extra etc/@PACKAGE_NAME@/route.sq3
+@extra etc/@PACKAGE_NAME@/route.cf.bak
+etc/@PACKAGE_NAME@/
+@cwd /usr/local
+@man man/cat1/@PACKAGE_NAME@.0
+@mode 555
+share/doc/@PACKAGE_NAME@/Img/
+share/examples/@PACKAGE_NAME@/
+share/examples/@PACKAGE_NAME@/extra/
+share/examples/@PACKAGE_NAME@/spamassassin/
+@mode 444
+share/doc/@PACKAGE_NAME@/Img/logo-300x74.png
+share/doc/@PACKAGE_NAME@/Img/mrpixel.gif
+share/doc/@PACKAGE_NAME@/Img/BarricadeMX.jpg
+share/doc/@PACKAGE_NAME@/Img/BarricadeMX.png
+share/doc/@PACKAGE_NAME@/Img/BarricadeMX0.jpg
+share/doc/@PACKAGE_NAME@/BarricadeMX.html
+share/doc/@PACKAGE_NAME@/access-map.html
+share/doc/@PACKAGE_NAME@/route-map.html
+share/doc/@PACKAGE_NAME@/@PACKAGE_NAME@-cf.html
+share/doc/@PACKAGE_NAME@/glossary.html
+share/doc/@PACKAGE_NAME@/license.html
+share/doc/@PACKAGE_NAME@/install.html
+share/doc/@PACKAGE_NAME@/manual.shtml
+share/doc/@PACKAGE_NAME@/runtime.html
+share/doc/@PACKAGE_NAME@/summary.html
+share/doc/@PACKAGE_NAME@/reply.html
+share/doc/@PACKAGE_NAME@/syslog.html
+share/doc/@PACKAGE_NAME@/mailto.js
+share/doc/@PACKAGE_NAME@/style.css
+share/doc/@PACKAGE_NAME@/LICENSE.TXT
+share/examples/@PACKAGE_NAME@/sendmail-hub.mc
+share/examples/@PACKAGE_NAME@/startup.sh
+share/examples/@PACKAGE_NAME@/Makefile
+share/examples/@PACKAGE_NAME@/spamassassin/barricademx.cf
+share/examples/@PACKAGE_NAME@/spamassassin/smf.cf
+share/examples/@PACKAGE_NAME@/spamassassin/smf.pm
+share/examples/@PACKAGE_NAME@/extra/bmx-antiphishingreply-update.pl
+share/examples/@PACKAGE_NAME@/extra/bmx-uribl-update.pl
+@sample /etc/@PACKAGE_NAME@/Makefile
+share/examples/@PACKAGE_NAME@/dump.mk
+@sample /etc/@PACKAGE_NAME@/dump.mk
+share/examples/@PACKAGE_NAME@/sync.sh
+@mode 664
+share/examples/@PACKAGE_NAME@/access-defaults.cf
+share/examples/@PACKAGE_NAME@/access.cf
+@sample /etc/@PACKAGE_NAME@/access.cf
+share/examples/@PACKAGE_NAME@/route.cf
+@sample /etc/@PACKAGE_NAME@/route.cf
+share/examples/@PACKAGE_NAME@/@PACKAGE_NAME@.cf
+@sample /etc/@PACKAGE_NAME@/@PACKAGE_NAME@.cf
+@mode 555
+bin/sqlite3t
+bin/show
+bin/spf
+bin/uri
+sbin/kvmap
+sbin/kvmd
+sbin/kvmc
+sbin/mcc
+@mode 550
+sbin/@PACKAGE_NAME@
+@exec cd /etc/@PACKAGE_NAME@; make all

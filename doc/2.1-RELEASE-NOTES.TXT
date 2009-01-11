@@ -1,0 +1,139 @@
+SMTPF 2.1 RELEASE NOTES
+-----------------------
+
+With the release of smtpf 2.1, comes many improvements. Below are the
+principal highlights concerning new options and significant changes:
+
+
+* More AV support
+
+BarricadeMX now supports Avast! and F-Prot anti-virus servers. New
+options are:
+
+	avastd-policy		fpscand-policy
+	avastd-socket		fpscand-socket
+	avastd-timeout		fpscand-timeout
+
+
+* Self-White-Listing Support
+
+In an effort to reduce mail addminstrator support of their users, we
+have implemented a means by which a sender that has been rejected can
+either send a mail or click a link in order to get themselves white
+listed and subsequently get their mail through to their recipient. New
+options are:
+
+	click-secret
+	click-ttl
+	click-url
+
+
+* Documented log messages and SMTP replies.
+
+All the errors, warnings, and informational log messages have been
+documented with links to their related options and sometimes additional
+explainations as to the problem. Like wise for the SMTP replies.
+
+
+* More RFC conformance tests.
+
+RFC 2821 says that an MTA must be able to handle an SMTP reply of at
+least 512 bytes long, so in an effort to catch out spamware, we can pad
+replies to the RFC stated limit.
+
+Similar to rfc2821-line-length, a new option has been added to enforce
+RFC 2821 command length of 512 bytes.
+
+The new options are:
+
+	rfc2821-pad-reply-octet
+	rfc2821-command-length
+
+
+* Improved white listing support
+
+Sometimes you know a mail host is well behaved or that it has problems
+with some pre-DATA tests. However you do not trust the host enough to
+white list it completely through everything. So a new access-map action
+word CONTENT was added to allow a means to by-pass the pre-DATA filters
+and continue to apply only the message content filters. For example:
+
+	Connect:yahoo.com	 CONTENT
+
+
+* Duplicate message problem fixed.
+
+The real-time proxy filter design of BarricadeMX and the fact we do not
+use "queue" files in handling mail, duplicate messages could result if
+the connected client drops the connection between the time they send the
+end of message indicator and we relay back a reply from the forward
+hosts. The client would think it had timed out and would requeue the
+message again for later delivery, while the forward host had accepted
+the message. As a result we now record the Message-ID of messages that
+had delivery problems at the final stage to be used to detect if and
+when a duplicate arrives.
+
+The new options are:
+
+	dupmsg-ttl
+
+
+* Improved DNS client code.
+
+The DNS client code used has been completely been rewritten to allow
+for parallel and asynchronus DNS lookups. The parallel nature of the
+new code improves the performance with respect to DNS and URI blacklists.
+This new code also fixed issues with multi-homed MX hosts and TCP lookups.
+
+New option:
+
+	dns-max-timeout
+
+
+* Improved early talker (pipelining) detection.
+
+Previously greet-pause and command-pause were used to detect pipelining
+behaviour at different stages. That code and the related access-map tags
+have been replaced by a new option that can detect pipelining without
+having to impose an initial delay. This both simplifies configuration and
+improves performance. The Connect: CONTENT action mentioned above can
+be used to replace the previous GreetPause: and CommandPause: tags.
+
+New option:
+
+	rfc2920-pipelining
+
+Removed:
+
+	GreetPause:
+	CommandPause:
+
+
+* IPv6 support
+
+Thanks to the University of Southampton, the IPv6 support has been tested
+and ready for deployment. The code handles IPv4 only, IPv6 only, separate
+IPv4 and IPv6 network stacks, and dual mode IPv6/IPv4 network stack.
+
+
+* BarricadeMX for Windows
+
+The native Windows version of BarricadeMX is now in alpha testing. Please
+contact FSL if you are interested in participating in the beta test phase
+due to start soon.
+
+
+* Fixed race condition (thread create spikes)
+
+* Database handling changes
+
+* Other new options
+
+	smtp-auth-enable
+	smtp-disconnect-after-dot
+
+
+
+
+
+

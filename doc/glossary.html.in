@@ -1,0 +1,373 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN">
+<!-- $OpenBSD$ -->
+<html>
+<head>
+<title>
+SnertSoft - @PACKAGE_NAME@/@PACKAGE_VERSION@
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+<meta name="keywords" content="SMTP Filter Proxy, call back, call ahead, grey listing, greylisting, RET, Return Encrypted Tag" />
+<meta name="description" content="@PACKAGE_NAME@ sits in front of one or more mail transfer agents (MTA) on SMTP port 25. It acts as a proxy, filtering and forwarding mail to one or more MTAs, which can be on the same machine or different machines." />
+<link rel="stylesheet" type="text/css" href="./style.css" />
+<script language="JavaScript" type="text/javascript" src="./mailto.js"></script>
+</head>
+
+<body>
+<div align="center">
+<table class="page" cellpadding="0" cellspacing="0" border="0">
+<tr><td>
+
+<a href="http://www.snertsoft.com/">
+<img alt="SnertSoft: We Serve Your Server" src="Img/logo-300x74.png" width="300" height="74" border="0" /></a>
+
+<div align="center">
+<h1 class="title">Barricade MX</h1>
+<h2>
+@PACKAGE_NAME@/@PACKAGE_VERSION@
+<br/><span class="large">&laquo;An SMTP Filtering Proxy&raquo;</span>
+</h2>
+</div>
+
+
+<div class="contents">
+<ol type="A" class="toc">
+<li><a href="manual.shtml">Introduction</a></li>
+<li><a href="license.html">License &amp; Support</a></li>
+<li><a href="install.html">Installation</a></li>
+<li>Configuration</li>
+	<ol type="a">
+	<li><a href="route-map.html">The Route Map</a></li>
+		<ul>
+		<li><a href="route-map.html#route_local_mta">Local MTA</a></li>
+		<li><a href="route-map.html#route_local_route_queue">Local Route</a></li>
+		<li><a href="route-map.html#route_relay">FORWARD &amp; RELAY</a></li>
+			<ul>
+			<li><a href="route-map.html#route_by_domain">by domain</a></li>
+			<li><a href="route-map.html#route_by_mail_address">by mail</a></li>
+			</ul>
+		<li><a href="route-map.html#route_call_ahead">Call-Ahead</a></li>
+			<ul>
+			<li><a href="route-map.html#route_dumb_mx">Accept-Then-Bounce</a></li>
+			</ul>
+		<li><a href="route-map.html#route_auth_support">AUTH Support</a></li>
+		<li><a href="route-map.html#route_etrn_support">ETRN Support</a></li>
+		</ul>
+	<li><a href="access-map.html">The Access Map</a></li>
+		<ul>
+		<li><a href="access-map.html#access_lookups">Lookup Sequences</a></li>
+		<li><a href="access-map.html#access_tags">Tags</a></li>
+		<li><a href="access-map.html#access_about_delay_checks">About Delay Checks</a></li>
+		<li><a href="access-map.html#access_simple_value">Right Hand Side Values</a></li>
+		<li><a href="access-map.html#access_action_words">Action Words</a></li>
+		<li><a href="access-map.html#access_pattern_lists">Pattern Lists</a></li>
+		<li><a href="access-map.html#access_simple_pattern">!Simple Patterns!</a></li>
+		<li><a href="access-map.html#access_regex_pattern">/Regular Expression Patterns/</a></li>
+		</ul>
+
+	<li><a href="@PACKAGE_NAME@-cf.html">The @PACKAGE_NAME@.cf File</a></li>
+		<ul>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_avastd">Avast! AV Support</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_cache">Cache Options</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_call_back">Call-Backs</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_clamd">Clam AV Support</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_cli">Command-Line Interface</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_client_is_mx">Client IP Address</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_concurrent">Concurrency &amp; Rate</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_dns_bl">DNS Based Lists</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_delay_checks">Delay Checks</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_emew">EMEW</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_fpscand">F-Prot AV Support</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_grey_list">Grey Listing</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_grey_content">Grey Content</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_helo">SMTP HELO Testing</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_interface">Network Interface</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_length_limit">Length &amp; Limits</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_rfc">RFC Conformance</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_run">Run Settings</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_server">Server Performance</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_siq">SIQ Support</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_smtp">SMTP Options</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_savdid">Sophos AV Support</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_spamd">SpamAssassin Support</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_spf">SPF Support</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_stats">Statistics</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_uri">URI Blacklists</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_verbose">Verbose Logging</a></li>
+		</ul>
+	<li><a href="summary.html">Option Summary</a></li>
+	</ol>
+<li>Runtime</li>
+	<ol type="a">
+	<li><a href="runtime.html#command_options">Command Line Options</a></li>
+	<li><a href="runtime.html#runtime_config">Runtime Configuration</a></li>
+	<li><a href="runtime.html#cache_file">The Cache File</a></li>
+		<ul>
+		<li><a href="runtime.html#cache_structure">The Cache Structure</a></li>
+		</ul>
+	<li><a href="runtime.html#stats_file">The Stats File</a></li>
+		<ul>
+		<li><a href="runtime.html#stats_structure">The Stats Structure</a></li>
+		</ul>
+	<li><a href="syslog.html">Log Messages</a></li>
+	<li><a href="reply.html">SMTP Replies</a></li>
+	</ol>
+<li><a class="glossary" href="glossary.html">Glossary</a></li>
+</ol>
+</div>
+
+
+
+<a name="Glossary"></a>
+<h3>Glossary</h3>
+<dl>
+
+<a name="term_AUTH"></a>
+<dt>AUTH</dt>
+<dd>Authentication. In the context of mail, SMTP AUTH (RFC <a href="http://tools.ietf.org/html/rfc2554">2554</a>,
+<a href="http://tools.ietf.org/html/rfc4954">4954</a>), is an extension that allows for
+assorted different mechanisms to be used to accept authentication creditials, ie.
+account name and password details. Most common are LOGIN and
+PLAIN (RFC <a href="http://tools.ietf.org/html/rfc2595">2595</a>, <a href="http://tools.ietf.org/html/rfc4616">4616</a>),
+which are insecure clear text mechanisms support by most <a href="#term_MUA">MUA</a>.
+Some others mechanisms include CRAM-MD5 (RFC <a href="http://tools.ietf.org/html/rfc2195">2195</a>),
+DIGEST-MD5 (RFC <a href="http://tools.ietf.org/html/rfc2831">2831</a>),
+KERBEROS_V5 (RFC <a href="http://tools.ietf.org/html/rfc4752">4752</a>).
+</dd>
+
+<a name="term_DNS"></a>
+<dt>DNS</dt>
+<dd>Domain Name Service is a distributed database that acts a phone book to the Internet.
+Typically used to map domain names and machine names into IP addresses, though many other related
+pieces of information can be found through the DNS.
+See RFC <a href="http://tools.ietf.org/html/rfc1034">1034</a>, <a href="http://tools.ietf.org/html/rfc1035">1035</a>.
+</dd>
+
+<a name="term_A"></a>
+<dt>DNS A or AAAA record</dt>
+<dd>A domain name record used to map a domain name into an IPv4 or IPv6 address.
+This is the opposite to a PTR record discussed below.
+See RFC <a href="http://tools.ietf.org/html/rfc1035">1035</a>, <a href="http://tools.ietf.org/html/rfc3596">3596</a>.
+</dd>
+
+<a name="term_MX"></a>
+<dt>DNS MX record</dt>
+<dd>A mail exchange record that specifies where mail destined for a domain name should be sent.
+See RFC <a href="http://tools.ietf.org/html/rfc1035">1035</a> and
+<a href="http://tools.ietf.org/html/rfc2821">2821</a>.
+</dd>
+
+<a name="term_PTR"></a>
+<dt>DNS PTR record</dt>
+<dd>A domain name pointer record used to map an IP address into a domain name. This is the
+opposite to an A or AAAA record.
+See RFC <a href="http://tools.ietf.org/html/rfc1035">1035</a>.
+</dd>
+
+<a name="term_TXT"></a>
+<dt>DNS TXT record</dt>
+<dd>A domain name text record used to store arbitrary text or binary data.
+Used by many DNS blacklists for comments and for <a href="#term_SPF">SPF</a> tests.
+See RFC <a href="http://tools.ietf.org/html/rfc1035">1035</a>.
+</dd>
+
+<a name="term_DSN"></a>
+<dt>DSN, NDR</dt>
+<dd>
+Delivery Status Notification is more commonly referred to as a "bounce message"
+or Non-Delivery Report. It provides a summary as to why a messsage could not be delivered.
+</dd>
+
+<!-- -->
+<a name="term_EMEW"></a>
+<dt>EMEW</dt>
+<dd>
+Enhanced Message-ID as Email Watermark.
+</dd>
+
+<a name="term_FQDN"></a>
+<dt>FQDN</dt>
+<dd>Full Qualified Domain Name is typically a host name of a machine connected to the Internet
+that is three or more labels in length, such as <code>smtp.snertsoft.com</code>. A host name may
+also be a domain name, such as <code>snertsoft.com</code> or <code>snertsoft.co.uk</code>, though
+such usage is frowned upon. While not strictly a FQDN, an IP-domain literal, which is an IP address
+between square brackets (<code>[</code>, <code>]</code>), for example "<code>[192.0.2.9]</code>" and can
+often be used in place of host name.
+</dd>
+
+<a name="term_HTTP"></a>
+<dt>HTTP</dt>
+<dd>
+Hyper-Text Transfer Protocol is used for requesting web resources such
+as documents and images. See RFC <a href="http://tools.ietf.org/html/rfc2616">2616</a>.
+</dd>
+
+<a name="term_IETF"></a>
+<dt>IETF</dt>
+<dd><a href="http://www.ietf.org/">Internet Engineering Task Force</a> is an open international community
+concerned with the evolution of the Internet architecture and the smooth operation; they review
+Internet Drafts and published RFC documents, which typically pertain to interoperability over the Internet.
+</dd>
+
+<a name="term_IPV6"></a>
+<dt>IPv6</dt>
+<dd>Internet Protocol version 6, the successor to the original Internet Protocol version 4. See
+RFC <a href="http://tools.ietf.org/html/rfc3516">3516</a>.
+</dd>
+
+<a name="term_MDN"></a>
+<dt>MDN</dt>
+<dd>Message Disposition Notification is the term for the various flavours of "return receipts"
+defined by RFC <a href="http://tools.ietf.org/html/rfc3798">3798</a>,
+</dd>
+
+<a name="term_MSA"></a>
+<dt>MSA</dt>
+<dd>Mail Submission Agent is a special SMTP server that listens on port 587 and is the entry point for new mail
+into the mail system. It can typically validate and/or authenticate the origin of the mail
+as coming from a known user.
+</dd>
+
+<a name="term_MTA"></a>
+<dt>MTA</dt>
+<dd>Mail Transfer Agent is an SMTP client/server that listens normally on port 25 and handles the routing and
+delivery of mail between remote locations. It makes up the backbone of the Internet mail system.
+When @PACKAGE_NAME@ is installed, it is configured to listen on port 25. Any MTA that was
+previous configured to listen on port 25 of the same machine, has to be configured to listen
+on an unused port, such as port 26; ideally only on the localhost interface.
+</dd>
+
+<a name="term_MUA"></a>
+<dt>MUA</dt>
+<dd>Mail User Agent is the end user's mail program that is used to compose, send, and read mail.
+</dd>
+
+<a name="term_MIME"></a>
+<dt>MIME</dt>
+<dd>Multipurpose Internet Mail Extensions used to specify how mail attachments can encoded and
+transfered using mail messages. Also used for HTTP. There are many RFC documents pertaining to MIME. The initial
+set to start with are
+<a href="http://tools.ietf.org/html/rfc2045">2045</a>,
+<a href="http://tools.ietf.org/html/rfc2046">2046</a>,
+<a href="http://tools.ietf.org/html/rfc2047">2047</a>,
+<a href="http://tools.ietf.org/html/rfc2048">2048</a>,
+<a href="http://tools.ietf.org/html/rfc2049">2049</a>,
+<a href="http://tools.ietf.org/html/rfc2387">2387</a>, ...
+</dd>
+
+<a name="term_RFC"></a>
+<dt>RFC</dt>
+<dd>Request For Comments: originally intended as published technical documents related
+to Internet operations that was intended to solicit feedback. Now RFC are more
+formal documents providing information, approved standards, protocols, experimental options, etc.
+New RFC documents start life as an Internet Draft to be discussed and are later voted on for
+approval, further review, or dropped by the IETF.
+</dd>
+
+<a name="term_PROXY"></a>
+<dt>Proxy or Gateway</dt>
+<dd>
+An intermediary server or application that accepts requests from clients, screening and/or caching
+them, before forward the requests to other proxy servers, origin servers, or services.
+Gateway is often used as a synonym for "proxy server".
+</dd>
+
+<a name="term_SMTP"></a>
+<dt>SMTP</dt>
+<dd>Simple Mail Transfer Protocol. See RFC
+<a href="http://tools.ietf.org/html/rfc821">821</a>,
+<a href="http://tools.ietf.org/html/rfc822">822</a>,
+<a href="http://tools.ietf.org/html/rfc1870">1870</a>,
+<a href="http://tools.ietf.org/html/rfc1985">1985</a>,
+<a href="http://tools.ietf.org/html/rfc2554">2554</a>,
+<a href="http://tools.ietf.org/html/rfc2821">2821</a>,
+<a href="http://tools.ietf.org/html/rfc2822">2822</a>,
+<a href="http://tools.ietf.org/html/rfc2920">2920</a>,
+<a href="http://tools.ietf.org/html/rfc3463">3463</a>,
+<a href="http://tools.ietf.org/html/rfc3848">3848</a>,
+<a href="http://tools.ietf.org/html/rfc4954">4954</a>.
+<a href="http://tools.ietf.org/html/rfc5321">5321</a>.
+<a href="http://tools.ietf.org/html/rfc5322">5322</a>.
+There are several other RFC documents for SMTP extensions not mentioned here.
+
+<p>
+Briefly, an SMTP session follows these states: connection, HELO/EHLO, AUTH,
+MAIL, RCPT, DATA, content, dot, QUIT. Each successful MAIL command during the
+SMTP session starts a new message transaction, which ends when either the final
+dot is sent or RSET is given. For each message, there can be more than
+one RCPT given.
+</p>
+<p>
+Of the information obtained from each state, only the IP
+address of the SMTP client and each valid RCPT address specified
+can be relied upon. Even then, the connecting IP might be questionable,
+because it's possibly in a dynamic IP address pool, the reverse DNS
+of the IP is often poorly configured or non-existent, or the
+WhoIs information about IP and domain assignment might be restricted,
+due to privacy concerns (RFC <a href="http://tools.ietf.org/html/rfc3912">3912</a>).
+
+As for the other states, the HELO, MAIL, and message content can be
+misrepresented or faked, and thus cannot be immediately trusted.
+</p>
+<p>
+Most spam filtering techniques fall into two classes: those that
+act on the SMTP client's IP address and envelope information
+(pre-DATA) and those that act on the message content (post-DATA).
+This distinction is important, because once the DATA command is accepted
+by the receiving server, it is generally committed to reading the
+entire message until the SMTP client indicates it has finished. This,
+of course, consumes bandwidth and system resources, so several filtering
+techniques attempt to make a decision based on policy or behaviour
+before accepting DATA in order to avoid/reduce more expensive forms
+of filtering after.
+</p>
+</dd>
+
+<a name="term_SPF"></a>
+<dt>SPF</dt>
+<dd>Sender Policy Framework is an experimental protocol. See RFC
+<a href="http://tools.ietf.org/html/rfc4408">4408</a>.
+</dd>
+
+<a name="term_TLD"></a>
+<dt>TLD, gTLD, ccTLD</dt>
+<dd>Global Top Level Domain such as <code>.com</code>, <code>.net</code>, and <code>.org</code>.
+In most cases Country Code Top Level Domain that have a secondary level classification,
+for example <code>.co.uk</code>, <code>.edu.au</code>, or <code>.gouv.fr</code> can be lump
+together under TLD.
+</dd>
+
+<a name="term_TTL"></a>
+<dt>TTL</dt>
+<dd>Time To Live is the life span for some piece of locally stored information before it expires
+and is retested or refetched. This value is typically expressed in seconds.
+</dd>
+
+<a name="term_URI"></a>
+<dt>URI, URL, URN</dt>
+<dd>
+Uniform Resource Identifiers, Uniform Resource Locators, and Uniform Resource Names are
+used to specify how and where an object or resource can be found. See RFC
+<a href="http://tools.ietf.org/html/rfc2396">2396</a>.
+</dd>
+
+
+
+</dl>
+
+<p style="text-align: center;">
+-<a href="#"> TOP </a>-
+</p>
+
+<!-- copyright -->
+<p class="copyright" style="text-align: center;">
+<nobr>@package_copyright@</nobr>
+<br/><nobr>BarricadeMX trademark &amp; patents pending.</nobr>
+</p>
+<!--end copyright-->
+
+</td></tr>
+</table>
+</div>
+</body>
+</html>
+

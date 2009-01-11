@@ -1,0 +1,41 @@
+helo puff.snert.com
+mail from:<achowe@snert.com>
+rcpt to:<achowe@fsg.com>
+
+
+550 5.7.1 [62.210.114.125] sent pre-greeting traffic #404 (k239Cj270630000400)
+550 5.7.1 [62.210.114.125] sent pre-greeting traffic #404 (k239Cj270630000400)\r
+
+
+550 5.7.1 [62.210.114.125] sent pre-greeting traffic #404 (k239Ou272790000700) White list by sending mail to <CLICK-k239PDb6abb95d78a805c6aa8c1b19af5cfe68@mail.fsg.com>
+
+
+helo puff.snert.com
+mail from:<achowe@snert.com>
+rcpt to:<CLICK-k239Seae8c3d61cc3aa0c5d978e4147f37c1dd@mail.fsg.com>
+
+Subject: test 1
+Message-id: <foo@bar>
+Date: 4 Mar 2008 18:35:00 +0100
+From: <achowe@snert.com>
+
+
+helo puff.snert.com
+mail from:<achowe@snert.com>
+rcpt to:<achowe@fsg.com>
+data
+Subject: test 3
+Message-id: <foo@bar>
+Date: 4 Mar 2008 18:50:00 +0100
+From: <achowe@snert.com>
+
+test 3
+
+3
+.
+quit
+
+
+helo puff.snert.com
+mail from:<wumpus@snert.com>
+rcpt to:<achowe@fsg.com>

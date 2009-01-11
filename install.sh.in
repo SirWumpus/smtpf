@@ -1,0 +1,317 @@
+#!/bin/sh
+#
+# @package_copyright@
+#
+# @configure_input@
+#
+# $OpenBSD$
+# $custom$
+#
+
+USER="@enable_run_user@"
+GROUP="@enable_run_group@"
+TARNAME='@PACKAGE_TARNAME@'
+INSTALL=install
+INSTALL_O='-o'
+PLATFORM='@platform@'
+
+prefix="@prefix@"
+exec_prefix="@exec_prefix@"
+libexecdir="${DESTDIR}@libexecdir@"
+sbindir="${DESTDIR}@sbindir@"
+bindir="${DESTDIR}@bindir@"
+datadir="${DESTDIR}@datadir@"
+mandir="${DESTDIR}@mandir@"
+
+sysconfdir="${DESTDIR}@sysconfdir@"
+if test -d $sysconfdir ; then
+	:
+else
+	sysconfdir="${DESTDIR}/etc"
+fi
+localstatedir="${DESTDIR}@localstatedir@"
+if test -d $localstatedir ; then
+	:
+else
+	localstatedir="${DESTDIR}/var"
+fi
+
+UNAME=`uname -s|sed -e 's/^\([a-zA-Z]*\).*/\1/'`
+if test $UNAME = 'SunOS' ; then
+	# There are two different install tools.
+	if test -x /usr/ucb/install ; then
+		INSTALL=/usr/ucb/install
+		INSTALL_O='-o'
+	elif test -x /usr/sbin/install ; then
+		INSTALL=/usr/sbin/install
+		INSTALL_O='-u'
+	fi
+fi
+
+if test $UNAME = 'CYGWIN' ; then
+	# Installation by shell script is just for testing during
+	# development. Normally there will be a proper Windows installer.
+
+	INSTALL_WHEEL=''
+	INSTALL_GROUP=''
+	INSTALL_USER=''
+
+	sbindir="${DESTDIR}${TARNAME}"
+	bindir="${DESTDIR}${TARNAME}"
+	datadir="${DESTDIR}${TARNAME}"
+	mandir="${DESTDIR}${TARNAME}/doc"
+	sysconfdir="${DESTDIR}${TARNAME}"
+	localstatedir="${DESTDIR}${TARNAME}"
+	conf="${DESTDIR}${TARNAME}"
+
+	examples=$datadir/examples
+	doc=$datadir/doc
+else
+	if id | grep 'uid=0' >/dev/null ; then
+		:
+	else
+		echo
+		echo "You must be root to install this software."
+		echo
+		exit 1
+	fi
+	if id $USER >/dev/null 2>&1 ; then
+		:
+	elif test $UNAME = FreeBSD ; then
+		pw groupadd -n ${GROUP}
+		pw useradd -n ${USER} -g ${GROUP} -c 'BarricadeMX daemon' -d /var/empty -s /usr/sbin/nologin
+	else
+		groupadd ${GROUP}
+		useradd -g ${GROUP} -c "${TARNAME} daemon process" ${USER} >/dev/null
+	fi
+
+	INSTALL_WHEEL="${INSTALL_O} root -g 0"
+	INSTALL_GROUP="${INSTALL_O} root -g ${GROUP}"
+	INSTALL_USER="${INSTALL_O} ${USER} -g ${GROUP}"
+
+	# Always use this location. Linux FHS is silent about it. OpenBSD favours it.
+	examples=$datadir/examples/$TARNAME
+	doc=$datadir/doc/$TARNAME
+	conf=$sysconfdir/$TARNAME
+fi
+
+unalias hasCommand >/dev/null 2>&1
+hasCommand()
+{
+	case $UNAME in
+	Linux|OpenBSD|FreeBSD)
+		which "$1"
+		return $?
+		;;
+	*)
+		# SunOS which(1) always returns 0 it would seem, even if
+		# the command does not exist. Linux and OpenBSD return a
+		# false value when the command is not found.
+		if which $1 | grep "no $1 in" >/dev/null ; then
+			return 1
+		fi
+
+		return 0
+	esac
+
+	return 1
+}
+
+#if test -d $libexecdir -a $UNAME != 'Linux' ; then
+#	program=$libexecdir/$TARNAME
+#else
+	# Linux tends not to come with a /usr/local/libexec and the
+	# FHS is silent about it. They prefer to put system daemons
+	# in sbin, unlike BSD systems that prefer libexec.
+	program=$sbindir/$TARNAME
+#fi
+
+
+# Find location of common startup script directories...
+if test -d /etc/init.d ; then
+	# Debian Linux
+	startup_script="${DESTDIR}/etc/init.d/$TARNAME"
+elif test -d /etc/rc.d/init.d ; then
+	# Older Linux, System V structure?
+	startup_script="${DESTDIR}/etc/rc.d/init.d/$TARNAME"
+elif test -d /usr/local/etc/rc.d ; then
+	# FreeBSD
+	startup_script="${DESTDIR}/usr/local/etc/rc.d/$TARNAME.sh"
+else
+	# OpenBSD policy is for root to install startup scripts by hand.
+	# Also Cygwin/Mingw uses a different method.
+	startup_script='NO'
+fi
+
+echo
+if test $startup_script = NO ; then
+	:
+elif test -f $startup_script -a ${DESTDIR:-no} = no; then
+	echo "You already have a startup script installed:"
+	echo
+	echo "  $startup_script"
+	echo
+
+	if cmp -s $startup_script examples/startup.sh ; then
+		echo "And its identical to the current distributiuon."
+		startup_script='NO'
+	else
+		while true ; do
+			echo -n "Shall I show you the differences against the new one? [n] "
+			read yn
+			if test ${yn:=n} = 'n' -o ${yn} = 'y' ; then
+				break;
+			fi
+		done
+
+		if test "X$yn" = 'Xy' ; then
+			diff -u $startup_script examples/startup.sh | more
+		fi
+
+		echo
+
+		while true ; do
+			echo -n "Shall I replace the old startup script? [n] "
+			read yn
+			if test ${yn:=n} = 'n' -o ${yn} = 'y' ; then
+				break;
+			fi
+		done
+
+		if test "X$yn" = 'Xy' ; then
+			$INSTALL -m 555 $INSTALL_GROUP examples/startup.sh $startup_script
+			if hasCommand chkconfig ; then
+				# Red Hat Linux
+				chkconfig --add ${TARNAME}
+			elif hasCommand update-rc.d ; then
+				# Debian Linux
+				update-rc.d ${TARNAME} defaults 18
+			fi
+		else
+			startup_script='NO'
+		fi
+	fi
+else
+	echo 'Creating...' `dirname $startup_script`
+	$INSTALL -m 755 $INSTALL_WHEEL -d `dirname $startup_script`
+	echo 'Installing...' $startup_script
+	$INSTALL -m 555 $INSTALL_GROUP examples/startup.sh $startup_script
+
+	if test ${DESTDIR:-no} = no ; then
+		if hasCommand chkconfig ; then
+			# Red Hat Linux
+			chkconfig --add ${TARNAME}
+		elif hasCommand update-rc.d ; then
+			# Debian Linux
+			update-rc.d ${TARNAME} defaults 18
+		fi
+	fi
+fi
+
+echo
+echo '***************************************************************'
+echo
+
+src/${TARNAME} help=examples/$TARNAME.cf
+echo 'Creating.....' $conf
+$INSTALL -m 2770 $INSTALL_GROUP -d $conf
+$INSTALL -m 444 $INSTALL_GROUP examples/Makefile $conf
+$INSTALL -m 444 $INSTALL_GROUP examples/dump.mk $conf
+$INSTALL -m 664 $INSTALL_GROUP examples/smtpf.cf $conf
+$INSTALL -m 664 $INSTALL_GROUP examples/access-defaults.cf $conf
+if test ! -f $conf/access.cf ; then
+	$INSTALL -m 664 $INSTALL_GROUP examples/access.cf $conf
+fi
+if test ! -f $conf/route.cf ; then
+	$INSTALL -m 664 $INSTALL_GROUP examples/route.cf $conf
+fi
+
+$INSTALL -m 755 $INSTALL_WHEEL -d $sbindir
+echo 'Installing...' $sbindir/kvmap
+$INSTALL -m 555 $INSTALL_WHEEL ../lib/type/kvmap $sbindir
+echo 'Installing...' $sbindir/kvmd
+$INSTALL -m 555 $INSTALL_WHEEL ../lib/type/kvmd $sbindir
+echo 'Installing...' $sbindir/kvmc
+$INSTALL -m 555 $INSTALL_WHEEL ../lib/type/kvmc $sbindir
+echo 'Installing...' $sbindir/mcc
+$INSTALL -m 555 $INSTALL_WHEEL ../lib/type/mcc $sbindir
+echo 'Installing...' $sbindir/$TARNAME
+$INSTALL -m 550 $INSTALL_WHEEL src/$TARNAME $sbindir
+
+$INSTALL -m 755 $INSTALL_WHEEL -d $bindir
+echo 'Installing...' $bindir/show
+$INSTALL -m 555 $INSTALL_WHEEL ../tools/show $bindir
+echo 'Installing...' $bindir/spf
+$INSTALL -m 555 $INSTALL_WHEEL ../lib/mail/spf $bindir
+echo 'Installing...' $bindir/uri
+$INSTALL -m 555 $INSTALL_WHEEL ../lib/util/uri $bindir
+echo 'Installing...' $bindir/sqlite3t
+$INSTALL -m 555 $INSTALL_WHEEL ../../../../org/sqlite/bin/sqlite3 $bindir/sqlite3t
+
+if test $UNAME = 'CYGWIN' ; then
+	mv -f $bindir/sqlite3t $bindir/sqlite3
+
+	echo 'Installing...' $conf'/*.cf'
+	$INSTALL -m 644 $INSTALL_WHEEL examples/*.cf $conf
+
+	echo 'Installing...' ${DESTDIR}${TARNAME}'/installer.nsi'
+	$INSTALL -m 644 package/Windows/installer.nsi ${DESTDIR}${TARNAME}
+
+	echo 'Creating.....' $localstatedir/tmp
+	$INSTALL -m 770 $INSTALL_USER -d $localstatedir/tmp
+else
+	if test -d /var/cache ; then
+		echo 'Creating.....' $localstatedir/cache/$TARNAME
+		$INSTALL -m 6770 $INSTALL_USER -d $localstatedir/cache/$TARNAME
+	elif test -d /var/db ; then
+		echo 'Creating.....' $localstatedir/db/$TARNAME
+		$INSTALL -m 6770 $INSTALL_USER -d $localstatedir/db/$TARNAME
+	fi
+
+	$INSTALL -m 755 $INSTALL_WHEEL -d $mandir/cat1
+	echo 'Installing...' $mandir/cat1/smtpf.0
+	$INSTALL -m 444 doc/smtpf.0 $mandir/cat1
+
+	echo 'Installing...' $examples
+	$INSTALL -m 755 -d $examples
+	$INSTALL -m 755 $INSTALL_WHEEL -d $examples/extra
+	$INSTALL -m 755 $INSTALL_WHEEL -d $examples/spamassassin
+	$INSTALL -m 444 $INSTALL_WHEEL examples/Makefile $examples
+	$INSTALL -m 444 $INSTALL_WHEEL examples/*.cf $examples
+	$INSTALL -m 444 $INSTALL_WHEEL examples/*.mc $examples
+	$INSTALL -m 444 $INSTALL_WHEEL examples/*.mk $examples
+	$INSTALL -m 444 $INSTALL_WHEEL examples/*.sh $examples
+	#$INSTALL -m 444 $INSTALL_GROUP examples/*.txt $examples
+	$INSTALL -m 444 $INSTALL_WHEEL examples/extra/* $examples/extra
+	$INSTALL -m 444 $INSTALL_WHEEL examples/spamassassin/* $examples/spamassassin
+fi
+
+echo 'Creating.....' $doc
+$INSTALL -m 755 -d $doc/Img
+
+echo 'Installing...' $doc
+$INSTALL -m 444 doc/*.css $doc
+$INSTALL -m 444 doc/*html $doc
+$INSTALL -m 444 doc/mailto.js $doc
+$INSTALL -m 444 doc/LICENSE.TXT $doc
+$INSTALL -m 444 doc/Img/*.gif $doc/Img
+$INSTALL -m 444 doc/Img/*.jpg $doc/Img
+$INSTALL -m 444 doc/Img/*.png $doc/Img
+$INSTALL -m 444 doc/Img/*.bmp $doc/Img
+
+echo
+echo '***************************************************************'
+echo
+echo 'Remember to review the sample configuration files above with'
+echo 'your current configuration as existing options sometimes are'
+echo 'deleted or renamed, and new ones added between revisions.'
+echo
+if test $UNAME = 'OpenBSD' ; then
+echo 'Remember to modify your /etc/rc.local script to startup the'
+echo 'software after your MTA on system boot.'
+echo
+fi
+echo '***************************************************************'
+echo
+
+exit 0

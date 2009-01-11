@@ -1,0 +1,30 @@
+###
+### access.cf
+###
+### Place your site local policy choices in this file.
+###
+
+#length-connect:			25M
+
+#######################################################################
+# Frequently seen URL domains that are known to be good or undesirable.
+#######################################################################
+
+#body:126.com				REJECT
+#body:163.com				REJECT
+#body:2o7.net				REJECT
+#body:4at1.com				REJECT
+#body:advertising.com			REJECT
+#body:classmates.com			REJECT
+#body:directtrack.com			REJECT
+#body:doubleclick.net			REJECT
+#body:exacttarget.com			REJECT
+#body:flowgo.com			REJECT
+#body:incredimail.com			REJECT
+#body:optonline.net			REJECT
+#body:overstock.com			REJECT
+#body:pandasoftware.com			REJECT
+
+#######################################################################
+# END
+#######################################################################

@@ -1,0 +1,20 @@
+tardir	= @rel_tardir@
+topdir	= @top_srcdir@
+redhat	= /usr/src/redhat
+package	= ${redhat}/RPMS/@PACKAGE_NAME@-@PACKAGE_VERSION@-@package_build@.i386.rpm
+
+all : pack
+
+pack: ${package}
+
+${redhat}/SPECS/@PACKAGE_NAME@.spec : @PACKAGE_NAME@.spec
+	cp @PACKAGE_NAME@.spec ${redhat}/SPECS
+
+${package}: ${redhat}/SPECS/@PACKAGE_NAME@.spec libsnert smtpf
+	cd ${redhat}; rpmbuild -ba @PACKAGE_NAME@.spec 
+	
+libsnert :
+	cp `ls -1 ${tardir}/${topdir}/libsnert* | sort -t . -k 2n,2 -k 3n,3 | tail -n 1` ${redhat}/SOURCES
+
+smtpf :
+	cp `ls -1 ${tardir}/${topdir}/smtpf* | sort -t . -k 2n,2 -k 3n,3 | tail -n 1` ${redhat}/SOURCES

@@ -1,0 +1,135 @@
+ERR	#100 pattern delimiter error: \"%.50s...\"
+ERR	#103 network delimiter error: \"%.50s...\"
+ERR	#105 network specifier error: \"%.50s...\"
+ERR	#106 network specifier error, \"%.50s...\"
+ERR	#108 regular expression delimiter error: \"%.50s...\"
+ERR	#110 regular expression error: %s \"%.50s...\"
+ERR	#112 regular expression error: %s \"%.50s...\"
+INFO	#119 host %s [%s] white listed
+INFO	#124 host %s [%s] sender <%s> white listed
+INFO	#126 sender <%s> white listed
+INFO	#134 host %s [%s] recipient <%s> white listed
+INFO	#136 sender <%s> recipient <%s> white listed
+INFO	#138 recipient <%s> white listed
+WARN	#172 clamd-max-size=%ld reached
+ERR	#178 %s
+INFO	#183 started %s[%d] %s
+ERR	#184 cmdStart() failed: %s (%d)
+ERR	#186 write error to child=%d: %s (%d)
+ERR	#191 %s[%d] terminated on signal=%d%s
+ERR	#192 exit status=%d out of range
+INFO	#193 %s[%d] exit status=%d
+INFO	#197 %s
+ERR	#223 client %s [%s] I/O error: %s (%d)
+ERR	#226 AUTH LOGIN buffer overflow caught
+ERR	#227 login base64 decode error
+ERR	#228 client %s [%s] I/O error: %s (%d)
+ERR	#231 password base64 decode error
+ERR	#234 AUTH PLAIN buffer overflow caught
+ERR	#236 AUTH base64 decode error
+INFO	#238 queuing all messages on %s [%s]
+INFO	#239 %s auth-id=<%s> relay=%d
+WARN	#247 filter_mail_table unexpected rc=%d
+WARN	#257 filter_rcpt_table unexpected rc=%d
+INFO	#260 queuing message on %s [%s] for <%s>
+ERR	#267 chunk write error: %s (%d)
+ERR	#275 missing temp. file name
+ERR	#276 open error \"%s\": %s (%d)
+ERR	#277 seek error \"%s\": %s (%d)
+ERR	#278 DATA rejected by all forward hosts
+ERR	#279 read error \"%s\": %s (%d)
+ERR	#282 client %s [%s] timeout after DOT-LF; message must end with CRLF-DOT-CRLF
+ERR	#283 client %s [%s] I/O error: %s (%d)
+ERR	#286 client %s [%s] I/O error at DOT (3): %s (%d)
+ERR	#288 client %s [%s] I/O error at DOT (2): %s (%d)
+ERR	#299 %s rejected message: %s
+WARN	#304 EMEW Message-ID buffer error
+ERR	#319 filterGetContext(%lx, offset=%lu) invalid offset
+ERR	#321 cache get key={%s} failed
+ERR	#322 cache put key={%s} value={%s} failed
+ERR	#330 cache get key={%s} failed
+ERR	#335 cache put key={%s} value={%s} failed
+ERR	#336 greyMakeKey() overflow caught, key={%s} truncated
+INFO	#339 grey listed {%s} for %ld seconds
+INFO	#344 grey-content message mismatch
+INFO	#345 grey-content listed {%s} for %ld seconds
+ERR	#349 cache get key={%s} failed
+ERR	#353 cache put key={%s} value={%s} failed
+ERR	#354 greyMakeKey() overflow caught, key={%s} truncated
+INFO	#358 grey listed {%s} for %ld seconds
+INFO	#363 grey-content message mismatch
+INFO	#364 grey-content listed {%s} for %ld seconds
+WARN	#395 %s [%s] HELO %s is not FQDN
+WARN	#401 empty MX list after pruning
+ERR	#402 MX %s lookup: %s (%d)
+INFO	#403 client %s [%s] is MX for %s
+ERR	#408 MX %s lookup: %s (%d)
+ERR	#418 domain %s does not exist
+ERR	#420 domain %s does not exist
+ERR	#421 SOA for %s lookup error: %s
+ERR	#422 SOA for %s does not exist
+ERR	#424 cache get key={%s} failed
+ERR	#426 cache put key={%s} value={%s} failed
+ERR	#438 %s write error: %s
+ERR	#440 %s read error: %s
+ERR	#442 %s %s
+ERR	#457 p0f server address error: %s (%d)
+ERR	#458 p0f server open error: %s (%d)
+ERR	#459 p0f server connection error: %s (%d)
+ERR	#461 p0f server write error: %s (%d)
+ERR	#462 p0f server timeout error: %s (%d)
+ERR	#463 p0f server read error: %s (%d)
+ERR	#464 mutex unlock failed: %s (%d)
+ERR	#466 p0f magic number error
+ERR	#467 p0f server query error (%d)
+INFO	#468 %s
+ERR	#470 %lu connections exceeds %ld per second
+INFO	#475 %s found %s %s
+ERR	#490 internal error %s(%lu): %s (%d)
+ERR	#491 resources error %s(%lu): %s (%d)
+INFO	#502 call-ahead host=%s rcpt=<%s> rc=%d reply=\"%s\"
+ERR	#510 localhost route required
+ERR	#511 localhost route requires FORWARD definition
+ERR	#512 mail loop from %s [%s] in localhost route
+INFO	#514 smtp-strict-relay client %s [%s] sender <%s> denied
+INFO	#521 call-back mail=<%s> rc=%d reply=\"%s\"
+ERR	#526 delete error \"%s\": %s (%d)
+ERR	#528 temp. file name \"%s\": %s (%d)
+ERR	#529 create error \"%s\": %s (%d)
+INFO	#565 siq score=%d confidence=%d ttl=%u text='%.83s'
+ERR	#566 %s
+INFO	#568 siq-score=%d less than %ld, discarding message
+INFO	#576 multiline response...
+INFO	#577 < %s
+ERR	#578 server I/O error: %s (%d)
+ERR	#582 %s [%s] sent traffic before %s reply, pause=%ld
+INFO	#583 pipeline input=%ld:%s
+INFO	#588 client [%s] has CNAME/PTR delegation %s
+INFO	#590 start %s [%s] f=\"%s\"
+ERR	#591 client %s [%s] I/O error: %s (%d)
+INFO	#594 dropping %s [%s] after %d errors
+ERR	#596 spamd connect error \"%s\": %s (%d)
+ERR	#599 spamd write error: %s (%d)
+WARN	#606 spamd-max-size=%ld reached
+ERR	#607 spamd write error after %lu bytes
+ERR	#609 spamd read error: %s (%d)
+ERR	#611 spamd error: %s
+ERR	#613 spamd parse error: %s
+ERR	#614 spamd read error: %s (%d)
+ERR	#617 %s
+INFO	#618 %s
+ERR	#620 spamd connect error \"%s\": %s (%d)
+ERR	#624 spamd write error: %s (%d)
+ERR	#631 open error \"%s\": %s (%d)
+ERR	#633 spamd read error: %s (%d)
+ERR	#635 spamd error: %s
+ERR	#637 spamd parse error: %s
+ERR	#638 spamd read error: %s (%d)
+INFO	#640 %s [%s] %s
+INFO	#666 sender <%s> f=\"%s\" spf-mail=%s spf-helo=%s x=\"%s\"
+INFO	#667 recipient <%s> f=\"%s\" x=\"%s\"
+INFO	#668 data x=\"%s\"
+INFO	#669 message <%s> f=\"%s\" b=%lu m=%s s=\"%.60s\" x=\"%s\"
+INFO	#670 end i=%s p=\"%s\" f=\"%s\" h=\"%s\" b=%lu t=%lu %s
+INFO	#718 URI <%s> white listed
+ERR	#735 discarded: %s\r\n

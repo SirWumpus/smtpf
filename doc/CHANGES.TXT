@@ -1,0 +1,3546 @@
+CHANGES
+-------
+
+The major number changes for such things as code rewrites, changes in
+syntax, and/or dramatic changes in functionality. The minor number
+changes for corrections, enhancements, etc. made to the code. There
+is no set schedule for releases.
+
+
+--TODO / WISHLIST--
+
+  !!	Fix bug routeFind() and routeIsMember() where two routes to
+   	the same host, but different ports are incorrectly considered
+   	the same route, ie. the port number hasn't been considered.
+
+  !!	DSN code should be sent to local queue route instead of
+   	direct to MX.
+
+   ?	STARTTLS
+
+   ?	AUTH CRAM-MD5 and AUTH DIGEST-MD5
+
+   ?	FastCLI aka FastCGI instead of a built in scripting language.
+
+  ??	Sender/Recipient rewriting (copy, redirect/rename).
+
+   ?	HUP to reload the configuration.
+
+   ?	DKIM verifier. Has certain issues in a proxy design. To be
+    	discussed.
+
+   ?	Limited DKIM signing for the first 64KB chunk of message.
+    	Certain security issues related to the l= tag.
+
+  ??	Cache rejected RCPT from forward connections, similar to
+   	call-ahead caching.
+
+  ??	SMTP ROUTE command
+
+  ??	Add DNS-BL code vs bit vector support.
+
+  ??	VBounce like module using SPF record of RCPT to identify
+   	if a DNS/MDN originate with us by scanning original message's
+   	Received headers.
+
+  ??	Support for port 587.
+
+   ?	uri-bl-ns, uri-bl-mail-ns: check NS hosts against URIBLs.
+
+  ??	URI support to HTML named entities.
+
+   ?	Consider spamd PROCESS support (probably when FastCLI is added)
+
+   ?	Can EMEW white-wash through grey-content for DSN?? Requested by
+   	Jan-Peter. Current answer is NO - violates module independence.
+
+   ?	Rate throttle traffic modelling for trusted hosts.
+
+   ?	clamd/spamd statistic for threads waiting, connections failures
+   	timeouts, high water marks.
+
+  ??	When FORWARD: and RCPT: lists are eqivalent, then ignore the
+   	RCPT: list and skip call-ahead, see routeRcpt().
+
+   ?	uribl: as an optimasation, consider moving the HTTP link tests
+   	to be done after the URI BL lookups.
+
+   ?	uriHttpOrigin(): consider adding tests that can detect and follow
+   	redirection using meta refresh or javascript, eg:
+
+	<script language="javascript">
+	var r = "";
+	r += "i"; r = "m" + r; r += "x"; r = "o" + r; r += "s"; r = "l" + r; r = "p" + r; r += "o"; r += "f"; r = "/" + r; r += "t"; r = "/" + r; r += "."; r = ":" + r; r = "p" + r; r += "c"; r += "o"; r = "t" + r; r = "t" + r; r += "m"; r = "h" + r; parent.location.replace(r);
+	</script>
+
+	redirects to http://plomixsoft.com
+
+   ?	Alternative to FastCGI: SocketCLI / filter-socket / socket-filter
+   	list option. The following protocol would be used.
+
+   	All commands, responses, and arguments are sent using network
+	strings. All command, response, and flag words are considered
+	case insensitive. All commands expect a response within 60
+	seconds, after which the connection is placed into an error
+	state, ignored, and closed at the end of session. There is no
+	welcome banner.
+
+
+	-- DEFINITIONS
+
+	ASCII formfeed octet (CTRL+L, 0x0C, \f) is used for separating
+		fields within a string or list. [Some thought was given
+		to using ASCII FS (0x1C) or RS (0x1E) codes, but "\f" is
+		a common character constant in many programming
+		languages that is easier to remember than an ASCII
+		code.]
+
+	$flag_list is a formfeed separated list of case-insensitive
+		tokens. Reserved tokens start with an underscore: _DROP,
+		_DELAY, _ALTER, _SAVE, _HOLD. A socket-filter client and
+		server(s) may pass arbitrary tokens between each other.
+		It provides an simple means of communicating state
+		information to downstream socket-filter servers.
+
+
+	>> CLIENT COMMANDS
+
+	OPEN $flag_list $protocol_version $smtp_client_ip Client
+		connection accept handler: Any response. The response
+		text must start with the server's version number. The
+		$protocol_version is a positive integer and this is
+		version "1".
+
+	INIT $flag_list $session_id
+		Session thread initialise handler: Any response.
+
+	RCVD $flag_list $string
+		SMTP input as received from the client: Any response.
+		Response flags may contain _SAVE, indicating that
+		message should be saved in a temporary file. It would be
+		the server's responibility to parse and determine state
+		for HELO, EHLO, AUTH, MAIL FROM, RCPT TO, DATA, RSET,
+		NOOP, VRFY, EXPN, QUIT.
+
+	SENT $flag_list $text
+		Last reply sent to client: Expect CONT. The command
+		text starts with an SMTP response code, may have an
+		extended response code, and a reason.
+
+	HEAD $flag_list $string
+		Single header handler: Expect CONT. Response flags may
+		contain _ALTER, in which case the response text is the
+		replacement header and/or extra headers. Multiple
+		headers are separated by a formfeed.
+
+	EHDR $flag_list
+		End of headers: Expect CONT. Response flags may contain
+		_ALTER, in which case the response text is one or more
+		headers to append to the list of headers. Multiple
+		headers are separated by a formfeed.
+
+	BODY $flag_list $chunk
+		Message body content: Expect CONT.
+
+	EBDY $flag_list
+		End of message body: Any response. Response flags may
+		contain _HOLD, indicating that message temp.file should
+		not be deleted.
+
+
+	<< SERVER RESPONSES
+
+	CONT $flag_list $text
+		Continue / acknowledge / don't care.
+
+	PASS $flag_list $text
+		Accept. Stop processing remaining filters and tests.
+		The text should contain an SMTP response code,
+		extended response code, and reason.
+
+	TEMP $flag_list $text
+		Temporary Failure. Flags may contain the _DROP to drop
+		the connection and/or _DELAY to delay the response when
+		+smtp-delay-checks. The text should contain an SMTP
+		response code, extended response code, and reason.
+
+
+	FAIL $flag_list $text
+		Reject. Flags may contain the _DROP to drop the
+		connection and/or _DELAY to delay the response when
+		+smtp-delay-checks. The text should contain an SMTP
+		response code, extended response code, and reason.
+
+   ?	Improve readData.
+
+   ?	Flags for RFC syntax errors and a way to have them appear in
+   	a header for SpamAssassin. Steve Freegard.
+
+   ?	Save mail in a queue file for MailScanner. Required in a "qf"
+	look alike? Envelope sender and receipents; original connected
+	IP; Received header to be added, extra headers to be added -
+	hell, all the original headers and/or modified to replace those
+	in .msg which contains the original inbound headers); the fseek
+	offset of the CRLF header-body separator so that it would be
+	easy to skip the original headers in the .msg file.
+
+	Example of possible smtpf queue file:
+	----
+	ORIGIN 192.0.2.1
+	HELO origin.helo.arg
+	MAIL FROM:<achowe@snert.com>
+	RCPT TO:<steve.freegard@fsl.com>
+	RCPT TO:<Julian.Field@fsl.com>
+	BODY k488j9201532991400.msg SEEK=2345
+	Received: from mx.snert.net (localhost.snert.net [127.0.0.1])
+	    by mx.snert.net (8.14.2/8.14.1) with SMTP id m48N49Cp001277
+	    for <achowe@snert.com>; Fri, 9 May 2008 01:04:09 +0200 (CEST)
+	Received: from smtp118.sat.emailsrvr.com (smtp118.sat.emailsrvr.com [66.216.121.118])
+	    by mx.snert.net (mx.snert.net [])
+	    id k481452015326929FO ret-id none; Fri, 09 May 2008 01:04:17 +0200
+	Received: from relay1.relay.sat.mlsrvr.com (localhost [127.0.0.1])
+	    by relay1.relay.sat.mlsrvr.com (SMTP Server) with ESMTP id 29B81214494;
+	    Thu,  8 May 2008 19:03:38 -0400 (EDT)
+	Received: by relay1.relay.sat.mlsrvr.com (Authenticated sender: smf-AT-fsl.com) with ESMTP id 96824212044;
+	    Thu,  8 May 2008 19:03:37 -0400 (EDT)
+	Message-ID: <482386C8.2070305@fsl.com>
+	Date: Fri, 09 May 2008 00:03:36 +0100
+	From: Steve Freegard <steve.freegard@fsl.com>
+	Organization: Fort Systems Ltd.
+	User-Agent: Thunderbird 2.0.0.12 (X11/20080227)
+	MIME-Version: 1.0
+	To: "'Julian Field'" <Julian.Field@fsl.com>
+	CC: Anthony Howe <achowe@snert.com>
+	Subject: Re: Mailscanner and Exim - Spool File Return Code problems.
+	References: <1638CDD827D51E4D8E9B2741290E1C9101857A20@wkits02.knowledgeit.co.uk> <482337A4.4060403@ecs.soton.ac.uk> <1638CDD827D51E4D8E9B2741290E1C91BF5273@wkits02.knowledgeit.co.uk> <482366A5.2020702@ecs.soton.ac.uk>
+	In-Reply-To: <482366A5.2020702@ecs.soton.ac.uk>
+	Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+	Content-Transfer-Encoding: 7bit
+	----
+
+	Essentially HELO and ORIGIN are informational. BODY would always
+	be the last field to be always followed by replacement headers
+	until EOF.
+
+	What else?
+
+	One issue with removing the inbound sendmail. You need to enable
+	call-aheads (RCPT:) to the outbound sendmail and disable FORWARD
+	(or lack of FORWARD in route-map would be the switch to save a
+	queue file).
+
+  !!	Access-map DISCARD action may be broken in access.c.
+
+   +	smtpf RESTART command
+
+   +	STARTTLS proxy to local queue route like roundhouse.
+
+   +	store stats for IP, HELO, MAIL domain (schzo test over long periods)
+
+  ++	hash module
+
+  ++	timeout socket writes to clamd, spamd, et al.
+
+   +	Consider enhancing body: tag lookups. Consider the URL
+
+		http://some.example.com/a/b/c.html?blah
+
+	tag:some.example.com/a/b/c.html
+	tag:some.example.com/a/b
+	tag:some.example.com/a
+	tag:some.example.com
+	tag:example.com/a/b/c.html
+	tag:example.com/a/b
+	tag:example.com/a
+	tag:example.com
+
+--2.2.3--
+
+   *	Requires Libsnert 1.69.25
+
+   *	Conversion to GIT source control management.
+
+--2.2.2--
+
+   *	Requires Libsnert 1.69.24
+
+   !	mailTestsMail: adjusted mail-require-mx to return temporary
+	failure if any of the MX's associated A/AAAA records return
+	PDQ_RCODE_SERVER.
+
+   !	nsListLookup: the value of list_name was undefined in the event
+   	that pdqGet for the SOA record failed for any reason.
+
+   !	nsListLookup: Changed lookup method.
+
+	Problem in handling wnrl37.cheesereason.com. Version 1 did an
+	initial SOA lookup wnrl37.cheesereason.com assuming the DNS
+	server would return an SOA for the queried host or parent
+	domain. This does not always appear to be the case. Example:
+
+		dig soa wnrl37.cheesereason.com		SERVFAIL
+		dig soa cheesereason.com		OK (SOA result)
+		dig ns wnrl37.cheesereason.com    	OK (SOA result)
+		dig ns cheesereason.com    		OK (NS list)
+
+	However if you do a NS lookup and get an SOA result, then
+	recurse once using the SOA domain. This still works fine for
+	CNAME records, like www.snert.com.
+
+   !	grey.c/h, cacheInit: added grey-temp-expire stat, which requires
+   	adding mcc hooks for the GC expire runs.
+
+   +	Added supplimental SpamAssassin rules and plugins to
+   	examples/spamassassin/ ; updated manifests.
+
+   !	access.c: corrections to some of the patterns used in
+   	accessTagWordsMap and accessWordTagsMap
+
+--2.2.1--
+
+   *	Requires Libsnert 1.69.20
+
+   !	serverInit: call pidLock following pidSave.
+
+   !	uribl.c, rbl.c: dnsListLookup now checks and maintains a specified
+   	list of previously checked names. Particularly important for NS BL
+   	lookups of URI domains, where many different domains might share
+   	common NS and want to skip those we've already checked. This list
+   	should be checked and maintained in dnsListLookup instead of higher
+   	up in the call chain.
+
+   !	uribl.c: fixed the handling of NS BL lookups to correspond with
+   	similar changes made in libsnert uri CLI. Essentially the original
+   	NS test was flawed and failed to handle CNAME:
+
+	/* Find SOA domain handling the name in question. This
+ 	 * handles CNAME. Consider www.snert.com CNAME mx.snert.net.
+ 	 * Once you have the SOA domain, then lookup the NS of SOA
+ 	 * domain and then check those against an NS BL.
+	 */
+
+   !	install.sh.in: changed /etc/smtpf directory permissions from
+   	2770 to 2776 so that the web insterface can read the smtpf.cf
+   	configuration.
+
+   !	filter_idle_table: add accessIdle to table.
+
+   !	cmdMail: added check of idle-retest-timer.
+
+   +	Added new mail-retest-client option.
+
+   +	summarySession, smtpf.h: Added two new per-session counters,
+   	forward_count = number of messagess successfully forwards
+   	(trailing edge transaction) and mail_count = nummber of
+   	MAIL FROM: received (leading edge transaction).
+
+
+--2.1.73-- AKA 2.2.0
+
+   +	cmdEhlo, size.c: Added RFC 1870 SIZE support.
+
+   +	Add +info option to output configure and compile options.
+
+   +	Added SMTP INFO to output configure and compile options.
+
+   +	Added time-limit-rcpt stat.
+
+   -	Following stats disabled or removed:
+
+   		stat_clean_quit_no_message
+   		stat_smtp_enable_esmtp
+   		stat_grey_upgrade
+		stat_grey_downgrade
+		stat_grey_dnsbl_reset
+		stat_grey_pass_dnsbl_hit
+		stat_grey_uribl_reset
+		stat_grey_pass_uribl_hit
+
+   !	summary.c/h, cmdMail, cmdRcpt: changed call signature for
+   	summarySender and summaryRecipient to take an arbitrary string
+   	for the mail addressin the event that parsePath fails.
+
+   +	Added SPF helo and mail policies fail-tag and softfail-tag.
+   	NOTE that fail-tag and softfail-tag will by-pass grey-listing
+   	and other filters, that might otherwise reject a message.
+
+   - 	cmdRcpt: Removed from filter_rcpt_table switch the setting of
+
+		RCPT_SET(sess, RCPT_IS_WHITE);
+	   	rcpt->isWhiteListed = 1;
+
+	which sets message and per-recipient white flags should any of
+	the filters return SMTPF_ACCEPT.
+
+   !	uriblHeaders: 71 or .72 broke URI content parsing when uri-bl-
+	headers option was changed from a boolean scan all headers to a
+	header list. The ctx->mime state wasn't setup correctly when
+	uri-bl-headers list was empty.
+
+--2.1.72--
+
+   !	timeLimitRcpt: enhanced the time limit recipient format to allow
+   	for a non-numeric information token:
+
+   	The time limit specifier starts with marker delimiter followed
+	by optional non-numeric informational token followed by 4 to 12
+	decimal digit time specifier.
+
+	    /(.)([^0-9]*)([0-9]{4,12})/
+
+	    \1	delimiter from set of allowed time-limit-delimiters
+	    \2	optional non-numeric informational token
+	    \3	time specifier: YYYY[MM[DD[hh[mm]]]]
+
+	Examples:
+
+		achowe$zorch20091231@snert.com
+		$listname2010achowe@snert.com
+		first_name$200812061430.last_name@some.domain
+
+	Since the time limit specifier has a well defined structure, it
+	can appear any where in the local-part of a mail address and is
+	removed before forwarding the recipient to the forward host.
+
+   !	timeLimitRcpt: fixed reporting of RCPT address in reject message.
+
+   !	Updated message numbers to recently added new messages.
+
+   !	Updated time-limit-delimiters usage text.
+
+  !!	routeIsMember: Added NULL guard for value.
+
+   !	examples/Makefile.in: fixed route.sq3 update rules. Changes in
+   	.71 from inferred rules to implicit broke this.
+
+   !	cacheCommand: CACHE GET human readable timestamps were referring
+   	to the wrong variable new_row, instead of the fetched old_row.
+
+   +	Added rfc1652-8bitmime option. This option implements pass-
+	through support only. It will not do 8bit to 7bit conversion
+	when forwarding a message.
+
+   +	stats.c/h, cmdQuit: added quit-after-ehlo and quit-after-helo
+	stats.
+
+--2.1.71--
+
+   !	smtpf.h, server.c, uribl.c: moved msg.uri_count, msg.uri_tested,
+   	client.uri_tested into a Uribl context from the general Session
+   	structure.
+
+   +	rbl.c/h, filter.c: Added dns-bl-headers option to test IP
+	addresses found in select headers against dns-bl.
+
+   +	uribl.c: added uri-bl-ns option to test the NS hosts of PTR and
+   	sender domains againstr uri-bl and uri-dns-bl listsl.
+
+   !	cmdOption: fixed case where a restricted "boolean" option was
+   	incorrectly allowed.
+
+   !	uriCheckIp: removed SMTP 550 5.7.1 response code from messages
+	saved in msg.reject in order to tidy up message presentations.
+
+  !!	rcptFindFirstValid: fixed occasional seg.fault when the first
+  	forward host in the forward list had no valid RCPTs.
+
+  !!	sessionReset, sessionStart, readClientData, forwardDataAtDot:
+	changed handling of msg.eof from signed to unsigned;
+	specifically replacing the use of -1 as an undefined indicator,
+	by simply use zero. The original method could result in a
+	#311 seek error generated by forwardDataAtDot when the headers
+	are not terminate by a CRLF and subsequent content, ie. the
+	headers end with DOT without the CRLF end-of-headers.
+
+   +	uriblTestURI: Added support for body:account@domain.tld.
+
+   !	accessConnect, accessMail, accessRcpt: added support for action
+	word with a message, eg: REJECT:"you wanker" NOTE that this will
+	NOT work with pattern lists.
+
+   +	Added uri-sub-domains, which was previously removed during PDQ
+   	conversion.
+
+   !	Changed uri-bl-ns into ns-bl and added ns-sub-domains.
+
+   !	replyRset: added code to clear delayed message transaction
+   	responses.
+
+   !	statsRouteCopy: make sure to reset route stats to zero after
+   	copying into working structure; bug introduce in 2.1.68.
+
+   !	examples/Makefile.in: changes to allow multiple access source
+   	files.
+
+   !	getReceivedHeader: added support for RFC 3848 "with" clause
+	transmission types ie. with SMTP, with ESMTP, with ESMTPA.
+	SpamAssassin uses this to detect if the message	authenticated
+	when sent, which influencese some rules.
+
+
+--2.1.70--
+
+   *	Requires Libsnert 1.69.17
+
+   !	uribl.c/h, filter.c, smtpf.h: Removed mime object from Messsage
+   	in favour of creating a Uribl context.
+
+   !	uribl.c: converted to using revised URI API which uses the newer
+   	MIME API, which is already used by grey.c, attachment.c, and
+   	digest.c
+
+   +	Added +uri-bl-headers option.
+
+--2.1.69--
+
+   !	uribl.h: activate FILTER_URIBL_CONTENT_SHORTCUT in relation to
+   	changes made in 2.1.67.
+
+  !!	statsCommand: changed STAT output command to multiple columns
+   	showing
+
+   	$row $field=$runtime_counter $runtime_pct; $hourly_counter $hourly_pct; $window_counter $window_pct CRLF
+
+   +	Added stats-http-post, stats-http-user, and stats-http-pass
+	options to HTTP/1.1 POST stats to a collection server using
+	chunked data transfer.
+
+   !	serverInit: assert run-pid-file ownership so that the process
+   	can later delete it after having dropped privelages.
+
+  !!	statsFini: fixed mutex locking given changes to statsSave in
+	2.1.68.
+
+  !!	statsLoad: appears to have never worked correctly to reload
+	previously saved hourly stats.
+
+   +	lickey.c: added optional http-realm, http-user and, http-pass
+	fields to license key.
+
+   !	cacheInit, serverInit: moved gc thread startup from cacheInit
+   	into cacheGcStart, which can then be called after the lickey
+   	has been loaded.
+
+--2.1.68--
+
+   !	stats.c: change statsSave to minimise stats mutex lock time by
+	locking mutex, make working copies of stats, unlock mutex, then
+	use the working copies to update the stats database.
+
+   !	stmpf.h: removed TIMER_ macros in favour of libsnert's timer.h.
+
+--2.1.67--
+
+   !	filter_dot_table: digestDot should not be called when
+   	FILTER_DIGEST_CONTENT_SHORTCUT is defined.
+
+   !	dupmsgContent, dupmsgDot: changes to take advantage of the
+	replyContent and replyDot filter table short-circuit.
+
+   !	emewContent, emewDot: changes to take advantage of the
+	replyContent and replyDot filter table short-circuit.
+
+   !	uriblCheckUri, uriblDot: changes to take advantage of the
+	replyContent and replyDot filter table short-circuit.
+
+   !	cmdData, readClientData: added some verb +data logging of filter
+   	table results.
+
+   !	filter_content_table, filter_dot_table: moved saveContent and
+   	saveDot ahead of replyContent and replyDot which might return
+   	SMTPF_REJECT.
+
+   -	uribl.c: removed old DNS client code now that PDQ is working.
+
+   !	accessDot, cmdData: fixed handling of TAG so as not to miss
+	those handlers that follow accessDot.
+
+   !	replyData: do not delete replies marked with SMTPF_SESSION
+	between MAIL transactions. This allows delayed session level
+	rejections to be applied to multiple MAIL transactions.
+
+--2.1.66--
+
+   +	Added clamd-scan-all option. When disabled, only scan messages
+   	with attachments.
+
+   !	avastd.c, fpscand.c, savdid.c: as an optimisation, only scan
+   	messages with attachments.
+
+   !	Replaced EMEW with EMEW2 which adds the sender's address to the
+	EMEW tag so that it can be used to select an EMEW password from
+	the access-map. The new EMEW format is:
+
+   	EMEW,ttttttmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm,original_sender,original_msg_id
+
+   	For migratation purposes the original EMEW is still validated.
+
+   +	access.c, reply.c, save.c, smtpf.h: Added access map TAG action.
+	Instead of rejecting a message for policy reasons, simply tag
+	the subject header and by-pass the remaining tests.
+
+   !	statsRoute: disable route updates when stats-map is disabled.
+
+   +	Added SMTP cache manipulation commands:
+
+   		CACHE GET key
+   		CACHE PUT key value
+   		CACHE DELETE key
+
+   +	cache_gc_thread, stats.c/h: Added high and current load
+   	average stats.
+
+--2.1.65--
+
+   *	Requires Libsnert 1.69.12
+
+   !	digest.c: minor change in doing digest DNS lookups.
+
+   !	cache.c, filter.c, server.c, smtpf.c: Adjusted serveral
+	TIMER_START() macros so that they are protected by guards. This
+	in an effort to reduce suspected excessive calls to time or
+	clock_gettime functions that might impact performance.
+
+   !	digestDot: fixed bug WRT digestMimePartFinish acting on a NULL
+   	pointer.
+
+   !	readClientData: moved sess->last_mark = time(NULL) outside the
+   	data read loop.
+
+   !	sessionProcess: moved sess->last_mark = time(NULL) to just before
+   	the SMTP command function is called.
+
+--2.1.64--
+
+   +	Added digest-bl option.
+
+  !!	uriblDot: added missing format string argument for "rejected content"
+  	message.
+
+--2.1.63--
+
+   !	Changed all instances of
+   		__FILE__, __LINE__
+   	with
+   		__FILE__, (unsigned long) __LINE__
+
+   !	mailTestMail: count of client-is-mx stat now happens at time
+   	CLIENT_IS_MX is set. Lost in switch to PDQ.
+
+   !	uribl.c: fixed session based rejections for PTR, HELO, NS by
+   	adding SMTPF_SESSION.
+
+   !	uribl.c: fixed reject message formatting. The session based
+   	rejects were confusing to read, eg:
+
+   	550-5.7.1 rejected client blah.blah.com [192.0.2.78], 550 5.7.1 black
+   	listed URL domain blah.com by multi.surbl.org #762 (k9MBQl031184173400)
+   	#790 (k9MBQl031184173400)
+
+   	They now look like:
+
+   	550-5.7.1 rejected client blah.blah.com [192.0.2.78], black
+   	listed URL domain blah.com by multi.surbl.org #762 #790 (k9MBQl031184173400)
+
+   	The double message ID number is intend. The first is the actuall
+   	internal test and the second the wrapper message.
+
+  !!	sessionProcess: fix command loop handling of delayed errors
+	specifically those for pipelining vs. other delayed errors. If a
+	delayed error was present and we were in the RCPT state and have
+	just received the DATA command, then the DATA command would be
+	rejected with the delayed error before actually reaching
+	cmdData. This check in the command loop is ignore if we are in
+	transit to the delay state.
+
+--2.1.62--
+
+   +	Added access-map actions IREJECT for use with connect:, from:,
+   	and connect:from: tags. IREJECT rejects immediately, instead
+   	of deferring until the recipient state.
+
+   !	click.c: Added CLIENT_IS_BLACK, MAIL_IS_BLACK, and RCPT_IS_BLACK
+	to the click message exception list. This fixes a minor bug
+	where access-map REJECT entries shouldn't issue a click message.
+	However, the current implementation has the affect of disabling
+	the click message for DNS BL hosts, which is unclear whether
+	that is desired.
+
+   +	Added time limited recipient addresses.
+
+   +	Added spamd-connect-error stat.
+
+   !	Fixed spamd-*-header options added in 2.1.53.
+
+--2.1.61--
+
+   !	dupmsgHeaders: fixed extraction of original Message-ID; make
+   	sure to trim comments and other junk following the closing
+   	angle-bracket (>).
+
+   !	attachment: rename deny-zip-name stat to deny-compressed-name.
+
+   !	config.h.in.in: removed _NAME from the WORK_DIR macro definition.
+
+--2.1.60--
+
+   +	Added uri-cite-list option.
+
+   +	attachment.c: added file name scanning in .rar attachments.
+
+   !	renamed deny-zip-name to deny-compressed-name.
+
+   !	summary.c: fixed flags to account for MSG_TAG and CLIENT_IS_TAG.
+
+--2.1.59--
+
+   !	spamd2.c, smtpf.c: Moved code to find first valid RCPT into
+   	a general function.
+
+   !	dupmsg.c: changed dupmsg: key from dupmsg:$msgid to
+   	dupmsg:$msgid,$1st_rcpt. This addresses an issue with mailing
+   	lists that split the recipient list into individual messages
+   	all containing the same message ID.
+
+   !	configure.in: attachment module enabled by default
+
+--2.1.58--
+
+   !	attachment.c: corrected and enable file name scanning in .zip
+	attachments.
+
+   +	Added trap-dir option. By default it is the same as the save-dir,
+   	but trapped files are also renamed to $trap-dir/$msg-id.trap.
+
+   -	cmd.c, config.h.in.in: Removed old ENABLE_IMMEDIATE_250_AT_DOT
+   	code blocks (first attempst to the dupmsg problem eventually solved
+   	by dumsg.c code).
+
+--2.1.57--
+
+   *	Requires Libsnert 1.69.8
+
+   +	Add SAVE (and deliver) and TRAP (and discard) actions for
+	access-map. smtpf.h, access.c, save.c.
+
+   !	spamd2.c: spam_user could seg. fault if the first forward domain
+   	actually was an empty list.
+
+   +	Added verb valgrind for linux.
+
+   !	Fix handling of DISCARD in accessData.
+
+   !	Fixed accessPattern. Should return SMDB_ACCESS_NOT_FOUND when no
+	pattern matches and no default given. Not SMDB_ACCESS_UNKNOWN,
+	which implies a default or pattern matched, but the action is
+	not known.
+
+   !	replySet: fixed illegal access to a reply code after having
+   	freed the reply. This was a regression from 2.1.3 that probably
+   	appeared in 2.1.50 with changes for Pivitol. Reported by valgrind.
+
+   !	attachment.c: added initial support for scanning file names in
+   	a .zip file attachment. Currently disabled and untested.
+
+--2.1.56--
+
+   *	Requires Libsnert 1.69.7
+
+   +	access.c, filterRun: Added TEMPFAIL access action.
+
+   +	Added deny-content master switch option.
+
+   !	Fixed regression WRT pipelining from localhost. This occured
+   	in 2.1.54 when the pipelining rejection and stats handling was
+   	rewroted.
+
+   !	Added ; to the delimiter list for grey-key.
+
+--2.1.55--
+
+   +	Added support for Sophos AV daemon savdid.
+
+   !	filter.c: Fixed missing handlers for Avast!
+
+   !	avastd.c, clamd.c, fpscand.c, savdid.c: set MSG_POLICY for infected
+   	messages to avoid adding a Click message.
+
+--2.1.54--
+
+   -	Removed client-pipilining-reject stat. It was a multi-hit counter
+	given its placement in the code and thus confusing. The client-
+	pipilining-seen is more accurate stat.
+
+   !	smtpf.c: Moved pipelining reject message from the SMTP command
+	loop to writeClient where the CLIENT_PIPELINING flag is raised.
+
+   !	sessionProcess: if -smtp-delay-checks, then rejections due to
+	pipelining failed to be reported immediately before processing
+	the next SMTP command. Added a check in the SMTP command loop
+	for early replies.
+
+   !	replyQuery: when both immediate and delayed responses are NULL
+   	then this function incorrectly returned SMTPF_DROP instead of
+   	SMTPF_CONTINUE.
+
+   -	Old greetPauseConnect, commandPause code, and the --enable-
+	pipelining-test compile time option removed. The newer pipelining
+	code has been working well for several months.
+
+   !	lickey.c: fixed command line option and argument offset problems
+   	that prevented lickey from finding the license key file argument
+   	to load.
+
+--2.1.53--
+
+   !	Added addtional MIME types to deny-content-type option.
+
+   !	filter_dot_table, greyContent, attachmentContent, uriblContent:
+	Added content handler shortcuts. greyContent was already done,
+	but have added a macro FILTER_*_CONTENT_SHORTCUT as with the
+	others cases.
+
+   !	smtpf.h, clickReplyLog, attachmentDot, summary.c: added
+	MSG_POLICY flag to allow clickReplyLog to skip appending click
+	links for auto white list base policy based rejects ie.
+	undesirable attachments type.
+
+   +	Added options to rename or disable mail headers X-smtpf-report,
+   	X-p0f-report, X-Spam-Flag, X-Spam-Level, X-Spam-Status,
+   	X-Spam-Report, and X-Grey-Report.
+
+   !	checkClientIP: when PDQ is enabled, remember CLIENT_NO_PTR_ERROR
+   	if there was a DNS error and return 4xy error.
+
+   !	cmdRcpt, clickReplyLog, smtpf.h: added a RCPT_FAILED to flag
+   	operational failures like unknown recipient in order avoid adding
+   	a click message in some instances.
+
+--2.1.52--
+
+   +	Added experimental deny-content-name and deny-content-type options.
+
+  !!	smtpf.h, cmdRcpt, emewHeader, summary.c: EMEW must only be
+	applied to outbound mail. Applying EMEW to inbound mail can
+	cause message threading issues with some MLM that record
+	Message-ID.
+
+	Consider inbound mail from MLM and a subsequent outbound reply;
+	if the inbound Message-ID is changed, then the References and/or
+	In-Reply-To header on the outbound reply will refer to the EMEW
+	modified Message-ID, not the original inbound Message-ID and so
+	confuse some MLM (like MailMan).
+
+	Mail sent to the queue route (relay, AUTH, unqualified sender)
+	are considered outbound for the purposes of EMEW. Added a
+	MSG_QUEUE flag that is set when routeQueue returns true.
+
+--2.1.51--
+
+   !	smtpf.c: fixed smtpGetReplyCodes to handle multiline SMTP formatted
+   	replies, eg. "220-2.0.0 host.tld ESMTP ready"
+
+   +	Added call-back-strict-greeting which verifies a FQDN is the first
+   	word of the 220 response in a call-back.
+
+   +	Added call-back-uri-greeting which tests the FQDN hostname from
+   	the 220 response during a call-back.
+
+   !	clickReplyLog: exclude CLIENT_IS_GREY|CLIENT_IS_WHITE, MSG_DISCARD,
+   	MAIL_IS_WHITE, and RCPT_IS_WHITE from getting click links appended
+   	to any rejection message.
+
+   !	cmdMail, cmdRcpt: CLIENT_USUAL_SUSPECTS and CLIENT_HAS_AUTH are
+	excluded from rfc2821-extra-spaces, though the flag is still set.
+
+   !	reply.h: Fixed corrupted "verb" output due to a missing parameter
+   	in the REPLY_CONST macro caused by changes in 2.1.50.
+
+--2.1.50-- (Pivitol Veracity)
+
+   *	Libsnert 1.69.1
+
+   !	summaryHeaders: remove any previous instance of X-smtpf-report header
+   	found in an incoming message.
+
+   +	Added lint option. Added SMTPF_SESSION flag to denote session replies
+   	vs. per-message replies. See ENABLE_LINT sections.
+
+   !	reply.c/h: reworked replyMsg, replyFmtV, replyAppendFmt; added
+   	replyFree; removed replyAppendMsg. All this so that Reply objects
+   	can be in a linked list and still allow the string to grow.
+
+   !	smtp-disconnect-after-dot now defaults to off. Might eventually go
+   	away.
+
+   !	Added Content-Type: text/plain to DSN messages.
+
+--2.1.3-- AKA 2.0.79
+
+   *	Required libsnert 1.69.2 for critical KVM fix.
+
+--2.1.2-- AKA 2.0.78
+
+   *	Required libsnert 1.69.1 for critical SPF fix.
+
+--2.1.1-- AKA 2.0.77
+
+   *	Required libsnert 1.69.0
+
+  !!	Fixed seg. fault in pdq. See libsnert change notes.
+
+   !	Number of all replies and log messages now locked in for
+   	documentation
+
+  !!	smtpGetReplyCodes, cmdRcpt, writeReplyLog: fixed bug where an SMTP
+  	reply without extended reply codes would cause addition of multiline
+  	reject text to generate garbage output.
+
+--2.0.76-- AKA 2.1.0
+
+   +	Added MSG_DISCARD flag for log summary.
+
+   +	Added MAIL_IS_BLACK, MAIL_IS_WHITE, MAIL_HAS_EXTRA_SPACES and
+   	RCPT_IS_BLACK, RCPT_IS_WHITE, RCPT_HAS_EXTRA_SPACES flags.
+
+   +	Added X-smtpf-Report: header that reports client, mail, and rcpt
+   	flags per message.
+
+   !	interfaceCreate, sessionAccept, getReceivedHeader, p0fHeaders:
+	disabled the determination of the interface address during
+	serverInit, since a dual IPv6/IPv4 network stack will have two
+	addresses. Instead the local address of a connection is
+	determined at time the client connects, which insures that the
+	correct interface address is reported.
+
+   !	lickeyInit: added hints when using getaddrinfo.
+
+   !	p0fConnect: fix IPv4 only guard; on a dual IPv6/IPv4 network
+   	stack, all IPv4 addresses will be mapped into the IPv6 family,
+   	therefore a different test is required.
+
+   !	p0fConnect: take the source address from the sess->client.ipv6
+   	structure instead of the sess->client.socket->address.in.sin_addr
+   	which varies depending on the network stack.
+
+   !	sessionStart, sessionReset: clear the mail_flags and rcpt_flags.
+
+   !	Misunderstood how sqlite_soft_heap_limit functions, increased
+   	limit from 64K to 32MB.
+
+   !	statsCommand: added sqlite-memory and sqlite-high-memory information
+   	lines for diagnositics.
+
+   +	Added smtp-auth-enable option. Requested by Quentin Campbell.
+
+   !	configure.in: PDQ API is now enabled by default.
+
+   !	configure.in: pipeline-test replacement enabled by default.
+
+   !	examples/Makefile: fixed route-to-mailer coversion rule.
+
+--2.0.75--
+
+   *	Requires libsnert 1.68.971.
+
+   !	smtpf.h: when --disabled-cli is specified, then cliFdCloseOnExec
+   	is no longer a noop, but sets a file descriptor to FD_CLOEXEC
+   	without the cli_mutex. It is unclear whether this mutex is
+   	required and may be causing problems with --enable-cli.
+
+   !	server.c, cli.c: switch from fcntl of FD_CLOEXEC to fileSetCloseOnExec
+   	in order to maintain other flags.
+
+   +	Added SQLite calls sqlite3_soft_heap_limit(64 * 1024) and
+   	sqlite3_enable_shared_cache(1).
+
+   !	Enable SIGPROF so that profiling can be done.
+
+   +	EXPERIMENTAL added -slow-quit command. Intended to provide cleaner
+   	quit, especially when debugging with valgrind when we really want
+   	each thread to exit cleanly and cleanup.
+
+   !	When server-max-thread=0 then change the setting internally to be
+   	LONG_MAX.
+
+   !	avastd.c: fixed avastd-socket usage text to refer to avastd, not
+   	clamd.
+
+   !	clickMakeHash fixed to use the time62 encoding in place of the
+   	binary time_t timestamp. Similar problem to the EMEW timestamps.
+   	See 2.0.68 for dicussion of the EMEW timestamp problem.
+
+   !	saveHeaders: disable chownByName of .msg files. The files should
+   	inherit the smtpf process owner and group without having to do it
+   	explicitly.
+
+--2.0.74--
+
+   !	sessionAccept: added flag to socketAddressGetIPv6 to normalise
+	the IPv4-mapped-IPv6 to IPv4-compatible-IPv6 so that address
+	comparisons work, eg. an IPv4 connection via an IPv6 network
+	stack will return ::ffff:192.0.2.1 address, while PDQ/DNS
+	queries will return ::192.0.2.1. This impacts CLIENT_IS_FORGED
+	test and others. Reported by LastSpam.
+
+--2.0.73--
+
+   !	smtpf.h, access.c, route.c: changed when access_map and
+	route_map are opened. Instead of per connection, it is done per
+	thread. This reduces the number times the databases are opened
+	and closed, since a single serverChild thread can handle
+	multiple connections.
+
+   !	sessionAccept: cliFdCloseOnExec is mutex protected, but might be
+   	redundent and a source lock contention that could be slowing down
+   	new connections. Have opted to use the direct fcntl call instead.
+
+   !	./configure.in: SIQ support now disabled by default due to lack
+   	of supporting services.
+
+   !	mailTestsMail: when -mail-require-mx, an rejection could occur
+   	when the MX list is empty after pruning. Reported by Mike
+   	Bacher.
+
+  !!	filter.c, spamd2.c: Fixed potential memory and file descriptor
+	leak. If during readClientData there is an IO error, then the
+	longjmp on error would by pass the spamd connection clean up
+	code in spamdDot. Have added a spamdRset handler.
+
+   !	spamd_open: fixed potential memory leak if there was a defined
+   	spamd: user record and the socketOpenClient failed.
+
+   !	server.c: when using PDQ, open the PDQ socket once per thread
+   	instead of once per connection.
+
+   !	server.c: moved socketSetLinger of client socket from
+	sessionFinsih to sessionCreate in an effort to eliminate sockest
+	in LAST_ACK state.
+
+   !	serverChild: moved serverCheckThreadPool out of accept_mutex block
+   	to just before sessionStart call. Thread creation while the
+   	accept_mutex is locked could cause a pile up of connections
+   	in the kernel's queue for the socket.
+
+   !	serverChild: do not terminate thread if errno equals ECONNABORTED.
+   	This could inadvertantly terminate threads that are still useful
+   	for high volume systems and thus cause more thread spawning than
+   	necessary.
+
+   !	smtpf.h: changed keepAlive to a noop; in particular this could
+	be called thousands of times in uriblContent while looking for
+	URI.
+
+   !	serverInit, statsInit: statsInit must be called before
+	cacheInit, otherwise there can occur a race condition between
+	statsInit using a buffer to hold the journal file name it wants
+	to chown and the same buffer being used by the initial GC run to
+	hold the stat field names.
+
+   !	getReceivedHeader, p0fHeaders: replaced reference to this_ip to be
+   	sess->iface->addr.
+
+   !	Added Valgrind's client request headers to the source manifest for
+   	additional debugging on Linux.
+
+   !	smtpf.h: Added MEMSET macro for debugging. Valgrind complains about
+   	uninitialised bytes with respect to data (packet) sent by mccPutRow.
+
+--2.0.72--
+
+   !	route.c, serverInit: make a similar change as done for access.c
+   	to open the route-map for each thread instead of having a global.
+
+   +	Added route:local to replace route:127.0.0.1 and route:::1 as a
+	more clearly understood. The older variants are still supported
+	for backwards compatibility.
+
+--2.0.71--
+
+   !	statsSetHighWater, server.c, smtpf.c, rate.c: added extra
+	boolean argument to enable logging. Only high connections and
+	high session time are logged. High connections per second and
+	high connections per minute are too verbose and so are not
+	logged.
+
+   !	Added experimental server.thread_stop_cv as a means to synchronise
+   	termination of threads at program exit.
+
+   !	unix.c: fixed signalKillAll to avoid sig. fault after a thread
+	has been removed from the session list.
+
+   !	unix.c: signalKillAll use pthread_cancel instead of pthread_kill.
+
+   !	interfaceCreate: set the server listener socket to non-blocking.
+
+   	Consider the situation where the listener socket is blocking. In
+	serverChild the socketTimeouts call returns true indicating that
+	one or more listening sockets has a connection waiting to be
+	accepted, but before we get to socketAccept, that waiting
+	connection goes away, in which case socketAccept could end up
+	blocking until a new connection arrives.
+
+   !	statsSave: disable sync of stats db. Leave SQLite to handle it.
+
+   !	route.c, serverInit: make a similar change as done for access.c
+   	to open the route-map for each thread instead of having a global.
+
+--2.0.70--
+
+   +	smtpf.h: Added TIMER_* macros as portable way of computing elapsed
+   	times.
+
+   !	mutex_lock, mutex_trylock, mutex_unlock: replace #ifdef code for
+   	computing elapsed time with TIMER_ macros.
+
+   !	filter.c/h: changed the filter tables from array of pointers to
+   	be an array of structures that contain the function pointer and
+   	function name. Added a new verbose flag "timers" to log filter
+   	handlers that take more than zero seconds to complete.
+
+   +	sessionProcess: add TIMER_ macros to compute elapsed time from
+	start of sessionProcess upto but not including the
+	filter_connect_table handlers.
+
+   !	mailTestsMail: skip MX related tests for domains we route, because
+   	of split DNS configurations.
+
+   !	access.c, spamd_user: moved access_map from a global to be a
+	filter context variable that is opened on a per-thred bais. By
+	doing this we can forego the need to mutex protext access_map,
+	which appears to be a bottle next on high volume machines. SQLite
+	is thread safe in this context. *** NOTE this will only work
+	with sql! and socketmap! methods now. The text! method cannot be
+	used in it's current form. *** NOTE also that this will use at
+	least one extra file descriptor per thread. ***
+
+--2.0.69--
+
+   !	server.c, cmdConn, cmdKill, signalKillAll: server.threads_mutex
+	replaced by server.connections_mutex instead and moved the
+	server.threads counting from sessionCreate to sessionStart where
+	new threads are actually created. This should remove a potential
+	race condition that causes a spike in thread creation and denial
+	of service scenario as connections are accepted, but never acted
+	on because new threads are constantly being created.
+
+   !	serverStart, serverChild: moved the thread creation code into a
+	new function serverCheckThreadPool. This function will lock
+	server.connections_mutex, increment server.connections, update
+	high water marks, create any new threads, and unlock the mutex.
+	The code in sessionStart that previously did this was removed.
+	serverCheckThreadPool is now called just before sessionAccept
+	while the thread still has the server.accept_mutex lock; this
+	will prevent newly spawned threads from accepting new
+	connections until all the thread creation work has been
+	completed. This deals with a second (same) race conditon not
+	completely resolved by the previous attempt to address this.
+
+   !	routeAdd: ignore smtp-strict-relay when the message sender is
+   	the null sender address.
+
+   !	cmdData: re-enabled disconnect-after-dot code and added an option
+   	smtp-disconnect-after-dot and white list bypasses.
+
+   !	writeClient: fixed potential seg.fault for writing off the end
+   	of the peek buffer.
+
+   +	Added a server-max-threads to control upper limits.
+
+   !	rate-throtle: increased default from 10 to 20.
+
+   -	Removed test-case option since the development of a test suite
+   	appears no longer possible.
+
+   !	stats.c, rate.c, smtpf.c, server.c: added statsSetHighWater to
+   	replace common code.
+
+   +	rate.c: Added rolling connections_per_minute variable and stats.
+
+   !	serverChild: altered the surplus thread termination logic. There
+	are two places that kill surplus threads, just before and just
+	after session processing. The leading check, previously only
+	killed threads when there was a socket accept error, excluding
+	ETIMEDOUT. The trailing check killed surplus threads when the
+	number of threads fell below half the value of server-new-threads.
+
+	Now the leading check will kill a thread on any error, typically
+	ETIMEDOUT or more seriously EMFILE. In the case of ETIMEDOUT
+	this removes surplus when idle. The trailing check now removes
+	surplus that exceeds the value of server.connections plus
+	server-new-threads. This will typically maintain at least a
+	surplus of server-min-threads plus server-new-threads. If the
+	system is idle, the surplus will slowly die off. If the system
+	is busy, there are ready threads to pick up new connections.
+
+--2.0.68--
+
+   !	cacheInit: fixed small memory leak concerning mccStartUnicast.
+   	Reported by valgrind.
+
+   !	emew.c: changed emewSet and emewIsValid to use the time62 encoding
+   	in place of the binary time_t timestamp.
+
+	The time_t type can be signed or unsigend 32 or 64-bits long.
+	Newer systems appear to be moving towards signed 64-bit. This
+	can cause problems when trying to compare EMEW strings generated
+	by a system using a time_t with a different size.
+
+	To resolve this, we now use the ASCII encoded 62-year cycle of
+	the timestamp. For our purposes that is more than sufficient
+	resolution and portable.
+
+	This change will invalidate all previously EMEW generated by the
+	system with the previous version. During the next emew-ttl
+	seconds, it is recommended to set emew-policy=none to avoid
+	rejecting any useful DSN/MDN. The alternative is to just reject
+	possibly valid DSN/MDN carrying an older EMEW version.
+
+   !	cmdLickey: do not dump the license unless connected from localhost.
+   	Lickey check though still done.
+
+   !	serverChild: removed pthread_cancel related code.
+
+   !	serverChild: The pthread_cleanup_push and pthread_cleanup_pop code
+   	was not being compiled in due to mistyped HAVE_ macro used.
+
+--2.0.67--
+
+   !	forwardCommand: Removed SMTP_DOT_TIMEOUT_MARGIN. Fixed issue
+	with time_taken not being correctly updated to reflect how much
+	time was taken by _all_ forward hosts involved.
+
+   !	Increased smtp-dot-timeout used in forward host connections from
+	RFC 2821 minimum of 10 minutes to 30 minutes. As reminded me by
+	Quentin Cambell, both the RFC and the Sendmail Bat book 3e note
+	that a spurious timeout while processing final dot could result
+	in duplicate message delivery attempts. Sendmail's default is
+	one hour, which I think excessive and given we've had some
+	issues with duplicate messages already, increasing this value
+	may help. Certainly if the connected client times out earlier
+	than smtpf, there is not much we can do about it.
+
+   !	dupmsg.c: when +dupmsg-track-all and +grey-content are used
+	together, we have to avoid recording the Message-ID until after
+	the grey-list period, otherwise we inadvertly reject the
+	message. This situation could occur from other temporary
+	failures at dot, so +dupmsg-track-all now only records the
+	Message-ID after successfully received messages.
+
+   !	*.c,*.h: Rename "Interface" structure to BoundIp and "interface"
+	member to "iface" due to Windows PSDK name space pollution.
+
+   !	lickeyInit: socketAddressFormatIp and formatIP return values are
+   	now tested. On Windows, getaddrinfo will return IPX protocols
+   	too and these need to be ignored.
+
+   +	Added cache-multicast-ttl value to be applied to broadcast packets.
+
+--2.0.66--
+
+   *	Requires libsnert 1.68.966
+
+  !!	Combine IPv4 & IPv6 support has problems. Have reimplemented how
+	multiple "interfaces" can be supported; binds to both ::0 and
+	0.0.0.0 (or specific IPs and ports), then multiplex incoming
+	connections. interface-ip= and interface-name= options replaced
+	by interfaces= option list.
+
+   !	server.c: moved where the high-connections stat was counted from
+	sessionCreate to sessionStart where connection_mutex is applied.
+	This should improve accuracy.
+
+   !	sessionProcess: if ntpd makes a radical enough time shift, then
+	the elapse time could actually be negative, but as unsigned long
+	a negative number would appear as a very very large number. The
+	only solution is to ignore the session time by assuming zero.
+
+   !	serverInit, cmdLickey, lickey.c: changed how lickeyInit checks
+   	the system's configured IP addresses against the license in order
+   	to handle both IPv4 and IPv6.
+
+   !	lickeyIsValid: now checks the number of CPU (cores) the system
+   	has against the license for both Linux, *BSD, and Windows.
+
+   !	stats.c, cache.c: removed mutex locking from statsSave and
+	statsLoad; instead use statsLock and statsUnlock around
+	statsSave, especially in _atExitCleanUp and cache_gc_thread to
+	avoid a deadlock on exit, espcially during initialisation.
+
+   !	rbl.c: dnsListLookup will check for IPv4, IPv4-compatible-IPv6,
+	and IPv4-mapped-IPv6 address and convert them into IPv4 dot
+	notation before doing a DNS BL lookup as almost all DNS BL
+	currently do not support IPv6 lookups.
+
+	[11:46:23] Steve Freegard says: echo 1 > /proc/sys/net/ipv6/bindv6only
+
+  !!	serverAccept, rbl.c: undid the above change in favour of
+	changing the session->client.addr to hold the IPv4 dot notation
+	for IPv4-compatible-IPv6 and IPv4-mapped-IPv6 address to
+	address backwards compatibilty with acces-map, DNS BL, and
+	ip-in-ptr tests.
+
+   !	ipInPtr: fixed broken CLIENT_IS_SET test that was altered in
+   	2.0.64
+
+   !	lickeySendWarning: The lickey: record cached didn't have it's
+   	touch time set. Changed the touch argument of mccPutRowLocal.
+
+--2.0.65--
+
+   !	lickey.c: fix compile on unix, freeThreadData is a stub / macro
+   	on unix.
+
+--2.0.64--
+
+   !	misc.c: changed pairs of CLIENT_ANY_SET && CLIENT_NOT_SET to
+   	a single CLIENT_IS_SET test.
+
+   !	smtpf.c: when --enable-pipeline-test, added pipeline: OK access
+   	map lookup that sets CLIENT_PIPELINE_OK.
+
+   !	smtpf.h: when --enable-pipeline-test, CLIENT_GREET_PAUSE and
+   	CLIENT_COMMAND_PAUSE either disabled or replaced by new flags
+
+   +	Added dns-round-robin option for pdqSetRoundRobin.
+
+   +	Added test-pause-after-dot.
+
+   +	dupmsg.c: Added verb dupmsg and more debug logging.
+
+
+--2.0.63--
+
+   !	rbl.c: dnsListIsListed changed due to some changes previously
+   	made to PDQ to return all additional records received from a
+   	lookup. dnsListIsListed needed to distinguish between A and
+   	NS records.
+
+   -	uri-sub-domains is not supported with --enable-pdq.
+
+   !	windows.c: fixed output of +help to go to standard output or
+   	a file. Don't need console window any more.
+
+   +	Added show CLI tool from libsnert, primarily for Windows.
+
+   !	uribl.c: with --enable-pdq, the new code failed to check only
+   	the registered 2nd level domain.
+
+   !	statsRegister0: fixed reset of stats_table_indices.
+
+   !	smtpf.h, cmd.c, stats.c: Mingw uses the Microsoft C libarary
+   	strftime which has a broken %z that returns some Microsoft
+   	time zone name string. In order to create RFC 2821 date-time
+   	strings, you have to leave off the %z format, fetch the
+   	time zone bias, and append the string manually. Have moved
+   	all this into getRFC2821DateTime function.
+
+   !	saveRset: fixed +save-data, which was removing the file
+   	regardless of the option's setting.
+
+   !	saveRset, avastdOptn, clamdOptn, fpscandOptn, spamdOptn: fixed
+   	logic bug concerning save-data. If the configuration has -save-data
+   	and one of AV or spamd are being used then save-data was auto-set
+   	internally, however we still want to remove .msg files unless
+   	the configuration or OPTN explicitly set +save-data.
+
+   !	spamdDot, saveHeaders, forwardDataAtDot, greyHeaders: fopen of
+   	the .msg file needs wb and rb in order to retain CRLF on
+   	Windows.
+
+   !	unix.c, windows.c, serverInit: moved setting of atExitCleanUp
+   	handler from unix.c:main to serverInit. Defined a windows
+   	version of atExitCleanUp.
+
+   !	grey.c: fixed code to only add one X-Grey-Report per grey key
+   	per message.
+
+   !	windows.c, cache_gc_thread, sessionFree, license_control: added
+   	a strerror replacement for Windows that can format GetLastError
+   	values and is thread safe by using thread specific data storage.
+   	***
+   	Must make sure that freeThreadData is called before exiting any
+	thread, else potential memory leaks can occur.
+	***
+
+   !	verboseCommand: replace use of cmdUnknown by cmdOutOfSequence
+   	for consistency with other admin. commands.
+
+   !	cliWritePipe, writeClient: Added ERRNO_EQ_EAGAIN macro to
+	finally deal with possible instances both EAGAIN and EWOULDBLOCK
+	being defined and not equal to each other.
+
+   +	lickey.c: added code to send warning message to client, reseller,
+   	and/or support close to when the license is about to expire.
+
+  !!	server.c, lickey.c, cache.c: fix potential Windows thread handle
+   	leaks. 	*** NOTE avoid the idiom
+
+		pthread_detach(pthread_self());
+
+	and instead have the caller of pthread_create do pthread_detach
+	or pthread_join so as to avoid HANDLE leaks. ***
+
+  !!	sessionFree: fixed Windows per thread event HANDLE leak.
+
+  !!	greyGc, cacheGc, filterRun: fixed segfault when tracing.
+
+  !!	serverChild: socketHasInput, when using select(), could result
+   	in errno being set to 0 and thus incorrectly terminate threads
+   	treating it as an IO error. This could result in excess threads
+   	being incorrectly terminated and blocking new connections from
+   	being accepted.
+
+  !!	serverChild, serverOptn: fix bug when server-new-threads is 1,
+	no new connections would be accepted once the server-min-threads
+	were active. Fixed by imposing a minimum setting of 2.
+
+  !!	serverOptn: server-min-threads imposes minimum value of 1 now.
+
+   +	configure.in, installer.nsi.in: added Nullsoft installer script
+   	to build Windows installation .exe.
+
+   +	sessionCreate, rateAccept, sessionProcess now log when a high
+   	water mark start reaches a new high.
+
+   !	configure.in, dupmsg.c: Now enabled by default. Also added a
+   	new stat to count when a message ID is initially cached.
+
+   !	forwardDataAtDot: normal operation, we skip the original message
+   	headers from the .msg file by fseeking to the EOH, before forwarding
+   	the updated set of headers. If the EOH is never seen then the EOH
+   	offset is undefined (-1) and the fseek reports an error. Now we
+   	only fseek if EOH has been set.
+
+  !!	summaryMessage, verbose.c: added a verbose subject flag to control
+  	whether the Subject: header is logged or not.
+
+	/* Paranoid privacy nutters argue that the Subject: header is
+	 * content and therefore cannot be logged.
+	 *
+	 * The opposing view is that the Subject: header is part of
+	 * "envelope" or "traffic data" and serves as a title or form
+	 * of human recognisable message-id, title, or "file name" used
+	 * to identify and sort mail.
+	 *
+	 * The UK's Regulation of Investigatory Powers Act 2000 (RIPA)
+	 *
+	 * http://www.opsi.gov.uk/acts/acts2000/plain/ukpga_20000023_en
+	 *
+	 * Section 2.(5)(b) appears to allow for my claim that Subject:
+	 * header is "traffic data", is part of the "envelope", and
+	 * that the interception of the Subject: is not an offence.
+	 *
+	 * Section 2.(9) defining "traffic data". A Subject: header could
+	 * be viewed a "file name" and many MUA when saving messages will
+	 * default to "$subject.eml" as the file name. It serves as a means
+	 * of reference like a book title and not communication. This is
+	 * re-iterated in 21.(6).
+	 *
+	 * Section 2.(10) also about "traffic data", in particular the
+	 * last line. If headers are part of the "traffic data" and/or
+	 * "envelope", then the Subject: can be considered as having been
+	 * written on the outside of the envelope. While they are referring
+	 * to postal items, I believe it is possible to argue in favour of
+	 * my interpretation.
+	 *
+	 * Section 3.(2) talks about consent. The request by the majority
+	 * of users to filter spam can be taken to be consent, though not
+	 * specifically given by individual users, in the name of public
+	 * good, simplicity, and efficiency I would assume such.
+	 *
+	 * Section 81.(1) "communication" (c) is the closest thing I found
+	 * that might support the view that the "Subject: header is content",
+	 * because it might be seen to impart something between sender and
+	 * recipient. Clearly that conflicts with the view taken with respect
+	 * to 2.(9) where the Subject: is seen like a title or file name.
+	 *
+	 * Currently I'm told there is no case law that address this issue.
+	 */
+
+  	I'm NOT in favour of this as I believe logging the Subject:
+	header is a useful diagnositic tool and does not impinge on
+	privacy.
+
+   !	p0fConnect: do not report "p0f query error" for != RESP_OK *and*
+   	!= RESP_NOMATCH. Reported by Julian Field.
+
+   !	avastd.c, clamd.c, fpscand.c: fixed potential "internal error" issue
+   	when the SCAN file command buffer is exceeded. Now it should report
+   	a proper temporary fail and reponse.
+
+   !	fpscandDot: fixed "internal error"; when the file was not infected
+   	the default value for rc was SMTPF_TEMPFAIL instead of SMTPF_CONTINUE.
+   	Reported by Julian Field.
+
+   !	Renamed client-pipelining stat to client-pipelining-seen and added a
+   	new stats client-pipelining-reject.
+
+--2.0.62--
+
+   !	unix.c: "help=filepath" is now equivalent to "+help >filepath";
+   	this is for compatibility with Windows GUI native version,
+   	which doesn't support IO redirection.
+
+   !	install.sh.in: several changes with respect to installing on
+   	Cygwin platform for testing.
+
+   !	unix.c, windows.c: sessionKillAll renamed signalKillAll, and
+	move into OS dependent section related to signal handling.
+
+   !	windows.c: ServiceStop, HandlerRoutine, signalThread now use
+   	an Event object in an effort to handle program termination
+   	properly.
+
+   !	install.sh.in, config.h.in.in, options.c, save.c: fixed path
+   	of some files and directories under WIndows.
+
+   !	FILTER_CLI is disable under Windows.
+
+   !	windows.c: add socketInit, getMyDetails, and lickey calls to
+   	correspond to unix.c.
+
+   !	routeIsMember: fixed bug where FORWARD or RCPT lists were not
+   	properly matched against the client name or IP. For example:
+
+   	route:192.168.1		FORWARD: 192.168.1.3; RELAY
+
+   	for a connection from 192.168.1.33 would genera a "mail loop"
+   	error, because it thought 192.168.1.33 was a member of the
+   	forward host list.
+
+   !	windows.c, src/makefile: switch from GUI to console app. Doing
+   	so solves process termination semantics to be more unix like,
+   	ie. when main() returns, process exits; when WinMain() returns
+   	it assumed an end to a message dispatch loop which does exist
+   	and behaves wierd.
+
+   !	windows.c: removed console window (AllocConsole) in favour of
+   	having everything go to the process log.
+
+   !	windows.c: with the use of an Event object, ServiceControl no
+   	longer needs to spawn a ServiceStop thread in order to cleaning
+   	signal termination.
+
+--2.0.61--
+
+   *	Requires libsnert 1.68.964
+
+   !	mxConnect, uribl.c: converted to use PDQ API when enabled.
+
+   -	uri-ip-in-ptr is too similar to uri-ip-in-name. Removed as
+   	part of the ENABLE_PDQ code.
+
+   !	noPtr, ipInPtr, heloIsPtr, mailTestsMail, filter.c: fixed logic
+	WRT client-is-mx. Removed logic WRT client-ip-in-ptr and
+	client-required-ptr from mailTestsMail, since this is now handled
+	by filter handlers.
+
+--2.0.60--
+
+   *	Requires libsnert 1.68.961
+
+   !	mailTestsMail, rcptTestsRcpt converted to use PDQ API when
+	enabled.
+
+   +	Added smtp-command-timeout-black to reduce SMTP command
+   	timeouts for blacklisted hosts.
+
+   +	Added forward-helo-*, forward-mail-*, and forward-rcpt-* stats
+   	to more preceisely point to potentional forward host config
+   	issues.
+
+   +	Added missing documentation for tld-level-one-file and
+   	tld-level-two-file.
+
+   !	Added an explicit call to tldInit in serverInit. Previously this
+   	was handled in indexValidNthTLD, but a file I/O or permissions
+   	error could cause a failure once running.
+
+   !	emewDot: Allow by-pass of EMEW rejections for localhost, LAN,
+	RELAY, and white listed hosts. Originally EMEW was excluded from
+	white listing checks. The logic being that a) you need to be
+	able to generate an EMEW for outbound messages and b) if an
+	remote host sends you a bounce, then that bounce must have been
+	generated in response to a message sent from your EMEW enabled
+	host, otherwise it is backscatter; if you white listed that
+	host, then backscatter could bleed through.
+
+--2.0.59--
+
+   *	Requires libsnert 1.68.960
+
+   !	dupmsg.c: reworked to only save messages ID in the event there
+	was an IO error while trying to send a 250 reply to dot. Also
+	added an anti-spam option, dupmsg-track-all, to save all message
+	ID and reject duplicates.
+
+   !	rbl.c: dns-bl, dns-wl, and dns-gl converted to use PDQ API when
+   	--enable-pdq is set.
+
+   !	heloSyntaxHelo: converted to use PDQ API when enabled.
+
+   !	mailTestsMail: fixed memory leaks when using mail-ip-in-ns and
+   	mail-ns-nxdomain.
+
+   !	optionsSort: fixed sorting of "decription only options", ie.
+   	those without an option name. Used the "title" of the description
+   	from in the usage.
+
+   !	EXPERIMENTAL: writeClient, summary.c: Added an alternative
+	pipelining test. After receiving the first response line of a
+	multiline banner or reply, the client might begin to pipeline
+	without having read all the reply lines. This is currently just
+	a CLIENT_PIPELINING flag without any action.
+
+   	This flag could lead to a merge of greet-pause and command-pause
+	into one generalised test, which would remove the need for
+	delays at connect time or between each command. (smtp-slow-reply
+	is sufficient). The purpose of those tests is to detect
+	pipelining.
+
+	Greet-pause and command-pause are leading edge tests. By placing
+	the test trailing edge (after the connection or command) but
+	before the output of each banner or reply line, we can still
+	detect pipelining during a multiline banner or reply. Consider
+	the following cases:
+
+	a) Before first banner line: behaves just like greet-pause.
+
+	b) After first banner line, before last banner line: just like
+	greet-pause.
+
+	c) After banner, before first line of HELO/EHLO reply: catches
+	pipelining before EHLO response with possible PIPELINING token
+	could be known. Equivalent to greet-pause.
+
+	d) After first line of EHLO reply, before last line of reply:
+	catches pipelining if PIPELINING is disabled (-smtp-enable-esmtp
+	and/or consider new option -smtp-pipelining). Equivalent to
+	greet-pause or command-pause.
+
+	e) After any command, after first reply line, before last reply
+	line: behaves like command-pause.
+
+	f) After any command, after single line reply, before first line
+	of next command reply: Equivalent to command-pause.
+
+	This could improve performance throughput without sacrificing
+	pipelining detection, which would be important for high-volume
+	servers. This would remove two access-map lookups and allow the
+	Connect: OK or Connect: CONTENT tag/actions to be used instead.
+
+--2.0.58--
+
+   !	statsRoute: dropped FORWARD attribute requirement. The sender
+   	route need only exist in the route map. The original code in
+   	2.0.55 was testing the "key" and not the "value" for a
+   	FORWARD attribute. Doh!
+
+--2.0.57--
+
+   !	pad.c is now part of the default set of modules and option
+   	rfc2821-pad-reply-octet is no longer experimental.
+
+   !	click.c is now part of the default set of modules and is no
+   	longer experimental.
+
+   !	filter.c, cache.c, grey.c: Added a new filter_cache_gc_table for
+   	handling GC run / expire row events. This makes grey-to-black
+   	changes more modular.
+
+   +	Added new CONTENT action word for use with the Connect: tag.
+	Similar to a local dns-gl. White list as far as, but not
+	including, the content filters.
+
+   !	spamd-score-reject no longer relies on spamd score exceeding
+   	the spamd threshold first. Requested by Jan-Peter Koopmann.
+
+  !!	saveRset: fixed bug in removal of .msg files, which could
+  	cause .msg files to accumlate in the save-dir without end.
+
+   +	Added a VERB +save flag. Currently only displays the save
+   	file name and file permissions.
+
+  !!	saveHeaders: when the .msg file is created, assert the desired
+	file ownership (run-user:run-group), because it appears on
+	OpenBSD and FreeBSD (but not Linux) that creating a new file
+	gets the real group ID instead of the effective group ID. This
+	also means that anti- virus scanners that scan by file path
+	(avastd, fpscnad, and clamd when local) need to be a secondary
+	member of the smtpf run-group in order to read the file. For
+	clamd, also specify "AllowSupplementaryGroups yes".
+
+   !	clamdOptn: changed the behaviour of STREAMing vs. SCANing a file
+	to maintain backwards compatibility with existing installs that
+	used STREAM when it was the only method. Instead of switching to
+	SCAN based on clamd-socket=127.0.0.1, we now use clamd-socket=
+	SCAN which implies 127.0.0.1.
+
+--2.0.56--
+
+   +	Added filter_register_table to be run in main() before options
+   	are loaded in order to register options, verbose words, stat
+   	counters, and contexts.
+
+   !	verb.c: The list of verbose words displayed in in the usage
+   	is now maintained automatically through verboseRegister().
+   	Previously I had to maintain this by hand.
+
+   !	verboseCommand: simplified the VERB command output.
+
+   !	stats.c et al.: Each module now registers their stats from their
+	register handler. Previously I had to maintain this by hand.
+
+   !	options.c et al.: Each module now registers their options from
+	their register handler. Previously I had to maintain this by
+	hand.
+
+   +	Added --enable-pad to enable experimental option for padding
+   	SMTP resposnes, rfc2821-pad-reply-octet
+
+   !	verb +smtp output now includes the input/output lengths.
+
+   +	Added CLIENT_NO_CRLF flag when the SMTP command is not terminated
+   	by CRLF as required RFC 2821.
+
+   +	Added option and stat for rfc2821-command-length, similar to
+   	rfc2821-line-length.
+
+   !	click.c, smtpf.c: moved addPtrSuffix to addPtrOrIpSuffix and made
+   	it a common helper function.
+
+   !	four21.c: replaced the IP-only key with PTR or IP key using
+	addPtrOrIpSuffix.
+
+   !	emewContent: fixed by-pass of content filters for messages bigger
+   	that a single body chunk. Reported by Jan-Peter Koopmann.
+
+   +	install.sh.in: uri CLI tool added to the installed files.
+
+   !	clickMakeHash: now makes sure that "when" timestamp is hashed
+   	as a 32-bit network long (bigendian).
+
+  !!	Fixed argument order for log_internal messages that could case
+  	seg. faults.
+
+   +	Added --enable-immed250 to enable experimental fix for the
+   	"duplicate message problem".
+
+   +	Added --enable-dupmsg to enable a different experimental fix for
+	the "duplicate message problem".
+
+   !	Added --enable-pdq and converted checkClientIP from old Dns API
+   	to the pdq API. The configure option is only in place until the
+   	code is completely tested and migrated through out libsnert and
+   	BarricadeMX.
+
+--2.0.55--
+
+   !	filter.c, filter.h, sendClient: replaced filter_ok_table,
+	filter_reject_table, filter_tempfail_table, with simpler
+	filter_reply_log_table and filter_reply_clean_table that allows
+	for better handling of special logging, actions, and/or altering
+	replies.
+
+   !	click.c, filter.c: changed to use filter_reply_log_table.
+
+   !	sendClient, misc.c, filter.c: moved the smtp-reject-delay code
+   	into smtpReplyLog to use in filter_reply_log_table.
+
+   -	Removed experimental options _auto-bl-on-drop and _auto-bl-tl
+   	as being problematic.
+
+   !	cmdData: remove the strerror(errno) and errno from one of the
+   	"I/O error at DOT" message as errno is zero (0) after the
+   	socketPeekByte call and showing "Success (0)" makes for a
+   	confusing log message.
+
+   !	sendClient, reply.c: added a special "no reply"; intended for
+	use when a command or module actually sends the client a reply
+	directly, but we need a zero length place holder reply that
+	can be ignored just to satisfy the reply and module mechanics.
+
+   !	Added missing avastdOptn to filter_optn_table.
+
+   !	save.c, avastd.c, clamd.c, fpscand.c, spamd2.c: removed #ifdef /
+	socket option dependencies on avastd, clamd, spamd, and fpscand.
+	Instead each module will set optSaveData true and make sure
+	optSaveDir has a value if enabled.
+
+   !	clamd.c: improve clamd support to also use the "SCAN file"
+	command when clamd is run on localhost or use the STREAM command
+	otherwise. This should avoid extranous I/O to pass the message
+	over a socket to a localhost clamd, which could have easily read
+	the temporary message file itself.
+
+   !	uriblTestURI: fixed bug with uri-require-domain would cause a
+	false-positive due to recent changes to libsnert uri.c, where
+	implicit URI found now have a default scheme. However, implicit
+	URI do not have a defined schemeInfo (ie. equals NULL).
+
+   !	statsRoute: Add local sender route stats. Request by Jan-Peter
+   	Koopmann.
+
+   +	spamd_open: The special spamd: tag value "OK" will by-pass
+   	spamd processing for all recipients of the message in question.
+
+--2.0.54--
+
+   *	Requires libsnert 1.67.957
+
+   !	Options strings now have a length field.
+
+   !	EXPERIMENTAL: added "click" module to let a sender self-white
+   	list when they are rejected because of a test.
+
+   !	cmdRcpt: when filterRun returns SMTPF_DISCARD, the subsequent
+   	call to replySetFmt with SMTPF_DELAY|SMTPF_CONTINUE would cause
+   	a double-free and abort. Changed the SMTPF_DELAY|SMTPF_CONTINUE
+   	to SMTPF_CONTINUE.
+
+   !	replySetFmt, replySend: cleaned up the semantics of
+   	SMTPF_DELAY|SMTPF_CONTINUE to be like any other delayed response.
+
+   !	reply.c, reply.h: replaced Reply->must_free flag with Reply->free
+   	function, that can be a no action stub or a call to free. This
+   	should simplify handling static vs. dynamic reply structures.
+
+   !	smtpRejectTextInit, smtpRejectText, sendClient converted to
+   	be filter table handlers.
+
+--2.0.53--
+
+   *	Requires libsnert 1.67.956
+
+   +	EXPERIMENTAL: added "grey to black" facility based on request
+   	from Steve F.:
+
+	[20:02:53] Steve Freegard says: 1) All greylist entries must be managed (either upgraded to a '0' state or deleted), even after a pass record has been created.
+	[20:03:46] Steve Freegard says: 2) Instead of deleting expired greylist keys - any '4' records found would make be converted to a '5' entry using the same rules for creating a '0' entry.
+	[20:04:31] Steve Freegard says: 3)  If a '5' entry is found return REJECT+DROP 'Host does not support greylisting'.
+	[20:05:56] Steve Freegard says: stat counters for 'grey-white' = either a '0' entry was created or deleted, 'grey-black' = where a record was converted to '5'.
+	[20:06:34] Steve Freegard says: Two benefits to this approach.
+	[20:09:39] Steve Freegard says: 1)  Stops incessant greylisting
+	[20:11:30] Steve Freegard says: This helps identify where the greylisting might be going wrong quickly
+	[20:11:40] Steve Freegard says: 2)  Prevents database bloat
+	[20:11:50] Steve Freegard says: 3)  Rejects crappy hosts quickly.
+	[20:12:06] Steve Freegard says: 4)  Provides the only method of measuring greylisting effectiveness
+	[20:12:13] Steve Freegard says: (albeit delayed by 25 hours)
+
+	In other words, ever message that generates a grey: cache entry
+	must eventually return after the grey-temp-fail-period and
+	remove its corresponding record from the cache. Failure to
+	remove all the records from the cache, results in grey: host
+	reject record.
+
+   !	mailTestsMail(): the MX related tests are by-passed now for
+   	MAIL FROM:<> and when the HELO argument is from localhost or
+   	a private LAN, since there is no possible MX available. This
+   	avoids extra lookups and failing on "MX invalid".
+
+   !	socketPeek() renamed to socketPeekByte() in libsnert becasue
+   	a new socketPeek() that reads into a buffer was added.
+
+   !	greet pause and command pause uses socketPeek to get and report
+   	the input in the pipeline. When socketHasInput is true, but
+   	socketPeek returns zero length input, then this is a indication
+   	of a client disconnect, which should not be counted as pipeline
+   	input.
+
+   !	Added a CLIENT_COMMAND_PAUSE session flag.
+
+--2.0.52--
+
+   !	uri.c: moved common code from uriblContent and uriblDot into
+   	uriblCheckUri.
+
+   !	grey.c: stats grey-continue was imprecise and misinterpreted.
+	Replaced grey-continue by grey-upgrade. Added stats grey-accept.
+
+   !	grey.c, cache.c: changed behaviour to support grey-to-black.
+	Added stats grey-reject and grey-downgrade.
+
+   !	heloTests(): fix "claims to be us" to remove the CLIENT_IS_FORGED
+   	clause. This works when combined with the CLIENT_IS_HELO_HOSTNAME /
+   	grey-list change made in .44 that allowed us to use the HELO arg
+   	as the client.name when there was no PTR. Consider the case of
+   	puff.snert.com on a static ADSL IP, HELOs as puff.snert.com, and
+   	puff.snert.com has a defined A record - we should be allowed to
+   	HELO within the snert.com domain as a result.
+
+   !	mailTestsMail(): when the MX list is empty after pruning, return:
+
+   		"553 5.1.8 sender <%s> MX invalid"
+
+   	instead of a misleading:
+
+   		"451 4.4.3 sender <%s> MX lookup error"
+
+   	An empty MX list is permanent problem since it requires some
+	intervention to change the DNS records. Making this a
+	rejection means faster response to legit senders and that
+	secondary MXes can clear their queues sooner.
+
+   !	Added several standardised log messages: log_init, log_oom,
+   	log_internal, log_cache_* to replace many unique log messages
+   	for seldom seen error conditions. This reduces the number of
+   	log messages to document. The new generic messages now show
+   	the filename and line number which help more with diagnostics.
+
+   	Note the following code style was employed : cache get are
+   	reported after mccGetRow if something was found and cache put
+   	is stated before mccPutRow.
+
+   !	Adjust total-kb stat to be counted at the end of each session
+   	instead of end of each message, in addition to counting the
+   	SMTP command lengths to the overall total. This should improve
+   	overall accuracy.
+
+   !	RFC2822-Min-Headers might sometimes incorrectly misidentify
+   	a From: header as a list of senders.
+
+   +	Added options to load user defined TLDs and two-level TLDs;
+   	tld-level-one-file and tld-level-two-file.
+
+   +	filterRun(); added trace log line to display handler run times.
+
+--2.0.51--
+
+   +	Added cliFdCloseOnExec() which is a mutex control function to
+   	that can set/unset a file descriptor's FS_CLOEXEC flag. pthread_atfork
+   	handlers also defined.
+
+   !	avastd.c, clamd.c, cmd.c, grey.c, fpscand.c, route.c, save.c,
+	spamd2.c: now use cliFdCloseOnExec().
+
+   !	cli.c: the creation of the I/O pipes are now marked for close
+   	on exec.
+
+   !	Replaced all pthread_atfork log messages with a global string.
+
+   !	replySend(): localhost and relays are more trusted machines such
+   	that that we shouldn't need to drop them in the event of a test
+   	failure. When sendmail is dropped, it may defer connections for a
+   	period of time causing a backlog. Requested by Steve Freegard as
+   	an optimisation.
+
+   +	access.c, stats.c: applied kvmAtFork* handlers.
+
+   !	sav.c, stats.c: corrected the definitions of call-back-cache
+	and call-back-made and added four new stats call-back-skip,
+	-accept, -reject, and -tempfail.
+
+   !	sav.c: only do the false-RCPT test if the tested sender address
+   	was not rejected.
+
+--2.0.50--
+
+   *	Requires libsnert-1.67.953.
+
+   +	Added stat_client_is_2nd_mx.
+
+   !	example/Makefile: added two rules to convert route.cf to a
+	mailertable and the inverse operation.
+
+   +	sendClientReply(), sessionProcess(), filter.c: Added filter
+	tables that act on OK, temp.fail, reject, and drop actions.
+
+   +	Added experimental options _auto-bl-on-drop and _auto-bl-ttl.
+
+   +	unix.c, cli.c: Added signalFini() function to restore signal
+   	handling to default behaviour.
+
+   !	avastd.c, clamd.c, cmd.c, grey.c, fpscand.c, route.c, save.c,
+	spamd2.c: make sure the temporary message file and forward/call-
+	ahead connections are marked for closure on fork/exec. Similar
+	changes made in libsnert-1.67.953
+
+--2.0.49--
+
+   !	Redo SMTP_ERROR_* error handling to use new smtp2 API. This change
+   	is #ifdef OLD_SMTP_ERROR_CODES.
+
+   !	mxCommand(), sessionReset() fix double QUIT error after a RCPT reject:
+
+Feb  7 05:28:05 gateway4 smtpf[28585]: k165S4285856336700 route:lesliegroup.com  > HELO gateway4.lastspam.com
+Feb  7 05:28:05 gateway4 smtpf[28585]: k165S4285856336700 route:lesliegroup.com << 250 gateway4.lastspam.com Hello localhost.localdomain [127.0.0.1], pleased to meet you
+Feb  7 05:28:05 gateway4 smtpf[28585]: k165S4285856336700 route:lesliegroup.com >> MAIL FROM:<owner-nolist-FSCO-080125C-euidlxqe*rob**LESLIEGROUP*-COM@CACPTOQPV MA001.CAC.AD.GOV.ON.CA>
+Feb  7 05:29:44 gateway4 smtpf[28585]: k165S4285856336700 route:lesliegroup.com << 451 4.1.8 Domain of sender address owner-nolist-FSCO-080125C-euidlxqe*rob**LESLIEGROUP*-COM@CACPTOQPVMMA001.CAC.AD.GOV.ON.CA does not resolve
+Feb  7 05:29:44 gateway4 smtpf[28585]: k165S4285856336700 route:lesliegroup.com  > QUIT
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+First QUIT to forward host
+Feb  7 05:29:44 gateway4 smtpf[28585]: k165S4285856336700 route:lesliegroup.com << 221 2.0.0 gateway4.lastspam.com closing connection
+Feb  7 05:29:44 gateway4 smtpf[28585]: k165S4285856336700 recipient <rob@LESLIEGROUP.COM> f="white" x="451 4.1.8  recipient <rob@LESLIEGROUP.COM> denied (k165S4285856336700)"
+Feb  7 05:29:44 gateway4 smtpf[28585]: k165S4285856336700 < 451 4.1.8  recipient <rob@LESLIEGROUP.COM> denied (k165S4285856336700)
+Feb  7 05:29:44 gateway4 smtpf[28585]: k165S4285856336700 > QUIT
+Feb  7 05:29:44 gateway4 smtpf[28585]: k165S4285856336700 < 221 2.0.0 gateway4.l stspam.com closing connection
+Feb  7 05:29:44 gateway4 smtpf[28585]: k165S4285856336700 route:lesliegroup.com  > QUIT
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Double QUIT to forward host
+Feb  7 05:29:44 gateway4 smtpf[28585]: k165S4285856336700 route:lesliegroup.com write error: SMTP command temporary failure
+Feb  7 05:29:44 gateway4 smtpf[28585]: k165S4285856336700 end i=204.41.5.23 p="ctspotdcemmsg03.service.cihs.gov.on.ca" f="white,ptr_multidomain,quit" h="ctspotdcemmsg03.service.cihs.gov.on.ca" b=0 t=100
+
+   !	filter.c: Fixed EMEW so as to be applied regardless of
+	whitelisting. This was a regression from 1.0.
+
+--2.0.48--
+
+   +	Added support for Avast! anti-virus daemon.
+
+--2.0.47--
+
+   !	configure.in: altered to detect MinGW enabled so as to by-pass
+   	pthreads requirement.
+
+   !	Start adding documentation comments for syslog ERR, WARN, and
+	INFO level and SMTP replies that can be extracted automatically
+	in order to generate HTML documentation.
+
+	*** NOTE this effectively means that renumbering messages should
+	no longer happen after this point.
+
+   !	stats.*, cmd.c: Two new counters rcpt-relay-denied, rcpt-unknown
+
+   !	reply.c: added replySetFmtV().
+
+   !	clamd.c: added ID_MSG macro to all clamdError() calls in order to
+   	identify specifc messages and they're source location.
+
+   +	Added support for F-Prot anti-virus daemon.
+
+--2.0.46--
+
+   !	Number all syslog messages for documentation.
+
+   !	Number all reply messages for documentation.
+
+   !	cmd.c: change constant replies into formatted replies with the
+   	session id in order to support numbering individual replies.
+
+   !	cmd.c: added session id to many replies, including 2xy, that were
+   	missing it in  order to support numbering individual replies.
+
+   !	uriblTestURI(), uriblDot(): added ID_FMT to messages formated into
+   	the msg.reject buffer to facilitate numbering individual replies.
+
+   !	misc.h, filter.c: added heloIsPtrHelo, heloIsPtrRcpt to filter
+   	tables.
+
+   !	route.c: Fixed bug in counting of FORWARD routes towards the
+   	license limit, ie. do not count RELAY only routes.
+
+   !	uri-links-policy: Fixed possible infinite redirection loop bug.
+   	Requires libsnert 1.67.952 or better.
+
+   !	mx.c: fix CRLF before message session ID to appear after.
+
+   !	server.c, cmd.c, unix.c: without pthread_kill() we cannot
+	implement the KILL command for WIN32.
+
+   !	uriblTestUrl(): moved HTTP link testing to after the URI BL
+   	lookups for better efficiency. Suggested by Steve F.
+
+--2.0.45--
+
+   !	stats.c: added missing spamd-connect stat.
+
+   +	summary.c, smtpf.h: Added message state flags.
+
+   +	Added grey-uribl-reset and grey-pass-uribl-hit stats. In the case
+   	of the former, during the grey-content temp. fail period, if a URI
+   	is flagged as blacklisted, then we remove / reset the grey temp.fail
+   	record.
+
+
+--2.0.44--
+
+   +	spamd2.c: added spamd-connect counter.
+
+   +	lickey.c: added counters route-domains, route-addresses,
+   	route-accounts. NOTE these counters only reflect the values at
+   	restart time, NOT during runtime.
+
+   !	grey.c, misc.c: When a host has no PTR, but the HELO arg
+   	corresponds to the A/AAAA record of the client address, then
+   	we can use the HELO arg for the client.name and subsequently
+   	use it with the grey-list ptr key.
+
+--2.0.43--
+
+   +	Added grey-dnsbl-reset and grey-pass-dnsbl-hit stats.In the case
+	of the former, during the grey temp. fail period, if the host is
+	flagged as blacklisted, then we remove / reset the grey
+	temp.fail record. These stats only have meaning when smtp-delay-
+	checks is on and grey-listing or grey-content is enabled.
+
+--2.0.42--
+
+   !	Redefined how dns-gl is applied: by-pass all pre-DATA tests and
+	those that would delay delivery, but apply those tests that *act*
+	on message content; specifically cli, clamd, spamd, uribl. This
+	specifically means that grey-listing and grey-content should be
+	skipped. Previously grey-listing was not by-passed, though the
+	reasons why are lost in history, possibly related to grey-
+	connect: being available, or might have been a bug.
+
+   !	grey.c: New grey-key element "PTRN", which replaces all numbers
+   	in the trimmed-PTR with a hash sign (#).
+
+   +	Added spamd-reject-sender-marked-spam to control handling of
+   	sender supplied spam headers; aol.com are so stupid at times.
+
+
+--2.0.41--
+
+   !	sendClient(): fixed logic bug with multiline rejections until
+	after EHLO/HELO (from 2.0.1). The reject file was never being
+	appended.
+
+
+--2.0.40--
+
+   !	smtpf.c: the standard single line banner presented to white
+   	listed was missing the session ID.
+
+   !	smtpf.c: removed the program name from the single line banner
+   	presented to white listed connections.
+
+  !!	dsn.c: added NULL guard around the output of the fwd->reply
+   	which might result from an I/O error between smtpf and a
+   	forward host before any response is collected.
+
+  !!	checkClientIP(): fixed handling of PTR result to deal with
+	CNAME/PTR delegation correctly. We neglected to take this into
+	account and thus CLIENT_IS_PTR_MULTIDOMAIN would be incorrectly
+	set and the wrong client name would be assigned to the session.
+
+   !	checkClientIP(): removed multihomed PTR log line, since we now
+   	have a flag that is reported on the start/end lines.
+
+--2.0.39--
+
+   !	libsnert 1.66.948 required.
+
+
+--2.0.38--
+
+   !	forwardCommand(): fixed bug concerning the handling of DSNs with
+   	multiple forwarders; we were comparing two pointers instead of the
+   	values referenced.
+
+   +	Added smtp-dot-timeout for end of message replies from forward
+   	hosts.
+
+   !	forwardCommand(): changed timeout handling using smtp-dot-timeout
+   	instead of smtp-command-timeout and distribute the remaining time
+   	over each forward host.
+
+  !!	forwardCommand(): changed DATA and DOT handling from two loops
+	(1st to send the command and 2nd to collect the replies) to a
+	single loop to send the command and wait for a reply from each
+	forwarder. The old way could result in a final dot being sent,
+	but replies from multiple forwarders timing out and still
+	delivering the message. This could result in confusion where the
+	sender resends the message for those forwarders hosts that
+	timeout, but in fact had received the final dot and succeeded.
+
+   !	forwardCommand(): when handling multiple forward hosts, a DSN
+   	was only sent based on an I/O error, but not on reject or
+   	temp.fail replies.
+
+   !	forwardCommand(): changed how the can_quit flag is set after
+   	mxResponse(): can_quit should be set if DATA sent and not 354,
+   	or DOT sent and any result returned.
+
+   !	sendDSN(): The From: address is changed from process-user@host
+   	to postmaster@host.
+
+   !	sendDSN(), mxResponse(), connectionFree(), smtp.h: save the
+   	complete multiline reply for each forwarder for use in a DSN.
+
+--2.0.37--
+
+   +	Added smtp-strict-relay option.
+
+
+--2.0.36--
+
+  !!	replySend(): Fixed delay-checks + PIPELINE + spamd bug where
+	an SPF Fail of the sender or any delayed reply with
+	SMTPF_DELAY|SMTPF_REJECT, would reject the RCPT TO: correctly,
+	but a DATA in the PIPELINE would still be accepted even though
+	there are no recipients. This would result in the eventual
+	crash of smtpf when spamd was contacted with an empty recipient
+	list.
+
+   !	rcptTestsRcpt(), spfRcpt(), summary.c, smtpf.h, grey.c: Fixed
+	issue where SPF records that have -all, eg. INR.NET, must be
+	ignored when our secondary MXes relay mail to us, else we
+	incorrectly reject the sender. This happens only when our
+	secondary MXes do not themselves perform and fail SPF -all at
+	the point of entry. This is also applied to grey-listing for
+	similar reasons.
+
+   !	stats.c: added verb +stats for debugging route stats.
+
+   !	cmdData(): route stats were not correctly recording the volume
+   	of data passed because the msg.length was being reset at the
+   	end of cmdData() instead of in sessionReset().
+
+   !	heloSyntaxHelo(): fixes setting of CLIENT_IS_HELO_HOSTNAME.
+
+   !	stats.c: fix distinction between counter and max-value stats
+   	for the "rolling windows". This means "high-session-time" and
+   	other high water marks should display the highest value of all
+   	the intervals, not the sum of the intervals.
+
+
+--2.0.35--
+
+   -	unix.c: Removed double init of pthread_attr.
+
+   !	grey.c: Added Grey-Report age and hits to the grey: pass record.
+
+   +	stats.c, cmd.c: Added quit-after-rcpt to count "polite"
+   	call-backs.
+
+   !	sessionProcess(): set errno to EMFILE before throwing a
+   	resource error if the number of file descriptors exceeds our
+   	threshold so that we see a more representative message based
+   	on errno.
+
+   !	smtpf.c, uribl.c: disabled DnsGet2() "recusive" argument when
+   	doing PTR lookups. The recusive lookup perform a convenience
+   	forward lookup for an A record. When the A record is multi-
+   	homed and has a large number of entries such that UDP response
+   	is trunctaed (dig a gateway01.websitewelcome.com) causing the
+   	PTR lookup to fail.
+
+   !	install.sh.in: if /etc/smtpf/access.cf and route.cf already
+   	exists, do NOT rename to .bak versions and copy examples in
+   	place. Too confusing. If there are already files in place,
+   	leave them alone.
+
+   !	rfc2822Headers(): fixed bug when searching for semi-colon
+   	delimiter separating word pairs and timestamp in a Received:
+   	header. We now correctly look for the last occurence instead
+   	of the first occurence. MLM's like Ecartis sometimes add
+   	comments in the header containing a semi-colon.
+
+   !	cmdEhlo(): If a client is a well behaved host that passed
+   	grey listing, then allow EHLO and PIPELINING.
+
+   !	command-pause is excluded for usual suspects, dns-gl, and well
+	behaved hosts that passed grey listing.
+
+   !	statsRoute(), statsRouteUpdate(): some changes as to how route
+   	stats are counted and volumes. Remember route accept/reject
+   	refer to messages. A temp.fail or other error is not counted,
+   	but the volume is still significant (see grey-content).
+
+--2.0.34--
+
+   !	emewHeaders(): some minor changes to avoid possible buffer
+   	overflow when generating the EMEW Message-ID string,
+
+  !!	statsSave() fixed buffer overflow when generating the list of
+	field names.
+
+   !	emewHeaders(): fixed off-by-one bug in Message-ID generation.
+
+   !	rateConnect(), concurrentConnect(): added client host name
+	when available to log and 421 replies.
+
+   !	isNxDomain() reimplmented to look for the first SOA before
+   	the host's TLD suffix.
+
+   !	mail-ns-nxdomain and uri-ns-nxdomain no longer reject on a
+   	DNS lookup error (SERVFAIL).
+
+   !	Whitelisted host using connect: is sent single line banner and
+   	replies.
+
+   !	mail-require-mx now ignores DNS "not implemented" when the MX
+   	lookup returns a truncated UDP packet.
+
+   !	rateConnect(), concurrentConnect() now allow LAN and RELAY
+   	connections to by-pass these controls. Previously only localhost
+   	could by-pass rate control and localhost/RELAY in concurrency.
+   	This was added, because of LastSpam apparently handling outbound
+   	filtering for many many clients. The risk with this is that a
+   	workstation on the LAN or a RELAY could DoS smtpf, because of
+   	too much trust. Must consider some automatic traffic modelling
+   	algorithm.
+
+--2.0.33--
+
+   *	Requires libsnert-1.66.942
+
+   +	spamd2.c: code to select a user to specify to spamd based on
+	an access-map spamd: tagged entry. The right hand side should
+	be a user name/address to pass to spamd. It can be a pattern
+	list.
+
+   !	p0f.c: fixed bug when p0f-socket is empty, it would still attempt
+   	to connect to a p0f server.
+
+   !	replySet(): Fixed handling of "conditional go-ahead" code:
+
+   	SMTPF_DELAY|SMTPF_CONTINUE is a "conditional go-ahead", which
+	which is intended to signal that the immediate message should
+	be reported only if there is no delayed message waiting. Used
+	in cmdRcpt() where delay-checks is resolved.
+
+   !	spamd2.c: Fixed bug in spamd report logging.
+
+  !!	emewHeaders(): Added missing function call to generate the EMEW
+  	Message-ID.
+
+  !!	emewContent(): There was a bug in the EMEW content scanning
+	code that is suppose to only scan the first body chunk and
+	skips subsequent chunks. However all body chunks were being
+	ignored. This is a result of filter module call-back changes
+	between 1.0 and 2.0; the test for "first body chunk" changed
+	from:
+
+		chunk == sess->msg.chunk0
+	to
+		chunk == sess->msg.chunk0+sess->msg.eoh
+
+	ie. In 1.0 the headers were part of the first chunk and the
+	content routine would have to explicit skip the headers, while
+	in 2.0 the chunk pointer pass to the content handler already
+	points to start of the body just after the headers, since
+	there is a separate headers handler.
+
+   !	emewHeaders(): Allow DSN/MDN meessages to be searched for
+   	References and/or In-Reply-To: headers on the assumption that
+   	a DSN/MDN might include them and so no reason not too.
+
+--2.0.32--
+
+   +	concurrent.c: Added concurrent-drop option.
+
+   !	serverOptn() fixed timeout over multiplication each time OPTN
+	was used.
+
+   +	server.c, filter.c, clamd, cli, p0f, spamd, spamd2, uribl: Add
+	filter_optn_table to handle reset/adjustment/validation of
+	options for OPTN command.
+
+   !	server-accept-timeout redefined to be specified in seconds for
+   	consistency with other timeouts. It doesn't need millisecond
+   	resolution.
+
+   !	filter.c: Moved #ifdef FILTER_SIZE blocks ahead of clamd and
+	access modules.
+
+   !	dsn.c: moved sendDSN() into a separate file and changed
+   	implementation to use newer smtp2 API.
+
+  !!	uriblHeaders(), filter.c: added missing call-back to parse the
+   	message headers and set the initial state for URI BL filtering.
+
+--2.0.31--
+
+   +	rblConnect, urblPtr: added by-pass for LANs, relays, and those
+   	on a DNS grey-list.
+
+   +	Added disconnect-after-dot stat for socketHasInput/socketPeek
+   	test whether client has disappeared.
+
+   !	Moved code that counts Total-KB to include partially receieved
+   	yet rejected messages, to more accurately monitor traffic volume.
+
+   +	Added mail-drop, mail-reject, mail-tempfail, and rcpt-drop stats.
+
+   !	Fixed setting of OPTN smtp-drop-after=" " so that a value of
+	zero or less does not drop all connections on the first error.
+
+   !	Moved several timeout options into serverResetOptions() so that
+   	application of a seconds value gets correctly set to milliseconds,
+   	otherwise they would almost be next to zero.
+
+   !	cmdRcpt(), routeAdd(): Fix bug when first RCPT is blacklisted
+   	and subsequent is not would incorrectly report a "cannot forward
+   	mail" error.
+
+   !	accessRcpt(): All RCPT black list entries should NOT be delayed
+   	otherwise subsequent RCPT entries will report the previous black
+   	listed RCPT error.
+
+   +	rate.c: Added rate-drop option.
+
+--2.0.30--
+
+   !	cmdData(): added log message socketHasInput fails for something
+   	other than a timeout.
+
+--2.0.29--
+
+   *	Requires libsnert-1.66.937
+
+   !	cmdAuth() add parameter to disable ==== termination of a
+   	full quantum of Base64 encoded data. Sendmail doesn't
+   	handle it properly.
+
+   !	spamd2.c: fix off-by-one error in truncating the trailing line
+	folding characters when generating a X-Spam-Report header.
+
+   !	spamd2.c: only generate a X-Spam-Report header when the
+	spamd-command is not set to CHECK.
+
+   !	cmdRcpt(): fixed call-ahead by-pass and SMTPF_DISCARD code to
+   	set the RCPT state and increment the RCPT count, otherwise
+   	delayed responses were not reported and we would see "DATA
+   	out of sequence" response.
+
+   !	statsCommand(): RELAY hosts are no longer permitted to run the
+   	STAT command.
+
+   +	Added uri-ip-in-ns option to check and reject a message where
+   	a URI domain's NS server list contains NS hosts with IP-in-name.
+   	This is another test to catch fast-flux spam.
+
+   !	uriblTestURI(): removed +uri-ip-in-ptr or +uri-require-ptr
+   	prerequiste prior to uriblCheckIp().
+
+   +	Added smtp-auth-white so that successful SMTP AUTH sessions
+	can be white listed through content filtering when the option
+	is set.
+
+   !	spamd2.c: If the sender supplies an X-Spam-Status with a score
+   	in excess of our reject threshold, then reject the message,
+   	otherwise if the sender supplies an "X-Spam-Flag: YES" header,
+   	then reject the message (if the sender thought it was spam, why
+   	should we accept it and process it again).
+
+   !	spamd2.c: Previous X-Spam- headers are removed, as any claims
+   	that they are not spam cannot be trusted.
+
+   +	Added uri-ns-nxdomain check that URI's domain NS records exists.
+
+   !	require-sender-mx renamed mail-require-mx.
+
+   +	Added mail-ip-in-ns option. Similar to uri-ip-in-ns, but applied
+   	to the sender's NS records.
+
+   +	Added mail-ns-nx-domain option. Similar to uri-ns-nxdomain, but
+   	applied to the sender's NS records.
+
+   !	spamd2.c: include client name and IP in the logged junk mail
+   	score. Requested by Digitalus.
+
+   +	Added RFC 1985 ETRN support where ETRN is relayed to the local
+   	route.
+
+   !	Enhanced rfc2821-strict-helo to treat "some-name." or "." as
+	NOT a FQDN. Also log a warning if one of the hosts we're
+	responsible for is misconfigured.
+
+   +	cmdData(): added a socketHasInput() test of the client before
+   	forwarding the final dot in order to detect if the client has
+   	dropped the connection and so avoid potential duplicate messages.
+
+
+--2.0.28--
+
+   !	spamd2.c: fixed "open error" of a non existant message file
+   	when spamd-socket is disabled.
+
+   !	p0f.c: do not set a X-p0f-Report header for LAN and RELAY
+	hosts to avoid disclosing internal network topology.
+
+   !	p0f.c: X-p0f-Report header treated as trace header with host IP
+   	and time stamp appended to the report; similar to Received header.
+   	Allows for secondary MX hosts to also add a header if necessary.
+
+   !	uriblConnect() now clears sess->msg.policy before it being tested
+   	in uriblTestUri(); fixes Valgrind error "Conditional jump or move
+   	depends on uninitialised value".
+
+   !	serverCreate() should assert that session->client.socket is set
+   	to NULL; fixes Valgrind error "Conditional jump or move depends
+   	on uninitialised value" and resolves potentional seg. fault
+   	occuring when a new thread is created and times out the very
+   	first time.
+
+   !	nullFini() now releases hash table entries.
+
+   !	Clean-up lickeyOptTable for sake of Valgrind memory leak reports.
+
+   !	cmdData():1471 fix potential off-by-one error causing intermitant
+   	seg. faults when the last chunk of the message read is exactly two
+   	bytes, we read outside the buffer. Changed  "2 <=" to "2 <".
+
+   !	cmdRcpt() fixed memory leak related to +smtp-delay-checks and the
+   	replyQuery() short circuit to by-pass call-aheads if there is a
+   	delayed response.
+
+   !	cmdRcpt() fixed possible seg. fault in the event of a SMTPF_DISCARD
+   	prematurely releasing the recipient. Rare since discard actions are
+   	seldom used.
+
+   !	sessionStart(): the fix for race condition in 2.0.25 does not solve
+   	the problem. The whole thread creation if-block has to be protected
+   	by the mutex.
+
+   !	stats.c: append "(D H:M:S)" to the age line.
+
+--2.0.27--
+
+   +	Requires LibSnert 1.66.935
+
+   !	spamd2.c, stats.c: removed junk-mail stat in favour of
+   	spamd-reject, spamd-tag.
+
+   !	configure: spamd2 made default, older spamd disabled.
+
+   !	clamd.c, stats.c: "infected" stat renamed to "clamd-infected"
+
+   !	spamd2.c: DISABLED. when there is only one recipient supply a
+	User: header containing the recipient address to spamd so that
+	it can select a user configuration if necessary.
+
+   !	lickey.c: fixed off-by-one errors when supplying a file to
+   	generate a new license key from.
+
+--2.0.26--
+
+   !	rateAccept() split into two functions; keep the global rate
+	control in rateAccept() and place the client IP rate controls
+	in rateConnect() outside the accept_mutex section.
+
+   !	Fix missing junk-mail stat when using new spamd2.c.
+
+   !	replyQuery() fixed to use replyGetCode() which strips off the
+   	SMTPF_DELAY bit from the SMTPF_ code.
+
+   +	Added verbose rate logging flag for client IP rate logging.
+
+   !	uriDot(): Fixed to find URI at the end of a message that does
+	not end with a newline, possibly leaving a URI in the MIME
+	hold buffer to parse.
+
+
+--2.0.25--
+
+   !	forwardDot(): report temp. fail if the temp. file name is
+   	missing.
+
+   !	forwardDot(): if the DATA command is rejected by all forward
+   	hosts, reply with a rejection.
+
+   !	saveHeaders(): log out of memory error if we fail to create
+   	the temp. file name.
+
+   !	cmdRcpt() Fixed bug with dns-gl that would mark a recipient
+   	as completely white listed.
+
+   !	sessionStart(): Fix possible race condition when testing if
+	more threads are required, by setting a "need_more_threads"
+	flag guarded by a mutex and then creating the extra threads
+	once the mutex is released. This will prevent two or more
+	threads from entering the thread creation if-block at the
+	same time.
+
+
+--2.0.24--
+
+   !	rate.c: do not exempt relays from rate throttling.
+
+   !	server.c: moved some initialisation from sessionStart() into a
+	new sessionAccept(), which runs filter_accept_table handlers,
+	such as rateAccept, while the accept_mutex is still locked.
+
+	This should resolve an issue where the global rate throttle
+	code appeared to be broken, because the new server thread model
+	from the older 1.0 code.
+
+	Note that concurrency checks are handled by filter_connect_table
+	and not filter_accept_table.
+
+   -	filter.c, reply.c: removed replyHelo, replyMail, replyRcpt and
+   	old unused code.
+
+   +	cmd.c: cmdData() completed changes to support using temporary
+	message files for spamd2 to support tagging and adding of X-
+	Spam-* headers.
+
+   !	Fix headerAddPrefix(), which failed to add prefix correctly.
+
+   !	headerAddPrefix() adds the header if missing.
+
+--2.0.23--
+
+   +	Requires LibSnert 1.66.933
+
+   !	unix.c: dropPrivelages() split into two functions and moved
+   	into libsnert lib/sys/process.c processDropPrivelages() and
+   	processDumpCore().
+
+   !	sessionProcess(): fix segmentation fault from trying to free a
+	constant reply structure when we run out of file descriptors.
+	Be sure to set session->response.delayed and immediate to NULL.
+
+   +	spamd2.[ch]: experiment with saving message to a temporary file
+   	and doing all the spamd processing at final-dot. This code is
+   	not yet complete. TODO: cmdData() changes and added spamd
+   	report header.
+
+--2.0.22--
+
+   !	config.h.in.in: FD_OVERHEAD increased to 11.
+
+  !!	serverChild(): When we have a socketAccept error, most likely
+	because of EMFILE, terminate this thread cleanly to release
+	resources. If this occurs in multiple threads in the accept
+	state, then this will terminate any surplus of threads,
+	temporarily preventing the server from answering more
+	connections. This will allow the threads with active
+	connections to finish, release resources, and eventually
+	resume answering again once sufficent resources are available.
+
+	If we got an error during socketAccept() and we did not
+	terminate the thread and eliminate the surplus, it might be
+	possible to get into a tight busy loop which contantly tries
+	to accept a connection yet fails with EMFILE. This would slow
+	down or prevent other threads with active connections from
+	completing normally.
+
+   !	checkClientIP(), mxConnect(), mailTestsMail(), uriCheckIp():
+	When DNS_RCODE_ERRNO returned, then be sure to check errno for
+	EMFILE and ENFILE and throw replyResourcesError() if found.
+
+   !	rbl.c: Fixed potentional seg. fault in dnsIsIpListed(). Make
+	sure that ``answer'' is set to NULL before DnsGet2() call in
+	case the call fails (consider EMFILE) and we the try to free
+	an undefined Vector.
+
+   !	clamd_open(), spamd_open(): if socketOpen or socketClientOpen
+	fail, then be sure to check errno for EMFILE and ENFILE and
+	throw replyResourcesError() if found.
+
+--2.0.21--
+
+   !	spfMail(): exclude localhost, LAN, and white listed clients
+   	from SPF lookups. Relays were already excluded.
+
+   !	greyHashLine(): add state machine to strip HTML comments from
+   	the grey-content hash generator. Appears some STUPID bulk
+   	mailers like Nestle, not only change the Message-ID and Date
+   	headers each retry, but also insert a copy of the Message-ID
+   	header as a an HTML comment.
+
+--2.0.20--
+
+   !	p0fHeaders(): added missing CRLF to X-p0f-Report header.
+
+   !	greyRset(): fixed memory leak of MIME parsing object from
+   	2.0.19.
+
+   !	greyContent(): fixed double output to .grey file left over
+   	from 2.0.18 to .19 changes.
+
+   !	greyContent(): make sure to scan the original message headers
+   	in order to correctly parse a MIME message.
+
+   !	filter.c: add missing greyRset() and greyClose() handlers
+   	required to clean up after +grey-content-save otherwise
+   	possible leak of file descriptors.
+
+--2.0.19--
+
+   !	grey.c: Restored the 2.0.16 changes concerning the ignoring
+   	of TNEF attachments when generating grey-content hashes. The
+   	changes in 2.0.18 reverted to the original hashing method
+   	used prior to 2.0.14. It would appear that an Exchange server
+   	will alter the TNEF attachment every time it retries to send
+   	a message, not just in some instances.
+
+--2.0.18--
+
+   !	grey.c: New technique to deal with MTAs like stupid Exchange
+	that try to delivery the newest message first and never try
+	subsequent messages in the queue if the first is temp.failed.
+
+	Remember the hash of the first message and last messages seen.
+	If the MTA queue retry strategy is to send the oldest message
+	first, then we'll match the first hash on the 2nd try. If the
+	MTA queue retry strategy is to send the newest message first,
+	then we will match the last hash typically on the 3rd retry,
+	unless more than two messages have been sent.
+
+--2.0.17--
+
+   !    clamd.c: changed extended reply codes for clamd I/O errors
+        from 4.7.1 to 4.4.0 (generic network error).
+
+   !    rate.c: changed extended reply code 421 4.7.1 to 421 4.4.5
+        (network congestion), since RFC 3463 says X.7.1 can only be
+        used for permanent rejections and rate throttling is more
+	like congestion.
+
+   !    reply.c: changed the "451 4.7.1 try again later" to
+        "451 4.7.0 try again later", since RFC 3463 says X.7.1
+        can only be used for permanent rejections, which is utter
+	crap since it makes sense in light of grey-listing.
+
+   !	reply.c changed the "450 4.7.1 try again later" used for
+	content hash mismatch with "450 4.4.5 try again later" in a
+	further attempt to make Exchange do something sensible.
+
+   !	cli.c, sav.c: changed the "%d %d.7.1 ..." to "%d %d.7.0",
+	since in the event of a temp.fail 4.7.1 is confusing in light
+	of RFC 3463.
+
+   !	mailTestsMail(): changed extended code "451 4.1.8 sender <%s>
+   	MX record lookup error" to "451 4.4.3 sender <%s> MX record
+   	lookup error" (directory server failure).
+
+   !	commandPause(): changed extended code "550 5.7.1 pipelining
+	not allowed" to "550 5.3.3 pipelining not allowed" (system not
+	capable of selected features). While it is disabled for
+	security, make it look like we just don't support it.
+
+   !	cmdData(): add session ID to final dot reply.
+
+   !	summaryMessage(): increased display of subject from 40 to 60
+   	characters.
+
+   !	rfc2822Headers(): changed reply codes for "550 5.7.1 missing
+	RFC 2822 required headers" to "554 5.6.0 missing RFC 2822
+	required headers". The x.6.0 better reflects a content based
+	(or lack there of) failure
+
+--2.0.16--
+
+   !	Changed session summary log line to include basic p0f results.
+
+   !	grey.c: Yet another example of Exchange shite; they change
+   	their stupid TNEF data, when included, in relation to the
+   	message content. Simple solution is to ignore content-types
+   	with application/ms-tnef. However, this required replacing
+   	the state-mahcine from 2.0.14 with code to use the new
+   	MIME call-back API in LibSnert, which is better equipped to
+   	parse MIME.
+
+   !	greyDot(): This is contrary to the the Evan Harris article
+
+	http://lists.puremagic.com/pipermail/greylist-users/2004-September/000766.html
+
+	We've observed problems with Exchange machines with grey-
+	content at final dot. Some of them appear to try the newest
+	messages first and if a 451 is issued they won't try any
+	subsequent messages destined for the same recipient during the
+	same SMTP session, essentially causing grey-content messages
+	to be forever temp. failed and to eventually expire from
+	their retry queue. Since 450 appeared to have a different
+	effect, we try that instead to see if they pass those older
+	messages, in particualr the original first message, in the
+	same session.
+
+--2.0.15--
+
+   !	routeCallAhead(), savData(): changed logging to always log a
+   	summary of the results of a call-ahead and call-back.
+
+   !	grey.c:	Added p0f OS genre as a grey-key element.
+
+   !	grey.c: It has been seen that some sites (those using Exchange
+	or Entourage) alter the message body in some manner on queue
+	retries, such as changing boundary tags, changing headers
+	(Received, Date, Message-ID), changing line wrapping, adding
+	disclaimers.
+
+	greyContent() does its best to hash only the content, but in
+	one case where disclaimers were added after the first delivery
+	attempt, this breaks the principal that a message is
+	immutable once queued. However, the message content on the
+	third and subsequent attempts remained constant.
+
+	So in an effort to handle this case, we hash the subject, and
+	if the body hash doesn't match and the subject hash does, then
+	we replace the body hash and temp. fail the message. In this
+	way the 3rd attempt to deliver the message should succeed
+	provided the message content doesn't change again.
+
+--2.0.14--
+
+   !	spamd.c: Some logging changes.
+
+   !	grey.c: It has been observed that some stupid yet legit
+   	MTAs will:
+
+	a) change whitespacing, ie. adding/removing leading or
+	   trailing blank lines and/or change white space in some
+	   headers. (fucking Microsoft-Entourage and Exhcange)
+
+	b) change Date: headers on retries
+
+	c) change Message-ID: header on retries
+
+	d) change MIME boundaries on retries
+
+	e) change the leading text before the first boundary (fucking
+	   Microsoft-Entourage and Exchange) from whatever the MUA
+	   specified.
+
+	Currently we ignore the headers altogether, but
+	the change in whitespacing, MIME boundaries and
+	text before the first and possibly after the
+	last boundary is problematic.
+
+   +	Add p0f support which will add an information X-p0f-Report:
+	header. New options are:
+
+		p0f-mutex
+		p0f-socket
+		p0f-timeout
+
+
+--2.0.13--
+
+   !	spamd.c: Fixed potential memory leak when using spamd-save-dir.
+   	The save file might not have been closed between mail
+	transactions during the same session, MAIL-RCPT-DATA-RSET-MAIL...
+
+   +	Added save message support module, save-data, save-dir options.
+   	(Incorporating changes for possible memory leak between
+   	transactions.)
+
+   -	Removed spamd-save-dir option.
+
+   !	replySend(): fixed possible memory leak for immediate replies.
+
+--2.0.12--
+
+   !	Add summary flags for client rate and concurrency limits being
+	exceeded.
+
+   !	greyDot: When the grey-list key contains IP or PTR elements,
+	drop the connection after reporting the temp.failure. See 2.0.2
+	for similar change made for greyData
+
+
+--2.0.11--
+
+   !	Changed message summary to include our transaction ID, SMTP
+	result code and extended code, message length, message-id, and
+	leading part of the subject. This is suppose to facilitate
+	tying spamd summary output to our session.
+
+   !	sav.c: changed 450 sender verification failed code to 451; see
+   	comments in 2.0.8
+
+   !	cmdMail, cmdRcpt: changed "spurious white space" error to a
+   	general "syntax error".
+
+   !	cmdMail, cmdRcpt: changed command summary line.
+
+   !	smtpf.h, cmd.c: add seen_final_dot flag to message structure
+	so that content filters know when they are on the last chunk
+	of the body.
+
+   !	filter.c, grey.c: As an optimisation concerning +grey-content
+	and spamd, when we see the final dot in a chunk, then perform
+	the greyDot() processing immediately, instead of in the dot
+	handler phase. So if the entire message fits in the first
+	chunk, we can avoid connecting to spamd entirely, which is
+	last in filter_content_table.
+
+--2.0.10--
+
+   !	spamd sequencing has been changed. The spamd connection is now
+	opened in the content handler, instead of at DATA, the headers
+	handler is folded into the content filter, the content filter
+	is last. This delays as long as possible the need to connect
+	to spamd, which can be very expensive operation and tie up
+	resources unnecessarily in the event that an earlier test can
+	reject the connection.
+
+   !	filter.c: fixed incorrect reference in filter_dot_table to
+   	spamdContent, when it should have been spamdDot.
+
+--2.0.9--
+
+   +	Added access-map support for "From:domain SPF-PASS" as a means
+	of white listing a sender if they pass SPF checks.
+
+   +	Added volume count to route stats.
+
+--2.0.8--
+
+   !	Fixed -rfc2822-7bit-headers. Option check was missing after
+   	merge of sevenBitHeaders() into rfc2822Headers().
+
+   !	Fixed missing rfc2822-7bit-headers counter.
+
+   !	Fixed Message-ID header format check. Added an option check
+   	for +rfc2822-min-headers.
+
+   !	route.c: call-ahead "dumb:" records had undefined expire times.
+
+   !	Changed recipient logging a little bit.
+
+   !	routeAdd() fixed broken local route relay caused by changes
+   	made to support route statistics.
+
+   !	clamd.c, cli.c, msglimit.c, mx.c, reply.c: changed SMTP 450
+	for 451. This had been applied previously for grey-listing.
+	The original logic for 450 was that a 550 was a rejection
+	based on local policy and so 450 should be the equivalent for
+	temp. fail. However, this has proven problematic. See:
+
+   	http://lists.puremagic.com/pipermail/greylist-users/2004-September/000766.html
+
+   	Evan Harris eharris at puremagic.com
+	Tue Sep 21 14:07:33 PDT 2004
+
+	After getting several whitelist submissions that I can confirm
+	don't actually need a whitelist entry (based on my sites
+	logs), I think I have narrowed down an issue/detail that may
+	need attention from developers of alternate implementations.
+
+	When doing the initial testing of my implementation, I tested
+	the use of several different SMTP codes, and 451 was found to
+	be the least problematic in that it caused the fewest number
+	of problems with various sites.
+
+	Some implementations appear to be returning an SMTP error code
+	450 or other 4xx code rather than 451 which is what I used in
+	relaydelay.  Some major sites (MSN/Hotmail and others) trying
+	to deliver mail appear to try several times in a very short
+	time period, and then bounce mail if they get a 450 error code
+	rather than a 451.
+
+	The actual behavior varies by site, but since most sites that
+	have undesired behavior have this pattern, my guess is that it
+	is because a 450 is generally used for a mailbox lock failure,
+	and is considered a failure that should be able to be resolved
+	within seconds, and thus the short retry delay.  451 seems to
+	be handled as a more generic temporary failure, and seems to
+	produce the desired result much more often.
+
+	So, if you're using or developing an implementation that uses
+	an error other than 451, you might want to check into
+	changing, or at least testing further.
+
+	Evan
+
+
+--2.0.7--
+
+   !	accessMail(): fixed handling of null sender and TLD checking.
+
+--2.0.6--
+
+   !	Replaced short mneumonic client flags with longer strings;
+	Little Stevie doesn't like the short flags.
+
+   !	Fixed some more side effects of DNS GL hits causing "interal
+   	error reply.c(432)" for MAIL and RCPT commands.
+
+   !	SAV should be skipped in the client is DNS GL.
+
+--2.0.5--
+
+   !	dnsglConnect() returns SMTPF_GREY for a DNS GL hit instead of
+   	SMTPF_CONTINUE in order to short-circuit the remaining connect
+   	filters.
+
+   !	idleRetestIdle() should skip any tests if CLIENT_IS_GREY from
+   	a previous DNS GL record. Only content scanning is applied.
+
+   +	Added accessHelo() to check the current white/grey list state
+   	of the client and skip any HELO filters if necessary.
+
+--2.0.4--
+
+   +	Requires LibSnert 1.66.929
+
+   +	Added separate stat for uri-dns-bl hits.
+
+  !!	reply.c, smtpf.h: completely changed implementation from a
+	Vector of replies to two session variables (immediate and
+	delayed). This should simplify reply management and allow for
+	replies in header/content handlers to short-circuit content
+	handlers on subsequent chunks.
+
+   +	Added option rfc2822-min-headers to check for required
+	headers.
+
+   +	Added option rfc2822-strict-date to check date syntax in
+   	message headers Date, Resent-Date, and Received.
+
+   !	misc.c: merged sevenBitHeaders() into rfc2822Headers(); fixed
+   	bug when checking headers for 7-bit conformance introduce when
+   	this test was converted to the new modular stucture.
+
+   !	cmdRcpt(): white listed RCPTs are no longer content filtered.
+   	This bug was the result of changes introduced for route stats,
+   	which altered the session structure a little and neglected to
+   	remember the bw_state per recipient.
+
+   !	clamd.c, cmd.c, mx.c, smtpf.c spamd.c: added cast to resolve
+   	64-bit signedess warnings
+
+   +	Added rfc2821-extra-spaces option to reject supurious white
+   	space in MAIL FROM: and RCPT TO: commands.
+
+   !	rfc2821-syntax renamed rfc2821-angle-brackets.
+
+   +	Added test of Message-ID: header format.
+
+   !	Change the "session time" message to be a session summary line.
+
+   !	readClientData() client I/O error would try to send back a
+	reply to the client for timeout errors, which would generate
+	more errors because the connection has gone away. Now we just
+	log the I/O error and longjmp() to the on_error marker to
+	drop the connection.
+
+   !	route.c: changed the log level all the forward ready message
+	from info to smtp.
+
+   !	require-sender-mx now prunes the MX list same way as would be
+   	done for call-abacks.
+
+   +	Added uri-ip-in-name to apply IP in name heuristic to the
+   	host name of a URI.
+
+   !	Fixed uri-max-test over counting.
+
+   !	Moved null-rate-to: check from RCPT to after grey-listing at
+	DATA. This is a trial.
+
+   !	Moved null-rate control check to DATA after grey-listing.
+
+   !	Fixed routing of unqualified recipients to local route.
+
+   !	Fixed SAV response for temp. fails during call-back.
+
+--2.0.3--
+
+   +	Requires LibSnert 1.66.927
+
+   !	cmdData(): if SMTPF_DISCARD, SMTPF_TEMPFAIL, or SMTPF_REJECT
+   	are returned by a filter_content_table module, then they are
+   	treated as SMTPF_DISCARD, reading upto the final dot, before
+   	returning the actual SMTPF_ code. This should avoid legit
+   	clients getting out of sequence, because of the server sending
+   	back a reply and entering the SMTP command loop before the
+   	client is ready.
+
+   !	cmdData(), forwardCommand(): only send a DSN message if there
+   	a multiple forward hosts open. If the single forward host
+   	replied with a 5xy reply, then send the client a 554 reply.
+   	If the single forward host replied 4xy or had an I/O error,
+   	then send the client a 451 reply. (Note extended error codes
+   	might need correction.) Otherwise continue.
+
+   !	lickey: updates for convertDate().
+
+   !	siqHeaders() added to filter_header_table.
+
+   !	spfHeaders() added to filter_header_table.
+
+   +	Added X-Grey-Report header with grey-listing details such as
+   	age, the key, and when the record was created.
+
+   !	call-ahead enhancement modifies the dumb: cache key to be the
+   	combination of the host name/ip and the RCPT domain being
+   	tested. This should help distinguish between domains using
+   	catch-alls and truely dumb accept-then-bounce mail host.
+
+   +	Added null sender rate throttling module, which implements the
+	null-rate-to: tag to limit the number of DSN/MDN messages sent
+	to a recipient or domain. This is intended as an alternative
+	backscatter control function.
+
+   !	rate.c fixed potential hash table corruption for lack of mutex
+	protection due to change in server thread model.
+
+   !	sessionProcess() merged accept and connect filter tables since
+	the need for an accept hook goes away with the new server
+	thread model.
+
+--2.0.2--
+
+   +	Requires LibSnert 1.66.925
+
+   !	writeClient() Changed handle of syslog output of multiline
+   	buffer. Linux syslog does not convert carriage return into
+   	a printable representation and it would truncate long lines.
+   	Change so that only the last line of a multiline buffer is
+   	logged, affects admin commands such as STAT, VERB, CONN. The
+   	smtp-reject-file is handled differently and so is not affected.
+
+   +	Added admin. command list to HELP output.
+
+   !	accessMail(), accessRcpt() some combo tags were missing the
+   	leading colon separator on the second tag during lookups.
+
+   !	accessRcpt() called smdbMailMail(), but the function failed
+   	to return an SMDB_ACCESS_* code as documented. See smdb.c
+   	in libsnert.
+
+   !	When +test-mode, set the kernel socket queue to one.
+
+   !	accessMail(), accessRcpt(): do not call smdbDomainMail() when
+   	the client.name is an empty string, ie. no PTR record.
+
+   !	replyMail(), replyRcpt() fixed bug with respect rewinding
+   	replies from previous message transaction.
+
+   !	Replaced cmdWant* functions by cmdOutOfSequence.
+
+   !	cmdOutOfSequence() returns SMTPF_DROP instead of SMTPF_REJECT;
+   	the assumption being that legitimate correctly written SMTP
+   	client's will not issue commands out of sequemce.
+
+   !	+grey-content be sure to reset the expire time when the MD5
+   	hash is appended to the record in order to assert that the
+   	grey-temp-fail-period starts on the trailing edge of the
+   	message, not the leading edge.
+
+   +	Added cache-on-corrupt option.
+
+   +	Added cache-sync-mode option.
+
+   !	sessionChild() sets PTHREAD_CANCEL_ASYNCHRONOUS so that we can
+   	call sessionCancelAll() to terminate threads immiedately and
+   	cleanly at program termination.
+
+   +	Added support for various high water marks during 60 minute
+   	window.
+
+   +	Added hard limit to number of AUTH attempts per session.
+
+   +	Added check and reject message for unknown AUTH mechanisms.
+
+   !	AUTH PLAIN now correctly finds the authentication-id when the
+   	authorize-id field is not empty. The authorize-id continues to
+   	remain ignored.
+
+   !	routeKnownAuth() fixed w.r.t. to changes made to support route
+   	stats.
+
+   !	replySend() didn't check sendClient() return code for error,
+	which could result in forever blocked connection. Now if
+	sendClient() returns an error, then longjmp(sess->on_error),
+	which will terminate the session.
+
+   !	When the grey-list key contains IP or PTR elements, drop the
+   	connection after reporting the temp.failure.
+
+	It has been observed that some spammers remain connected and
+	repeatedly attempt to send a message for the same sender-
+	recipient pair or even different pairs. When grey-key uses ip
+	or ptr elements, then we know that the connection will be
+	repeated temp.failed until the grey-temp-fail-period, so force
+	a drop in order to force the client that they implement a
+	retry queue.
+
+	The options smtp-drop-after and/or smtpf-reject-delay would
+	eventually catch this abuse, but this is a time and resource
+	saving measure.
+
+   +	Add license check for lickey max-domains against the route-map.
+
+   !	+smtp-drop-after applies all clients, including white listed
+   	hosts. This prevents sessions that get out of sync at DATA
+   	from tying up a session.
+
+   !	White listed clients excluded from +smtp-reject-delay.
+
+   !	When +smtp-delay-checks is set and when we don't have a white
+   	listed RCPT, check the reply queue for an already delayed
+   	negative result, in which case we can skip an expensive call-
+   	ahead and return the queued reply.
+
+   !	If a forward connection is not open, avoid sending the QUIT
+   	command. This came about because of how the addition of route
+   	stats changed how the forward connection list is used.
+
+--2.0.1--
+
+   +	Added statistics for route accept:reject ratio over 31 days.
+	Works best when +smtp-delay-checks set.
+
+   !	replyAppendFmt(): Fixed bug in when enlarging the dynamic
+	length reply buffer.
+
+   !	When +smtp-delay-checks and +smtp-command-pause are set, then
+	do not read the pipelined command, otherwise we can get
+	command-out-sequence errors, which would interfere with the
+	possible RCPT white-listing.
+
+   !	sendClient(): Disable multiline rejections until after
+	EHLO/HELO. This is a work-around for broken MTAs like
+	FirstClass that don't handle multiline replies correctly.
+
+   +	Added false RCPT test for call-ahead. This code had been
+	originally planned for the 1.0 release, but was put off and
+	subsequently forgotten until now.
+
+   +	Added stats for clean-quit and clean-quit-no-message.
+
+   !	sessionProcess() fixed SMTPF_ACCEPT from filter_accept_table
+   	and filter_connect_table, that incorrectly tried to send a
+   	reply from an empty reply queue, triggering an internal
+   	error, and subsequently an infinite longjmp() + replaySend
+   	loop.
+
+--2.0.0--
+
+   +	Requires LibSnert 1.66.923
+
+  !!	Revised server threading model to improve performance using
+	pre- spawned server threads. See options server-min-threads,
+	server-new-threads, smtp-accept-timeout.
+
+  !!	Fixed +quit problem concerning blocking in accept() and
+	closing the socket in signal handler or other thread.
+
+  !!	Revised client response mechanism into a reply API, in an
+	attempt to keep all the I/O centralised. This is to aid with a
+	new option smtp-delay-checks to allow RCPT white listing to
+	override policy based rejections from earlier stages in an
+	SMTP transaction. This is similar to Sendmail's delay-checks.
+	With this any early rejects are deferred until RCPT commands
+	are issued.
+
+  !!	Revised filtering structure to be more modular table driven.
+
+   +	Added smtp-delay-checks.
+
+   -	verbose=error setting dropped. Errors should always be
+	reported otherwise they're warnings, which can be optional.
+
+   -	clamd-policy-io removed in favour of a temporary failure at
+	the final dot, since it IS possible to temp.fail at dot.
+
+   -	grey-policy removed. Was experimental.
+
+   +	clamd, spamd: added log messages when max-size is exceeded.
+
+   +	Added pthread_atfork() handlers to destroy mutexes within the
+	child process that could mysteriously hang the CLI on exit.
+	concurrent.c, grey.c, msglimit.c, rate.c, route.c, server.c.
+	cache.c and stats.c were previously done in 1.0 in an attempt
+	to address randomly hanging CLI processes.
+
+   !	threadSleep() moved to libsnert/1.65 and renamed pthreadSleep().
+
+   +	Added SMTP CONN administration command to dump the list of
+	active client connections
+
+   +	Added new combination B/W listing tag mechanism, ie.
+	Connect:From:, Connect:To:, and From:To:
+
+   +	checkClientIP(): Added CLIENT_PASSED_GREY flag based on the
+	client having previously passed grey-listing. This allows
+	tests and controls like smtp-greet-pause and smtp-slow-reply
+	to be skipped for clients that have proven to be well behaved.
+
+   +	Added session ID to end of 5xy and 4xy replies.
+
+   !	Changed the text of some SMTP responses that indicate the
+	connection will drop be dropped to remove reference to "drop"
+	or "dropping"; when smtp-delay-checks is set, the SMTPF_DROP
+	are converted to SMTPF_REJECT so that we can check each RCPT
+	for possible white listing, so the text is misleading in that
+	context.
+
+--1.0.170--
+
+   !	sendClient(): Disable multiline rejections until after
+	EHLO/HELO. This is a work-around for broken MTAs like
+	FirstClass that don't handle multiline replies correctly.
+
+--1.0.169--
+
+   !	uribl.c: Fixed check for uri-require-ptr is enabled (>0)
+   	before applying the test and rejection.
+
+--1.0.168--
+
+   *	Requires libsnert-1.66.923
+
+   !	Fix bug with broken case insensitive lookups introduced in
+   	libsnert 1.66.922 smdb.c code, which affected access and route
+   	map lookups.
+
+--1.0.167--
+
+   !	grey.c: when grey-temp-fail-period is less than or equal to
+	zero, then grey-listing is disabled.
+
+   !	grey-content: When grey-content is set,  there are three
+	possible temp. fail out comes for a grey-content listing:
+
+	a) we temp. fail a message for the first time at final dot and
+	display the "grey listed {%s} for %ld seconds" message, which
+	was added in version 1.0.165; or
+
+	b) the temp.fail period has not expired so we temp. fail at
+	DATA per usual and display the "grey listed {%s} for %ld
+	seconds" message; or
+
+	c) the temp. fail period has expired, but the message content
+	fails to hash to the original message, ie. more than one
+	message sent by the same sender and the MTA delivering them
+	out of order. The second case could also be caused by spam
+	sources using different hash busting in their message each
+	time they attempt to send a message, which of course are
+	correctly blocked.
+
+	However for case c) the "grey listed N seconds" message was
+	being incorrectly logged with a random value for the number of
+	seconds. Solution is to add a different log message for case
+	c). Also for case a), the log message was changed slightly to
+	denote the difference between instances of a) and b).
+
+--1.0.166--
+
+   !	greyMakeKey() fix possible recipient address overflow issue
+	with source routed recipient addreses that might exceed the
+	max. grey key length (382).
+
+   !	greyMakeKey() fix possible length overflow and buffer
+	corruption when building the grey key. If grey-key=
+	ptr,mail,rcpt and if one or more of the PTR, MAIL, or RCPT
+	value are max. length of 255 bytes, then it would be possible
+	to overflow the buffer length variable and subsequently the
+	buffer itself.
+
+--1.0.165--
+
+  ++	cli.c: Linux: Fixed mysterious hang in C library mutex.
+
+  	syslog() calls strftime() calls tzset() which tries to lock
+	tzset_lock, which might already be in a locked state by some
+	other thread in the parent process.
+
+	The simple solution is to close syslog() to prevent any chance
+	of hanging on the tzset_lock mutex between fork() and execve().
+	Once we reach execve(), the process will return to a know safe
+	state. Between fork() and execve() we can only use async-signal-
+	safe library routines (see SUS rationale for pthread_atfork for
+	commentary).
+
+  !	Adjuested execution order for grey-content scanning w.r.t.
+   	clamd, spamd, and other content filters.
+
+--1.0.164--
+
+   !	routeCacheAddRcpt(): fixed bug in TTL selection.
+
+--1.0.163--
+
+   +	smtp-slow-reply now checks the CLIENT_IS_WHITE flag (added in build
+   	151). This flag is set for Connect: and dns-wl entries.
+
+--1.0.162--
+
+   +	Added experimental option grey-content.
+
+--1.0.161--
+
+   +	Added cache-unicast-hosts option, since cache-unicast-domain, while
+   	a neat idea is not always convenient for some sites.
+
+--1.0.160--
+
+  !!	cmdData(): RFC 2821 section 4.1.1.4 DATA paragraph 4, "partial"
+	failure" has defined semantics in the realm of "transaction
+	processing" and must not be confused with SMTP temporary failure
+	result. As a result, it is perfectly acceptable to return a 4xy
+	reply in response to the end-of-message dot.
+
+	One fix made as a result is when a message transfered to a single
+	forward host either times out or returns a temporary failure is we
+	can send a temporary failure back to the client. This avoids a
+	double DSN message issue and tells the client to requeue for later.
+
+   !	uriblTestUri(): Fixed extra counting of uri-bl stat by uri-bl-ptr,
+   	uri-bl-helo, and uri-bl-mail tests. Introduced in 1.0.158 with
+   	new experimental URI options.
+
+--1.0.159--
+
+   +	options.c: Added experimental option spf-temp-error-dns.
+
+   !	spf.c: Ignore TempError. Appears that PermError is ignored so
+	that we can proceed with subsequent tests. The same should hold
+	true with TempError.
+
+   !	Fixed whitelisting by dns-wl and dns-gl for -smtp-enable-esmtp.
+
+--1.0.158--
+
+   !	client-is-mx stat counting fixed.
+
+   +	Added stat for uri-links-policy.
+
+   !	uri-links-policy is now only applied post-DATA for message content.
+
+   +	EXPERIMENTAL options added: uri-require-domain, uri-require-ptr,
+   	uri-ip-in-ptr, uri-reject-unknownm, uri-reject-on-timeout
+
+   !	filterMail(): An empty MX list is now treated as a temporary lookup
+   	error, instead of an out right failure.
+
+   +	stats.c: added pthread_atfork() handlers to avoid saving the stats
+   	when a child process is forked and thus possibly get stuck on a
+   	locked mutex carried over from the parent's memory state.
+
+--1.0.157--
+
+   !	threadSleep(): fix possible memory leak with respect to the
+   	conditional variable and mutex not being destroyed.
+
+   !	statsLoad(): fixed potentional memory leak during startup.
+
+   +	Add ProcTitleFini() to _atExitCleanUp().
+
+   !	filterMail() Fixed potential memory WRT to DNS lookups related
+   	to require-sender-mx and client-is-mx .
+
+--1.0.156--
+
+   -	ServerMain(): Removed old terminate code that would exit smtpf
+   	for some particular types of accept() errors on various
+   	platforms. In partcular FreeBSD could return EINVAL from accept()
+   	for unclear reasons, thus terminating the process in a clean
+   	manner.
+
+--1.0.155--
+
+   +	Add signalIgnore handler for the following in an effort to catch
+   	mysterious program termination without a core dump on FreeBSD 6.2:
+	SIGALRM SIGXCPU SIGXFSZ SIGVTALRM SIGPROF SIGUSR1 SIGUSR2
+
+--1.0.154--
+
+   +	Add SIGHUP / signalIgnore handler.
+
+--1.0.153--
+
+   +	Set the FD_CLOEXEC flag on all sockets. Also on the pipes, but
+   	not their standard duplicates. This is for the CLI support.
+
+--1.0.152--
+
+   +	Add smtp-slow-reply option to throttle SMTP responses.
+
+   !	rate.c, cache.c, smtpf.c: replaced instances of sleep() with
+	threadSleep(), which uses pthread_cond_timedwait() to
+	temporarily put a thread to sleep and allow other threads to
+	continue, since sleep() on some OSes result in a process sleep.
+
+--1.0.151--
+
+   !	Connect: white listed entries can now by-pass -smtp-enable-esmtp,
+   	allowing EHLO to be used. This is to deal with broken ESMTP MTAs
+	that fail to downgrade to HELO properly. I don't agree with this
+	change, because it is a protocol problem, not a policy one.
+
+--1.0.150--
+
+   !	sessionInit(), filterIdle(): an inadvertant newline or unknown
+	command in place of HELO triggered inadvertantly triggered the
+	idle retest timer of blacklists, because the retest_ip field was
+	initially set to zero instead of the session start time.
+
+   !	filterIdle(): locahost, LAN, and relays must be excluded from
+	DNS-BL testing.
+
+   !	unix.c: changed standard file handling from fclose() to freopen().
+   	This appears to resolve issues with CLI redirection and termination.
+
+--1.0.149--
+
+   !	cli.c: Fixed potential memory leak when cli-content is aborted
+	do to a reject/drop condition from a different test.
+
+--1.0.148--
+
+   !	Clarified cli-content option behaviour in documentation.
+
+   !	cli.c: exit values out of range are converted to 0 (continue)
+	exit code.
+
+--1.0.147--
+
+   !	Updated documentation with installed file ownership and
+   	permissions.
+
+   !	uribl.c, smtpf.h: Minor change for 64-bit compiler warning.
+
+   +	checkClientIP() skips PTR lookup for localhost.
+
+   +	Added Linux.rpm/smtpf.spec and makefile.in to source package.
+   	Updated configure.in.
+
+--1.0.146--
+
+   +	Requires LibSnert 1.65.912
+
+   !	configure.in: Changes for FreeBSD 4 builds.
+
+   !	Changed grey listing "450 4.7.1 try again later" to 451. See
+   	http://lists.puremagic.com/pipermail/greylist-users/2004-September/000766.html
+
+--1.0.145--
+
+   -	Disabled pthread_yield() calls to avoid redundant context
+   	switches on busy systems.
+
+   +	Add +restart-if option for Linux yum updates.
+
+ TODO	fix +quit problem concerning blocking in accept() and closing
+ 	the socket in signal handler or other thread.
+
+--1.0.134--
+
+   +	Requires LibSnert 1.65.
+
+   +	Fronts any MTA.
+
+   +	SMTP AUTH LOGIN, PLAIN support.
+
+   +	Socketmap support for all access, cache, and route maps.
+
+   +	Multicast & Unicast caching for clusters.
+
+   +	Featured filtering techniques
+
+	    *	Recipient call-ahead
+	    *	Sender call-back
+	    *	ClamAV
+	    *	Command Line Interface
+	    *	SMTP command pause
+	    *	Concurrent connection limits.
+            *	Connection rate throttling.
+	    *	Drop on disabled SMTP commands.
+	    *	SMTP greet pause
+	    *	Grey-listing
+	    *	HELO claims to be us
+	    *	Local B/W list IP, MAIL, RCPT
+	    *	Message limit controls
+	    *	Message size controls
+	    *	DNS real-time blacklists
+	    *	RET Message-Id used for recipient white
+	    	wash and backscatter prevention.
+	    *	SpamAssassin
+	    *	SPF Classic
+	    *	Tar pitting SMTP rejects.
+	    *	URI blacklists
+	    *	URI blacklist test of HELO
+	    *	Client is MX
+	    *	Require client PTR
+	    *	IP in client's PTR name
+

@@ -1,0 +1,40 @@
+#    http://support.microsoft.com/default.aspx?scid=kb;EN-US;q262617
+
+.ade            Microsoft Access project extension
+.adp            Microsoft Access project
+.bas            Microsoft Visual Basic class module
+.bat            Batch file
+.chm            Compiled HTML Help file
+.cmd            Microsoft Windows NT Command script
+.com            Microsoft MS-DOS program
+.cpl            Control Panel extension
+.crt            Security certificate
+.exe            Program
+.hlp            Help file
+.hta            HTML program
+.inf            Setup Information
+.ins            Internet Naming Service
+.isp            Internet Communication settings
+.js             JScript file
+.jse            Jscript Encoded Script file
+.lnk            Shortcut
+.mdb            Microsoft Access program
+.mde            Microsoft Access MDE database
+.msc            Microsoft Common Console document
+.msi            Microsoft Windows Installer package
+.msp            Microsoft Windows Installer patch
+.mst            Microsoft Visual Test source files
+.pcd            Photo CD image, Microsoft Visual compiled script
+.pif            Shortcut to MS-DOS program
+.reg            Registration entries
+.scr            Screen saver
+.sct            Windows Script Component
+.shs            Shell Scrap object
+.shb            Shell Scrap object
+.url            Internet shortcut
+.vb             VBScript file
+.vbe            VBScript Encoded script file
+.vbs            VBScript file
+.wsc            Windows Script Component
+.wsf            Windows Script file
+.wsh            Windows Script Host Settings file

@@ -1,0 +1,193 @@
+smtpf 1.0
+=========
+
+1. Installation
+---------------
+
+1.1 Unix Systems
+----------------
+
+	tar -zxf libsnert-1.63.tar.gz
+	tar -zxf smtpf-1.0.tar.gz
+	cd com/snert/src/lib
+	./configure --without-db
+	make clean build
+	cd ../smtpf
+	./configure
+	make clean build
+	sudo make install
+
+
+1.2 Windows Systems
+-------------------
+
+Double-click on ``smtpf-1.0-install.exe'' to install. Its recommended
+that the software be placed in a ``C:\smtpf'' directory for easy 
+accessibility to the configuration files, though other locations are
+possible if preferred.
+	
+
+2. Configuration
+----------------
+
+2.1 Unix Systems
+----------------
+
+An /etc/smtpf directory should have been created with example
+configuration files. Specifically you will need to edit at the very
+least /etc/smtpf/route.cf; see section 4 below.
+
+The smtpf binary has a conservative set of built-in defaults for all
+the options and can be run without a /etc/smtpf/smtpf.cf file. A
+default .cf can be generated with:
+
+	smtpf -help >/etc/smtpf/smtpf.cf
+	
+This file can then be edited. If you're upgrading between versions,
+you can generate a new .cf file that includes your current settings
+so that you can compare old and new options. For example:
+
+	smtpf -help file=/etc/smtpf/smtpf.cf >smtpf.new
+	diff -u /etc/smtpf/smtpf.cf smtpf.new
+
+The access.cf is similar in style to Sendmail's /etc/mail/access file.
+The smtpfmap utility can be used to convert between text format,
+Berkeley DB formats, or a socket-map. If the access-map option is set
+to ``text!/etc/smtpf/access.cf'', then any time this file is updated
+smtpf will have to be restarted. If the Berkeley DB format is used,
+``db!/etc/smtpf/access.db'', then smtpf will auto-detect updates and
+reopen the file; this is the preferred single machine configuration.
+
+
+2.2 Windows Systems
+-------------------
+
+
+3. About the smtpf cache
+------------------------
+
+
+
+4. Configuration of Mail Transfer Agents
+----------------------------------------
+
+smtpf sits in front of one or more mail transfer agents (MTA) on SMTP
+port 25. It acts as a proxy, filtering and forwarding mail to one or
+more MTAs, which can be on the same machine or different machines.
+
+When the MTA exists on the same machine as smtpf, it will have to be
+configured to accept connections on a port other than SMTP port 25,
+which smtpf will be listening on. The MTA will also need to be
+configured to forward outbound mail via smtpf, if certain features
+that need to modify the outbound message headers are to be used.
+
+Assuming smtpf and the local MTA operate on the same machine and that
+the MTA is configured to listen on port 26, then in the smtpf route-
+map use a ``FORWARD: 127.0.0.1:26'' for your LAN and each of your
+domains you accept mail for. Example:
+
+	route:::1		FORWARD: 127.0.0.1:26
+	route:127.0.0.1		FORWARD: 127.0.0.1:26
+	route:192.168.0		FORWARD: 127.0.0.1:26
+	route:my.domain		FORWARD: 127.0.0.1:26
+	
+In the smtpf route-map, be sure to add a RELAY parameter to your
+IPv4 and/or IPv6 local host IP addresses. Example:
+	
+	route:::1		FORWARD: 127.0.0.1:26; RELAY
+	route:127.0.0.1		FORWARD: 127.0.0.1:26; RELAY
+	
+The RELAY tag should be used sparingly, typically only for your
+LAN or trusted hosts. It allows mail that is not destined for 
+local delivery to be sent outwards to the Internet. Example:
+
+	route:192.168.0		FORWARD: 127.0.0.1:26; RELAY
+	route:smtp2.my.domain	RELAY
+
+/WRONG/The route-map RELAY parameter does white list; see access-map.
+
+
+4.1 Sendmail
+------------
+
+To enable sendmail and smtpf to operate on the same machine, edit
+the /etc/mail/sendmail.mc file and comment out all existing 
+DAEMON_OPTIONS macros. Add the following macro:
+
+	DAEMON_OPTIONS(`Addr=127.0.0.1, Port=26, Name=MTA')
+
+This will allow smtpf to accept, filter, and forward mail for local
+delivery via the local MTA.
+	
+
+4.2 Postfix
+-----------
+
+
+4.3 Exchange
+------------
+
+
+5. Operating smtpf
+------------------
+
+
+5.1 Unix Systems
+----------------
+
+   *	Option and command summary:
+
+		smtpf -help
+
+
+   *	Start smtpf as a Unix daemon:
+
+		smtpf
+	
+
+   *	Start with an alternate configuration file:	
+
+		smtpf file=/path/to/alt-smtpf.cf
+		
+
+   *	Start with the built-in configuration:
+   
+   		smtpf file=""
+
+   		
+   *	Changes to the .cf files require the smtpf process to be
+   	restarted:
+
+		smtpf -restart
+	
+
+   *	To stop smtpf:
+
+		smtpf -quit
+	or
+		pkill smtpf
+
+
+5.2 Debugging
+-------------
+
+5.2.1 Linux 2.6
+---------------
+
+To get core dumps of daemon running process:
+
+	echo 1 > /proc/sys/kernel/suid_dumpable
+
+And prior to starting smtpf:
+	
+	ulimit -c unlimited 2>&1 > /dev/null
+
+
+5.2.2 OpenBSD
+-------------
+
+To get core dumps of daemon running process:
+
+	sysctl kern.nosuidcoredump=0
+	
+

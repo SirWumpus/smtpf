@@ -1,0 +1,63 @@
+.POSIX :
+.SUFFIXES :
+
+# Define the smtpf config directory with a trailing slash.
+CURDIR=/etc/smtpf/
+
+.MAIN : all
+
+all : sq3
+
+sq3 : access.sq3 .access.cf route.sq3 .route.cf
+
+access.sq3: access.d access.cf
+	cat ${CURDIR}access-defaults.cf ${CURDIR}access/* ${CURDIR}access.cf 2>/dev/null \
+		| kvmap -l "access!sql!${CURDIR}access.sq3"
+	chmod 660 ${CURDIR}access.sq3
+
+access.cf:
+	if test ! -f ${CURDIR}access.cf ; then touch ${CURDIR}access.cf ; fi
+
+access.d:
+	if test ! -d ${CURDIR}access ; then mkdir ${CURDIR}access ; chmod 750 ${CURDIR}access ; fi
+
+.access.cf: access.cf
+	if test -f ${CURDIR}sync.sh ; then ${CURDIR}sync.sh ${CURDIR} access ; cp access.cf .access.cf ; fi
+
+route.sq3: route.cf
+	kvmap -l "route!sql!${CURDIR}route.sq3" <route.cf
+	chmod 660 ${CURDIR}route.sq3
+
+.route.cf: route.cf
+	if test -f ${CURDIR}sync.sh ; then ${CURDIR}sync.sh ${CURDIR} route ; cp route.cf .route.cf ; fi
+
+newconfig :
+	-@mv ${CURDIR}smtpf.cf ${CURDIR}smtpf.cf.old
+	-@smtpf +help file=${CURDIR}smtpf.cf.old > ${CURDIR}smtpf.cf ;:
+	-@chmod 660 ${CURDIR}smtpf.cf
+
+route-to-mailer:
+	-cd /etc/mail; mv mailertable mailertable.bak
+	sed \
+		-e '/^route:127/d' \
+		-e '/RCPT:/!d' \
+		-e 's/RCPT: */& /' \
+		-e 's/:[0-9][0-9]*//g' \
+		-e 's/^route:\([^ 	]*\).*RCPT: \([^;]*\).*/\1		esmtp:\2/' \
+		-e 's/, */:/g' \
+		-e 's/\(:\) *\([^:;]*\)/\1[\2]/g' \
+		route.cf >/etc/mail/mailertable
+	cd /etc/mail; make mailertable.db
+
+mailer-to-route:
+	cd /etc/mail; makemap -u hash mailertable >mailertable.dump
+	mv route.cf route.cf.bak
+	sed \
+		-e 's/:/,/g' \
+		-e 's/esmtp,/FORWARD: 127.0.0.1:26; RCPT:/' \
+		-e 's/[][]//g ' \
+		-e 's/^/route:/' \
+		/etc/mail/mailertable.dump >route.cf
+	echo 'route:127.0.0.1		FORWARD:127.0.0.1:26; RELAY' >>route.cf
+	make route.sq3
+

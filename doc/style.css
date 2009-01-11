@@ -1,0 +1,199 @@
+/*
+ * Copyright 2002, 2005 by Anthony Howe. All rights reserved.
+ *
+ * $OpenBSD$
+ */
+
+/*
+BODY {
+	background-color: #4B748A;
+}
+*/
+TABLE {
+	background-color: #ffffff;
+}
+
+.normal, BODY, P, UL, TD {
+	font-family: Arial, Verdana, Helvetica, sans-serif;
+	font-size: 11pt;
+/*
+	color: #ffffff;
+	background-color: #4B748A;
+*/
+	text-align: justify;
+}
+.small {
+	font-family: Arial, Verdana, Helvetica, sans-serif;
+	font-size: 8pt;
+}
+.copyright {
+	font-family: Arial, Verdana, Helvetica, sans-serif;
+	font-size: 9pt;
+}
+.big, H3 {
+	font-family: Arial, Verdana, Helvetica, sans-serif;
+	font-size: 14pt;
+	font-weight: normal;
+}
+.large, H2 {
+	font-family: Arial, Verdana, Helvetica, sans-serif;
+	font-weight: normal;
+	font-size: 16pt;
+}
+.huge, H1 {
+	font-family: Arial, Verdana, Helvetica, sans-serif;
+	font-size: 26pt;
+}
+.title {
+	font-family: serif;
+	font-weight: bold;
+	font-size: 24pt;
+/*	color: #3099ff; */
+	color: #0668B2;
+}
+DT {
+	font-family: monospace;
+	font-weight: bold;
+}
+DT.normal {
+	font-family: Arial, Verdana, Helvetica, sans-serif;
+	font-weight: normal;
+}
+DD {
+	text-align: justify;
+	margin: 0 0 20px 40px;
+}
+DT TT {
+	text-align: left;
+}
+A {
+	font-family: Arial, Verdana, Helvetica, sans-serif;
+	text-decoration: none;
+	font-weight: bold;
+	font-size: 10pt;
+}
+A:link {
+	color: #0000ff;
+}
+A:visited {
+	color: #0000ff;
+}
+A:hover {
+	color: #ff0000;
+}
+A.glossary {
+	color: #000066;
+}
+
+.option {
+	font-family: monospace;
+	font-weight: bold;
+	font-size: 11pt;
+	color:#000080;
+}
+.key {
+	font-weight: bold;
+	font-family: monospace;
+}
+.value {
+	color:#0000cc;
+	font-family: monospace;
+	font-style: italic;
+	font-weight: bold;
+	font-size: 11pt;
+}
+TD.value, DT.value {
+	color:#000000;
+	font-style: normal;
+	font-weight: bold;
+	text-align: left;
+}
+.tag {
+	color:#008000;
+	font-family: monospace;
+	font-weight: bold;
+	font-size: 11pt;
+}
+.warn {
+	color:#cc0000;
+	font-style: italic;
+}
+
+.note {
+	color:#990000;
+	font-style: italic;
+}
+.tline {
+	border-collapse: collapse;
+	border-top: 1px solid;
+	border-color: #999999;
+}
+.bline {
+	border-collapse: collapse;
+	border-bottom: 1px solid;
+	border-color: #999999;
+}
+.lline {
+	border-collapse: collapse;
+	border-left: 1px solid;
+	border-color: #999999;
+}
+.rline {
+	border-collapse: collapse;
+	border-right: 1px solid;
+	border-color: #999999;
+}
+.tdotted {
+	border-collapse: collapse;
+	border-top: 1px dotted;
+	border-color: #cccccc;
+}
+.bdotted {
+	border-collapse: collapse;
+	border-bottom: 1px dotted;
+	border-color: #cccccc;
+}
+.ldotted {
+	border-collapse: collapse;
+	border-left: 1px dotted;
+	border-color: #cccccc;
+}
+.rdotted {
+	border-collapse: collapse;
+	border-right: 1px dotted;
+	border-color: #cccccc;
+}
+
+.big_picture {
+	margin: 0px 10px 10px 0px;
+	text-align: center;
+	float: left;
+}
+.page {
+	width: 700px;
+}
+.contents {
+	margin: 0px 0px 15px 15px;
+	width: 260px;
+	border-collapse: collapse;
+	border: 1px dotted #999999;
+	float: right;
+}
+DL.message {
+}
+DT.message {
+}
+DD.message {
+}
+OL.toc OL, OL.toc UL {
+	padding: 0px 0px 0px 0.7em;
+}
+OL.toc LI {
+	padding: 1px 0px 0px 0px;
+	font-weight: 200;
+}
+OL.toc {
+	padding: 0px 0px 0px 2em;
+}
+
+

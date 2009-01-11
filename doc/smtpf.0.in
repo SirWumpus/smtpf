@@ -1,0 +1,86 @@
+NAME
+	@PACKAGE_NAME@ - Barricade MX - SMTP Anti-Spam Proxy Filter
+	
+SYNOPSIS
+
+	@PACKAGE_NAME@ -help [options ...]
+	@PACKAGE_NAME@ -quit
+	@PACKAGE_NAME@ -restart [options ...]
+	@PACKAGE_NAME@ [file=cf][options ...]
+		
+DESCRIPTION
+
+	@PACKAGE_NAME@ is an SMTP proxy filter that listens on port 25 and 
+	forwards mail to one or more mail transfer agents, which can be
+	on the same machine or different machines.
+	
+	A local copy of the complete documentation can be viewed with:
+	
+	   lynx /usr/local/share/doc/@PACKAGE_NAME@/manual.shtml
+		
+	Or the most current copy can be viewed online with:
+	
+	   lynx http://www.snertsoft.com/
+	
+COMMAND LINE
+
+	-help
+		Write to standard output a complete summary of all
+		the options. Any options specified on the command
+		line are first applied before appearing in the output.
+		Can be used to generate a default or merged .cf file:
+		
+		   @PACKAGE_NAME@ -help > @PACKAGE_NAME@-defaults.cf
+		
+	-quit
+		Stop @PACKAGE_NAME@. Equivalent to
+		
+		   kill -TERM /var/run/@PACKAGE_NAME@.pid
+		
+	-restart
+		Stops an already running instance of @PACKAGE_NAME@ before
+		continuing to start-up a new one.
+		
+	file=/path/to/@PACKAGE_NAME@.cf
+		Read the given configuration file first, followed
+		by the command line options.
+		
+	The remaining option descriptions can be viewed using the -help
+	option or in the HTML documentation.
+	
+FILES
+		
+	/etc/@PACKAGE_NAME@/@PACKAGE_NAME@.cf		configuration file
+	/etc/@PACKAGE_NAME@/access.cf		text source for access.sq3
+	/etc/@PACKAGE_NAME@/access.sq3		
+	/etc/@PACKAGE_NAME@/route.cf		text source for route.sq3
+	/etc/@PACKAGE_NAME@/route.sq3
+	/etc/@PACKAGE_NAME@/Makefile		used to rebuild .sq3 files.
+	
+	/usr/local/sbin/@PACKAGE_NAME@		
+	/usr/local/sbin/kvmap		key-value map conversion tool
+	/usr/local/sbin/kvmc		key-value map client
+	/usr/local/sbin/kvmd		key-value map daemon
+	/usr/local/sbin/mcc		multicast client/daemon
+	
+	/usr/local/bin/sqlite3		thread-safe version
+
+	/var/cache/@PACKAGE_NAME@/cache.sq3	cache on Linux
+	/var/cache/@PACKAGE_NAME@/stats.sq3	statistics on Linux
+
+	/var/db/@PACKAGE_NAME@/cache.sq3 	cache on BSD systems
+	/var/db/@PACKAGE_NAME@/stats.sq3		statistics on BSD systems
+
+	/usr/local/share/examples/@PACKAGE_NAME@
+	/usr/local/share/doc/@PACKAGE_NAME@/manual.shtml
+
+SEE ALSO
+
+	/usr/local/share/doc/@PACKAGE_NAME@/manual.shtml
+	
+COPYRIGHT
+
+	@package_copyright@
+	Trademark & Patents Pending.
+
+	

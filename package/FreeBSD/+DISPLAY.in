@@ -1,0 +1,23 @@
+
+--- @PACKAGE_NAME@ - Barricade MX @package_major@.@package_minor@ ---
+	Some overview documentation can be found with:
+
+man @PACKAGE_NAME@
+	
+	The complete documentation can be viewed with
+	a text or graphical web browser locally here:
+
+/usr/local/share/doc/@PACKAGE_NAME@/manual.shtml
+	
+	or online at:
+	
+http://www.snertsoft.com/
+	
+	Remember to modify your /etc/rc.local script to
+	startup the software after your MTA on system
+	boot.
+
+	If @PACKAGE_NAME@ and your MTA operate on the same
+	machine, that you will have to change your MTA
+	to listen on a different port and set up your 
+	route-map accordingly.

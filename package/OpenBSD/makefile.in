@@ -1,0 +1,34 @@
+topdir = @top_srcdir@
+
+all : pack
+
+pack: clean @PACKAGE_NAME@-@PACKAGE_VERSION@.tgz
+
+clean:
+	-rm -rf /var/tmp/stage
+	-groupdel @PACKAGE_NAME@
+	-userdel @PACKAGE_NAME@
+
+distclean : 
+	-rm -f @PACKAGE_NAME@-@PACKAGE_VERSION@.tgz
+	-rm -f +COMMENT +CONTENTS +DESC +DISPLAY
+
+list :
+	tar -zvtf @PACKAGE_NAME@-@PACKAGE_VERSION@.tgz
+
++COMMENT : +COMMENT.in
+	cd ${topdir} ; ./config.status
+
++CONTENTS : +CONTENTS.in
+	cd ${topdir} ; ./config.status
+
++DESC : +DESC.in
+	cd ${topdir} ; ./config.status
+
++DISPLAY : +DISPLAY.in
+	cd ${topdir} ; ./config.status
+
+@PACKAGE_NAME@-@PACKAGE_VERSION@.tgz : +CONTENTS +COMMENT +DESC +DISPLAY
+	mkdir /var/tmp/stage
+	cd ${topdir} ; make DESTDIR=/var/tmp/stage install
+	pkg_create -B /var/tmp/stage -p /usr/local -c +COMMENT -d +DESC -f +CONTENTS @PACKAGE_NAME@-@PACKAGE_VERSION@.tgz

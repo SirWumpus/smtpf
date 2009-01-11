@@ -1,0 +1,61 @@
+#
+# BarricadeMX SpamAssassin ruleset
+# Version: 1.0 (2008-12-16)
+#
+
+header   BMX_FROM_LAN		X-smtpf-Report =~ /[=,;]lan[,;]?/
+describe BMX_FROM_LAN		BarricadeMX: SMTP client is from rfc1918 address space
+score    BMX_FROM_LAN		0.001
+
+header   BMX_FROM_2NDMX		X-smtpf-Report =~ /[=,;]2nd_mx[,;]?/
+describe BMX_FROM_2NDMX		BarricadeMX: SMTP client is a secondary MX for envelope-sender domain
+score    BMX_FROM_2NDMX		1.0
+
+header   BMX_FROM_RELAY		X-smtpf-Report =~ /[=,;]relay[,;]?/
+describe BMX_FROM_RELAY		BarricadeMX: SMTP client is a relay
+score    BMX_FROM_RELAY 	-0.001
+
+header   BMX_FROM_AUTH 		X-smtpf-Report =~ /[=,;]auth[,;]?/
+describe BMX_FROM_AUTH 		BarricadeMX: SMTP Client used SMTP AUTH 
+score    BMX_FROM_AUTH		-0.001
+
+header   __BMX_EXTRA_SPACES	X-smtpf-Report =~ /[=,;]extra_spaces[,;]?/
+meta     BMX_EXTRA_SPACES 	__BMX_EXTRA_SPACES && !(BMX_FROM_RELAY || BMX_FROM_AUTH)
+describe BMX_EXTRA_SPACES 	BarricadeMX: SMTP Client sent extra spaces in MAIL and/or RCPT commands
+score    BMX_EXTRA_SPACES 	3.5
+
+header   BMX_WAS_GREYLISTED 	X-Grey-Report =~ /age=/
+describe BMX_WAS_GREYLISTED 	BarricadeMX: SMTP Client was greylisted as had not been seen before
+score    BMX_WAS_GREYLISTED 	1.0
+
+header   BMX_FROM_MX 		X-smtpf-Report =~ /[=,;]mx[,;]?/
+describe BMX_FROM_MX 		BarricadeMX: SMTP Client was an MX for the domain in envelope-from
+score    BMX_FROM_MX 		-0.001
+
+header   BMX_IP_IN_PTR 		X-smtpf-Report =~ /[=,;]ip_in_ptr[,;]?/
+describe BMX_IP_IN_PTR 		BarricadeMX: SMTP Client PTR record contained one or more octets of the IP address
+score    BMX_IP_IN_PTR 		1.0
+
+header   BMX_NO_PTR 		X-smtpf-Report =~ /[=,;]no_ptr[,;]?/
+describe BMX_NO_PTR 		BarricadeMX: SMTP Client had no PTR record
+score    BMX_NO_PTR 		2.0
+
+header   BMX_HELO_HOST 		X-smtpf-Report =~ /[=,;]helo_host[,;]?/
+describe BMX_HELO_HOST 		BarricadeMX: SMTP Client sent a HELO that matched the host PTR
+score    BMX_HELO_HOST 		-0.001
+
+header   BMX_HELO_IP		X-smtpf-Report =~ /[=,;]helo_ip[,;]?/
+describe BMX_HELO_IP		BarricadeMX: SMTP Client sent a HELO that was an IP address
+score    BMX_HELO_IP		1.0
+
+#header   BMX_WHITE 		X-smtpf-Report =~ /[=,;]white[,;]?/
+#describe BMX_WHITE 		BarricadeMX: whitelisted
+#score    BMX_WHITE 		-10
+
+header   BMX_GREY 		X-smtpf-Report =~ /[=,;]grey[,;]?/
+describe BMX_GREY		BarricadeMX: whitelisted through all pre-DATA tests
+score    BMX_GREY 		0.001
+
+header   BMX_BLACK 		X-smtpf-Report =~ /[=,;]black[,;]?/
+describe BMX_BLACK 		BarricadeMX: blacklisted
+score    BMX_BLACK 		10

@@ -1,0 +1,186 @@
+#!/bin/sh
+#
+# @package_copyright@
+#
+# @configure_input@
+#
+# $OpenBSD$
+
+# chkconfig: 345 87 12
+# description: @PACKAGE_NAME@
+
+# REQUIRE: syslogd
+# BEFORE:  mail
+# KEYWORD: FreeBSD NetBSD
+
+
+prefix="@prefix@"
+exec_prefix="@exec_prefix@"
+libexecdir="@libexecdir@"
+sbindir="@sbindir@"
+localstatedir="@localstatedir@"
+PACKAGE_NAME="@PACKAGE_NAME@"
+PID_FILE="@enable_pid@"
+
+COLUMN='\r\033[71C'
+FG_RED='\033[1;31m'
+FG_GREEN='\033[1;32m'
+FG_NORMAL='\033[0m'
+
+##########################################################################
+#	Nothing to be configured below this point.
+##########################################################################
+
+if test -x $libexecdir/$PACKAGE_NAME ; then
+	PROGRAM=$libexecdir/$PACKAGE_NAME
+elif test -x $sbindir/$PACKAGE_NAME ; then
+	PROGRAM=$sbindir/$PACKAGE_NAME
+else
+	echo "$PACKAGE_NAME not found".
+	exit 0;
+fi
+
+os=`uname -s`
+
+unalias announce >/dev/null 2>&1
+announce()
+{
+	case $os in
+	Linux*)
+		printf "$1"
+		;;
+	esac
+}
+
+unalias pass >/dev/null 2>&1
+pass()
+{
+	case $os in
+	Linux*)
+		printf ${COLUMN}'['${FG_GREEN}'  OK  '${FG_NORMAL}']\n'
+		;;
+	*)
+		echo -n " $PACKAGE_NAME"
+		;;
+	esac
+}
+
+unalias fail >/dev/null 2>&1
+fail()
+{
+	case $os in
+	Linux*)
+		printf ${COLUMN}'['${FG_RED}'FAILED'${FG_NORMAL}']\n'
+		;;
+	*)
+		;;
+	esac
+}
+
+#
+# I choose to use getpid() instead of the $PID_FILE, because .pid
+# files can disappear while the program is still running.
+#
+unalias getpid >/dev/null 2>&1
+getpid()
+{
+	sleep 1
+	case $os in
+	Linux*)
+ps acxj | grep "$PACKAGE_NAME" | sed -n -e '/^  *1 /{
+s/^ *[^ ][^ ]*  *\([0-9][0-9]*\).*/\1/
+p
+}'
+		;;
+	SunOS)
+ps -ef | grep "$PACKAGE_NAME" | sed -n -e '/^ *[^ ][^ ]*  *[0-9][0-9]*  *1 /{
+s/^ *[^ ][^ ]*  *\([0-9][0-9]*\).*/\1/
+p
+}'
+		;;
+	*BSD*)
+ps -acxj | grep "$PACKAGE_NAME" | sed -n -e '/^ *[^ ][^ ]*  *[0-9][0-9]*  *1 /{
+s/^ *[^ ][^ ]*  *\([0-9][0-9]*\).*/\1/
+p
+}'
+		;;
+	esac
+}
+
+unalias start >/dev/null 2>&1
+start()
+{
+        announce "Starting $PACKAGE_NAME"
+
+	pid=`getpid "$PROGRAM"`
+	if test X"$pid" != X ; then
+		# I'm not dead yet.
+		fail
+		return
+	fi
+
+	$PROGRAM $OPTIONS
+
+	pid=`getpid "$PROGRAM"`
+	if test X"$pid" = X ; then
+		# I think I'm dead.
+		fail
+		return
+	fi
+
+	pass
+}
+
+unalias stop >/dev/null 2>&1
+stop()
+{
+        announce "Stopping $PACKAGE_NAME"
+
+	# The milter knows how to terminate a running instance of itself.
+        pid=`getpid "$PROGRAM"`
+        if test X"$pid" != X ; then
+                kill $pid
+                sleep 1
+                pid=`getpid "$PROGRAM"`
+        fi
+	if test X"$pid" != X ; then
+		# I'm not dead yet.
+		kill -KILL $pid
+
+		pid=`getpid "$PROGRAM"`
+		if test X"$pid" != X ; then					
+			# I'm still not dead.
+			fail
+			return
+		fi
+	fi
+
+	pass
+}
+
+case "$1" in
+restart)
+	stop
+	start
+	;;
+start)
+	start
+	;;
+stop)
+	stop
+	;;
+status)
+	pid=`getpid "$PROGRAM"`
+	if test X"$pid" != X ; then
+		echo "$PACKAGE_NAME:${pid}"	
+	else
+		echo "$PACKAGE_NAME:STOPPED"	
+	fi
+	;;
+*)
+	echo "Usage: $PACKAGE_NAME {start|stop|restart|status}"
+	exit 1
+esac
+
+exit $?
+

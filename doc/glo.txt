@@ -1,0 +1,438 @@
+TITLE
+
+	Grey-Listing Optimisations for Electronic Mail Filtering
+
+INVENTORS
+
+	Anthony C. Howe, Cannes, France;
+	Fort Systems Ltd, Washington DC, USA
+
+REFERNCES
+
+	RFC 2821 Simple Mail Transfer Protocol (SMTP), J. Klensin
+	http://www.ietf.org/rfc/rfc2821.txt?number=2821
+
+	RFC 1035 Domain Names (DNS) - Implementation And
+	Specification, P. Mockapetris
+	http://www.ietf.org/rfc/rfc1035.txt?number=1035
+
+	The Next Step in the Spam Control War: Greylisting
+	Evan Harris, 2003
+	http://projects.puremagic.com/greylisting/whitepaper.html
+
+	milter-gris, Anthony C. Howe
+	http://www.snertsoft.com/sendmail/milter-gris/
+
+	Grey-Listing Web Site; collection of articles, references,
+	forums 	http://www.greylisting.org/
+
+	Sender Policy Framework (SPF) for Authorizing Use of Domains
+	in E-Mail, Version 1; M. Wong & W. Schlitt
+	http://www.rfc-editor.org/rfc/rfc4408.txt
+
+	Classless Inter-Domain Routing (CIDR)
+	http://public.pacbell.net/dedicated/cidr.html
+	http://www.ietf.org/rfc/rfc1517.txt?number=1517
+	http://www.ietf.org/rfc/rfc1518.txt?number=1518
+	http://www.ietf.org/rfc/rfc1519.txt?number=1519
+	http://www.ietf.org/rfc/rfc1520.txt?number=1520
+
+ABSTRACT
+
+	Grey-Listing Optimisations addresses the problem of repeated
+	delays in the delivery of electronic mail, primarily from mail
+	systems that use a pool of mail servers that share a mail
+	queue. It does this with more flexible and improved
+	possibilities in the form of key tuples used in grey-listing
+	records.
+
+TERMS
+
+	OGL = original grey-listing as outlined by Evan Harris
+
+	MTA = mail transfer agent handles routing and delivery of
+	mail from a local site to one or more remote sites.
+
+	SMTP = Simple Mail Transfer Protocol defined by RFC 2821.
+
+	AS = Antonymous System number used in network routing
+
+BACKGROUND OF THE INVENTION
+
+1. Field of the Invention
+
+	This invention relates to the filtering of electronic mail
+	messages (email) using the filtering method know as grey-
+	listing.
+
+2. Description of Related Art
+
+	The Internet is a huge communications medium that provides its
+	users a convenient, fast, and inexpensive means to pass email
+	messages to one or more users around the globe. In many cases
+	it has replaced the physical postal service. As result of its
+	popularity, advertisers and thieves have turned to using email
+	as a means to promote products with unsolicited commercial or
+	bulk email, and steal information with email born worms and
+	viruses. These undesirable junk email messages are often
+	collectively referred to as "spam".
+
+	The problem of spam has escalated to pandemic proportions and
+	threatens every email provider's ability to deliver regular
+	email to their users, consuming time and resources to correct.
+	As a result, many email providers deploy on their mail systems
+	policy, behavioural, and/or content based filtering methods.
+
+	The original grey-listing (OGL) method is a behavioural filter
+	that takes advantage of SMTP procedures defined in RFC 2821 by
+	temporarily rejecting email from an unknown source in order to
+	determine if that source implements a retry queue. This is
+	based on the assumption that junk mail systems are typically
+	implemented with speed and volume in mind, rather than
+	reliability. As such they do not implement mail retry queues.
+	If email from a previously refused source returns within a
+	certain time frame, then it is permitted to pass.
+
+	This invention addresses two problems concerning the OGL
+	method:
+
+	The first concerns a common problem with OGL is that some
+	sending sites use a pool of mail servers with a shared mail
+	queue (gmail.com is one such site), such that mail queue
+	retries will appear to come from constantly changing IP
+	addresses. This has a negative impact on recipient sites using
+	the OGL key tuple of {client-IP, sender, recipient}. The
+	receiving site using OGL constantly sees a different IP
+	address, but with the same sender and recipient. This results
+	in the receiving site grey-listing and delaying the message
+	multiple times, some times resulting in the message not being
+	delivered.
+
+	The second problem concerns additional and unnecessary grey-
+	listing delays when using the OGL method. Grey-listing as an
+	anti-spam technique asks a single question: does the sending
+	mail server implement a mail retry queue? Many traditional
+	grey-listing implementations cache each and every unique
+	{client-IP, sender, recipient} tuple, only allowing repeat
+	visits from the same tuple to pass without delay. However,
+	once it is determined that a sending mail server implements a
+	retry queue, new mail from the same machine, but from
+	different senders and/or to different recipients will result
+	in additional and unnecessary grey-listing delays.
+
+3. Description of Prior Art
+
+	Some grey-listing implementations have attempted to address
+	these issues.
+
+	One technique in use will convert the cache key tuple of a
+	successful connection from {client-IP, sender, recipient} to
+	{client-IP/24}, ie. white list all the machines in the /24
+	subnet the client IP is a member of. While this will often
+	resolve both problems mentioned above, the assumption is too
+	broad and imprecise. It is often the case that unrelated mail
+	sources share the same net block. Past are the days when
+	Internet providers assigned whole /24 to each customer they
+	hosted. Now IPv4 addresses are rationed out in smaller
+	subnets. It is very possible to have spam sources appear as
+	neighbouring machines within the same /24 subnet.
+
+	The OpenBSD's grey-listing implementation takes a more
+	conservative view. It converts a successful cache key tuple to
+	just the {client-IP} of the machine that is known to implement
+	a retry queue. This solves the second problem of unnecessary
+	delays, but doesn't address the first concerning mail server
+	pools.
+
+SUMMARY OF THE INVENTION
+
+	Our invention is two fold:
+
+	First it allows the mail system administrator the ability to
+	chose the attributes of the key tuple used for storage and
+	retrieval of grey-listing records. These attributes are
+	derived from information concerning the SMTP transaction, such
+	SMTP client's network details and/or SMTP command arguments
+	other than MAIL FROM: and RCPT TO:. Different key tuples will
+	have different effects on how grey-listing behaves.
+
+	In our implementation we experimented with five types of
+	attributes: client IP address, client PTR information, HELO or
+	EHLO argument, MAIL FROM: argument (sender), and the RCPT TO:
+	argument (recipient). While some combinations will be better
+	than others, the choice should be available to the mail system
+	administrator.
+
+	For example, weakening the OGL key tuple to consist only of
+	{sender, recipient} helps address the problem of mail server
+	pools. However, it can be overly broad in that it allows mail
+	for the same sender and recipient pair to come from anywhere
+	on the Internet.
+
+	The second part of our invention concerns the specific
+	treatment of a key tuple that uses the client PTR information
+	obtained from the domain name system (DNS) based on the IP
+	address of the connected SMTP client; a PTR record maps an IP
+	address to a host name. The client PTR record allows for a
+	more interesting key tuple of the form {trimmed-PTR, sender,
+	recipient}.
+
+	If the PTR record is not defined, is a multi-homed PTR for
+	multiple domains, or has IP-in-PTR references, we fall back on
+	using the IP address as in the OGL method with the
+	optimisation for already known IP addresses mentioned above.
+
+	With the client host name, taking care with special cases
+	related to domain-as-host-name and two level country domains,
+	we remove the first label from the host name, which should
+	leave us with the client's domain name or a subdomain. This
+	trimmed PTR information is then used in placed of the client
+	IP address of the key tuple, ie. {trimmed-PTR, sender,
+	recipient}. The effect of this simple change is that we grey-
+	list the sender's pool of mail servers more precisely by
+	domain name or subdomain, instead of a single machine or
+	subnet.
+
+	When a SMTP client later retries to send the message and
+	connects to us from a different member of their mail pool, we
+	will successful find our cached record for {trimmed-PTR,
+	sender, recipient} and convert the key tuple to just {trimmed-
+	PTR} to pass through without delay future mail from the same
+	group of machines.
+
+	For example, consider a sender site like:
+
+	    out1.pool1.sender.com	192.0.2.1
+	    out2.pool1.sender.com	192.0.2.2
+	    out3.pool1.sender.com	192.0.2.3
+	    out4.pool1.sender.com	192.0.2.4
+
+	Using the OGL tuple of {client-IP, sender, recipient}, the
+	first time the sending site connects, the receiver will record
+	in their grey-list cache:
+
+	    { 192.0.2.3, fred@sender.com, john@receiver.com }
+
+	and temporarily reject the mail. When the sending site
+	retries, the receiver will likely see a different connecting
+	client IP address and record a new key tuple:
+
+	    { 192.0.2.1, fred@sender.com, john@receiver.com }
+
+	and temporarily reject the mail once again. This process can
+	repeat itself for as many times as there are machines in the
+	sending pool of servers, resulting in excessive mail delivery
+	delays and sometimes non-delivery depending on cache times and
+	retry intervals.
+
+	Using our invention, if the sender connects from IP address
+	192.0.2.3 which has a PTR of out3.pool1.sender.com, then the
+	receiver would use the trimmed PTR information to record the
+	following grey-list tuple the first time the sender attempts
+	to deliver the message:
+
+	    { pool1.sender.com, fred@sender.com, john@receiver.com }
+
+	and temporarily reject the message. The next time the sending
+	site connects to the receiver, no matter from which machine
+	within the same pool, the trimmed PTR information will match
+	the previously cached record key and result in the mail being
+	passed through grey-listing. We then convert the cache key
+	tuple of the successful sender to:
+
+	    { pool1.sender.com }
+
+	And so allow us to pass all future mail from this pool of mail
+	servers without unnecessary delays.
+
+BRIEF DESCRIPTION OF THE DRAWINGS
+
+	Figure 1 background information outlining a normal SMTP
+	transaction without grey-listing.
+
+	Figure 2 shows an SMTP transaction using the original grey-
+	listing method.
+
+	Figure 3 is similar to figure 2, but shows where alternative,
+	customisable grey-listing keys would be applied.
+
+	Figure 4 shows a modified section of figure 2 when using the
+	client PTR information for grey-listing.
+
+
+DESCRIPTION
+
+	A mail system will consist of one or more mail servers that
+	accept submissions, transfer, filter, and store email.
+	Different organisations will have different levels of
+	sophistication in their mail system configurations.
+
+	Almost all Internet mail make use of RFC 2821 Simple Mail
+	Transfer Protocol (SMTP) to pass messages between two mail
+	systems. Figure 1 shows what an ordinary successful SMTP
+	transaction would look like.
+
+	RFC 2821 section 4.5.4 explains the need for a "mail retry
+	queue", where email is stored until it can be transferred to
+	its destination. Most spam sources send out huge volumes of
+	junk and/or virus infected mail and so do not implement mail
+	retry queues, because speed and volume are often more
+	important to them than reliability; what's the loss of one
+	failed message when millions are being sent.
+
+	Figure 2 shows where the original grey-listing method is
+	applied in the SMTP transaction. For each RCPT TO: command
+	(7), the OGL would lookup in some storage medium a key tuple
+	consisting of the client IP address, the sender address, and
+	recipient address (50).
+
+	If the key was not found, then add a new record using the key
+	and a timestamp value (51, 53) of when the record was added.
+	Reply to the RCPT TO: command with a temporary failure result
+	(54).
+
+	If the key is found, but the grey-list period has not expired
+	then reply to the RCPT TO: command with a temporary failure
+	result (52, 54). The grey-list period prevents an unknown
+	simply repeating the same RCPT TO: command or disconnecting
+	and immediately reconnecting to try again.
+
+	Otherwise the key was found and the grey-list period has
+	expired, then reply to the RCPT TO: command with a 250 OK
+	result (8) allowing that message to proceed for that sender
+	and recipient pair.
+
+	The above outlines the original grey-listing method used in
+	prior art. In Figure 3 we show where part of our invention
+	replaces step 50 with 60, which is a pre-selected choice of
+	grey-listing key tuple to use throughout. Part of our
+	invention consists of offering a configurable choice of
+	attributes used to compose the key tuple. These attributes are
+	derived from either the client IP address and/or other SMTP
+	commands used during the SMTP transaction.
+
+	Our invention offers a choice of key tuple attributes such as
+	the client PTR information, which is found using a DNS lookup
+	for a PTR record which are used to map IP addresses to host
+	names. Other attributes can be the HELO or EHLO argument
+	supplied by the SMTP client; the argument of an SMTP AUTH
+	command; or parameters specified with the MAIL FROM: command
+	like SIZE or AUTH in addition to the sender address. The
+	ability to use different attributes will result in slightly
+	different behaviour as to when and how grey-listing is
+	applied.
+
+	For example, one implemention of our invention offers key
+	tuple attributes: client IP, client PTR, HELO, MAIL (sender),
+	and RCPT (recipient). The OGL method specifies, {IP, MAIL,
+	RCPT} which is problematic with mail server pools sharing a
+	common mail queue, but a trivial change to the key tuple to
+	use only {MAIL, RCPT} attributes provides another solution to
+	the problem of a mail server pool.
+
+	In the other part of our invention, we use the client host
+	name, found through a DNS PTR lookup using the client IP
+	address, as a key attribute. Figure 4 shows how it can be
+	applied.
+
+	The client host name sometimes does not exist (80) or should
+	not be used in certain situations such as when the PTR record
+	is "multi-homed" and the resulting list of host names maps to
+	many different domain names (81), or when the host name is
+	composed from parts of the client IP address typically
+	assigned by Internet service providers (ISP) to residential or
+	dynamic IP blocks (82) which should only send mail via their
+	ISP. In such cases we fall back on the using the client IP
+	address (84).
+
+	When client host name is suitable to use, we modify it by
+	removing the leading label only when the domain name is not
+	used as the host name of a machine. Otherwise we use it as is.
+	We can then perform a grey-list lookup consisting of the
+	trimmed-PTR (85) or the client IP address (84).
+
+	If the record exists we can proceed go to step 52 to see if
+	the record is still within the grey-list period.
+
+	If steps 84 or 85 do not find a record, then we append the
+	other attributes of the predefined grey-list key tuple to
+	lookup a key tuple with the client IP address (88) or trimmed
+	PTR (89) as one of the attributes.
+
+	The effect of using the trimmed-PTR information in steps 85
+	and 89, allows our invention to identify a group of mail
+	servers by a common domain or subdomain name and in so doing
+	avoid unnecessary delays in mail delivery.
+
+	From here the logic is much the same as in Figure 2, with the
+	exception of step 90. If the grey-list period is over, we can
+	reduce the key tuple to the first element of the tuple, which
+	would be either the client IP address or trimmed-PTR. This
+	step combined with steps 84 and 85 allow grey-listing to be
+	skipped once a SMTP client has demonstrated the existence of a
+	retry queue and so avoid unnecessary delays when any of the
+	other key tuple attributes change. The additional key tuple
+	attributes help identify a machine or group of machines and a
+	conversation. Once the SMTP client has shown it uses a mail
+	retry queue, the other attributes of the key only serve to
+	hinder more than help.
+
+
+CLAIMS
+
+	The embodiments of the invention in which an exclusive
+	property or privilege is claimed are defined as follows:
+
+    1.	Storing and retrieving grey-listing record keys consisting
+	of:
+
+    	    -	configurable combinations of attributes related to
+		the known and/or derivable details of an electronic
+		mail transaction
+
+	    -	excluding the specific combination found in prior art
+	    	of client IP address, MAIL FROM: address, and RCPT TO:
+	    	address
+
+	    -	excluding the specific combination found in prior art
+	    	of just	the client IP address or portion thereof, ie.
+	    	a subnet specification.
+
+    2.	Grey-listing record keys of claim 1 composed from one or more
+	of:
+
+	    -	SMTP client network information that can be derived
+		from its IP address and connection details, ie. PTR
+		records, NS records, passive OS finger-printing, AS
+		number, WHOIS data, etc.
+
+	    -	sender information derived from MAIL FROM: argument,
+		ie. MX records, NS records, TXT records, WHOIS data,
+		etc.
+
+	    -	SMTP command arguments in whole or in part, ie. HELO
+		or EHLO argument, AUTH arguments, STARTTLS details,
+		MAIL FROM: argument and/or parameters, etc.
+
+    3.	A process for grey-listing record keys specifically using
+	client PTR information includes:
+
+    	    -	a means to permit mail server pools sharing a common
+    	    	mail queue to be identified and grey-listed only once
+
+    	    - 	a means to allow mail systems that have demonstrated
+    	    	the use of a mail retry queue at least once, to avoid
+    	    	subsequent delays of future mail with different email
+    	    	characteristics.
+
+
+
+
+
+
+
+
+
+
+
+

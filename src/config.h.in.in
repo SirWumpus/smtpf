@@ -1,0 +1,226 @@
+/*
+ * config.h
+ *
+ * Copyright 2006 by Anthony Howe. All rights reserved.
+ */
+
+#ifndef __config_h__
+#define __config_h__	1
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#undef _NAME
+#undef _MAJOR
+#undef _MINOR
+#undef _AUTHOR
+#undef _VERSION
+#undef _COPYRIGHT
+
+#undef _PLATFORM
+#undef _CONFIGURE
+#undef _CFLAGS
+#undef _LDFLAGS
+#undef _LIBS
+#undef _BUILT
+
+#define _DISPLAY			_NAME
+#define _BRIEF				"BarricadeMX - The anti-spam SMTP proxy filter."
+
+#ifndef __@platform@__
+#define __@platform@__		1
+#endif
+
+#undef NDEBUG
+#undef ENABLE_FORK
+#undef _REENTRANT
+#undef _THREAD_SAFE
+#undef RUN_AS_USER
+#undef RUN_AS_GROUP
+
+#ifndef LINE_WRAP
+#define LINE_WRAP			72
+#endif
+
+#ifndef SERVER_ACCEPT_TIMEOUT
+#define SERVER_ACCEPT_TIMEOUT		5000
+#endif
+
+#ifndef SERVER_CONNECT_TIMEOUT
+#define SERVER_CONNECT_TIMEOUT		60000
+#endif
+
+#ifndef SMTP_SLOW_REPLY_SIZE
+#define SMTP_SLOW_REPLY_SIZE		10
+#endif
+
+#ifndef SMTP_PIPELINING_TIMEOUT
+#define SMTP_PIPELINING_TIMEOUT		500
+#endif
+
+#ifndef SQLITE_SOFT_HEAP_LIMIT
+#define SQLITE_SOFT_HEAP_LIMIT		(32 * 1024 * 1024)
+#endif
+
+#ifndef SIGNAL_STACK_SIZE
+#define SIGNAL_STACK_SIZE		SIGSTKSZ
+#endif
+
+#ifndef THREAD_STACK_SIZE
+# define THREAD_STACK_SIZE		(64 * 1024)
+#endif
+#if THREAD_STACK_SIZE < PTHREAD_STACK_MIN
+# undef THREAD_STACK_SIZE
+# define THREAD_STACK_SIZE		PTHREAD_STACK_MIN
+#endif
+
+#if !defined(CF_DIR)
+# if defined(__WIN32__)
+#  define CF_DIR			"."
+# else
+#  define CF_DIR			"/etc/" _NAME
+# endif
+#endif
+
+#if !defined(CF_FILE)
+# define CF_FILE			CF_DIR "/" _NAME ".cf"
+#endif
+
+#if !defined(CACHE_DIR)
+# if defined(__WIN32__)
+#  define CACHE_DIR			"."
+# elif defined(__linux__)
+#  define CACHE_DIR			"/var/cache/" _NAME
+# else
+#  define CACHE_DIR			"/var/db/" _NAME
+# endif
+#endif
+
+#if !defined(LICKEY_FILE)
+# if defined(__WIN32__)
+#  define LICKEY_FILE			CF_DIR "/lickey.txt"
+# else
+#  define LICKEY_FILE			CF_DIR "/lickey.txt"
+# endif
+#endif
+
+#if !defined(PID_FILE)
+# if defined(__WIN32__)
+#  define PID_FILE			CF_DIR "/" _NAME ".pid"
+# else
+#  define PID_FILE			"/var/run/" _NAME ".pid"
+# endif
+#endif
+
+#if !defined(STATS_DIR)
+# if defined(__WIN32__)
+#  define STATS_DIR			"."
+# elif defined(__linux__)
+#  define STATS_DIR			"/var/cache/" _NAME
+# else
+#  define STATS_DIR			"/var/db/" _NAME
+# endif
+#endif
+
+#if !defined(WORK_DIR)
+# if defined(__WIN32__)
+#  define WORK_DIR			"./tmp"
+# else
+#  define WORK_DIR			"/var/tmp"
+# endif
+#endif
+
+#ifndef SAFE_PATH
+# if defined(__WIN32__)
+#  define SAFE_PATH			CF_DIR
+# else
+#  define SAFE_PATH			"/bin:/usr/bin"
+# endif
+#endif
+
+#ifndef FD_OVERHEAD
+/* Global file descriptors in use: stdin, stdout, stderr, syslog,
+ * accept, cache x 2 (database and journal), and stats x 2
+ * (database and journal).
+ */
+#define FD_OVERHEAD			10
+#endif
+
+#ifndef FD_PER_THREAD
+/* access, route, pdq, client, forward, extra
+ */
+#define FD_PER_THREAD			6
+#endif
+
+#if defined(__WIN32__) && !defined(FD_SETSIZE)
+/* The winsock2.h default is 64. */
+#define FD_SETSIZE			1024
+#endif
+
+#undef SERVER_ACCEPT_THREAD_ONLY
+
+#ifndef KEEP_ALIVE_TIMEOUT_MS
+#define KEEP_ALIVE_TIMEOUT_MS		60000
+#endif
+
+#undef OLD_KVM_CACHE_SUPPORT
+
+#ifndef CACHE_MULTICAST_PORT
+#define CACHE_MULTICAST_PORT		6920
+#endif
+
+#ifndef CACHE_UNICAST_PORT
+#define CACHE_UNICAST_PORT		6921
+#endif
+
+#ifndef PHONE_HOME_MAIL
+#define PHONE_HOME_USER			"smtpf"
+#define PHONE_HOME_DOMAIN		"milter.info"
+#define PHONE_HOME_MAIL			PHONE_HOME_USER "@" PHONE_HOME_DOMAIN
+#endif
+
+#define ENABLE_LINT
+#undef ENABLE_PDQ
+#define ENABLE_CRLF_CHECKING
+#undef ENABLE_OPTION_QUIT
+
+#undef FILTER_ATTACHMENT
+#undef FILTER_AVASTD
+#undef FILTER_CLAMD
+#undef FILTER_CLI
+#undef FILTER_CLICK
+#undef FILTER_CONCURRENT
+#undef FILTER_DIGEST
+#undef FILTER_DUPMSG
+#undef FILTER_EMEW
+#undef FILTER_FOUR21
+#undef FILTER_FPSCAND
+#undef FILTER_GREY
+#undef ENABLE_GREY_TO_BLACK
+#define ENABLE_GREY_DNSBL_RESET
+#undef FILTER_MISC
+#undef FILTER_MSG_LIMIT
+#undef FILTER_NULL
+#define FILTER_NULL_DEFER
+#undef FILTER_RBL
+#undef FILTER_PAD
+#undef FILTER_P0F
+#undef FILTER_SAV
+#undef FILTER_SAVE
+#undef FILTER_SAVDID
+#undef FILTER_SIQ
+#undef FILTER_SIZE
+#undef FILTER_SPAMD
+#undef FILTER_SPAMD2
+#undef FILTER_SPF
+#undef FILTER_TIMELIMIT
+#undef FILTER_URIBL
+
+#undef HAVE_P0F_QUERY_H
+
+#ifdef  __cplusplus
+}
+#endif
+
+#endif /* __config_h__ */

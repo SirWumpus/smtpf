@@ -1,0 +1,223 @@
+/*
+ * Behaviour prior to 2.0.56:
+ *
+ *	Relay commands and replies between client and forward host
+ *	via smtpf.
+ *
+ * --------------------------------------------------------------------
+ *
+ *  1.	Successful delivery:
+ *
+ *  a.	sender >_________> client >___dot___> smtpf >___dot___> mail store >_________> recipient
+ *
+ *  b.	                   client <___250___< smtpf <___250___< mail store
+ *
+ * --------------------------------------------------------------------
+ *
+ *  2.	Rejected by mail store (or smtpf):
+ *
+ *  a.	sender >_________> client >___dot___> smtpf >___dot___> mail store
+ *
+ *  b.	sender <___DSN___< client <___5xy___< smtpf <___5xy___< mail store
+ *
+ * --------------------------------------------------------------------
+ *
+ *  3.	Temporary failure between client and smtpf:
+ *
+ *  a.	sender >_________> client >___dot___> smtpf
+ *
+ *
+ *  b.	                   client <___4xy___< smtpf
+ *
+ *
+ *  c.	                   client >___dot___> smtpf >___dot___> mail store >_________> recipient
+ *	                   (queue retry)
+ *
+ *  d.	                   client <___250___< smtpf <___250___< mail store
+ *
+ * --------------------------------------------------------------------
+ *
+ *  4.	Timeout between client and smtpf resulting in client dropping connection:
+ *
+ *  a.	sender >_________> client >___dot___> smtpf
+ *
+ *
+ *  b.	                   client <___421___< smtpf
+ *	                   (10m TO, drop)
+ *
+ *  c.	                   client >___dot___> smtpf >___dot___> mail store >_________> recipient
+ *	                   (queue retry)
+ *
+ *  d.	                   client <___250___< smtpf <___250___< mail store
+ *
+ * --------------------------------------------------------------------
+ *
+ *  5.	Temporary failure between smtpf and mail store:
+ *
+ *  a.	sender >_________> client >___dot___> smtpf >___dot___> mail store
+ *
+ *
+ *  b.	                   client <___4xy___< smtpf <___4xy___< mail store
+ *
+ *
+ *  c.	                   client >___dot___> smtpf >___dot___> mail store >_________> recipient
+ *	                   (queue retry)
+ *
+ *  d. 	                   client <___250___< smtpf <___250___< mail store
+ *
+ * Case 5 the client queues the message until it gets through, possibly
+ * timing out after 5 days and generating a DSN.
+ *
+ * --------------------------------------------------------------------
+ *
+ *  6.	Timeout between smtpf and mail store resulting in client dropping connection
+ *	and duplicate messages to recipient.
+ *
+ *  a.	sender >_________> client >___dot___> smtpf >___dot___> mail store >_________> recipient
+ *
+ *
+ *  b.	                   client <___421___< smtpf
+ *	                   (10m TO, drop)
+ *
+ *  c.	                   client >___dot___> smtpf >___dot___> mail store >_________> recipient
+ *	                   (queue retry)
+ *
+ *  d. 	                   client <___250___< smtpf <___250___< mail store
+ *
+ * Note that smtpf can forward to multiple forward hosts, which all must
+ * reply within the 10 minute at-DOT timeout window. This means if some
+ * forward hosts take longer than others, the forward hosts further down
+ * the list may not get the dot. Thus when the client times out and repeats
+ * the message, duplicates will arrive for some recipients.
+ *
+ * ====================================================================
+ *
+ * Proposed change as of 2.0.56:
+ *
+ *	When smtpf gets the final dot from client, immediately report 250
+ *	success to the client, then forward the dot to the forward hosts.
+ *	Any 4xy (timeout) or 5xy errors from forward hosts generates a DSN
+ *	to sender, since 250 has already been sent to the client and the
+ *	message deleted from the client's queue.
+ *
+ * --------------------------------------------------------------------
+ *
+ *  1.	Successful delivery:
+ *
+ *  a.	sender >_________> client >___dot___> smtpf
+ *
+ *  b.	                   client <___250___< smtpf
+ *
+ *  c.	                                      smtpf >___dot___> mail store >_________> recipient
+ *
+ *  d. 	                                      smtpf <___250___< mail store
+ *
+ * Case 1 has the same out come as before the change.
+ *
+ * --------------------------------------------------------------------
+ *
+ *  2.	Rejected by mail store (or smtpf):
+ *
+ *  a.	sender >_________> client >___dot___> smtpf
+ *
+ *  b.	                   client <___250___< smtpf
+ *
+ *  c.	                                      smtpf >___dot___> mail store
+ *
+ *  d. 	sender <___DSN___< client <___DSN___< smtpf <___5xy___< mail store
+ *
+ * Case 2 has the same out come as before the change.
+ *
+ * --------------------------------------------------------------------
+ *
+ *  3.	Temporary failure between client and smtpf:
+ *
+ *  a.	sender >_________> client >___dot___> smtpf
+ *
+ *
+ *  b.	                   client <___4xy___< smtpf
+ *
+ *
+ *  c.	                   client >___dot___> smtpf >___dot___> mail store >_________> recipient
+ *	                   (queue retry)
+ *
+ *  d.	                   client <___250___< smtpf <___250___< mail store
+ *
+ * Case 3 has the same out come as before the change.
+ *
+ * --------------------------------------------------------------------
+ *
+ *  4.	Timeout between client and smtpf resulting in client dropping connection:
+ *
+ *  a.	sender >_________> client >___dot___> smtpf
+ *
+ *
+ *  b.	                   client <___421___< smtpf
+ *	                   (10m TO, drop)
+ *
+ *  c.	                   client >___dot___> smtpf >___dot___> mail store >_________> recipient
+ *	                   (queue retry)
+ *
+ *  d.	                   client <___250___< smtpf <___250___< mail store
+ *
+ * Case 4 has the same out come as before the change.
+ *
+ * --------------------------------------------------------------------
+ *
+ *  5.	Temporary failure between smtpf and mail store:
+ *
+ *  a.	sender >_________> client >___dot___> smtpf
+ *
+ *  b.	                   client <___250___< smtpf
+ *
+ *  c.	                                      smtpf >___dot___> mail store
+ *
+ *  d. 	sender <___DSN___< client <___DSN___< smtpf <___4xy___< mail store
+ *
+ * Case 5 is sub-optimal, in that it converts a tempoary failure into a
+ * DSN. However, It is similar to what would happen if the message were
+ * to timeout from the client's mail queue after 5 days; the only difference
+ * is it happens on the first temp. fail or timeout, instead of 5 days later.
+ *
+ * --------------------------------------------------------------------
+ *
+ *  6.	Timeout between smtpf and mail store:
+ *
+ *  a.	sender >_________> client >___dot___> smtpf
+ *
+ *  b.	                   client <___250___< smtpf
+ *
+ *  c.	                                      smtpf >___dot___> mail store
+ *
+ *  d. 	sender <___DSN___< client <___DSN___< smtpf <___421___< mail store
+ *	                                      (10m TO, drop)
+ *
+ * Case 6 avoids duplicate messages. DSN(s) are generated for all the
+ * the forward hosts that timeout or drop the connection. This notifies
+ * sender as which recipients failed to get the message.
+ *
+ * --------------------------------------------------------------------
+ *
+ *  7.	Knock on timeout between client and smtpf, because of long timeout
+ * 	period between smtpf and mail store for previous message:
+ *
+ *  a.	sender >_________> client >___dot___> smtpf
+ *
+ *  b.	                   client <___250___< smtpf
+ *
+ *  c.	                                      smtpf >___dot___> mail store
+ *	                                      (5m to 10m delay)
+ *
+ *  d. 	sender >_________> client >___cmd___>
+ *	                          (5m TO, drop)
+ *
+ * Case 7 is special to the proposed change. Once smtpf sends 250 for the
+ * final dot to the client, the client can send the next command such as
+ * QUIT to end, RSET, or MAIL to start the next message. If smtpf while
+ * talking to the forward host(s) takes longer than 5 minutes, the RFC 2821
+ * recommended timeout for command replies, then the client will timeout
+ * and drop the connection. This will result in extranous log messages and/or
+ * client connections to send the next message.
+ *
+ * --------------------------------------------------------------------
+ */

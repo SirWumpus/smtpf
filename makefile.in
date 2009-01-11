@@ -1,0 +1,174 @@
+#
+# @package_copyright@
+#
+# @configure_input@
+#
+
+.POSIX :
+
+TARNAME 	= @PACKAGE_TARNAME@
+VERSION		= @PACKAGE_VERSION@
+
+########################################################################
+### No further configuration beyond this point.
+########################################################################
+
+.SUFFIXES :
+A = .@LIBEXT@
+O = .@OBJEXT@
+E = @EXEEXT@
+.SUFFIXES : .c $O $E
+
+platform	= @platform@
+prefix		= @prefix@
+exec_prefix	= @exec_prefix@
+
+#
+# Paths for supporting headers and libraries.
+#
+top_srcdir	= @top_srcdir@
+abs_top_srcdir 	= @top_srcdir@
+SNERT_TARDIR	= @rel_tardir@
+SNERT_INCDIR	= @rel_incdir@
+SNERT_LIBDIR	= @rel_libdir@
+
+SRCDIR   	= @abs_srcdir@
+SBINDIR  	= @sbindir@
+TOPDIR	 	= @abs_top_srcdir@
+TARDIR   	= ${TOPDIR}/../
+
+TARFILE		= ${TARNAME}-${VERSION}'.'${BUILD}.tar.gz
+TARNAME 	= @PACKAGE_TARNAME@
+MAJOR   	= @package_major@
+MINOR   	= @package_minor@
+BUILD		= `cat ${TOPDIR}/src/BUILD_ID.TXT`
+VERSION 	= ${MAJOR}.${MINOR}
+MD5SUM		= @MD5SUM@
+AUTOCONF	= @AUTOCONF@
+TAR_I		= @TAR_I@
+
+########################################################################
+### No further configuration beyond this point.
+########################################################################
+
+.SUFFIXES :
+O = .@OBJEXT@
+E = @EXEEXT@
+.SUFFIXES : .c $O $E
+
+BUILD_DIRS = \
+	${TOPDIR}/src
+
+CLEAN_DIRS = \
+	${TOPDIR}/src \
+	${TOPDIR}/package/FreeBSD \
+	${TOPDIR}/package/OpenBSD
+
+.MAIN : build
+
+build :
+	@for i in $(BUILD_DIRS); do ( cd $$i; ${MAKE} ${MAKEFLAGS} $@ ); done
+
+clean : title _clean
+	@for i in $(BUILD_DIRS); do ( cd $$i; ${MAKE} ${MAKEFLAGS} $@ ); done
+
+distclean : title _distclean
+	@for i in $(BUILD_DIRS); do ( cd $$i; ${MAKE} ${MAKEFLAGS} $@ ); done
+
+realclean : title _realclean
+	@for i in $(BUILD_DIRS); do ( cd $$i; ${MAKE} ${MAKEFLAGS} $@ ); done
+
+strip: build
+	@for i in $(BUILD_DIRS); do ( cd $$i; ${MAKE} ${MAKEFLAGS} $@ ); done
+
+test : build
+	@cd $@; $(MAKE) $@
+
+title :
+	@echo
+	@echo '***************************************************************'
+	@echo '==>' ${SRCDIR}
+	@echo '***************************************************************'
+	@echo
+
+_clean :
+	-rm -rf autom4te.cache configure.lineno core *.core core.*
+	-find ./test \( -name 'tmp.*' -o -name '*.core' \) -exec rm -f \{\} \;
+
+_clean_doc :
+	-rm -f doc/BarricadeMX.html doc/configure.html doc/install.html doc/glossary.html
+	-rm -f doc/license.html doc/manual.shtml doc/runtime.html doc/summary.html doc/smtpf.0
+	-rm -f doc/reply.html doc/syslog.html doc/reply.html.in doc/syslog.html.in
+
+_distclean : _clean _clean_doc
+	-rm -f examples/smtpf.cf examples/startup.sh
+	-rm -f config.log config.status install.sh makefile MANIFEST.TXT
+	cd package/FreeBSD; make distclean
+	cd package/OpenBSD; make distclean
+
+_realclean : _distclean
+	-rm -f configure
+
+next-id:
+	expr `cat ${TOPDIR}/src/BUILD_ID.TXT` + 1 >${TOPDIR}/src/BUILD_ID.TXT
+	@echo '***************************************************************'
+	@echo 'Build number now: ' `cat src/BUILD_ID.TXT`
+	@echo '***************************************************************'
+
+# For Windows builds:
+#
+# $ ./configure --enable-mingw
+# $ make clean build
+# $ DESTDIR=d:/stage/ make install
+#
+install: build install.sh
+	-@DESTDIR="${DESTDIR}" sh install.sh
+
+install.sh: install.sh.in config.status
+	./config.status install.sh
+
+config.status : configure
+	./configure
+
+configure : configure.in aclocal.m4
+	${AUTOCONF} -f
+
+makefile: makefile.in config.status
+	./config.status makefile
+
+list:
+	tar -zvtf ${SNERT_TARDIR}/${TARFILE}
+
+pack: next-id tar
+
+docs: _clean_doc doc/reply.html.in doc/syslog.html.in
+	./config.status
+
+#doc/reply.html.in: src/number_msg.txt doc/reply-header.html doc/syslog-footer.html doc/reply.awk doc/reply.sh
+doc/reply.html.in:
+	cd doc; sh reply.sh
+
+doc/reply.html: doc/reply.html.in
+	./config.status doc/reply.html
+
+#doc/syslog.html.in: src/number_msg.txt doc/syslog-header.html doc/syslog-footer.html doc/syslog.awk doc/syslog.sh
+doc/syslog.html.in:
+	cd doc; sh syslog.sh
+
+doc/syslog.html: doc/syslog.html.in
+	./config.status doc/syslog.html
+
+tar: MANIFEST.TXT doc/manual.shtml doc/reply.html doc/syslog.html
+	@echo
+	@echo '***************************************************************'
+	@echo
+	echo '${VERSION}.'`cat src/BUILD_ID.TXT` >VERSION.TXT
+	echo '${TARNAME}-${VERSION}.tar.gz' >FILE.TXT
+	tar -C ${SNERT_TARDIR} ${TAR_I} MANIFEST.TXT -zcf ${SNERT_TARDIR}/${TARFILE}
+	@echo
+	@echo '***************************************************************'
+	@cd ${SNERT_TARDIR}; ${MD5SUM} ${TARFILE} | tee com/snert/src/${TARNAME}/${TARNAME}.md5
+	@echo '***************************************************************'
+	@cd $(SNERT_TARDIR); wc -c $(TARFILE)
+	@echo '***************************************************************'
+	@echo

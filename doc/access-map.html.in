@@ -1,0 +1,677 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN">
+<!-- $OpenBSD$ -->
+<html>
+<head>
+<title>
+SnertSoft - @PACKAGE_NAME@/@PACKAGE_VERSION@
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+<meta name="keywords" content="SMTP Filter Proxy, call back, call ahead, grey listing, greylisting, RET, Return Encrypted Tag" />
+<meta name="description" content="@PACKAGE_NAME@ sits in front of one or more mail transfer agents (MTA) on SMTP port 25. It acts as a proxy, filtering and forwarding mail to one or more MTAs, which can be on the same machine or different machines." />
+<link rel="stylesheet" type="text/css" href="./style.css" />
+<script language="JavaScript" type="text/javascript" src="./mailto.js"></script>
+</head>
+
+<body>
+<div align="center">
+<table class="page" cellpadding="0" cellspacing="0" border="0">
+<tr><td>
+
+<a href="http://www.snertsoft.com/">
+<img alt="SnertSoft: We Serve Your Server" src="Img/logo-300x74.png" width="300" height="74" border="0" /></a>
+
+<div align="center">
+<h1 class="title">Barricade MX</h1>
+<h2>
+@PACKAGE_NAME@/@PACKAGE_VERSION@
+<br/><span class="large">&laquo;An SMTP Filtering Proxy&raquo;</span>
+</h2>
+</div>
+
+
+<div class="contents">
+<ol type="A" class="toc">
+<li><a href="manual.shtml">Introduction</a></li>
+<li><a href="license.html">License &amp; Support</a></li>
+<li><a href="install.html">Installation</a></li>
+<li>Configuration</li>
+	<ol type="a">
+	<li><a href="route-map.html">The Route Map</a></li>
+		<ul>
+		<li><a href="route-map.html#route_local_mta">Local MTA</a></li>
+		<li><a href="route-map.html#route_local_route_queue">Local Route</a></li>
+		<li><a href="route-map.html#route_relay">FORWARD &amp; RELAY</a></li>
+			<ul>
+			<li><a href="route-map.html#route_by_domain">by domain</a></li>
+			<li><a href="route-map.html#route_by_mail_address">by mail</a></li>
+			</ul>
+		<li><a href="route-map.html#route_call_ahead">Call-Ahead</a></li>
+			<ul>
+			<li><a href="route-map.html#route_dumb_mx">Accept-Then-Bounce</a></li>
+			</ul>
+		<li><a href="route-map.html#route_auth_support">AUTH Support</a></li>
+		<li><a href="route-map.html#route_etrn_support">ETRN Support</a></li>
+		</ul>
+	<li><a href="access-map.html">The Access Map</a></li>
+		<ul>
+		<li><a href="access-map.html#access_lookups">Lookup Sequences</a></li>
+		<li><a href="access-map.html#access_tags">Tags</a></li>
+		<li><a href="access-map.html#access_about_delay_checks">About Delay Checks</a></li>
+		<li><a href="access-map.html#access_simple_value">Right Hand Side Values</a></li>
+		<li><a href="access-map.html#access_action_words">Action Words</a></li>
+		<li><a href="access-map.html#access_pattern_lists">Pattern Lists</a></li>
+		<li><a href="access-map.html#access_simple_pattern">!Simple Patterns!</a></li>
+		<li><a href="access-map.html#access_regex_pattern">/Regular Expression Patterns/</a></li>
+		</ul>
+
+	<li><a href="@PACKAGE_NAME@-cf.html">The @PACKAGE_NAME@.cf File</a></li>
+		<ul>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_avastd">Avast! AV Support</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_cache">Cache Options</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_call_back">Call-Backs</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_clamd">Clam AV Support</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_cli">Command-Line Interface</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_client_is_mx">Client IP Address</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_concurrent">Concurrency &amp; Rate</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_dns_bl">DNS Based Lists</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_delay_checks">Delay Checks</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_emew">EMEW</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_fpscand">F-Prot AV Support</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_grey_list">Grey Listing</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_grey_content">Grey Content</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_helo">SMTP HELO Testing</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_interface">Network Interface</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_length_limit">Length &amp; Limits</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_rfc">RFC Conformance</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_run">Run Settings</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_server">Server Performance</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_siq">SIQ Support</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_smtp">SMTP Options</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_savdid">Sophos AV Support</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_spamd">SpamAssassin Support</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_spf">SPF Support</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_stats">Statistics</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_uri">URI Blacklists</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_verbose">Verbose Logging</a></li>
+		</ul>
+	<li><a href="summary.html">Option Summary</a></li>
+	</ol>
+<li>Runtime</li>
+	<ol type="a">
+	<li><a href="runtime.html#command_options">Command Line Options</a></li>
+	<li><a href="runtime.html#runtime_config">Runtime Configuration</a></li>
+	<li><a href="runtime.html#cache_file">The Cache File</a></li>
+		<ul>
+		<li><a href="runtime.html#cache_structure">The Cache Structure</a></li>
+		</ul>
+	<li><a href="runtime.html#stats_file">The Stats File</a></li>
+		<ul>
+		<li><a href="runtime.html#stats_structure">The Stats Structure</a></li>
+		</ul>
+	<li><a href="syslog.html">Log Messages</a></li>
+	<li><a href="reply.html">SMTP Replies</a></li>
+	</ol>
+<li><a class="glossary" href="glossary.html">Glossary</a></li>
+</ol>
+</div>
+
+
+<a name="access_map"></a>
+<h3>access-map</h3>
+
+<p>
+The <a href="summary.html#opt_access_map">access-map</a> is used to manage a variety of
+facilities such as black &amp; white listings, message limits &amp; sizes, concurrency
+&amp; rate throttling. Many elements can be specified by IP, subnet, host name, and/or
+sender &amp; recipient address or domain.
+</p>
+
+<p>
+The file referenced by the <a href="summary.html#opt_access_map">access-map</a> option
+can be a simple text file, SQLite3 database, or socket-map server. The recommended
+configuration uses an SQLite3 database generated from an <code>access.cf</code> text file.
+This can be done in one of two ways:
+</p>
+
+<blockquote><pre>
+# cd /etc/@PACKAGE_NAME@
+# kvmap -l "access!sql!access.sq3" \
+  &lt; access.cf
+</pre></blockquote>
+
+<p>
+or simply by using the supplied <code>Makefile</code>
+</p>
+
+<blockquote><pre>
+# cd /etc/@PACKAGE_NAME@
+# make access.sq3
+</pre></blockquote>
+
+<p>
+If you do not specify the <code>access.sq3</code> explicitly, then the <code>make</code>
+command will build all the configuration files if necessary.
+</p>
+
+<p>
+The <code>access.cf</code> text file consists of lines of key-value pairs.
+Each line consists of a key field separated by white space from the value field,
+which is the remainder of the line. Comments start with a hash (<code>#</code>) on a line by themselves.
+The key lookups are case insensitive, while the values are case sensitive.
+The order in which keys are looked up is outlined below and by the
+<a href="summary.html#opt_access_map">access-map</a> option.
+</p>
+
+<a name="access_lookups"></a>
+<p>
+There are essentially three types of keys used in the <a href="summary.html#opt_access_map">access-map</a>.
+Many of the tags available will use one or more of these lookup sequences.
+</p>
+
+<dl>
+<dt>IP Address Lookups</dt>
+<dd>
+An IP address lookup is typically applied to the connected SMTP client.
+It will start with a complete IPv4 or IPv6 address and break it down
+on delimiter boundaries from right to left.
+
+<p>
+<table border="0" cellspacing="0" cellpadding="0">
+<tr><th>IPv4 Lookup</th><td rowspan="9">&nbsp;&nbsp;</td><th>IPv6 Lookup</th></tr>
+<tr><td><span class="tag">tag:</span>192.0.2.9</td>	<td><span class="tag">tag:</span>2001:0DB8:0:0:0:0:1234:5678</td></tr>
+<tr><td><span class="tag">tag:</span>192.0.2</td>	<td><span class="tag">tag:</span>2001:0DB8:0:0:0:0:1234</td></tr>
+<tr><td><span class="tag">tag:</span>192.0</td>		<td><span class="tag">tag:</span>2001:0DB8:0:0:0:0</td></tr>
+<tr><td><span class="tag">tag:</span>192</td>		<td><span class="tag">tag:</span>2001:0DB8:0:0:0</td></tr>
+<tr><td rowspan="4">&nbsp;</td>				<td><span class="tag">tag:</span>2001:0DB8:0:0</td></tr>
+<tr>							<td><span class="tag">tag:</span>2001:0DB8:0</td></tr>
+<tr>							<td><span class="tag">tag:</span>2001:0DB8</td></tr>
+<tr>							<td><span class="tag">tag:</span>2001</td></tr>
+</table>
+</p>
+
+<p>
+Note that the compact form of an IPv6 address, "<code>2001:0DB8::1234:5678</code>", <em>cannot</em> be used.
+Only the full IPv6 address format, with all intervening zeros, is currently supported.
+</p>
+
+</dd>
+
+<dt>Domain Name Lookups</dt>
+<dd>
+A domain lookup may be applied to either the connected SMTP client,
+where the client's host name found through a <a class="glossary" href="glossary.html#term_PTR">DNS PTR</a> record is searched for, or
+using the domain portion of an mail address (see below). A domain lookup will try the IP-domain literal
+if applicable, then continue with the <a class="glossary" href="glossary.html#term_FQDN">FQDN</a>, breaking it down one label
+at a time from left to right.
+
+<p>
+<table border="0" cellspacing="0" cellpadding="0" width="100%">
+<tr><td><span class="tag">tag:</span>[ipv6:2001:0DB8::1234:5678]</td></tr>
+<tr><td><span class="tag">tag:</span>[192.0.2.9]</td></tr>
+<tr><td><span class="tag">tag:</span>sub.domain.tld</td></tr>
+<tr><td><span class="tag">tag:</span>domain.tld</td></tr>
+<tr><td><span class="tag">tag:</span>tld</td></tr>
+<tr><td><span class="tag">tag:</span></td></tr>
+</table>
+</p>
+
+<p>
+Note that the bare tag is often used to specify system wide defaults.
+</p>
+</dd>
+
+<dt>Mail Address Lookups</dt>
+<dd>
+A mail address lookup is similar to a domain lookup, but the search
+first starts with a complete mail address, before trying the address's
+domain, and finally only the local part of the address.
+
+<p>
+<table border="0" cellspacing="0" cellpadding="0" width="100%">
+<tr><td><span class="tag">tag:</span>account@sub.domain.tld</td></tr>
+<tr><td><span class="tag">tag:</span>sub.domain.tld</td></tr>
+<tr><td><span class="tag">tag:</span>domain.tld</td></tr>
+<tr><td><span class="tag">tag:</span>tld</td></tr>
+<tr><td><span class="tag">tag:</span>account@</td></tr>
+<tr><td><span class="tag">tag:</span></td></tr>
+</table>
+</p>
+
+<p>
+Note that the bare tag is often used to specify system wide defaults.
+</p>
+</dd>
+</dl>
+
+<a name="access_tags"></a>
+<h4>Tags</h4>
+<p>
+The following list outlines the available tags and their supported key lookups:
+</p>
+
+<dl>
+
+<a name="tag_body"></a>
+<dt><span class="tag">Body:</span>ip</dt>
+<dt><span class="tag">Body:</span>domain</dt>
+<dt><span class="tag">Body:</span>mail</dt>
+<dd>
+Used to black (REJECT) or ignore (OK) domains that make up
+mail addresses or URLs found within the header or body content
+of a message. See <a href="summary.html#opt_uri_bl">uri-bl</a>
+and <a href="summary.html#opt_uri_dns_bl">uri-dns-bl</a>.
+</dd>
+
+<!--
+<a name="tag_commandpause"></a>
+<dt><span class="tag">CommandPause:</span>ip</dt>
+<dt><span class="tag">CommandPause:</span>domain</dt>
+<dd>
+Delay SMTP command processing for a given number of milliseconds.
+If any data is received before the elapsed time, then the connection
+is dropped.
+Specify an integer in milliseconds or zero (0) to allow
+RFC <a href="http://www.rfc-editor.org/rfc/rfc2920.txt">2920</a> SMTP PIPELINING and disable command pause.
+</dd>
+-->
+
+<a name="tag_concurrent_connect"></a>
+<dt><span class="tag">Concurrent-Connect:</span>ip</dt>
+<dt><span class="tag">Concurrent-Connect:</span>domain</dt>
+<dd>
+This is used to specify the maximum number of concurrent connections
+an SMTP client is permitted at any one time. Specify an integer
+or zero (0) to disable. The bare tag can be used to specify a global
+setting. If an SMTP client exceeds the allotted number of connections,
+then the incoming connection is dropped, while existing connections continue.
+</dd>
+
+<a name="tag_connect"></a>
+<dt><span class="tag">Connect:</span>ip</dt>
+<dt><span class="tag">Connect:</span>domain</dt>
+<dd>
+Used to black or white list an SMTP client. If black listed (<code>REJECT</code>), the connection
+will be dropped. If white listed (<code>OK</code>), then the messages from this connection
+by-passes all the filtering except anti-virus. The connection can also be "grey-listed"
+(<code>CONTENT</code>), similar to <a href="summary.html#opt_dns_gl">dns-gl</a>, which
+only white lists a connection as far as, but not including, the data content filters.
+</dd>
+
+
+<a name="tag_connect_from"></a>
+<dt><span class="tag">Connect:</span>ip<span class="tag">:From:</span>mail</dt>
+<dt><span class="tag">Connect:</span>domain<span class="tag">:From:</span>mail</dt>
+<dd>
+This set of combination tags are used to black or white list sender
+addresses when sent from a given SMTP client. The
+sender address can be easily forged and using the <span class="tag">From:</span>
+tag by itself could allow spam with a forged address. By adding the
+sender's SMTP client as an extra constraint, it is possible to limit
+such abuse.
+<span class="note">
+Note that the lookup variants with blank IP, domain, or mail are not supported.
+</span>
+</dd>
+
+<a name="tag_connect_to"></a>
+<dt><span class="tag">Connect:</span>ip<span class="tag">:To:</span>mail</dt>
+<dt><span class="tag">Connect:</span>domain<span class="tag">:To:</span>mail</dt>
+<dd>
+This set of combination tags are used to black or white list recipient
+addresses that a given SMTP client may contact. This allows for
+finer granularity of control in place of the <span class="tag">To:</span> tag.
+<span class="note">
+Note that the lookup variants with blank IP, domain, or mail are not supported.
+</span>
+</dd>
+
+<a name="tag_emew"></a>
+<dt><span class="tag">Emew:</span>mail</dt>
+<dd>
+Used to specify an alternative <a href="summary.html#opt_emew_secret">EMEW secret</a>
+for the sender or sender's domain.
+</dd>
+
+<a name="tag_from"></a>
+<dt><span class="tag">From:</span>mail</dt>
+<dd>
+Used to black or white list a sender's mail address. If black listed (<code>REJECT</code>),
+mail from this sender is refused. If white listed (<code>OK</code>), then the messages from
+this sender will by-pass all the filtering except anti-virus. Black listing using
+this tag is fine, but white listing is <em>not</em> recommended as it is too easy
+for someone to fake the sender address.
+</dd>
+
+<a name="tag_from_to"></a>
+<dt><span class="tag">From:</span>mail<span class="tag">:To:</span>mail</dt>
+<dd>
+This set of combination tags are used to black or white list a pair of sender
+and recipient addresses. This allows for finer granularity of control in place
+of the <span class="tag">To:</span> tag.
+<span class="note">
+Note that the lookup variants with blank mail elements are not supported.
+</span>
+</dd>
+
+<!--
+<a name="tag_greetpause"></a>
+<dt><span class="tag">GreetPause:</span>ip</dt>
+<dt><span class="tag">GreetPause:</span>domain</dt>
+<dd>
+Used to specify the time to wait before the welcome
+banner is sent to the SMTP client. If the client sends any data
+before this time elapses, the connection is dropped.
+Specify an integer in milliseconds or zero (0) to disable.
+Values between 3 to 7 seconds have been reported to be very effective,
+while larger values appear to have little benefit and may hinder
+legitimate mail from impatient non-compliant SMTP clients.
+</dd>
+-->
+
+<a name="tag_grey"></a>
+<dt><span class="tag">Grey-Connect:</span>ip</dt>
+<dt><span class="tag">Grey-Connect:</span>domain</dt>
+<dt><span class="tag">Grey-To:</span>mail</dt>
+<dd>
+This is the amount of time in seconds a correspondent's grey-list
+record will be temporarily rejected before being accepted.
+If several keys are possible for a given message, then the minimum value is used.
+Specify an integer number of seconds or zero (0) to disable.
+</dd>
+
+<a name="tag_length"></a>
+<dt><span class="tag">Length-Connect:</span>ip</dt>
+<dt><span class="tag">Length-Connect:</span>domain</dt>
+<dt><span class="tag">Length-From:</span>mail</dt>
+<dt><span class="tag">Length-To:</span>mail</dt>
+<dd>
+Used to limit the maximum length of a message in octets.
+It is expressed as a number with an optional scale suffix K (kilo),
+M (mega), or G (giga). If no length is given or is -1, then
+the message can be any length (ULONG_MAX).
+<p>
+When there are multiple message length limits possible, then the
+limit applied, in order of precedence is:
+</p>
+<ol type="a">
+<li><span class="tag">Length-To:</span>. If there is more than one
+<span class="tag">Length-To:</span>, then the maximum limit
+specified will be used.
+</li>
+<li><span class="tag">Length-From:</span></li>
+<li><span class="tag">Length-Connect:</span></li>
+</ol>
+</dd>
+
+<a name="tag_msg_limit"></a>
+<dt><span class="tag">Msg-Limit-Connect:</span>ip</dt>
+<dt><span class="tag">Msg-Limit-Connect:</span>domain</dt>
+<dt><span class="tag">Msg-Limit-From:</span>mail</dt>
+<dt><span class="tag">Msg-Limit-To:</span>mail</dt>
+<dd>
+Used to limit the number of messages a SMTP client, sender, or recipient
+can send/receive in a given time period. A message limit is given as:
+
+<blockquote><pre>
+messages '/' time [unit]
+</pre></blockquote>
+
+<p>
+which is the number of messages per time interval. The time unit
+specifier can be one of week, day, hour, minute, or seconds (note
+only the first letter is significant). A negative number
+for <code>messages</code> will disable any limit.
+</p>
+<p>
+When there are multiple message limits possible, then the limit
+applied, in order of precedence is:
+<span class="tag">Msg-Limit-To:</span>,
+<span class="tag">Msg-Limit-From:</span>,
+and <span class="tag">Msg-Limit-Connect</span>.
+</p>
+</dd>
+
+<a name="tag_null_rate_to"></a>
+<dt><span class="tag">Null-Rate-To:</span>mail</dt>
+<dd>
+Spammers will often impersonate some random or otherwise false mail
+address within a legitimate domain, like <code>hotmail.com</code>.
+In some cases
+when a third party mail system rejects spam or virus mail during the
+SMTP session, a DSN (bounce message) is generated and sent back to the
+false sender. Since spammers typically send millions of messages with
+falsified sender addresses, the mail system of the abused domain can
+be swamped by the backscatter. @PACKAGE_NAME@'s
+<a href="smtpf-cf.html#smtpf_emew">EMEW</a> facility was designed in
+part to help with backscatter, but cannot be deployed in some mail
+system archietures.
+<p>
+So @PACKAGE_NAME@ provides another mechanism to help with backscatter
+situations, where @PACKAGE_NAME@ monitors the rate of DSN or MDN messages
+(essentially any message from the "null sender") arriving per minute and rejects
+such messages above a certain threshold that can be configured
+globally, by domain, and by recipient.
+</p>
+</dd>
+
+<a name="tag_rate_connect"></a>
+<dt><span class="tag">Rate-Connect:</span>ip</dt>
+<dt><span class="tag">Rate-Connect:</span>domain</dt>
+<dd>
+This is used to specify the number of connections per minute a host is allowed.
+Simply specify an integer or zero (0) to disable. The bare tag
+can be used to specify a global setting. If an SMTP client connects too frequently
+in excess of this limit, then the incoming connection is dropped.
+</dd>
+
+<a name="tag_spamd"></a>
+<dt><span class="tag">Spamd:</span>mail</dt>
+<dt><span class="tag">Spamd:</span>domain</dt>
+<dt><span class="tag">Spamd:</span></dt>
+<dd>
+Used to specify a SpamAssassin configuration to use. If the message is addressed to a
+single recipient, then a <span class="key"><span class="tag">Spamd:</span>mail</span> lookup is done.
+If the message is for more than one recipient, all of whom are within the <em>same domain</em>,
+then a <span class="key"><span class="tag">Spamd:</span>domain</span></span> lookup is done. Otherwise the
+<span class="key"><span class="tag">Spamd:</span></span> default configuration is used.
+The right hand side action must be a user name or address to pass to spamd.
+It can be a pattern list.
+If the special user name <code>OK</code> is used, then the message is not processed by spamd.
+</dd>
+
+<a name="tag_to"></a>
+<dt><span class="tag">To:</span>mail</dt>
+<dd>
+Used to black or white list a recipient's mail address. If black listed (<code>REJECT</code>),
+mail to this recipient will be refused; the current message transaction is permitted
+to specify addition recipients or abandon the transaction. If white listed (<code>OK</code>), then
+the message will by-passes all the filtering except anti-virus.
+</dd>
+
+</dl>
+
+<a name="access_about_delay_checks"></a>
+<p>
+It should be noted that black &amp; white listing with
+<span class="tag">Connect:</span>,
+<span class="tag">Connect:From:</span>,
+<span class="tag">Connect:To:</span>,
+<span class="tag">From:</span>,
+<span class="tag">From:To:</span>, and
+<span class="tag">To:</span> take effect <em>immediately</em> in the <a class="glossary" href="glossary.html#term_SMTP">SMTP state</a>
+they apply to. This can be changed by enabling
+<a href="summary.html#opt_smtpf_delay_checks">smtp-delay-checks</a>
+which delays policy rejections until the recipients have been
+specified with the possibility to white list.
+
+The <a href="summary.html#opt_auth_delay_checks">auth-delay-checks</a> option can be used
+to delay the connection and EHLO related tests until a MAIL FROM: is received allowing
+for an SMTP AUTH command to be issued.
+</p>
+
+<a name="access_simple_value"></a>
+<p>
+When a key lookup matches, then the value returned is a pattern list, which in
+its simplest and most common form is either an action word like
+<code>OK</code>, <code>CONTENT</code>, <code>DISCARD</code>, <code>REJECT</code>,
+<code>IREJECT</code>, <code>TAG</code>, etc;
+or a numerical value depending on the tag involved. For example:
+</p>
+
+<blockquote>
+<table border="0" cellspacing="0" cellpadding="0" width="100%">
+<tr valign="top"><td width="41%" class="key bdotted tline">Connect:192.168.0</td><td width="59%" class="value bdotted tline">OK</td></tr>
+<tr valign="top"><td width="41%" class="key bdotted">Rate-Connect:fsl.com</td><td width="59%" class="value bdotted">17</td></tr>
+<tr valign="top"><td width="41%" class="key bline">Msg-Limit-From:hotmail.com</td><td width="59%" class="value bline">150/30m</td></tr>
+</table>
+</blockquote>
+
+<a name="access_action_words"></a>
+<p>
+The action words supported are:
+</p>
+
+<blockquote>
+<table border="0" cellspacing="0" cellpadding="0" width="100%">
+<tr valign="top"><td width="41%" class="value bdotted tline">OK</td><td width="59%" class="bdotted tline">white list, by-pass one or more tests</td></tr>
+<tr valign="top"><td width="41%" class="value bdotted">CONTENT</td><td width="59%" class="bdotted">white list as far as, but not including, the content filters;<br/>used only with <span class="tag">Connect:</span></td></tr>
+<tr valign="top"><td width="41%" class="value bdotted">DISCARD</td><td width="59%" class="bdotted">accept &amp; discard message</td></tr>
+<tr valign="top"><td width="41%" class="value bdotted">NEXT</td><td width="59%" class="bdotted">resume lookup, opposite of SKIP</td></tr>
+<tr valign="top"><td width="41%" class="value bdotted">SAVE</td><td width="59%" class="bdotted">save a copy of message if delivered</td></tr>
+<tr valign="top"><td width="41%" class="value bdotted">SKIP</td><td width="59%" class="bdotted">stop lookup &amp; return no result</td></tr>
+<tr valign="top"><td width="41%" class="value bdotted">SPF-PASS</td><td width="59%" class="bdotted">white list sender if SPF returns Pass;<br/>used only with <span class="tag">Connect:From:</span> and <span class="tag">From:</span></td></tr>
+<tr valign="top"><td width="41%" class="value bdotted">TAG</td><td width="59%" class="bdotted">if a policy rejection or drop would occur, simply tag the Subject: header and by-pass remaining tests</td></tr>
+<tr valign="top"><td width="41%" class="value bdotted">TEMPFAIL</td><td width="59%" class="bdotted">report a temporary failure condition</td></tr>
+<tr valign="top"><td width="41%" class="value bdotted">TRAP</td><td width="59%" class="bdotted">accept and save message to <a href="summary.html#opt_trap_dir">trap-dir</a>, but do not deliver</td></tr>
+<tr valign="top"><td width="41%" class="value bdotted">REJECT</td><td width="59%" class="bdotted">black list, either reject or drop</td></tr>
+<tr valign="top"><td width="41%" class="value bline">IREJECT</td><td width="59%" class="bline">immediate REJECT, ignore <a href="summary.h#opt_smtp_delay_checks">smtp-delay-checks</a>; applies only to <span class="tag">Connect:</span>, <span class="tag">Connect:From:</span>, and <span class="tag">From:</span></td></tr>
+</table>
+</blockquote>
+
+<a name="access_pattern_lists"></a>
+<p>
+In most instances, the above forms of key lookup and values are sufficient. However,
+there may be times when finer granularity of control is required, in which case
+pattern lists can be used.
+
+A pattern list is a white space separated
+list of <i class="syntax">pattern-action</i> pairs followed by an optional default action.
+The supported types are:
+</p>
+
+<blockquote>
+<table border="0" cellspacing="0" cellpadding="2" width="100%">
+<tr valign="top"><td class="value bdotted tline" width="41%">[network/cidr]action</td><td class="bdotted tline">Classless Inter-Domain Routing<br/>(only with IP address lookups)</td></tr>
+<tr valign="top"><td class="value bdotted">!pattern!action</td><td class="bdotted">Simple fast text matching. <br/></td></tr>
+<tr valign="top"><td class="value bline">/regex/action</td><td class="bline">Extended Regular Expressions.</td></tr>
+</table>
+</blockquote>
+
+<a name="access_simple_pattern"></a>
+<p>
+The simple pattern matching, <span class="value">!pattern!</span>,
+uses an asterisk (*) for a wildcard, scanning over  zero or more characters;
+a question-mark (?) matches any single character; a backslash followed by
+any character treats that character as a literal. This method always
+tries to match the beginning and end of string. For example:
+</p>
+
+<blockquote>
+<table border="0" cellspacing="0" cellpadding="0" width="100%">
+<tr valign="top"><td class="value bdotted tline" width="41%">!abc!</td><td class="bdotted tline">exact match for 'abc'</td></tr>
+<tr valign="top"><td class="value bdotted">!abc*!</td><td class="bdotted">match 'abc' at start of string</td></tr>
+<tr valign="top"><td class="value bdotted">!*abc!</td><td class="bdotted">match 'abc' at the end of string</td></tr>
+<tr valign="top"><td class="value bdotted">!abc*def!</td><td class="bdotted">match 'abc' at the start and match 'def' at the end, maybe with stuff in between.</td></tr>
+<tr valign="top"><td class="value bline">!*abc*def*!</td><td class="bline">find 'abc', then find 'def'</td></tr>
+</table>
+</blockquote>
+
+<p>
+The following is an example using a simple pattern to reject client connections
+that originate from a range of IP addresses of an ISP assigned to ADSL customers.
+Using a pattern like this allows you to drop connects from the ISP's ADSL, while still
+accepting connections from mail and web servers.
+</p>
+
+<blockquote><pre>
+Connect:hananet.net	!adsl-*-*.usr.hananet.net!REJECT
+</pre></blockquote>
+
+<p>
+If you know that an ISP's mail and web servers follow a standard naming convention,
+you might prefer to only accept mail from those instead. We include web servers here
+to handle the case where a web server might have to send a mail response based on
+a form being filled in.
+</p>
+
+<blockquote><pre>
+Connect:hananet.net	!smtp*.hananet.net!OK !www*.hananet.net!OK REJECT
+</pre></blockquote>
+
+<a name="access_about_spf"></a>
+<p>
+Note that <a class="glossary" href="glossary.html#term_SPF">SPF</a> was designed to help mail servers identify
+originators of mail, so creating patterns as shown in the above two examples
+is not normally required. However, SPF is still considered experimental and not
+as widely deployed as one might hope.
+</p>
+
+<a name="access_regex_pattern"></a>
+<p>
+The next example, <span class="value">/regex/</span>, uses Extended Regular Expressions to validate the
+format of the local-part of an AOL address, which must be between 3 and 16
+characters long, can contain dots and RFC 2822 ``atext'' characters except <code>%</code> and <code>/</code>.
+The NEXT word allows the one regular expression to validate the format of the address and resume key lookup if the
+pattern matches; otherwise if the regular expression failed to match, REJECT the suspect aol.com address.
+</p>
+
+<blockquote style="font-family: monospace;">
+From:grandma@aol.com OK
+<br/>From:aol.com /^[a-zA-Z0-9!#$&amp;'*+=?^_`{|}~.-]{3,16}@aol.com$/NEXT REJECT
+</blockquote>
+
+<p>
+The discussion of Extended Regular Expressions is vast and complex, well beyond the
+scope of this document. There are many on-line tutorials and references available and the book
+<a href="http://www.oreilly.com/catalog/regex3/index.html">Mastering Regular Expressions, 3e</a> from O'Reilly covers the topic in depth.
+</p>
+
+<p>
+If you need to use a pattern list, then try and follow these suggestions:
+</p>
+<ul>
+<li>
+A pattern cannot be used as the key in an <a href="summary.html#opt_access_map">access-map</a>
+lookup. Key-value tables work with constants for the keys using a predefined lookup order
+as outlined <a href="#access_lookups">above</a>.
+</li>
+<li>Use the key lookup as a selector to find a pattern list.</li>
+<li>Use simple <a href="#access_simple_pattern">!pattern!</a> matching where possible, as it will be
+faster than Extended Regular Expressions, <a href="#access_regex_pattern">/regex/</a>.
+</li>
+<li>
+Avoid using pattern lists with bare tag variants that specify a global default.
+It will more often than not cause a lot of unnecessary attempts to match a pattern.
+</li>
+<li>
+Keep your pattern lists short &amp; simple.
+</li>
+</ul>
+
+<p style="text-align: center;">
+-<a href="#"> TOP </a>-
+</p>
+
+<!-- copyright -->
+<p class="copyright" style="text-align: center;">
+<nobr>@package_copyright@</nobr>
+<br/><nobr>BarricadeMX trademark &amp; patents pending.</nobr>
+</p>
+<!--end copyright-->
+
+</td></tr>
+</table>
+</div>
+</body>
+</html>
+
