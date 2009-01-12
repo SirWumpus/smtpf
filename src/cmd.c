@@ -85,8 +85,21 @@ int
 cmdRset(Session *sess)
 {
 /*	sessionReset(sess); */
+	if (sess->client.fwd_to_queue != NULL) {
+#ifdef NOT_SURE
+		if (mxCommand(sess, sess->client.fwd_to_queue, "RSET\r\n", 250)) {
+			(void) mxCommand(sess, sess->client.fwd_to_queue, "QUIT\r\n", 221);
+			connectionFree(sess->client.fwd_to_queue);
+			sess->client.fwd_to_queue = NULL;
+		}
+#else
+		(void) mxCommand(sess, sess->client.fwd_to_queue, "RSET\r\n", 250);
+#endif
+	}
+
 	if (sess->state != state0)
 		sess->state = sess->helo_state;
+
 	return replySetFmt(sess, SMTPF_CONTINUE, msg_ok, ID_ARG(sess));
 }
 

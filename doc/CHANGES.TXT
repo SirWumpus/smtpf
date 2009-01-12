@@ -260,6 +260,10 @@ is no set schedule for releases.
 	header to aid SpamAssassin.
 	http://wiki.apache.org/spamassassin/EnvelopeSenderInReceived
 
+   !	cmdRset: when sess->client.fwd_to_queue is defined due to a valid
+	AUTH, send a RSET command to the forward host if the client sends
+	a RSET.
+
 --2.2.3--
 
    *	Requires Libsnert 1.69.25
