@@ -254,6 +254,12 @@ is no set schedule for releases.
 	tag:example.com/a
 	tag:example.com
 
+--2.2.4--
+
+   !	getReceivedHeader: added envelope-from information to Received
+	header to aid SpamAssassin.
+	http://wiki.apache.org/spamassassin/EnvelopeSenderInReceived
+
 --2.2.3--
 
    *	Requires Libsnert 1.69.25

@@ -1237,13 +1237,14 @@ getReceivedHeader(Session *sess, char *buffer, size_t size)
 
 	length = snprintf(
 		buffer, size,
-		"Received: from %s (" CLIENT_FORMAT ")\r\n\tby %s (%s [%s]) with %s\r\n\tid %s"
+		"Received: from %s (" CLIENT_FORMAT ")\r\n\tby %s (%s [%s]) envelope-from <%s> with %s\r\n\tid %s"
 #ifdef FILTER_EMEW
 		" ret-id %s"
 #endif
 		"; %s\r\n",
 		sess->client.helo, CLIENT_INFO(sess),
 		sess->iface->name, sess->iface->name,
+		sess->msg.mail->address.string,
 		sess->if_addr, with, sess->msg.id,
 #ifdef FILTER_EMEW
 		emew_code_strings[emew->result],
