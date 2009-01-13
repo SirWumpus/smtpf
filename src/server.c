@@ -878,14 +878,10 @@ See <a href="summary.html#opt_run_pid_file">run-pid-file</a> option.
 		if (chownByName(optRunPidFile.string, optRunUser.string, optRunGroup.string))
 			exit(1);
 	}
-#if defined(__OpenBSD__) || defined(__FreeBSD__)
-	(void) processDumpCore(2);
-#endif
+
 	if (processDropPrivilages(optRunUser.string, optRunGroup.string, optRunWorkDir.string, optRunJailed.value))
 		exit(1);
-#if defined(__linux__)
 	(void) processDumpCore(1);
-#endif
 	syslog(LOG_INFO, LOG_NUM(599) "ready");
 /*{LOG
 The SMTP service is ready to accept connections.

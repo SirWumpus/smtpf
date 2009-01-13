@@ -254,6 +254,21 @@ is no set schedule for releases.
 	tag:example.com/a
 	tag:example.com
 
+
+--2.2.5--
+
+   *	Requires Libsnert 1.70.1
+
+   -	serverInit: removed processDumpCore for OpenBSD/FreeBSD. Currrent
+   	implementation affects the kernel sysctl setting as oppose to
+   	just the process.
+
+   !	getReceivedHeader: fixed out of order envelope-from value in
+   	printf format string.
+
+  !!	accessRcpt: fixed core dump on connect:to: combo tag due to
+	missing pass-back pointer in smdbDomainMail.
+
 --2.2.4--
 
    !	getReceivedHeader: added envelope-from information to Received

@@ -22,10 +22,10 @@ smtpf 1.0
 -------------------
 
 Double-click on ``smtpf-1.0-install.exe'' to install. Its recommended
-that the software be placed in a ``C:\smtpf'' directory for easy 
+that the software be placed in a ``C:\smtpf'' directory for easy
 accessibility to the configuration files, though other locations are
 possible if preferred.
-	
+
 
 2. Configuration
 ----------------
@@ -42,7 +42,7 @@ the options and can be run without a /etc/smtpf/smtpf.cf file. A
 default .cf can be generated with:
 
 	smtpf -help >/etc/smtpf/smtpf.cf
-	
+
 This file can then be edited. If you're upgrading between versions,
 you can generate a new .cf file that includes your current settings
 so that you can compare old and new options. For example:
@@ -90,15 +90,15 @@ domains you accept mail for. Example:
 	route:127.0.0.1		FORWARD: 127.0.0.1:26
 	route:192.168.0		FORWARD: 127.0.0.1:26
 	route:my.domain		FORWARD: 127.0.0.1:26
-	
+
 In the smtpf route-map, be sure to add a RELAY parameter to your
 IPv4 and/or IPv6 local host IP addresses. Example:
-	
+
 	route:::1		FORWARD: 127.0.0.1:26; RELAY
 	route:127.0.0.1		FORWARD: 127.0.0.1:26; RELAY
-	
+
 The RELAY tag should be used sparingly, typically only for your
-LAN or trusted hosts. It allows mail that is not destined for 
+LAN or trusted hosts. It allows mail that is not destined for
 local delivery to be sent outwards to the Internet. Example:
 
 	route:192.168.0		FORWARD: 127.0.0.1:26; RELAY
@@ -111,14 +111,14 @@ local delivery to be sent outwards to the Internet. Example:
 ------------
 
 To enable sendmail and smtpf to operate on the same machine, edit
-the /etc/mail/sendmail.mc file and comment out all existing 
+the /etc/mail/sendmail.mc file and comment out all existing
 DAEMON_OPTIONS macros. Add the following macro:
 
 	DAEMON_OPTIONS(`Addr=127.0.0.1, Port=26, Name=MTA')
 
 This will allow smtpf to accept, filter, and forward mail for local
 delivery via the local MTA.
-	
+
 
 4.2 Postfix
 -----------
@@ -143,23 +143,23 @@ delivery via the local MTA.
    *	Start smtpf as a Unix daemon:
 
 		smtpf
-	
 
-   *	Start with an alternate configuration file:	
+
+   *	Start with an alternate configuration file:
 
 		smtpf file=/path/to/alt-smtpf.cf
-		
+
 
    *	Start with the built-in configuration:
-   
+
    		smtpf file=""
 
-   		
+
    *	Changes to the .cf files require the smtpf process to be
    	restarted:
 
 		smtpf -restart
-	
+
 
    *	To stop smtpf:
 
@@ -179,8 +179,28 @@ To get core dumps of daemon running process:
 	echo 1 > /proc/sys/kernel/suid_dumpable
 
 And prior to starting smtpf:
-	
-	ulimit -c unlimited 2>&1 > /dev/null
+
+	ulimit -S -c unlimited 2>&1 > /dev/null
+
+
+
+# ulimit -S -c unlimited
+
+# sysctl fs.suid_dumpable=1
+
+0 - (default) - traditional behaviour.  Any process which has changed
+    privilege levels or is execute only will not be dumped
+
+1 - (debug) - all processes dump core when possible.  The core dump is
+    owned by the current user and no security is applied.  This is intended
+    for system debugging situations only.  Ptrace is unchecked.
+
+2 - (suidsafe) - any binary which normally would not be dumped is dumped
+    readable by root only.  This allows the end user to remove such a dump but
+    not access it directly.  For security reasons core dumps in this mode will
+    not overwrite one another or other files.  This mode is appropriate when
+    adminstrators are attempting to debug problems in a normal environment.
+
 
 
 5.2.2 OpenBSD
@@ -189,5 +209,22 @@ And prior to starting smtpf:
 To get core dumps of daemon running process:
 
 	sysctl kern.nosuidcoredump=0
-	
 
+	ulimit -S -c unlimited
+
+
+
+5.2.3 FreeBSD
+-------------
+
+	sysctl kern.sugid_coredump=1
+
+	ulimit -S -c unlimited
+
+
+5.2.4 Solaris
+-------------
+
+	sysctl allow_setid_core=1
+
+	ulimit -S -c unlimited

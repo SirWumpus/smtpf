@@ -1285,7 +1285,7 @@ See <a href="summary.html#opt_reject_quoted_at_sign">reject-quoted-at-sign</a>.
 	}
 
 	else if ((access = smdbIpMail(sess->access_map, "connect:", sess->client.addr, SMDB_COMBO_TAG_DELIM "to:", path->address.string, NULL, &value)) != SMDB_ACCESS_NOT_FOUND
-	     || (*sess->client.name != '\0' && (access = smdbDomainMail(sess->access_map, "connect:", sess->client.name, SMDB_COMBO_TAG_DELIM "to:", path->address.string, NULL, NULL)) != SMDB_ACCESS_NOT_FOUND)) {
+	     || (*sess->client.name != '\0' && (access = smdbDomainMail(sess->access_map, "connect:", sess->client.name, SMDB_COMBO_TAG_DELIM "to:", path->address.string, NULL, &value)) != SMDB_ACCESS_NOT_FOUND)) {
 		if ((msg = strchr(value, ':')) != NULL)
 			msg++;
 
