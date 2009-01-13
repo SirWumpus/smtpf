@@ -1299,14 +1299,14 @@ infoReplyVar(Reply *reply, int columns, const char *prefix, const char *name, co
 	else if ((list = TextSplit(value, " \t", 0)) != NULL && 0 < VectorLength(list)) {
 		args = (const char **) VectorBase(list);
 
-		reply = replyAppendFmt(reply, "%s %s=\"'%s'", prefix, name, *args);
+		reply = replyAppendFmt(reply, "%s %s=\"%s", prefix, name, *args);
 
 		for (args++; *args != NULL; args++) {
 			/* Line wrap. */
 			if (columns <= reply->length % columns + strlen(*args) + 3) {
 				reply = replyAppendFmt(reply, CRLF "%s    ", prefix);
 			}
-			reply = replyAppendFmt(reply, " '%s'", *args);
+			reply = replyAppendFmt(reply, " %s", *args);
 		}
 		reply = replyAppendFmt(reply, "\"" CRLF);
 

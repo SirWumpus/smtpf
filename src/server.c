@@ -1110,14 +1110,14 @@ serverPrintVar(int columns, const char *name, const char *value)
 	else if ((list = TextSplit(value, " \t", 0)) != NULL && 0 < VectorLength(list)) {
 		args = (const char **) VectorBase(list);
 
-		length = printf("%s=\"'%s'", name, *args);
+		length = printf("%s=\"%s", name, *args);
 		for (args++; *args != NULL; args++) {
 			/* Line wrap. */
 			if (columns <= length + strlen(*args) + 4) {
 				(void) printf("\n\t");
 				length = 8;
 			}
-			length += printf(" '%s'", *args);
+			length += printf(" %s", *args);
 		}
 		if (columns <= length + 1) {
 			(void) printf("\n");
