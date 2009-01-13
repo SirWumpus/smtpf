@@ -115,8 +115,8 @@ extern "C" {
 #include "valgrind/valgrind.h"
 #include "valgrind/memcheck.h"
 
-#if LIBSNERT_MAJOR < 1 || LIBSNERT_MINOR < 69
-# error "LibSnert/1.69 or better is required"
+#if LIBSNERT_MAJOR < 1 || LIBSNERT_MINOR < 70
+# error "LibSnert/1.70 or better is required"
 #endif
 
 /***********************************************************************
