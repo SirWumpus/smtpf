@@ -25,6 +25,7 @@ var/db/@PACKAGE_NAME@/
 @extra etc/@PACKAGE_NAME@/route.sq3
 @extra etc/@PACKAGE_NAME@/route.cf.bak
 etc/@PACKAGE_NAME@/
+etc/@PACKAGE_NAME@/access/
 @cwd /usr/local
 @man man/cat1/@PACKAGE_NAME@.0
 @mode 555

@@ -42,6 +42,9 @@ package/OpenBSD/+DESC
 package/OpenBSD/+DISPLAY
 package/Windows/installer.nsi
 
+FILE.TXT
+VERSION.TXT
+
 # Compiled
 src/smtpf
 

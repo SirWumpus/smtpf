@@ -14,6 +14,7 @@
 @exec mkdir /var/db/@PACKAGE_NAME@ ; chmod 6770 /var/db/@PACKAGE_NAME@ ; chown @PACKAGE_NAME@:@PACKAGE_NAME@ /var/db/@PACKAGE_NAME@
 @comment OpenBSD does this better. BTW frak FreeBSD /usr/local/etc.
 @exec mkdir /etc/@PACKAGE_NAME@ ; chmod 2770 /etc/@PACKAGE_NAME@ ; chown root:@PACKAGE_NAME@ /etc/@PACKAGE_NAME@
+@exec mkdir /etc/@PACKAGE_NAME@/access ; chmod 2770 /etc/@PACKAGE_NAME@/access ; chown root:@PACKAGE_NAME@ /etc/@PACKAGE_NAME@/access
 @cwd /usr/local
 man/cat1/@PACKAGE_NAME@.0
 @mode 444

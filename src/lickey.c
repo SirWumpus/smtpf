@@ -331,11 +331,11 @@ lickeySendWarning(void)
 		return;
 	}
 
-	row.key_size = snprintf(row.key_data, sizeof (row.key_data), "lickey:%s", mail);
+	row.key_size = snprintf((char *) row.key_data, sizeof (row.key_data), "lickey:%s", mail);
 
 	/* Check if the most recent warning has been sent. */
 	if (mccGetRow(mcc, &row) == MCC_OK
-	&& strtol(row.value_data, NULL, 10) <= days)
+	&& strtol((char *) row.value_data, NULL, 10) <= days)
 		return;
 
 #if defined(HAVE_PTHREAD_ATTR_SETSTACKSIZE)
@@ -360,8 +360,8 @@ lickeySendWarning(void)
 	row.hits = 0;
 	row.created = time(NULL);
 	row.expires = row.created + (days+1) * 86400;
-	row.key_size = snprintf(row.key_data, sizeof (row.key_data), "lickey:%s", mail);
-	row.value_size = (unsigned char) snprintf(row.value_data, sizeof (row.value_data), "%d", days);
+	row.key_size = snprintf((char *) row.key_data, sizeof (row.key_data), "lickey:%s", mail);
+	row.value_size = (unsigned char) snprintf((char *) row.value_data, sizeof (row.value_data), "%d", days);
 	(void) mccPutRowLocal(mcc, &row, 1);
 }
 
