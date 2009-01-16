@@ -107,15 +107,9 @@ static const char usage_uri_bl_ptr[] =
 ;
 
 static const char usage_uri_bl_headers[] =
-#ifdef VERSION1
-  "Parse message and MIME part headers for any URI and check if black\n"
-"# listed using uri-dns-bl and/or uri-bl. Use with caution.\n"
-"#"
-#else
   "A list of mail headers to parse for URI and check against one or\n"
 "# more URI BL. Specify the empty list to disable.\n"
 "#"
-#endif
 ;
 
 Option optUriBlHelo		= { "uri-bl-helo",	"-",			usage_uri_bl_helo };
@@ -807,11 +801,8 @@ uriblData(Session *sess, va_list ignore)
 
 	ctx->uri_count = 0;
 	ctx->distinct_uri_tested = 0;
-#ifdef VERSION1
-	ctx->mime = uriMimeCreate(optUriBlHeaders.value);
-#else
 	ctx->mime = uriMimeCreate(0);
-#endif
+
 	return SMTPF_CONTINUE;
 }
 
@@ -879,41 +870,6 @@ See <a href="summary.html#opt_uri_max_limit">uri-max-limit</a> option.
 	return rc;
 }
 
-#ifdef VERSION1
-int
-uriblHeaders(Session *sess, va_list args)
-{
-	long i;
-	char *hdr;
-	Vector headers;
-	Uribl *ctx = filterGetContext(sess, uribl_context);
-
-	LOG_TRACE(sess, 782, uriblHeaders);
-
-	if (ctx->mime == NULL)
-		return SMTPF_CONTINUE;
-
-	/* We run the headers through the URI MIME parser in order to
-	 * setup the correct state for MIME boundaries and content
-	 * type. Currently the URI API does not extract URI from the
-	 * headers.
-	 */
-	headers = va_arg(args, Vector);
-	for (i = 0; i < VectorLength(headers); i++) {
-		if ((hdr = VectorGet(headers, i)) == NULL)
-			continue;
-
-		while (*hdr != '\0') {
-			if (mimeNextCh(ctx->mime, *hdr++))
-				break;
-			(void) uriblCheckUri(sess, uriMimeGetUri(ctx->mime));
-			uriMimeFreeUri(ctx->mime);
-		}
-	}
-
-	return SMTPF_CONTINUE;
-}
-#else
 static int
 uriCheckString(Session *sess, Mime *mime, const char *value)
 {
@@ -999,7 +955,6 @@ error1:
 
 	return rc;
 }
-#endif
 
 int
 uriblContent(Session *sess, va_list args)
@@ -1019,32 +974,6 @@ uriblContent(Session *sess, va_list args)
 
 	if (ctx->mime == NULL)
 		return SMTPF_CONTINUE;
-
-#ifdef REMOVED
-/*** Do we need this guard if replyContent short-circuit is used? ***/
-	/* Have we already specified a rejection message? */
-	switch (sess->msg.policy) {
-	case 'r': return SMTPF_REJECT;
-	case 'd': return SMTPF_DISCARD;
-	}
-#endif
-
-#ifdef BEING_CONSIDERED
-/* Not applied yet because you should really use URI BLs that are designed
- * for URI related tests. Using a dynmic IP list for URI BL scanning will
- * FP in HELO, MAIL, PTR, and header checks.
- */
-	/* Do not parse message headers for URI, domains, or IPs. While
-	 * a good idea with some blacklists, other blacklists specialise
-	 * in listing dynamic IP addresses (pbl.spamhaus.org). A legit
-	 * message will typically originate from a dynamic IP and pass
-	 * through their ISP's SMTP servers which will add Received
-	 * headers containing the source IP address. This can cause
-	 * false positives.
-	 */
-	if (chunk == sess->msg.chunk0)
-		chunk += sess->msg.eoh;
-#endif
 
 	for (stop = chunk + size; chunk < stop; chunk++) {
 		if (mimeNextCh(ctx->mime, *chunk))
