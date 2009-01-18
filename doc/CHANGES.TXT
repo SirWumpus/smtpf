@@ -255,6 +255,14 @@ is no set schedule for releases.
 	tag:example.com
 
 
+--2.2.8--
+
+   !	Added the SIQ module back for April.
+
+--2.2.7--
+
+   !	aclocal.m4 corrections based on libsnert 1.70.4
+
 --2.2.6--
 
    !	lickey.c: silence more anal gcc signedness warnings.
