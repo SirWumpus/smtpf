@@ -84,7 +84,7 @@ AC_ARG_ENABLE(quit, [AC_HELP_STRING([--disable-quit],[disable quit, restart, res
 AC_ARG_ENABLE(sav, [AC_HELP_STRING([--disable-sav],[disable sender address verification])])
 AC_ARG_ENABLE(save, [AC_HELP_STRING([--disable-save],[disable save message support])])
 AC_ARG_ENABLE(savdid, [AC_HELP_STRING([--disable-savdid],[disable Sophos AV support])])
-AC_ARG_ENABLE(siq, [AC_HELP_STRING([--disable-siq],[enable Server Index Query support])])
+AC_ARG_ENABLE(siq, [AC_HELP_STRING([--disable-siq],[disable Server Index Query support])])
 AC_ARG_ENABLE(size, [AC_HELP_STRING([--disable-size],[disable message size restrictions])])
 AC_ARG_ENABLE(spamd, [AC_HELP_STRING([--enable-spamd],[enable older reject-only SpamAssassin support])])
 AC_ARG_ENABLE(spamd2, [AC_HELP_STRING([--disable-spamd2],[disable newer SpamAssassin with tagging support])])

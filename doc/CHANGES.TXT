@@ -257,6 +257,8 @@ is no set schedule for releases.
 
 --2.2.8--
 
+   *	Requires Libsnert 1.70.5
+
    !	Added the SIQ module back for April.
 
 --2.2.7--
