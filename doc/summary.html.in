@@ -1576,7 +1576,6 @@ Quit an already running instance, waiting for all the connections to
 terminate, then exit.
 </dd>
 
-<!--
 <a name="opt_siq_score_reject"></a>
 <dt><span class="option">siq-score-reject</span>=<span class="value">-1</span></dt>
 <dd>
@@ -1610,7 +1609,6 @@ registration before they will answer queries.
 <dd>
 Subject tag to preprend for messages identified as suspect.
 </dd>
--->
 
 <a name="opt_smtp_auth_enable"></a>
 <dt>-<span class="option">smtp-auth-enable</span></dt>

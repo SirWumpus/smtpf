@@ -917,7 +917,6 @@ out and is possibly terminated.
 </p>
 </dd>
 
-<!--
 <a name="smtpf_siq"></a>
 <dt>SIQ Protocol Support</dt>
 <dd>
@@ -953,7 +952,6 @@ only be tagged as suspect and continue to be delivered.
 A SIQ-Report header containing a summary of any SIQ result is always added.
 </p>
 </dd>
--->
 
 <a name="smtpf_smtp"></a>
 <dt>SMTP Settings</dt>
