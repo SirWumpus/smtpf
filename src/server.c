@@ -617,7 +617,11 @@ error1:
 	if (h_errno == 0)
 		syslog(LOG_ERR, LOG_NUM(596) "interface=%s error: %s (%d)", if_name, strerror(errno), errno);
 	else
+#ifdef HAVE_HSTRERROR
 		syslog(LOG_ERR, LOG_NUM(000) "interface=%s error: %s (%d)", if_name, hstrerror(h_errno), h_errno);
+#else
+		syslog(LOG_ERR, LOG_NUM(000) "interface=%s error: %d", if_name, h_errno);
+#endif
 /*{LOG
 An error occurred when @PACKAGE_NAME@ tried to bind to the socket.
 The most likely cause of this is that something else is already
