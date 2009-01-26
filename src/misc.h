@@ -26,6 +26,7 @@ extern Option optOneRcptPerNull;
 extern Option optMailIpInNs;
 extern Option optMailNsNxDomain;
 extern Option optMailRequireMx;
+extern Option optMailRetestClient;
 extern Option optRFC2821StrictHelo;
 extern Option optRFC28227bitHeaders;
 extern Option optRFC2822MinHeaders;

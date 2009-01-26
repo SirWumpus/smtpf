@@ -259,6 +259,33 @@ is no set schedule for releases.
 
    !	summary.html.in, smtpf.html.in: Re-enabled SIQ documentation.
 
+   !	cmdRcpt: Fixed log message bug when calling summary recipient.
+
+   !	accessConnect: for mail-retest-client and idle-retest-timer,
+	reset several of the CLIENT_ flags that could change.
+
+  !!	cmd.c: with the introduction of mail-retest-client option and
+	accessIdle, accessConnect could be called more that once per
+	session and subsequently return non-negative results that of
+	course will not set a reply. mail-retest-client was implemented
+	as part of the idle-retest-timer code, which previously assumed
+	only negative outcomes that set a reply. Thus for example if
+	+mail-retest-client and a connect:domain OK are defined, then
+	a "421 4.3.0 internal server error #549" was generated.
+
+	The fix therefore is every where filter_idle_table is run, to
+	check for both a return other than SMTPF_CONTINUE _AND_ that
+	there is defined reply.
+
+	In addition +mail-retest-client could be mean session status
+	change based on access or dns-bl/gl/wl. Therefore a previously
+	delayed session rejection is reset after the first message
+	transaction (replyRset) since there is currently no way to
+	determine the type of delayed session rejection message. This
+	might be an unwelcomed side-effect of +mail-retest-client, but
+	can't be help without major changes to how immediate / delayed
+	replies are handled.
+
 --2.2.8--
 
    *	Requires Libsnert 1.70.5

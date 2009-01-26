@@ -75,7 +75,8 @@ cmdNoop(Session *sess)
 {
 	int rc;
 
-	if ((rc = filterRun(sess, filter_idle_table)) != SMTPF_CONTINUE)
+	rc = filterRun(sess, filter_idle_table);
+	if (rc != SMTPF_CONTINUE && replyDefined(sess))
 		return rc;
 
 	return replySetFmt(sess, SMTPF_CONTINUE, msg_ok, ID_ARG(sess));
@@ -137,7 +138,8 @@ cmdUnknown(Session *sess)
 		goto error0;
 	}
 
-	if ((rc = filterRun(sess, filter_idle_table)) != SMTPF_CONTINUE)
+	rc = filterRun(sess, filter_idle_table);
+	if (rc != SMTPF_CONTINUE && replyDefined(sess))
 		return rc;
 
 	rc = SMTPF_REJECT;
@@ -157,7 +159,8 @@ cmdMissingArg(Session *sess, int cmd_length)
 	if (cmd_length < sess->input_length)
 		return SMTPF_CONTINUE;
 
-	if ((rc = filterRun(sess, filter_idle_table)) != SMTPF_CONTINUE)
+	rc = filterRun(sess, filter_idle_table);
+	if (rc != SMTPF_CONTINUE && replyDefined(sess))
 		return rc;
 
 	return replySetFmt(sess, SMTPF_REJECT, "501 5.5.2 %s missing argument" ID_MSG(249) "\r\n", sess->input, ID_ARG(sess));
@@ -703,7 +706,8 @@ cmdMail(Session *sess)
 
 	sessionReset(sess);
 
-	if ((rc = filterRun(sess, filter_idle_table)) != SMTPF_CONTINUE)
+	rc = filterRun(sess, filter_idle_table);
+	if (rc != SMTPF_CONTINUE && replyDefined(sess))
 		return rc;
 
 	sess->client.mail_count++;
@@ -1139,7 +1143,7 @@ open relay.
 	rc = replySetFmt(sess, apply_smtpf_delay | SMTPF_CONTINUE, "250 2.1.5 recipient <%s> accepted" ID_MSG(297) "\r\n", rcpt->address.string, ID_ARG(sess));
 /*{REPLY
 }*/
-	summaryRecipient(sess, sess->input+span);
+	summaryRecipient(sess, rcpt->address.string);
 	sess->msg.rcpt_count++;
 
 	/* Enter the RCPT state so that replySend() will
@@ -2027,7 +2031,8 @@ cmdHelp(Session *sess)
 {
 	int rc;
 
-	if ((rc = filterRun(sess, filter_idle_table)) != SMTPF_CONTINUE)
+	rc = filterRun(sess, filter_idle_table);
+	if (rc != SMTPF_CONTINUE && replyDefined(sess))
 		return rc;
 
 	return REPLY_PUSH_CONST(

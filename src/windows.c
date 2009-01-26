@@ -630,7 +630,7 @@ main(int argc, char **argv)
 					install_path,			// service's binary
 					NULL,				// no load ordering group
 					NULL,				// no tag identifier
-					"Tcpip\0\0",			// dependencies
+					"Tcpip\0Tcpip6\0\0",		// dependencies
 					NULL,				// LocalSystem account
 					NULL				// no password
 				);

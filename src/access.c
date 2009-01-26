@@ -818,6 +818,11 @@ accessConnect(Session *sess, va_list args)
 
 	LOG_TRACE(sess, 118, accessConnect);
 
+	/* Typicallyed already cleared at start of session. Reset these flags
+	 * just in case of an idle timer trigger (see also mail-retest-client).
+	 */
+	CLIENT_CLEAR(sess, CLIENT_IS_BLACK|CLIENT_IS_WHITE|CLIENT_IS_TEMPFAIL|CLIENT_IS_GREY|CLIENT_IS_SAVE|CLIENT_IS_TRAP|CLIENT_IS_TAG);
+
 	/* Lookup
 	 *
 	 *	tag:a.b.c.d
@@ -955,6 +960,7 @@ accessIdle(Session *sess, va_list ignore)
 {
 	int rc;
 
+	/* See mail-retest-client and idle-retest-timer. */
 	if ((rc = accessConnect(sess, ignore)) != SMTPF_CONTINUE)
 		statsCount(&stat_idle_retest_timer);
 
@@ -962,7 +968,7 @@ accessIdle(Session *sess, va_list ignore)
 }
 
 static int
-accessMailAction(Session *sess, const char *value, int access)
+accessMsgAction(Session *sess, const char *value, int access)
 {
 	if (strcmp(value, "SAVE") == 0) {
 		access = SMTPF_CONTINUE;
@@ -1105,7 +1111,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			}
 
 			else {
-				access = accessMailAction(sess, value, sess->client.bw_state);
+				access = accessMsgAction(sess, value, sess->client.bw_state);
 			}
 		}
 	}
@@ -1180,7 +1186,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			}
 
 			else {
-				access = accessMailAction(sess, value, sess->client.bw_state);
+				access = accessMsgAction(sess, value, sess->client.bw_state);
 			}
 		}
 	}
@@ -1332,7 +1338,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			break;
 
 		default:
-			access = accessMailAction(sess, value, sess->msg.bw_state);
+			access = accessMsgAction(sess, value, sess->msg.bw_state);
 		}
 	}
 
@@ -1380,7 +1386,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			break;
 
 		default:
-			access = accessMailAction(sess, value, sess->msg.bw_state);
+			access = accessMsgAction(sess, value, sess->msg.bw_state);
 		}
 	}
 
@@ -1438,7 +1444,7 @@ See <a href="access-map.html#access_map">access-map</a>.
 			break;
 
 		default:
-			access = accessMailAction(sess, value, sess->msg.bw_state);
+			access = accessMsgAction(sess, value, sess->msg.bw_state);
 		}
 	}
 

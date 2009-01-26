@@ -77,6 +77,7 @@ extern const Reply reply_try_again;
 #define replySetCode(r, c)		if ((r) != NULL) (r)->code = c;
 #define replyIsDelayed(r)		((r)->code & SMTPF_DELAY)
 #define replyIsSession(r)		((r)->code & SMTPF_SESSION)
+#define replyDefined(s)			((s)->response.immediate != NULL || (s)->response.delayed != NULL)
 
 #ifndef replySetCode
 extern void replySetCode(Reply *reply, int code);
