@@ -613,6 +613,7 @@ extern int chmodByName(const char *path, mode_t);
 extern long addPtrOrIpSuffix(Session *sess, char *buffer, long size);
 extern long headerFind(Vector headers, const char *name, char **header);
 extern void headerAddPrefix(Session *sess, const char *name, const char *prefix);
+extern int headerRemove(Vector headers, const char *name);
 
 
 typedef struct {

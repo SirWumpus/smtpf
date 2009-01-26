@@ -174,6 +174,25 @@ headerFind(Vector headers, const char *name, char **header)
 	return -1;
 }
 
+int
+headerRemove(Vector headers, const char *name)
+{
+	char *hdr;
+	long i, len;
+
+	for (i = 0; i < VectorLength(headers); i++) {
+		if ((hdr = VectorGet(headers, i)) == NULL)
+			continue;
+
+		if (0 < (len = TextInsensitiveStartsWith(hdr, name)) && hdr[len] == ':') {
+			(void) VectorRemove(headers, i);
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 void
 headerAddPrefix(Session *sess, const char *hdr_name, const char *prefix)
 {
