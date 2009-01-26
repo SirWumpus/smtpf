@@ -36,6 +36,15 @@ connect:yahoogroups.com			CONTENT
 connect:brightmail.com			CONTENT
 
 #######################################################################
+# These localhost domains and/or IP address could trigger URI BL
+# test records.
+#######################################################################
+
+body:127.0.0				OK
+body:localhost				OK
+body:localdomain			OK
+
+#######################################################################
 # Frequently seen URL domains that are known to be good or undesirable.
 #######################################################################
 
