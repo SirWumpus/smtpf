@@ -1709,6 +1709,15 @@ IP addresses will be exempt and always allowed to use ESMTP
 regardless.
 </dd>
 
+<a name="opt_smtp_keep_alive_timeout"></a>
+<dt><span class="option">smtp-keep-alive-timeout</span>=<span class="value">60</span></dt>
+<dd>
+In some cases, the forwarding of the DATA command is delayed and so
+we have to keep the forward connection(s) alive until they pass into
+the DATA state. The timeout is specified in seconds; specify 0 to
+disable the timeout.
+</dd>
+
 <a name="opt_smtp_reject_delay"></a>
 <dt>-<span class="option">smtp-reject-delay</span></dt>
 <dd>
@@ -2111,6 +2120,7 @@ Specify one of none, reject, or discard. When set to none, the test
 is disabled.
 </dd>
 
+<!--
 <a name="opt_uri_max_limit"></a>
 <dt><span class="option">uri-max-limit</span>=<span class="value">0</span></dt>
 <dd>
@@ -2119,6 +2129,7 @@ rejected. Intended as a means to prevent DoS attacks that attempt to
 flood the URI filter and/or the DNS server with excessive lookups.
 Specify zero for unlimited.
 </dd>
+-->
 
 <a name="opt_uri_max_test"></a>
 <dt><span class="option">uri-max-test</span>=<span class="value">10</span></dt>
@@ -2165,6 +2176,12 @@ When querying against name based black lists, like .multi.surbl.org
 or .black.uribl.com, first test the registered domain, then any
 sub-domains from right-to-left. Typically sub-domains are not listed
 on URI black lists.
+</dd>
+
+<a name="opt_uri_valid_soa"></a>
+<dt>-<span class="option">uri-valid-soa</span></dt>
+<dd>
+For each URI found, check that the domain has a valid SOA and reject otherwise.
 </dd>
 
 <a name="opt_verbose"></a>

@@ -255,6 +255,57 @@ is no set schedule for releases.
 	tag:example.com
 
 
+--2.2.10--
+
+   *	Requires Libsnert 1.70.6
+
+   !	smtpf.c, spamd.c: when tagging a message's Subject: header as spam
+   	add a "Precedence: bulk" header too. Requested by newcastle.ac.uk.
+
+   	From http://msexchangeteam.com/archive/2006/10/06/429115.aspx
+
+	In addition, in Exchange 2007 OOF responses are more secure
+	because of the following two checks:
+
+	    * OOF messages will not be sent out in response to server-
+	    detected Junk E-mail.  If Exchange 2007 detects a message as
+	    Junk or if the message sender is in the user's block list,
+	    no OOF response is sent.
+
+	    * OOF messages are not sent as responses to Internet mailing
+	    lists.  Exchange 2007 does not send OOF responses for
+	    incoming messages with the Precedence:bulk header set.
+	    However, if this header is missing, it is possible that OOF
+	    responses may be sent out because there is no reliable way
+	    of determining that the message was sent to a mailing list.
+	    OOF messages are also not sent as responses for incoming
+	    messages with the X-Auto- Response-Suppress:OOF header.
+
+   !	Re-enabled keepAlive checks, especially when using save-dir for
+	spamd2 and some of the anti-virus scanners, where the message is
+	first saved to a temp. file before being passed on to spamd or
+	AV and forwarded. Some forward hosts have short command timeouts
+	such that a delay between client's DATA command and forwarding
+	of DATA downstream might be exceeded resulting in 421 response
+	and/or dropped connection by the forward host. Reported by Jan
+	Peter Koopmann.
+
+   +	Added smtp-keep-alive-timeout for the keepAlive check. Previously
+   	the timeout was based on smtp-command-timeout / 2. Given the issue
+   	seen by Jan Peter Koopmann, a separate timeout option seemed more
+   	sensible.
+
+   +	Added uri-valid-soa option. Use uri-valid-soa=2 to save samples
+   	of rejects.
+
+   -	Removed (#ifdef) uri-max-limit as being confusing and useless,
+	could FP if the impilict URI parser returns too many invalid
+	URI. uri-max-test is sufficient to protect against DoS and
+	limit excessive calls to the URL BLs.
+
+   !	uri.c: Similar to libsnert change to dnsListQuery. Changed
+   	isNameListed to skip testing names without a TLD.
+
 --2.2.9--
 
    !	summary.html.in, smtpf.html.in: Re-enabled SIQ documentation.
