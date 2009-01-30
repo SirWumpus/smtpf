@@ -547,6 +547,7 @@ See <a href="summary.html#opt_spamd_score_reject">spamd-score-reject</a> option.
 	} else if (spamd->threshold <= spamd->score) {
 		statsCount(&stat_spamd_tag);
 		headerAddPrefix(sess, "Subject", optSpamdSubjectTag.string);
+		headerReplace(sess->msg.headers, "Precedence", strdup("Precedence: bulk\r\n"));
 	}
 error2:
 	socketClose(spamd->socket);

@@ -85,6 +85,7 @@ extern Option optSmtpAuthWhite;
 extern Option optSmtpCommandTimeout;
 extern Option optSmtpCommandTimeoutBlack;
 extern Option optSmtpConnectTimeout;
+extern Option optSmtpKeepAliveTimeout;
 extern Option optSmtpDataLineTimeout;
 extern Option optSmtpDotTimeout;
 extern Option optSmtpDelayChecks;

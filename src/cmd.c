@@ -1660,8 +1660,6 @@ See <a href="summary.html#opt_rfc2821_line_length">rfc2821-line-length</a>.
 			goto error0;
 		}
 
-		keepAlive(sess);
-
 		last_line_was_dot_lf = 0;
 
 		/* Look for RFC 2821 compliant CRLF-DOT-CRLF sequence. */

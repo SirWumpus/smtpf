@@ -145,11 +145,6 @@ extern void freeThreadData(void);
 #undef DISABLE_NAGLE
 #define USE_PTHREAD_CANCEL
 
-#define keepAlive(s)
-#ifndef keepAlive
-extern void keepAlive(Session *sess);
-#endif
-
 #ifdef __unix__
 # define cliFdCloseOnExec(fd, close_on_exec)	(void) fileSetCloseOnExec(fd, 1)
 #else
@@ -613,7 +608,9 @@ extern int chmodByName(const char *path, mode_t);
 extern long addPtrOrIpSuffix(Session *sess, char *buffer, long size);
 extern long headerFind(Vector headers, const char *name, char **header);
 extern void headerAddPrefix(Session *sess, const char *name, const char *prefix);
+extern void headerReplace(Vector headers, const char *hdr_name, char *replacement);
 extern int headerRemove(Vector headers, const char *name);
+extern void keepAlive(Session *sess);
 
 
 typedef struct {

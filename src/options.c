@@ -312,6 +312,16 @@ Option optSmtpCommandTimeout	= { "smtp-command-timeout",	QUOTE(SMTP_COMMAND_TO),
 Option optSmtpConnectTimeout	= { "smtp-connect-timeout",	"60",		"SMTP client connection timeout in seconds." };
 Option optSmtpDataLineTimeout	= { "smtp-data-line-timeout",	QUOTE(SMTP_DATA_BLOCK_TO), usage_smtp_data_line_timeout };
 Option optSmtpDotTimeout	= { "smtp-dot-timeout",		QUOTE(SMTP_DOT_TO), usage_smtp_dot_timeout };
+
+static const char usage_smtp_keep_alive_timeout[] =
+  "In some cases, the forwarding of the DATA command is delayed and so\n"
+"# we have to keep the forward connection(s) alive until they pass into\n"
+"# the DATA state. The timeout is specified in seconds; specify 0 to\n"
+"# disable the timeout.\n"
+"#"
+;
+Option optSmtpKeepAliveTimeout	= { "smtp-keep-alive-timeout",	"60",		usage_smtp_keep_alive_timeout };
+
 Option optSmtpDisconnectAfterDot= { "smtp-disconnect-after-dot","-",		usage_smtp_disconnect_after_dot };
 Option optSmtpEnableEsmtp	= { "smtp-enable-esmtp",	"+",		usage_smtp_enable_esmtp };
 Option optSmtpRejectFile	= { "smtp-reject-file",		"",		usage_smtp_reject_file };
@@ -524,6 +534,7 @@ optionsRegister0(Session *sess, va_list ignore)
 	optionsRegister(&optSmtpDropUnknown, 		0);
 	optionsRegister(&optSmtpDsnReplyTo, 		0);
 	optionsRegister(&optSmtpEnableEsmtp,		0);
+	optionsRegister(&optSmtpKeepAliveTimeout,	0);
 	optionsRegister(&optRFC16528bitmime,		0);
 	optionsRegister(&optRFC2920Pipelining,		0);
 	optionsRegister(&optSmtpRejectFile, 		1);

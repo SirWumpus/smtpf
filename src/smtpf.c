@@ -154,6 +154,10 @@ rcptFindFirstValid(Session *sess)
 	return NULL;
 }
 
+/***********************************************************************
+ *** Header Functions
+ ***********************************************************************/
+
 long
 headerFind(Vector headers, const char *name, char **header)
 {
@@ -191,6 +195,19 @@ headerRemove(Vector headers, const char *name)
 	}
 
 	return 0;
+}
+
+void
+headerReplace(Vector headers, const char *hdr_name, char *replacement)
+{
+	long hdr_index;
+
+	if (hdr_name != NULL && replacement != NULL) {
+		if (0 <= (hdr_index = headerFind(headers, hdr_name, NULL)))
+			VectorSet(headers, hdr_index, replacement);
+		else if (VectorAdd(headers, replacement))
+			free(replacement);
+	}
 }
 
 void
@@ -699,26 +716,24 @@ The first line of possible a multiline welcome banner.
 	return 0;
 }
 
-#ifndef keepAlive
 void
 keepAlive(Session *sess)
 {
 	time_t now;
 	int sent, count;
 	Connection *fwd;
-	long half_time;
+
+	if (optSmtpKeepAliveTimeout.value <= 0)
+		return;
 
 	now = time(NULL);
 	sent = count = 0;
 
-	/* Convert the timeout from milleseconds to seconds and divide by 2. */
-	half_time = optSmtpCommandTimeout.value / (2 * 1000);
-
 	for (fwd = sess->msg.fwds; fwd != NULL; fwd = fwd->next) {
 #ifdef OLD_SMTP_ERROR_CODES
-		if (!(fwd->smtp_error & SMTP_ERROR_IO) && fwd->time_of_last_command + half_time <= now) {
+		if (!(fwd->smtp_error & SMTP_ERROR_IO) && fwd->time_of_last_command + optSmtpKeepAliveTimeout.value <= now) {
 #else
-		if (fwd->smtp_code != SMTP_ERROR_IO && fwd->time_of_last_command + half_time <= now) {
+		if (fwd->smtp_code != SMTP_ERROR_IO && fwd->time_of_last_command + optSmtpKeepAliveTimeout.value <= now) {
 #endif
 			count++;
 			fwd->time_of_last_command = now;
@@ -729,10 +744,6 @@ keepAlive(Session *sess)
 				socketWrite(fwd->mx, (unsigned char *) "", 0);
 		}
 	}
-
-#ifdef HAVE_PTHREAD_YIELD
-	pthread_yield();
-#endif
 
 	for (fwd = sess->msg.fwds; fwd != NULL; fwd = fwd->next) {
 #ifdef OLD_SMTP_ERROR_CODES
@@ -748,13 +759,8 @@ keepAlive(Session *sess)
 	}
 
 	if (verb_debug.option.value)
-		syslog(LOG_DEBUG, LOG_MSG(634) "keep-alive yield relays=%d sent=%d fail=%d", LOG_ARGS(sess),  count, sent, count - sent);
-
-#ifdef HAVE_PTHREAD_YIELD
-	pthread_yield();
-#endif
+		syslog(LOG_DEBUG, LOG_MSG(634) "keep-alive relays=%d sent=%d fail=%d", LOG_ARGS(sess),  count, sent, count - sent);
 }
-#endif
 
 #ifdef ENABLE_PDQ
 static void
@@ -1260,8 +1266,6 @@ SMTP commands and their arguments can only consist of printable ASCII characters
 
 			if (verb_smtp.option.value)
 				syslog(LOG_DEBUG, LOG_MSG(642) "> %ld:%s", LOG_ARGS(sess), sess->input_length, sess->input);
-
-			keepAlive(sess);
 
 			/* First entry contains state table name. Skip it. */
 			for (s = &sess->state[1]; s->command != NULL; s++) {
