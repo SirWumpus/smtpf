@@ -573,7 +573,7 @@ uriblTestURI(Session *sess, URI *uri, int post_data)
 	if (uri == NULL || sess->msg.policy != '\0')
 		return SMTPF_CONTINUE;
 
-	if (uri->host == NULL || isReservedTLD(uri->host) || indexValidTLD(uri->host) <= 0)
+	if (uri->host == NULL || isRFC2606(uri->host) || indexValidTLD(uri->host) <= 0)
 		goto ignore0;
 
 	/* Session cache for previously tested hosts/domains. */
@@ -835,7 +835,9 @@ uriblData(Session *sess, va_list ignore)
 	sess->msg.policy = '\0';
 	*sess->msg.reject = '\0';
 
+#ifdef CONFUSED
 	ctx->uri_count = 0;
+#endif
 	ctx->distinct_uri_tested = 0;
 	ctx->mime = uriMimeCreate(0);
 
