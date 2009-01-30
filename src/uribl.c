@@ -60,6 +60,8 @@ static const char usage_uri_dns_bl[] =
 "# found within the message, for example w3c.org or google.com.\n"
 "#"
 ;
+
+#ifdef CONFUSING
 static const char usage_uri_max_limit[] =
   "Maximum number of URIs that a message may contain before being\n"
 "# rejected. Intended as a means to prevent DoS attacks that attempt to\n"
@@ -67,6 +69,9 @@ static const char usage_uri_max_limit[] =
 "# Specify zero for unlimited.\n"
 "#"
 ;
+Option optUriMaxLimit		= { "uri-max-limit",	"0",			usage_uri_max_limit };
+#endif
+
 static const char usage_uri_max_test[] =
   "Maximum number of unique URIs to check. Specify zero for unlimited.\n"
 "#"
@@ -84,9 +89,15 @@ Option optUriBL			= { "uri-bl",		"",			usage_uri_bl };
 Option optUriDnsBL		= { "uri-dns-bl",	"",			usage_uri_dns_bl };
 Option optUriBlPolicy		= { "uri-bl-policy",	"reject",		usage_uri_bl_policy };
 Option optUriLinksPolicy	= { "uri-links-policy",	"none",			usage_uri_links_policy };
-Option optUriMaxLimit		= { "uri-max-limit",	"0",			usage_uri_max_limit };
 Option optUriMaxTest		= { "uri-max-test",	"10",			usage_uri_max_test };
 Option optUriSubDomains		= { "uri-sub-domains",	"-",			usage_uri_sub_domains };
+
+static const char usage_uri_valid_soa[] =
+  "For each URI found, check that the domain has a valid SOA and reject\n"
+"# otherwise.\n"
+"#"
+;
+Option optUriValidSoa		= { "uri-valid-soa",	"-",		usage_uri_valid_soa };
 
 static const char usage_uri_bl_helo[] =
   "Check if the HELO/EHLO argument is black listed using uri-dns-bl\n"
@@ -225,20 +236,26 @@ Stats stat_uri_bl_mail			= { STATS_TABLE_MAIL,	"uri-bl-mail" };
 Stats stat_uri_ip_in_name		= { STATS_TABLE_MSG, 	"uri-ip-in-name"};
 Stats stat_uri_ip_in_ns			= { STATS_TABLE_MSG, 	"_uri-ip-in-ns"};
 Stats stat_uri_links_policy		= { STATS_TABLE_MSG, 	"uri-links-policy"};
+#ifdef CONFUSING
 Stats stat_uri_max_limit		= { STATS_TABLE_MSG, 	"uri-max-limit"};
+#endif
 Stats stat_uri_max_test			= { STATS_TABLE_MSG, 	"uri-max-test"};
 Stats stat_uri_ns_nxdomain		= { STATS_TABLE_MSG,	"_uri-ns-nxdomain" };
 Stats stat_uri_reject_on_timeout	= { STATS_TABLE_MSG, 	"uri-reject-on-timeout"};
 Stats stat_uri_reject_unknown		= { STATS_TABLE_MSG, 	"uri-reject-unknown"};
 Stats stat_uri_require_domain		= { STATS_TABLE_MSG, 	"uri-require-domain"};
 Stats stat_uri_require_ptr		= { STATS_TABLE_MSG, 	"uri-require-ptr"};
+Stats stat_uri_valid_soa		= { STATS_TABLE_MSG, 	"uri-valid-soa"};
+Stats stat_uri_soa_error		= { STATS_TABLE_MSG, 	"uri-soa-error"};
 
 typedef struct {
 	int policy;
 	Mime *mime;
 	Vector uri_seen;
 	Vector uri_ns_seen;
+#ifdef CONFUSING
 	unsigned uri_count;
+#endif
 	unsigned distinct_uri_tested;
 } Uribl;
 
@@ -470,9 +487,15 @@ isNameListed(Session *sess, DnsList *dns_list, Vector names_seen, int test_sub_d
 	/* Find start of TLD. */
 	offset = indexValidTLD(name);
 
-	if (offset < 0)
-		/* Might be a IP address. */
+	if (offset < 0) {
+		unsigned char ipv6[IPV6_BYTE_LENGTH];
+
+		if (parseIPv6(name, ipv6) <= 0)
+			return NULL;
+
+		/* Is an IP address. */
 		offset = 0;
+	}
 
 	/* Scan domain and subdomains from right-to-left. */
 	do {
@@ -550,7 +573,7 @@ uriblTestURI(Session *sess, URI *uri, int post_data)
 	if (uri == NULL || sess->msg.policy != '\0')
 		return SMTPF_CONTINUE;
 
-	if (uri->host == NULL)
+	if (uri->host == NULL || isReservedTLD(uri->host) || indexValidTLD(uri->host) <= 0)
 		goto ignore0;
 
 	/* Session cache for previously tested hosts/domains. */
@@ -706,6 +729,12 @@ uriblOptn(Session *null, va_list ignore)
 {
 	uriSetTimeout(optHttpTimeout.value * 1000);
 
+	if (optUriValidSoa.value == 2) {
+		optSaveData.value |= 2;
+		if (*optSaveDir.string == '\0')
+			optionSet(&optSaveDir, "/tmp");
+	}
+
 	return SMTPF_CONTINUE;
 }
 
@@ -729,7 +758,9 @@ uriRegister(Session *sess, va_list ignore)
 	optionsRegister(&optUriIpInPtr,			0);
 #endif
 	optionsRegister(&optUriLinksPolicy, 		0);
+#ifdef CONFUSING
 	optionsRegister(&optUriMaxLimit, 		0);
+#endif
 	optionsRegister(&optUriMaxTest, 		0);
 	optionsRegister(&optUriNsNxDomain, 		0);
 	optionsRegister(&optUriRejectOnTimeout,		0);
@@ -737,6 +768,7 @@ uriRegister(Session *sess, va_list ignore)
 	optionsRegister(&optUriRequireDomain,		0);
 	optionsRegister(&optUriRequirePtr,		0);
 	optionsRegister(&optUriSubDomains, 		0);
+	optionsRegister(&optUriValidSoa,		0);
 
 	optionsRegister(&optNsBL, 			1);
 	optionsRegister(&optNsSubDomains, 		0);
@@ -758,13 +790,17 @@ uriRegister(Session *sess, va_list ignore)
 	(void) statsRegister(&stat_uri_ip_in_ptr);
 #endif
 	(void) statsRegister(&stat_uri_links_policy);
+#ifdef CONFUSING
 	(void) statsRegister(&stat_uri_max_limit);
+#endif
 	(void) statsRegister(&stat_uri_max_test);
 	(void) statsRegister(&stat_uri_ns_nxdomain);
 	(void) statsRegister(&stat_uri_reject_on_timeout);
 	(void) statsRegister(&stat_uri_reject_unknown);
 	(void) statsRegister(&stat_uri_require_domain);
 	(void) statsRegister(&stat_uri_require_ptr);
+	(void) statsRegister(&stat_uri_valid_soa);
+	(void) statsRegister(&stat_uri_soa_error);
 
 	uribl_context = filterRegisterContext(sizeof (Uribl));
 
@@ -829,6 +865,7 @@ uriblNs(Session *sess, const char *host, Stats *stat)
 static int
 uriblCheckUri(Session *sess, URI *uri)
 {
+	PDQ_valid_soa code;
 	int rc = SMTPF_CONTINUE;
 	Uribl *ctx = filterGetContext(sess, uribl_context);
 
@@ -836,15 +873,18 @@ uriblCheckUri(Session *sess, URI *uri)
 		if (1 < verb_uri.option.value)
 			syslog(LOG_DEBUG, LOG_MSG(892) "uriDecoded=%s", LOG_ARGS(sess), uri->uriDecoded);
 
+#ifdef CONFUSING
 		if (0 < optUriMaxLimit.value && optUriMaxLimit.value <= ctx->uri_count++) {
-			(void) snprintf(sess->msg.reject, sizeof (sess->msg.reject), "550 5.7.1 max. URI per message limit exceeded" ID_MSG(781) "\r\n", ID_ARG(sess));
+			(void) snprintf(sess->msg.reject, sizeof (sess->msg.reject), "URI per message limit exceeded" ID_MSG(781) "\r\n", ID_ARG(sess));
 /*{REPLY
 See <a href="summary.html#opt_uri_max_limit">uri-max-limit</a> option.
 }*/
 			statsCount(&stat_uri_max_limit);
 			sess->msg.policy = 'r';
 			rc = SMTPF_REJECT;
-		} else if (0 < optUriMaxTest.value && optUriMaxTest.value <= ctx->distinct_uri_tested) {
+		} else
+#endif
+		if (0 < optUriMaxTest.value && optUriMaxTest.value <= ctx->distinct_uri_tested) {
 			statsCount(&stat_uri_max_test);
 			/* Break out of loop. */
 			rc = SMTPF_SKIP_REMAINDER;
@@ -857,6 +897,22 @@ See <a href="summary.html#opt_uri_max_limit">uri-max-limit</a> option.
 
 			if ((rc = testList(sess, uri->query, "&")) == SMTPF_CONTINUE)
 				rc = testList(sess, uri->path, "/");
+
+			if (rc == SMTPF_CONTINUE && optUriValidSoa.value
+			&& (code = pdqTestSOA(sess->pdq, PDQ_CLASS_IN, uri->host, NULL)) != PDQ_SOA_OK) {
+				if (optUriValidSoa.value == 2)
+					MSG_SET(sess, MSG_SAVE);
+
+				if (code == PDQ_SOA_MISSING) {
+					statsCount(&stat_uri_soa_error);
+					return replyPushFmt(sess, SMTPF_REJECT, "450 4.7.1 URI %s SOA lookup error" ID_MSG(000) "\r\n", uri->host, ID_ARG(sess));
+				}
+
+				snprintf(sess->msg.reject, sizeof (sess->msg.reject), "URI %s invalid SOA (%d)" ID_NUM(000), uri->host, code);
+				statsCount(&stat_uri_valid_soa);
+				sess->msg.policy = 'r';
+				rc = SMTPF_REJECT;
+			}
 		}
 
 		if (rc == SMTPF_REJECT) {
