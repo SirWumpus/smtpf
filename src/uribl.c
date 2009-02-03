@@ -871,7 +871,7 @@ uriblCheckUri(Session *sess, URI *uri)
 	int rc = SMTPF_CONTINUE;
 	Uribl *ctx = filterGetContext(sess, uribl_context);
 
-	if (uri != NULL && uri->host != NULL) {
+	if (uri != NULL && uri->host != NULL && !isRFC2606(uri->host) && 0 < indexValidTLD(uri->host)) {
 		if (1 < verb_uri.option.value)
 			syslog(LOG_DEBUG, LOG_MSG(892) "uriDecoded=%s", LOG_ARGS(sess), uri->uriDecoded);
 
@@ -891,8 +891,15 @@ See <a href="summary.html#opt_uri_max_limit">uri-max-limit</a> option.
 			/* Break out of loop. */
 			rc = SMTPF_SKIP_REMAINDER;
 
-			if (0 < verb_uri.option.value)
+			if (0 < verb_uri.option.value) {
+				char **host;
+
+				for (host = (char **) VectorBase(ctx->uri_seen); *host != NULL; host++) {
+					syslog(LOG_DEBUG, LOG_MSG(000) "uri-max-test host=%s", LOG_ARGS(sess), *host);
+				}
+
 				syslog(LOG_DEBUG, LOG_MSG(893) "uri-max-test reached skipping host=%s", LOG_ARGS(sess), uri->host);
+			}
 		} else if ((rc = uriblTestURI(sess, uri, 1)) == SMTPF_CONTINUE) {
 			if (uriblNs(sess, uri->host, &stat_ns_bl_uri) != SMTPF_CONTINUE)
 				return replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 rejected URI NS, %s" ID_MSG(894) "\r\n", sess->msg.reject, ID_ARG(sess));

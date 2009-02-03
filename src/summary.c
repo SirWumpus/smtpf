@@ -42,6 +42,7 @@ static const char *message_flags[] = {
 	"grey_hash_mismatch,",
 	"uri_dns_bl,",
 	"uri_bl,",
+	"emew_pass,",
 	"discard,",
 	"policy,",
 	"tag,",

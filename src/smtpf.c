@@ -250,6 +250,10 @@ headerAddPrefix(Session *sess, const char *hdr_name, const char *prefix)
 	sess->msg.subject = &replacement[colon - hdr];
 }
 
+/***********************************************************************
+ ***
+ ***********************************************************************/
+
 long
 addPtrOrIpSuffix(Session *sess, char *buffer, long size)
 {

@@ -62,13 +62,11 @@ Stats stat_emew_ttl	= { STATS_TABLE_MSG, "emew-ttl" };
 
 Verbose verb_emew	= { { "emew",		"-", "" } };
 
-#define EMEW_SET_DELIM(c)	#c
-
 #define EMEW1_DELIM		'-'
-#define EMEW1_STRING		"EMEW" EMEW_SET_DELIM(EMEW1_DELIM)
+#define EMEW1_STRING		"EMEW-"
 #define EMEW1_PREFIX_LENGTH	44	/* EMEW-ttttttmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm- */
 #define EMEW1_STRING_LENGTH	(EMEW1_PREFIX_LENGTH+SMTP_PATH_LENGTH)
-#define EMEW1_PRINTF_FORMAT	EMEW1_STRING "%.6s%.32s" EMEW1_SET_DELIM(EMEW1_DELIM) "%s"
+#define EMEW1_PRINTF_FORMAT	EMEW1_STRING "%.6s%.32s-%s"
 
 /* RFC 5322 defines specials that cannot appear in atoms (note dot-atom)
  * Each of the characters in specials can be used to indicate a tokenization
@@ -84,10 +82,10 @@ Verbose verb_emew	= { { "emew",		"-", "" } };
  */
 
 #define EMEW2_DELIM		','
-#define EMEW2_STRING		"EMEW" EMEW_SET_DELIM(EMEW2_DELIM)
+#define EMEW2_STRING		"EMEW,"
 #define EMEW2_PREFIX_LENGTH	44	/* EMEW,ttttttmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm, */
 #define EMEW2_STRING_LENGTH	(EMEW2_PREFIX_LENGTH+SMTP_PATH_LENGTH+1+SMTP_PATH_LENGTH)
-#define EMEW2_PRINTF_FORMAT	EMEW2_STRING "%.6s%.32s" EMEW_SET_DELIM(EMEW2_DELIM) "%s" EMEW_SET_DELIM(EMEW2_DELIM) "%s"
+#define EMEW2_PRINTF_FORMAT	EMEW2_STRING "%.6s%.32s,%s,%s"
 
 const char *emew_code_strings[] = { "none", "pass", "fail", "expired" };
 
@@ -203,9 +201,9 @@ emew1Set(time_t when, char *msgid, char *buffer, size_t size)
 static int
 emew2Set(Session *sess, time_t when, char *msgid, char *buffer, size_t size)
 {
-	char *secret;
 	long i, length;
 	md5_state_t md5;
+	char *secret, *sender;
 	unsigned char digest[16];
 
 	if (size < EMEW2_STRING_LENGTH)
@@ -226,14 +224,19 @@ emew2Set(Session *sess, time_t when, char *msgid, char *buffer, size_t size)
 	if (length <= 0 || size <= EMEW2_PREFIX_LENGTH + sess->msg.mail->address.length + 1 + length)
 		return 0;
 
-	if (accessEmail(sess, "emew:", sess->msg.mail->address.string, NULL, &secret) == SMDB_ACCESS_NOT_FOUND)
+	if (accessEmail(sess, ACCESS_TAG, sess->msg.mail->address.string, NULL, &secret) == SMDB_ACCESS_NOT_FOUND)
 		secret = optEmewSecret.string;
 
-	if (*secret == '\0') {
+	if (*secret == '\0' || (sender = malloc(sess->msg.mail->address.length+1)) == NULL) {
 		if (secret != optEmewSecret.string)
 			free(secret);
 		return 0;
 	}
+
+	/* Convert the @ sign in the sender address. */
+	TextCopy(sender, sess->msg.mail->address.length+1, sess->msg.mail->address.string);
+	if (sender[sess->msg.mail->address.length - sess->msg.mail->domain.length - 1] == '@')
+		sender[sess->msg.mail->address.length - sess->msg.mail->domain.length - 1] = '%';
 
 	(void) TextCopy(buffer, size, EMEW2_STRING);
 	time62Encode(when, buffer + sizeof (EMEW2_STRING)-1);
@@ -254,7 +257,7 @@ emew2Set(Session *sess, time_t when, char *msgid, char *buffer, size_t size)
 	md5_append(&md5, (md5_byte_t *) buffer + sizeof (EMEW2_STRING)-1, TIME62_BUFFER_SIZE);
 
 	/* Encode the original sender. */
-	md5_append(&md5, (md5_byte_t *) sess->msg.mail->address.string, sess->msg.mail->address.length);
+	md5_append(&md5, (md5_byte_t *) sender, sess->msg.mail->address.length);
 
 	/* Encode the delimiter between original sender and original message-id. */
 	digest[0] = EMEW2_DELIM;
@@ -275,13 +278,15 @@ emew2Set(Session *sess, time_t when, char *msgid, char *buffer, size_t size)
 		buffer[sizeof (EMEW2_STRING)-1+TIME62_BUFFER_SIZE+(i << 1) + 1] = hex_digit[digest[i] & 0x0F];
 	}
 	buffer[EMEW2_PREFIX_LENGTH-1] = EMEW2_DELIM;
-	(void) TextCopy(buffer+EMEW2_PREFIX_LENGTH, size-EMEW2_PREFIX_LENGTH, sess->msg.mail->address.string);
+	(void) TextCopy(buffer+EMEW2_PREFIX_LENGTH, size-EMEW2_PREFIX_LENGTH, sender);
 	buffer[EMEW2_PREFIX_LENGTH+sess->msg.mail->address.length] = EMEW2_DELIM;
 	strncpy(buffer+EMEW2_PREFIX_LENGTH+sess->msg.mail->address.length+1, msgid, length);
-	buffer[EMEW2_PREFIX_LENGTH+length] = '\0';
+	buffer[EMEW2_PREFIX_LENGTH+sess->msg.mail->address.length+1+length] = '\0';
 
 	if (secret != optEmewSecret.string)
 		free(secret);
+
+	free(sender);
 
 	return EMEW2_PREFIX_LENGTH+sess->msg.mail->address.length+1+length;
 }
@@ -326,6 +331,7 @@ emew1IsValid(Session *sess, const char *ret)
 	}
 
 	rc = EMEW_PASS;
+	MSG_SET(sess, MSG_EMEW_OK);
 
 	/* Have we exceeded the RET freshness date? */
 	if (0 < optEmewTTL.value && when + optEmewTTL.value < time(NULL))
@@ -351,7 +357,7 @@ emew2IsValid(Session *sess, const char *msgid)
 	md5_state_t md5;
 	const char *their_digest;
 	unsigned char our_digest[16];
-	char *secret, *original_sender;
+	char *secret, *original_sender, *at_sign;
 	EMEW *emew = filterGetContext(sess, emew_context);
 
 	if (!emew->required)
@@ -365,12 +371,16 @@ emew2IsValid(Session *sess, const char *msgid)
 	if ((original_sender = VectorGet(fields, 2)) == NULL)
 		goto error1;
 
-	if (accessEmail(sess, "emew:", original_sender, NULL, &secret) == SMDB_ACCESS_NOT_FOUND)
+	at_sign = strchr(original_sender, '%');
+	*at_sign = '@';
+
+	if (accessEmail(sess, ACCESS_TAG, original_sender, NULL, &secret) == SMDB_ACCESS_NOT_FOUND)
 		secret = optEmewSecret.string;
 
 	if (*secret == '\0')
 		goto error1;
 
+	*at_sign = '%';
 	md5_init(&md5);
 	length = strcspn(msgid+EMEW2_PREFIX_LENGTH, ">");
 	md5_append(&md5, (md5_byte_t *) msgid+sizeof (EMEW2_STRING)-1, TIME62_BUFFER_SIZE);
@@ -390,6 +400,7 @@ emew2IsValid(Session *sess, const char *msgid)
 	}
 
 	rc = EMEW_PASS;
+	MSG_SET(sess, MSG_EMEW_OK);
 
 	/* Have we exceeded the EMEW freshness date? */
 	when = time62Decode(msgid+sizeof (EMEW2_STRING)-1);
@@ -434,6 +445,9 @@ emewIsValid(Session *sess, const char *msgid)
 	if (msgid == NULL)
 		return EMEW_NONE;
 
+	if (*msgid == '<')
+		msgid++;
+
 	for (emew = emew_valid_table; emew->leadin != NULL; emew++) {
 		if (strncmp(msgid, emew->leadin, emew->leadin_length) == 0)
 			return (*emew->is_valid_fn)(sess, msgid);
@@ -470,7 +484,7 @@ emewMailRcpt(Session *sess, va_list args)
 	if (*optEmewSecret.string != '\0')
 		emew->required = 1;
 
-	else if (accessEmail(sess, "emew:", rcpt->address.string, NULL, NULL) != SMDB_ACCESS_NOT_FOUND)
+	else if (accessEmail(sess, ACCESS_TAG, rcpt->address.string, NULL, NULL) != SMDB_ACCESS_NOT_FOUND)
 		emew->required = 1;
 
 	return SMTPF_CONTINUE;
@@ -482,7 +496,7 @@ emewHeader(Session *sess, Vector headers)
 	EMEW *emew;
 	time_t when;
 	char *msgid, *hdr;
-	int length, msgid_index;
+	int length, msgid_index, ref_index;
 
 	LOG_TRACE(sess, 345, emewHeader);
 	emew = filterGetContext(sess, emew_context);
@@ -518,6 +532,25 @@ The buffer used to generate the EMEW Message-ID is too small.
 		syslog(LOG_DEBUG, LOG_MSG(347) "replacing %s", LOG_ARGS(sess), hdr);
 	VectorSet(headers, msgid_index, hdr);
 	summarySetMsgId(sess, hdr);
+
+	msgid += sizeof ("Message-ID:")-1;
+	msgid += strspn(msgid, " \t");
+
+	if ((ref_index = headerFind(sess->msg.headers, "References", &hdr)) == -1) {
+		(void) snprintf(sess->input, sizeof (sess->input), "References: %s", msgid);
+		headerReplace(sess->msg.headers, "References", strdup(sess->input));
+	} else {
+		char *ref;
+		size_t msgid_len, ref_len;
+
+		ref_len = strlen(hdr);
+		msgid_len = strlen(sess->msg.msg_id);
+
+		if ((ref = malloc(ref_len + 1 + msgid_len + 1)) != NULL) {
+			(void) snprintf(ref, ref_len + 1 + msgid_len + 1, "%s %s", hdr, msgid);
+			headerReplace(sess->msg.headers, "References", ref);
+		}
+	}
 
 	return SMTPF_CONTINUE;
 }
