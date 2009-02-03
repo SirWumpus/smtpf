@@ -786,7 +786,8 @@ replyRset(Session *sess, va_list ignore)
 	replySendLintReport(sess, "postmaster");
 	replyListFreeMsg(sess);
 #endif
-	if (sess->response.delayed != NULL && (!replyIsSession(sess->response.delayed) || optMailRetestClient.value)) {
+	if (sess->response.delayed != NULL
+	&& (!replyIsSession(sess->response.delayed) || (optMailRetestClient.value && 0 < sess->client.forward_count))) {
 		(*sess->response.delayed->free)(sess->response.delayed);
 		sess->response.delayed = NULL;
 	}
