@@ -110,6 +110,18 @@ getFlagString(const char **table, unsigned long flags, char *buffer, size_t size
 }
 
 const char *
+clientFlags(Session *sess)
+{
+	return getFlagString(client_flags, sess->client.flags, sess->reply, sizeof (sess->reply), NULL);
+}
+
+const char *
+messageFlags(Session *sess)
+{
+	return getFlagString(message_flags, sess->msg.flags, sess->reply, sizeof (sess->reply), NULL);
+}
+
+const char *
 mailFlags(Session *sess)
 {
 	return getFlagString(mail_flags, sess->msg.mail_flags, sess->reply, sizeof (sess->reply), NULL);
@@ -173,7 +185,7 @@ summaryData(Session *sess)
 	length = TextCopy(sess->input, sizeof (sess->input), replyGetReply(sess)->string);
 	sess->input[length-2] = '\0';
 
-	syslog(LOG_INFO, LOG_MSG(719) "data x=\"%s\"", LOG_ARGS(sess), sess->input);
+	syslog(LOG_INFO, LOG_MSG(719) "data f=\"%s\" x=\"%s\"", LOG_ARGS(sess), messageFlags(sess), sess->input);
 /*{LOG
 The start of message content.
 It cannot be suppressed.
@@ -244,18 +256,6 @@ summaryHeaders(Session *sess, va_list args)
 	}
 
 	return SMTPF_CONTINUE;
-}
-
-const char *
-messageFlags(Session *sess)
-{
-	return getFlagString(message_flags, sess->msg.flags, sess->reply, sizeof (sess->reply), NULL);
-}
-
-const char *
-clientFlags(Session *sess)
-{
-	return getFlagString(client_flags, sess->client.flags, sess->reply, sizeof (sess->reply), NULL);
 }
 
 void
