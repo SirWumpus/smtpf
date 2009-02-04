@@ -217,6 +217,7 @@ Option *cmdOptTable[] = {
 Stats stat_route_accounts	= { STATS_TABLE_GENERAL, "route-accounts", 1 };
 Stats stat_route_addresses	= { STATS_TABLE_GENERAL, "route-addresses", 1 };
 Stats stat_route_domains	= { STATS_TABLE_GENERAL, "route-domains", 1 };
+Stats stat_route_unique_domains	= { STATS_TABLE_GENERAL, "route-unique-domains", 1 };
 
 /***********************************************************************
  ***
@@ -648,13 +649,16 @@ void
 lickeyRouteCount(void)
 {
 	RouteCount rcount;
-	unsigned long route_count;
 
 	if (routeGetRouteCount(&rcount)) {
 		syslog(LOG_ERR, LOG_NUM(410) "route count error");
 /*{NEXT}*/
 		exit(1);
 	}
+
+#ifdef OLD_COUNTING
+{
+	unsigned long route_count;
 
 	/* max-domains is a bit of a misnomer, should have been called
 	 * max-routes, but it is easier for people to think in terms of
@@ -668,13 +672,21 @@ lickeyRouteCount(void)
 	 * of mail site and thus greater demands for support.
 	 */
 	route_count = rcount.domains + rcount.addresses + rcount.accounts;
-
 	if (0 < lickeyMaxDomains.value && lickeyMaxDomains.value <= route_count) {
 		syslog(LOG_ERR, LOG_NUM(411) "route-map entries=%lu exceeds license key max-domains=%ld", route_count, lickeyMaxDomains.value);
 /*{NEXT}*/
 		exit(3);
 	}
+}
+#else
+	if (0 < lickeyMaxDomains.value && lickeyMaxDomains.value <= rcount.unique_domains) {
+		syslog(LOG_ERR, LOG_NUM(411) "route-map unique-domains=%lu exceeds license key max-domains=%ld", rcount.unique_domains, lickeyMaxDomains.value);
+/*{NEXT}*/
+		exit(3);
+	}
+#endif
 
+	stat_route_unique_domains.runtime = rcount.unique_domains;
 	stat_route_accounts.runtime = rcount.accounts;
 	stat_route_addresses.runtime = rcount.addresses;
 	stat_route_domains.runtime = rcount.domains;

@@ -33,6 +33,8 @@ typedef struct {
 	unsigned long domains;		/* route:some.domain.tld */
 	unsigned long accounts;		/* route:account@ */
 	unsigned long addresses;	/* route:account@some.domain.tld */
+	unsigned long unique_domains;
+	Vector domain_list;		/* maintained during counting, NULL once computed. */
 } RouteCount;
 
 extern int routeGetRouteCount(RouteCount *rcp);

@@ -851,13 +851,13 @@ See <a href="summary.html#opt_interfaces">interfaces</a> option.
 #ifdef ENABLE_LINT
 	(void) serverOptn1(NULL, NULL);
 #endif
-	if (optTestLickey.value)
-		exit(0);
-
 	/* Needs to check and set the license route counters after
 	 * lickeyInit() in main(), routeInit(), and statInit().
 	 */
 	lickeyRouteCount();
+	if (optTestLickey.value)
+		exit(0);
+
 	cacheGcStart();
 
 	/* We have to create the .pid file after we become a daemon process

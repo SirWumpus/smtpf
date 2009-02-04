@@ -198,18 +198,47 @@ connectionOptions(Connection *fwd)
  ***********************************************************************/
 
 static int
+route_compare_domain(const void *_a, const void *_b)
+{
+	const char *a = *(const char **) _a;
+	const char *b = *(const char **) _b;
+
+	/* NULL pointers sort towards the end of a list. This may seem
+	 * odd, but consider a NULL terminated array of pointers to char,
+	 * like argv. You can iterate over the array stopping at the
+	 * NULL. Sorting NULL to the end allows us to continue using
+	 * that iteration technique.
+	 */
+	if (a == NULL && b != NULL)
+		return 1;
+	if (a != NULL && b == NULL)
+		return -1;
+	if (a == b)
+		return 0;
+
+	return strnatcasecmp(a, b);
+}
+
+static int
 route_walk_count(kvm_data *key, kvm_data *value, void *data)
 {
-	char *at_sign;
+	char *at_sign, *domain;
 	RouteCount *rcp = data;
 
 	if (0 <= TextInsensitiveStartsWith(key->data, ROUTE_TAG) && strstr(value->data, ROUTE_ATTR_FORWARD) != NULL) {
-		if ((at_sign = strchr(key->data, '@')) == NULL)
+		if ((at_sign = strchr(key->data, '@')) == NULL) {
 			rcp->domains++;
-		else if (at_sign[1] != '\0')
+
+			if (VectorAdd(rcp->domain_list, (domain = strdup(key->data + sizeof (ROUTE_TAG)-1))))
+				free(domain);
+		} else if (at_sign[1] != '\0') {
 			rcp->addresses++;
-		else
+
+			if (VectorAdd(rcp->domain_list, (domain = strdup(at_sign + 1))))
+				free(domain);
+		} else {
 			rcp->accounts++;
+		}
 	}
 
 	return 1;
@@ -226,18 +255,38 @@ routeGetRouteCount(RouteCount *rcp)
 		return -1;
 	}
 
+	memset(rcp, 0, sizeof (*rcp));
+	rcp->domain_list = VectorCreate(10);
+	VectorSetDestroyEntry(rcp->domain_list, free);
+
 	rc = KVM_ERROR;
 	if ((route_map = smdbOpen(route_map_path, 1)) != NULL) {
-		memset(rcp, 0, sizeof (*rcp));
 		rc = route_map->walk(route_map, route_walk_count, rcp);
 		smdbClose(route_map);
+	}
+
+	if (rcp->domain_list != NULL) {
+		char **table;
+
+		VectorSort(rcp->domain_list, (int (*)(const void *, const void *)) route_compare_domain);
+		VectorUniq(rcp->domain_list, (int (*)(const void *, const void *)) route_compare_domain);
+
+		if (verb_debug.option.value) {
+			for (table = (char **) VectorBase(rcp->domain_list); *table != NULL; table++)
+				syslog(LOG_DEBUG, LOG_NUM(000) "route uniq domain=%s", *table);
+		}
+
+		rcp->unique_domains = VectorLength(rcp->domain_list);
+
+		VectorDestroy(rcp->domain_list);
+		rcp->domain_list = NULL;
 	}
 
 	if (rc == KVM_ERROR)
 		return -1;
 
 	if (verb_info.option.value) {
-		syslog(LOG_INFO, LOG_NUM(557) "route domains=%lu addresses=%lu accounts=%lu", rcp->domains, rcp->addresses, rcp->accounts);
+		syslog(LOG_INFO, LOG_NUM(557) "route domains=%lu addresses=%lu accounts=%lu unique-domains=%lu", rcp->domains, rcp->addresses, rcp->accounts, rcp->unique_domains);
 /*{LOG
 A summary of route types found in the route-map, used for
 <em>max-domains</em> license control.

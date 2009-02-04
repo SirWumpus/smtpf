@@ -1058,6 +1058,7 @@ statsRegister0(Session *sess, va_list ignore)
 	(void) statsRegister(&stat_route_accounts);
 	(void) statsRegister(&stat_route_addresses);
 	(void) statsRegister(&stat_route_domains);
+	(void) statsRegister(&stat_route_unique_domains);
 
 #ifdef HAVE_GETLOADAVG
 	(void) statsRegister(&stat_high_load_avg_1);

@@ -49,6 +49,7 @@ extern Option *lickeyOptTable[];
 extern Stats stat_route_accounts;
 extern Stats stat_route_addresses;
 extern Stats stat_route_domains;
+extern Stats stat_route_unique_domains;
 
 extern void lickeyInit(Vector interfaces);
 extern void lickeyHasExpired(void);
