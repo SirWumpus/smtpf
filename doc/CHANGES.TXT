@@ -306,6 +306,24 @@ is no set schedule for releases.
    !	uri.c: Similar to libsnert change to dnsListQuery. Changed
    	isNameListed to skip testing names without a TLD.
 
+   !	Fixed DNS BL and session level rejections when using
+   	+mail-retest-client.
+
+  !!	emew.c: fixed incorrect quoting of EWEW string macros and the
+  	trunctation of the EMEW Message-ID.
+
+  !!	emew.c: fixed EMEW2 so that when the original sender is added
+  	to the EMEW2 Messages-ID, that the at-sign (@) is converted to
+  	a percent sign.
+
+   !	emew.c: when EMEW is applied, add or update the References:
+	header with the original Message-ID which allows for proper
+	threading of original mail if a user groups sent mail and
+	replies into the same folder. Suggested by Steve Freegard.
+
+   !    emewIsValid: fixed off by one error when looking for which
+        EMEW format to validate. Had to advance past the open angle
+        bracket of the message-id before making the compare.
 --2.2.9--
 
    !	summary.html.in, smtpf.html.in: Re-enabled SIQ documentation.
