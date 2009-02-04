@@ -36,16 +36,50 @@ newconfig :
 	-@smtpf +help file=${CURDIR}smtpf.cf.old > ${CURDIR}smtpf.cf ;:
 	-@chmod 660 ${CURDIR}smtpf.cf
 
+# route-to-mailer Explaination
+#
+# 	Delete localhost queue route.
+#		-e '/^route:127/d' \
+#
+# 	Keep only those lines with RCPT: fields.
+#		-e '/RCPT:/!d' \
+#
+# 	Normalise RCPT: so that only ONE space follows.
+#	Helps with next pattern.
+#		-e 's/\(RCPT:\) */\1 /' \
+#
+# 	Remove :port-number specifiers, being careful not to
+#	match the "route:".
+#		-e 's/\([ ,][^:]*\):[0-9][0-9]*/\1/g' \
+#
+# 	First part converts "route:" line into a mailertable line.
+#		-e 's/^route:\([^ 	]*\).*RCPT: \([^;]*\).*/\1		esmtp:\2/' \
+#
+# 	Strip trailing spaces.
+#		-e 's/ *$//'\
+#
+#	Replace host separator (commas with spaces) by
+#	colon (sendmail host separator)
+#		-e 's/, */:/g' \
+#
+#	Convert spaces also used as host separator to colon.
+#       	-e 's/ /:/g' \
+#
+#	Wrap each host with square brackets.
+#		-e 's/\(:\) *\([^:]*\)/\1[\2]/g' \
+#
 route-to-mailer:
 	-cd /etc/mail; mv mailertable mailertable.bak
 	sed \
 		-e '/^route:127/d' \
 		-e '/RCPT:/!d' \
-		-e 's/RCPT: */& /' \
-		-e 's/:[0-9][0-9]*//g' \
+		-e 's/\(RCPT:\) */\1 /' \
+		-e 's/\([ ,][^:]*\):[0-9][0-9]*/\1/g' \
 		-e 's/^route:\([^ 	]*\).*RCPT: \([^;]*\).*/\1		esmtp:\2/' \
+		-e 's/ *$$//'\
 		-e 's/, */:/g' \
-		-e 's/\(:\) *\([^:;]*\)/\1[\2]/g' \
+		-e 's/ /:/g' \
+		-e 's/\(:\) *\([^:]*\)/\1[\2]/g' \
 		route.cf >/etc/mail/mailertable
 	cd /etc/mail; make mailertable.db
 
