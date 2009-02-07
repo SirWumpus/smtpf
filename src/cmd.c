@@ -702,6 +702,7 @@ int
 cmdMail(Session *sess)
 {
 	int rc, span, args;
+	Vector params_list;
 	const char *error, *params;
 
 	sessionReset(sess);
@@ -779,7 +780,11 @@ See <a href="summary.html#opt_rfc2821_extra_spaces">rfc2821-extra-spaces</a>.
 	if (sess->msg.mail->address.length == 0)
 		statsCount(&stat_null_sender);
 
-	switch (rc = filterRun(sess, filter_mail_table, sess->msg.mail, TextSplit(params, " \t", 0))) {
+	params_list = TextSplit(params, " \t", 0);
+	rc = filterRun(sess, filter_mail_table, sess->msg.mail, params_list);
+	VectorDestroy(params_list);
+
+	switch (rc) {
 	case SMTPF_CONTINUE:
 	case SMTPF_DISCARD:
 	case SMTPF_ACCEPT:
