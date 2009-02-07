@@ -324,6 +324,9 @@ is no set schedule for releases.
    !    emewIsValid: fixed off by one error when looking for which
         EMEW format to validate. Had to advance past the open angle
         bracket of the message-id before making the compare.
+
+  !!	cmdMail: Fixed memory leak introduced when SIZE support was added.
+
 --2.2.9--
 
    !	summary.html.in, smtpf.html.in: Re-enabled SIQ documentation.
