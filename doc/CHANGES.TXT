@@ -255,6 +255,11 @@ is no set schedule for releases.
 	tag:example.com
 
 
+--2.2.11--
+
+  !!	emew2IsValid: fixed seg.fault when handling an EMEW for a null
+  	sender.
+
 --2.2.10--
 
    *	Requires Libsnert 1.70.6

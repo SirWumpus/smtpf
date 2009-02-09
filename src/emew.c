@@ -371,8 +371,8 @@ emew2IsValid(Session *sess, const char *msgid)
 	if ((original_sender = VectorGet(fields, 2)) == NULL)
 		goto error1;
 
-	at_sign = strchr(original_sender, '%');
-	*at_sign = '@';
+	if ((at_sign = strchr(original_sender, '%')) != NULL)
+		*at_sign = '@';
 
 	if (accessEmail(sess, ACCESS_TAG, original_sender, NULL, &secret) == SMDB_ACCESS_NOT_FOUND)
 		secret = optEmewSecret.string;
@@ -380,7 +380,9 @@ emew2IsValid(Session *sess, const char *msgid)
 	if (*secret == '\0')
 		goto error1;
 
-	*at_sign = '%';
+	if (at_sign != NULL)
+		*at_sign = '%';
+
 	md5_init(&md5);
 	length = strcspn(msgid+EMEW2_PREFIX_LENGTH, ">");
 	md5_append(&md5, (md5_byte_t *) msgid+sizeof (EMEW2_STRING)-1, TIME62_BUFFER_SIZE);
