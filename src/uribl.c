@@ -19,7 +19,6 @@
 #include "smtpf.h"
 
 #include <ctype.h>
-#include <com/snert/lib/io/Dns.h>
 #include <com/snert/lib/mail/tlds.h>
 
 /***********************************************************************
@@ -666,11 +665,11 @@ See <a href="summary.html#opt_uri_links_policy">uri-links-policy</a> option.
 		goto error1;
 	}
 
-	if ((list_name = isNameListed(sess, uri_dns_bl, NULL, 0, uri->host)) != NULL) {
+	if ((list_name = dnsListQueryIp(sess, uri_dns_bl, NULL, uri->host)) != NULL) {
 		setRejectMessage(sess, uri->host, list_name, post_data, MSG_IS_URIBL, &stat_uri_bl);
 		goto error1;
 	}
-	if (origin_is_different && (list_name = isNameListed(sess, uri_dns_bl, NULL, 0, origin->host)) != NULL) {
+	if (origin_is_different && (list_name = dnsListQueryIp(sess, uri_dns_bl, NULL, origin->host)) != NULL) {
 		setRejectMessage(sess, origin->host, list_name, post_data, MSG_IS_URIBL, &stat_uri_bl);
 		goto error1;
 	}
