@@ -350,6 +350,7 @@ typedef struct {
 #define MAIL_IS_WHITE			0x00000002
 #define MAIL_IS_TEMPFAIL		0x00000004
 #define MAIL_HAS_EXTRA_SPACES		0x00000008
+#define MAIL_IS_LOCAL_BLACK		0x00000010
 
 #define RCPT_SET(s, m)			FLAG_SET((s)->msg.rcpt_flags, m)
 #define RCPT_CLEAR(s, m)		FLAG_CLEAR((s)->msg.rcpt_flags, m)
@@ -363,7 +364,8 @@ typedef struct {
 #define RCPT_IS_WHITE			0x00000002
 #define RCPT_IS_TEMPFAIL		0x00000004
 #define RCPT_HAS_EXTRA_SPACES		0x00000008
-#define RCPT_FAILED			0x00000010
+#define RCPT_IS_LOCAL_BLACK		0x00000010
+#define RCPT_FAILED			0x00000020
 
 typedef struct {
 	char id[20];
@@ -424,7 +426,7 @@ typedef struct {
 #define CLIENT_IO_ERROR			0x01000000
 #define CLIENT_RATE_LIMIT		0x02000000
 #define CLIENT_CONCURRENCY_LIMIT	0x04000000
-#define CLIENT_NO_CRLF			0x08000000	/* * SMTP command was not terminated by CRLF. */
+#define CLIENT_IS_LOCAL_BLACK		0x08000000	/* Black listed locally. */
 #define CLIENT_IS_IPV6			0x10000000	/* IPv6 socket family */
 #define CLIENT_IS_TEMPFAIL		0x20000000
 #define CLIENT_HAS_AUTH			0x40000000	/* Has sucessfully authenticated. */

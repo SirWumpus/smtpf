@@ -1307,13 +1307,7 @@ See the <a href="access-map.html#access_tags">access-map</a> concerning the
 				sess->input[--sess->input_length] = '\0';
 				if (0 < sess->input_length && sess->input[sess->input_length-1] == '\r') {
 					sess->input[--sess->input_length] = '\0';
-				} else {
-					/* Missing CR */
-					CLIENT_SET(sess, CLIENT_NO_CRLF);
 				}
-			} else {
-				/* Empty line or missing LF. */
-				CLIENT_SET(sess, CLIENT_NO_CRLF);
 			}
 #endif
 			(void) time(&sess->last_mark);

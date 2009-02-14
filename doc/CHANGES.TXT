@@ -261,6 +261,12 @@ is no set schedule for releases.
 
    !	uri-dns-bl option was broken following conversion to PDQ.
 
+   !	Remove ./configure option to disable PDQ.
+
+   !	smtpf.h, access.c, click.c: Replaced CLIENT_NO_CRLF flag with
+	CLIENT_IS_LOCAL_BLACK. Add MAIL_IS_LOCAL_BLACK and
+	RCPT_IS_LOCAL_BLACK.
+
 
 --2.2.11--
 

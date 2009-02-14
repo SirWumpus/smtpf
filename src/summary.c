@@ -25,6 +25,7 @@ static const char *mail_flags[] = {
 	"white,",
 	"tempfail,",
 	"extra_spaces,",
+	"local_black,",
 	NULL
 };
 
@@ -33,6 +34,7 @@ static const char *rcpt_flags[] = {
 	"white,",
 	"tempfail,",
 	"extra_spaces,",
+	"local_black,",
 	"failed,",
 	NULL
 };
@@ -79,7 +81,7 @@ static const char *client_flags[] = {
 	"io_error,",
 	"rate_limit,",
 	"concurrency_limit,",
-	"no_crlf,",
+	"local_black,",
 	"ipv6,",
 	"tempfail,",
 	"auth,",

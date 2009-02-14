@@ -821,7 +821,7 @@ accessConnect(Session *sess, va_list args)
 	/* Typicallyed already cleared at start of session. Reset these flags
 	 * just in case of an idle timer trigger (see also mail-retest-client).
 	 */
-	CLIENT_CLEAR(sess, CLIENT_IS_BLACK|CLIENT_IS_WHITE|CLIENT_IS_TEMPFAIL|CLIENT_IS_GREY|CLIENT_IS_SAVE|CLIENT_IS_TRAP|CLIENT_IS_TAG);
+	CLIENT_CLEAR(sess, CLIENT_IS_BLACK|CLIENT_IS_LOCAL_BLACK|CLIENT_IS_WHITE|CLIENT_IS_TEMPFAIL|CLIENT_IS_GREY|CLIENT_IS_SAVE|CLIENT_IS_TRAP|CLIENT_IS_TAG);
 
 	/* Lookup
 	 *
@@ -870,7 +870,7 @@ There is a <a href="access-map.html#tag_connect"><span class="tag">Connect:</spa
 client name or IP address with a right-hand-side value of REJECT.
 See <a href="access-map.html#access_tags">access-map</a>.
 }*/
-			CLIENT_SET(sess, CLIENT_IS_BLACK);
+			CLIENT_SET(sess, CLIENT_IS_BLACK|CLIENT_IS_LOCAL_BLACK);
 			statsCount(&stat_connect_bl);
 			break;
 
@@ -894,7 +894,7 @@ There is a <a href="access-map.html#tag_connect"><span class="tag">Connect:</spa
 client name or IP address with a right-hand-side value of IREJECT.
 See <a href="access-map.html#access_tags">access-map</a>.
 }*/
-				CLIENT_SET(sess, CLIENT_IS_BLACK);
+			CLIENT_SET(sess, CLIENT_IS_BLACK|CLIENT_IS_LOCAL_BLACK);
 				statsCount(&stat_connect_bl);
 			}
 
@@ -1080,7 +1080,7 @@ right-hand-side value of REJECT.
 See <a href="access-map.html#access_tags">access-map</a>.
 }*/
 			statsCount(&stat_connect_mail_bl);
-			MAIL_SET(sess, MAIL_IS_BLACK);
+			MAIL_SET(sess, MAIL_IS_BLACK|MAIL_IS_LOCAL_BLACK);
 			path->isWhiteListed = -1;
 			break;
 
@@ -1106,7 +1106,7 @@ right-hand-side value of IREJECT.
 See <a href="access-map.html#access_tags">access-map</a>.
 }*/
 				statsCount(&stat_connect_mail_bl);
-				MAIL_SET(sess, MAIL_IS_BLACK);
+				MAIL_SET(sess, MAIL_IS_BLACK|MAIL_IS_LOCAL_BLACK);
 				path->isWhiteListed = -1;
 			}
 
@@ -1157,7 +1157,7 @@ the sender address or their domain with a right-hand-side value of REJECT.
 See <a href="access-map.html#access_tags">access-map</a>.
 }*/
 			statsCount(&stat_mail_bl);
-			MAIL_SET(sess, MAIL_IS_BLACK);
+			MAIL_SET(sess, MAIL_IS_BLACK|MAIL_IS_LOCAL_BLACK);
 			path->isWhiteListed = -1;
 			break;
 
@@ -1181,7 +1181,7 @@ the sender address or their domain with a right-hand-side value of IREJECT.
 See <a href="access-map.html#access_tags">access-map</a>.
 }*/
 				statsCount(&stat_mail_bl);
-				MAIL_SET(sess, MAIL_IS_BLACK);
+				MAIL_SET(sess, MAIL_IS_BLACK|MAIL_IS_LOCAL_BLACK);
 				path->isWhiteListed = -1;
 			}
 
@@ -1321,7 +1321,7 @@ right-hand-side value of REJECT.
 See <a href="access-map.html#access_tags">access-map</a>.
 }*/
 			statsCount(&stat_connect_rcpt_bl);
-			RCPT_SET(sess, RCPT_IS_BLACK);
+			RCPT_SET(sess, RCPT_IS_BLACK|RCPT_IS_LOCAL_BLACK);
 			path->isWhiteListed = -1;
 			break;
 
@@ -1370,7 +1370,7 @@ and recipient pair with a right-hand-side value of REJECT.
 See <a href="access-map.html#access_tags">access-map</a>.
 }*/
 			statsCount(&stat_mail_rcpt_bl);
-			RCPT_SET(sess, RCPT_IS_BLACK);
+			RCPT_SET(sess, RCPT_IS_BLACK|RCPT_IS_LOCAL_BLACK);
 			path->isWhiteListed = -1;
 			break;
 
@@ -1428,7 +1428,7 @@ address with a right-hand-side value of REJECT.
 See <a href="access-map.html#access_map">access-map</a>.
 }*/
 			statsCount(&stat_rcpt_bl);
-			RCPT_SET(sess, RCPT_IS_BLACK);
+			RCPT_SET(sess, RCPT_IS_BLACK|RCPT_IS_LOCAL_BLACK);
 			path->isWhiteListed = -1;
 			break;
 

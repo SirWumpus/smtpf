@@ -181,7 +181,6 @@ extern "C" {
 #endif
 
 #define ENABLE_LINT
-#undef ENABLE_PDQ
 #define ENABLE_CRLF_CHECKING
 #undef ENABLE_OPTION_QUIT
 
