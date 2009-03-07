@@ -1,6 +1,6 @@
 #
 # BarricadeMX SpamAssassin ruleset
-# Version: 1.0 (2008-12-16)
+# Version: 1.1 (2009-02-20)
 #
 
 header   BMX_FROM_LAN		X-smtpf-Report =~ /[=,;]lan[,;]?/
@@ -36,7 +36,8 @@ header   BMX_IP_IN_PTR 		X-smtpf-Report =~ /[=,;]ip_in_ptr[,;]?/
 describe BMX_IP_IN_PTR 		BarricadeMX: SMTP Client PTR record contained one or more octets of the IP address
 score    BMX_IP_IN_PTR 		1.0
 
-header   BMX_NO_PTR 		X-smtpf-Report =~ /[=,;]no_ptr[,;]?/
+header   __BMX_NO_PTR 		X-smtpf-Report =~ /[=,;]no_ptr[,;]?/
+meta     BMX_NO_PTR		__BMX_NO_PTR && !(BMX_FROM_RELAY || BMX_FROM_AUTH)
 describe BMX_NO_PTR 		BarricadeMX: SMTP Client had no PTR record
 score    BMX_NO_PTR 		2.0
 
