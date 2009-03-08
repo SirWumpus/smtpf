@@ -279,14 +279,10 @@ msgLimitMail(Session *sess, va_list args)
 
 	if (0 < sess->msg.mail->address.length && accessEmail(sess, ACCESS_FROM, sess->msg.mail->address.string, NULL, &value) != SMDB_ACCESS_NOT_FOUND) {
 		msgLimitParse(value, &limit->msg);
-		msgLimitCacheUpdate(sess, &limit->msg, sess->msg.mail->address.string);
 		free(value);
 	} else {
 		limit->msg.unit = 0;
 	}
-
-	if (limit->client.unit != 0)
-		msgLimitCacheUpdate(sess, &limit->client, sess->client.addr);
 
 	return SMTPF_CONTINUE;
 }
@@ -311,6 +307,15 @@ msgLimitRcpt(Session *sess, va_list args)
 	} else {
 		limit_rcpt.unit = 0;
 	}
+
+	/* Update the client and sender counter based on number of recipients,
+	 * instead of number of actually sent messages.
+	 */
+	if (limit->client.unit != 0)
+		msgLimitCacheUpdate(sess, &limit->client, sess->client.addr);
+
+	if (limit->msg.unit != 0)
+		msgLimitCacheUpdate(sess, &limit->msg, sess->msg.mail->address.string);
 
 	/*** The following represents the precedence from highest to lowest. ***/
 
