@@ -614,8 +614,19 @@ replySend(Session *sess)
 		}
 
 		rc = replyGetCode(reply);
+		error = sendClient(sess, reply->string, reply->length);
 
-		if (sendClient(sess, reply->string, reply->length)) {
+		/* SMTPF_DELAY|SMTPF_CONTINUE is intended to signal
+		 * that this reply should be reported only if there
+		 * is no delayed message waiting. In which case this
+		 * is not really a delayed reply and should be freed.
+		 * See cmdRcpt().
+		 */
+		if (rc == SMTPF_CONTINUE) {
+			sess->response.delayed = NULL;
+			(*reply->free)(reply);
+		}
+		if (error) {
 			/* Server I/O error while writing to client. */
 			longjmp(sess->on_error, SMTPF_DROP);
 		}
