@@ -422,8 +422,13 @@ options(int argc, char **argv)
 		exit(2);
 	}
 
-	if (optAccessInfo.string != NULL) {
-		accessPrintInfo();
+	if (optAccessTagWords.string != NULL) {
+		accessPrintMapping(accessTagWordsMap);
+		exit(2);
+	}
+
+	if (optAccessWordTags.string != NULL) {
+		accessPrintMapping(accessWordTagsMap);
 		exit(2);
 	}
 
