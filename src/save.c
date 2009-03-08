@@ -214,10 +214,13 @@ saveDot(Session *sess, va_list ignore)
 			(void) snprintf(sess->input, sizeof (sess->input), "%s/%s.trap", optTrapDir.string, sess->msg.id);
 			if (rename(save->name, sess->input))
 				syslog(LOG_ERR, LOG_MSG(876) "rename(%s, %s) failed: %s (%d)", LOG_ARGS(sess), save->name, sess->input, strerror(errno), errno);
+#ifdef __unix__
+/* No hard links under Windows. */
 		} else if (MSG_IS_SET(sess, MSG_SAVE, MSG_SAVE)){
 			(void) snprintf(sess->input, sizeof (sess->input), "%s/%s.msg", optSaveDir.string, sess->msg.id);
 			if (link(save->name, sess->input))
 				syslog(LOG_ERR, LOG_MSG(877) "hard link(%s, %s) failed: %s (%d)", LOG_ARGS(sess), save->name, sess->input, strerror(errno), errno);
+#endif
 		}
 	}
 
