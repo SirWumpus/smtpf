@@ -913,7 +913,17 @@ See <a href="summary.html#opt_uri_max_limit">uri-max-limit</a> option.
 
 				if (code == PDQ_SOA_MISSING) {
 					statsCount(&stat_uri_soa_error);
+#ifdef VERSION1
 					return replyPushFmt(sess, SMTPF_REJECT, "450 4.7.1 URI %s SOA lookup error" ID_MSG(000) "\r\n", uri->host, ID_ARG(sess));
+#else
+/* Disable the temporary failure for no SOA. Some DNS
+ * servers consistently return SERVFAIL for sites like
+ * prc.it and worldsites.mc, while the same query else
+ * where (for prc.it) appears to work. Possibly a negative
+ * caching problem with some DNS servers.
+ */
+					return SMTPF_CONTINUE;
+#endif
 				}
 
 				snprintf(sess->msg.reject, sizeof (sess->msg.reject), "URI %s invalid SOA (%d)" ID_NUM(000), uri->host, code);
