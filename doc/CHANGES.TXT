@@ -255,6 +255,61 @@ is no set schedule for releases.
 	tag:example.com
 
 
+--2.2.13--
+
+   *	Requires Libsnert 1.70.9
+
+   !	msglimit.c: change client and sender to count number of
+	recipients addressed instead of number of messages sent.
+
+   !	reply.c: fix handling of SMTPF_DELAY|SMTPF_CONTINUE as a
+	"conditional" immediate reply, which would be saved as a delayed
+	reply instead and thus not freed between recipients.
+
+   !	mailTestsMail: there was a logic bug with both pdqListFindIP and
+	pdqListFindAddress (see libsnert changes) which caused these
+	functions to always fail and thus the CLIENT_IS_MX flag was
+	never set. Reported by Jan-Peter Koopmann.
+
+   !	save.c: Disabled section of code using hard links under Windows,
+	since it doesn't support them.
+
+   !	windows.c: fixed access-tag-words and access-word-tags commands.
+
+   !	emew.c: Replace the EMEW2 by EMEW3 format since comma is an
+   	invalid character in message-ids. This causes some MLM to munge
+   	the headers because of invalid characters.
+
+ 	EMEW3|mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmttttttxxoriginal_sender|original_msg_id
+
+	m..m is the MD5 hash of the tttttt, xx, original_sender,
+	and original_msg_id.
+
+	tttttt is the year, month, day, hour, minute, second as a
+	base62 number. The year is modulo 62.
+
+	xx is the offset in hex of the at-sign within the
+	original_sender. We need to know this in case the
+	original_sender contains the EMEW delimiter within the local-
+	part of the address. Since the EMEW delimiter can not be a valid
+	domain name character, we can find the start of the
+	original_msg_id by looking for the next EMEW delimiter from the
+	at-sign position.
+
+	original_sender replaces the at-sign with an EMEW delimter,
+	since the original_msg_id will already have an at-sign and a
+	message-id can only have one at-sign.
+
+   !	emewMailRcpt: ignore double bounce messages that are sent from
+	the null sender to postmaster.
+
+   !	uriblCheckUri: tempered uri-valid-soa to ignore PDQ_SOA_MISSING
+	since it appears that some DNS servers will return SERVFAIL
+	while others will return an useful answer. Possibly a negative
+	caching problem with some servers.
+
+   !	Removed references to malware.hash.cymru.com
+
 --2.2.12--
 
    *	Requires Libsnert 1.70.7
