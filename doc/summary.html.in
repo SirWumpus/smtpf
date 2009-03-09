@@ -758,7 +758,7 @@ Specify an empty list to disable.
 <a name="opt_digest_bl"></a>
 <dt><span class="option">digest-bl</span>=<span class="value"></span></dt>
 <dd>
-A list of digest based BL suffixes to consult, like malware.hash.cymru.com.
+A list of MD5 digest based BL suffixes to consult.
 Aggregate lists are supported using suffix/mask. Without a /mask, suffix
 is the same as suffix/0x00FFFFFE.
 </dd>

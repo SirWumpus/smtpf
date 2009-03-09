@@ -28,9 +28,9 @@
  ***********************************************************************/
 
 static const char usage_digest_bl[] =
-  "A list of digest based BL suffixes to consult, like malware.hash.cymru.com.\n"
-"# Aggregate lists are supported using suffix/mask. Without a /mask, suffix\n"
-"# is the same as suffix/0x00FFFFFE.\n"
+  "A list of MD5 digest based BL suffixes to consult. Aggregate lists are\n"
+"# supported using suffix/mask. Without a /mask, suffix is the same as\n"
+"# suffix/0x00FFFFFE.\n"
 "#"
 ;
 
