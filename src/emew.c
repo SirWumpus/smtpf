@@ -85,7 +85,17 @@ Verbose verb_emew	= { { "emew",		"-", "" } };
 #define EMEW2_STRING		"EMEW,"
 #define EMEW2_PREFIX_LENGTH	44	/* EMEW,ttttttmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm, */
 #define EMEW2_STRING_LENGTH	(EMEW2_PREFIX_LENGTH+SMTP_PATH_LENGTH+1+SMTP_PATH_LENGTH)
-#define EMEW2_PRINTF_FORMAT	EMEW2_STRING "%.6s%.32s,%s,%s"
+#define EMEW2_PRINTF_FORMAT	EMEW2_STRING "%." QUOTE(TIME62_BUFFER_SIZE) "s%.32s,%s,%s"
+
+#define EMEW3_DELIM		'|'
+#define EMEW3_DELIM_S		"|"
+#define EMEW3_STRING		"EMEW3" EMEW3_DELIM_S
+#define EMEW3_HASH_OFFSET	(sizeof (EMEW3_STRING)-1)
+#define EMEW3_TIME_OFFSET	(EMEW3_HASH_OFFSET+32)
+#define EMEW3_SIZE_OFFSET	(EMEW3_TIME_OFFSET+TIME62_BUFFER_SIZE)
+#define EMEW3_MAIL_OFFSET	(EMEW3_SIZE_OFFSET+2)	/* EMEW3|mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmttttttxx */
+#define EMEW3_BUFFER_LENGTH	(EMEW3_MAIL_OFFSET+SMTP_PATH_LENGTH+1+SMTP_PATH_LENGTH)
+#define EMEW3_PRINTF_FORMAT	EMEW3_STRING "%.32s%." QUOTE(TIME62_BUFFER_SIZE) "s%.2x%s%%%s" EMEW3_DELIM_S "%s"
 
 const char *emew_code_strings[] = { "none", "pass", "fail", "expired" };
 
@@ -193,7 +203,7 @@ emew1Set(time_t when, char *msgid, char *buffer, size_t size)
 	return EMEW1_PREFIX_LENGTH + length;
 }
 #endif
-
+#ifdef NOT_USED
 /* Generate an EMEW 2 formatted messages-id:
  *
  * 	EMEW,ttttttmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm,original_sender,original_msg_id
@@ -290,13 +300,116 @@ emew2Set(Session *sess, time_t when, char *msgid, char *buffer, size_t size)
 
 	return EMEW2_PREFIX_LENGTH+sess->msg.mail->address.length+1+length;
 }
+#endif
+
+/* Generate an EMEW 3 formatted messages-id:
+ *
+ * 	EMEW3|mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmttttttxxoriginal_sender|original_msg_id
+ *
+ *	m..m is the MD5 hash of the tttttt, xx, original_sender,
+ *	and original_msg_id.
+ *
+ *	tttttt is the year, month, day, hour, minute, second as a
+ *	base62 number. The year is modulo 62.
+ *
+ *	xx is the offset in hex of the at-sign within the original_sender.
+ *	We need to know this in case the original_sender contains the
+ *	EMEW delimiter within the local-part of the address. Since the
+ *	EMEW delimiter can not be a valid domain name character, we can
+ *	find the start of the original_msg_id by looking for the next
+ *	EMEW delimiter from the at-sign position.
+ *
+ *	original_sender replaces the at-sign with an EMEW delimter, since
+ *	the original_msg_id will already have an at-sign and a message-id
+ *	can only have one at-sign.
+ */
+static int
+emew3Set(Session *sess, time_t when, char *msgid, char *buffer, size_t size)
+{
+	char *secret;
+	md5_state_t md5;
+	unsigned char digest[16];
+	long i, msgid_length, at_offset;
+
+	/* Find the start of message-id value. Note that there are some
+	 * mailers that do not conform to RFC 2822 Message-ID syntax,
+	 * in particular, they may have neglected the angle brackets.
+	 * We assume that the message-id contains no white space.
+	 */
+	msgid += sizeof ("Message-ID:")-1;
+	msgid += strspn(msgid, " \t");
+	if (*msgid == '<')
+		msgid++;
+	msgid_length = strcspn(msgid, "> \t\r\n");
+
+	/* This should never happen. */
+	if (msgid_length <= 0 || size <= EMEW3_MAIL_OFFSET + sess->msg.mail->address.length + 1 + msgid_length)
+		return 0;
+
+	if (accessEmail(sess, ACCESS_TAG, sess->msg.mail->address.string, NULL, &secret) == SMDB_ACCESS_NOT_FOUND)
+		secret = optEmewSecret.string;
+
+	if (*secret == '\0') {
+		if (secret != optEmewSecret.string)
+			free(secret);
+		return 0;
+	}
+
+	/* Start building the EMEW string. */
+	(void) TextCopy(buffer, size, EMEW3_STRING);
+
+	time62Encode(when, buffer+EMEW3_TIME_OFFSET);
+
+	/* Save offset of the at-sign within the sender address in hex. */
+	at_offset = sess->msg.mail->address.length - sess->msg.mail->domain.length - 1;
+	buffer[EMEW3_SIZE_OFFSET  ] = hex_digit[(at_offset >> 4) & 0x0F];
+	buffer[EMEW3_SIZE_OFFSET+1] = hex_digit[ at_offset       & 0x0F];
+
+	/* Save the original sender and convert the @ sign. */
+	(void) TextCopy(buffer+EMEW3_MAIL_OFFSET, size-EMEW3_MAIL_OFFSET, sess->msg.mail->address.string);
+	if (buffer[EMEW3_MAIL_OFFSET + at_offset] == '@')
+		buffer[EMEW3_MAIL_OFFSET + at_offset] = EMEW3_DELIM;
+
+	/* Append a delimiter and append the original message-id. */
+	buffer[EMEW3_MAIL_OFFSET+sess->msg.mail->address.length] = EMEW3_DELIM;
+	strncpy(buffer+EMEW3_MAIL_OFFSET+sess->msg.mail->address.length+1, msgid, msgid_length);
+	buffer[EMEW3_MAIL_OFFSET+sess->msg.mail->address.length+1+msgid_length] = '\0';
+
+	md5_init(&md5);
+
+	/* Hash the buffer from the encoded timestamp through
+	 * to the end of the EMEW string.
+	 */
+	md5_append(
+		&md5,
+		(md5_byte_t *) buffer+EMEW3_TIME_OFFSET,
+		EMEW3_MAIL_OFFSET-EMEW3_TIME_OFFSET+sess->msg.mail->address.length+1+msgid_length
+	);
+
+	/* Factor in original sender's secret phrase. */
+	md5_append(&md5, (md5_byte_t *) secret, strlen(secret));
+
+	/* That's all folks. */
+	md5_finish(&md5, (md5_byte_t *) digest);
+
+	/* Insert the digest as a readable hex string. */
+	for (i = 0; i < 16; i++) {
+		buffer[EMEW3_HASH_OFFSET + (i << 1)    ] = hex_digit[(digest[i] >> 4) & 0x0F];
+		buffer[EMEW3_HASH_OFFSET + (i << 1) + 1] = hex_digit[digest[i] & 0x0F];
+	}
+
+	if (secret != optEmewSecret.string)
+		free(secret);
+
+	return EMEW3_MAIL_OFFSET+sess->msg.mail->address.length+1+msgid_length;
+}
 
 /* Verify it's an EMEW message-id, which is formatted as
  *
  * 	<EMEW-ttttttmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm-original_msg_id>
  */
 static int
-emew1IsValid(Session *sess, const char *ret)
+emew1IsValid(Session *sess, char *ret)
 {
 	int rc;
 	time_t when;
@@ -348,7 +461,7 @@ error0:
  * 	<EMEW,ttttttmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm,original_sender,original_msg_id>
  */
 static int
-emew2IsValid(Session *sess, const char *msgid)
+emew2IsValid(Session *sess, char *msgid)
 {
 	int rc;
 	time_t when;
@@ -420,14 +533,109 @@ error0:
 	return rc;
 }
 
+/* Verify it's an EMEW message-id, which is formatted as
+ *
+ * 	<EMEW|mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmttttttxxoriginal_sender|original_msg_id>
+ */
+static int
+emew3IsValid(Session *sess, char *msgid)
+{
+	time_t when;
+	long i, length;
+	md5_state_t md5;
+	int rc, at_offset;
+	const char *their_digest;
+	char *secret, *orig_msgid;
+	unsigned char our_digest[16];
+	EMEW *emew = filterGetContext(sess, emew_context);
+
+	rc = EMEW_FAIL;
+
+	if (!emew->required) {
+		rc = EMEW_NONE;
+		goto error0;
+	}
+
+	if (*msgid == '<')
+		msgid++;
+
+	/* Have we exceeded the EMEW freshness date? */
+	when = time62Decode(msgid + EMEW3_TIME_OFFSET);
+	if (0 < optEmewTTL.value && when + optEmewTTL.value < time(NULL)) {
+		rc = EMEW_TTL;
+		goto error0;
+	}
+
+	/* Get the at-sign offset. */
+	at_offset = qpHexDigit(msgid[EMEW3_SIZE_OFFSET]) * 16 + qpHexDigit(msgid[EMEW3_SIZE_OFFSET+1]);
+
+	/* Convert the delimiter to an at-sign. */
+	if (msgid[EMEW3_MAIL_OFFSET + at_offset] != EMEW3_DELIM)
+		goto error0;
+	msgid[EMEW3_MAIL_OFFSET + at_offset] = '@';
+
+	/* Find the delimiter between original-sender domain and original-msg-id.
+	 * Note that the EMEW delimiter cannot be a valid domain name character
+	 * and so should be the first one found following the at-sign.
+	 */
+	if ((orig_msgid = strchr(msgid + EMEW3_MAIL_OFFSET + at_offset + 1, '|')) == NULL)
+		goto error0;
+
+	/* Terminate the original-sender string. */
+	*orig_msgid = '\0';
+
+	/* Lookup the secret of the original-sender address. */
+	if (accessEmail(sess, ACCESS_TAG, msgid+EMEW3_MAIL_OFFSET, NULL, &secret) == SMDB_ACCESS_NOT_FOUND)
+		secret = optEmewSecret.string;
+
+	/* Restore the EMEW delimiters. */
+	msgid[EMEW3_MAIL_OFFSET + at_offset] = EMEW3_DELIM;
+	*orig_msgid = EMEW3_DELIM;
+
+	/* Skip EMEW check if an empty secret? */
+	if (*secret == '\0') {
+		rc = EMEW_NONE;
+		goto error1;
+	}
+
+	md5_init(&md5);
+	length = strcspn(msgid+EMEW3_TIME_OFFSET, ">");
+	md5_append(&md5, (md5_byte_t *) msgid+EMEW3_TIME_OFFSET, length);
+	md5_append(&md5, (md5_byte_t *) secret, strlen(secret));
+	md5_finish(&md5, (md5_byte_t *) our_digest);
+
+	/* Jump to the MD5 portion of the EMEW. */
+	their_digest = msgid + EMEW3_HASH_OFFSET;
+
+	/* Compare our expected result with the supplied digest. */
+	for (i = 0; i < 16; i++) {
+		if (*their_digest++ != hex_digit[(our_digest[i] >> 4) & 0x0F])
+			goto error1;
+		if (*their_digest++ != hex_digit[our_digest[i] & 0x0F])
+			goto error1;
+	}
+
+	MSG_SET(sess, MSG_EMEW_OK);
+	rc = EMEW_PASS;
+error1:
+	if (secret != optEmewSecret.string)
+		free(secret);
+error0:
+	if (verb_emew.option.value)
+		syslog(LOG_DEBUG, LOG_MSG(343) "emew3IsValid(%s) rc=%d (%s)", LOG_ARGS(sess), msgid, rc, emew_code_strings[rc]);
+
+	return rc;
+}
+
 typedef struct {
 	const char *leadin;
 	size_t leadin_length;
-	int (*is_valid_fn)(Session *sess, const char *msgid);
+	int (*is_valid_fn)(Session *sess, char *msgid);
 } EmewValidTable;
 
 static EmewValidTable emew_valid_table[] =
 {
+	{ EMEW3_STRING, sizeof (EMEW3_STRING)-1, emew3IsValid },
 	{ EMEW2_STRING, sizeof (EMEW2_STRING)-1, emew2IsValid },
 	{ EMEW1_STRING, sizeof (EMEW1_STRING)-1, emew1IsValid },
 	{ NULL, 0, NULL }
@@ -438,9 +646,10 @@ static EmewValidTable emew_valid_table[] =
  *
  * 	<EMEW-ttttttmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm-original_msg_id>
  * 	<EMEW,ttttttmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm,original_sender,original_msg_id>
+ *	<EMEW3|mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmttttttxxoriginal_sender|original_msg_id>
  */
 static int
-emewIsValid(Session *sess, const char *msgid)
+emewIsValid(Session *sess, char *msgid)
 {
 	EmewValidTable *emew;
 
@@ -483,6 +692,10 @@ emewMailRcpt(Session *sess, va_list args)
 	if (emew->required)
 		return SMTPF_CONTINUE;
 
+	/* Ignore double bounce messages that are sent to postmaster. */
+	if (sess->msg.mail->address.length == 0 && TextInsensitiveCompare(rcpt->localLeft.string, "postmaster") == 0)
+		return SMTPF_CONTINUE;
+
 	if (*optEmewSecret.string != '\0')
 		emew->required = 1;
 
@@ -515,7 +728,7 @@ emewHeader(Session *sess, Vector headers)
 
 	when = time62Decode(sess->msg.id);
 
-	if ((length = emew2Set(sess, when, msgid, sess->input, sizeof (sess->input))) == 0) {
+	if ((length = emew3Set(sess, when, msgid, sess->input, sizeof (sess->input))) == 0) {
 		if (verb_warn.option.value) {
 			syslog(LOG_WARN, LOG_MSG(346) "EMEW Message-ID buffer error or no secret set", LOG_ARGS(sess));
 /*{LOG
@@ -538,6 +751,10 @@ The buffer used to generate the EMEW Message-ID is too small.
 	msgid += sizeof ("Message-ID:")-1;
 	msgid += strspn(msgid, " \t");
 
+	/* No CRLF is added to References header since the original
+	 * message-id header will already have a CRLF that will be
+	 * copied.
+	 */
 	if ((ref_index = headerFind(sess->msg.headers, "References", &hdr)) == -1) {
 		(void) snprintf(sess->input, sizeof (sess->input), "References: %s", msgid);
 		headerReplace(sess->msg.headers, "References", strdup(sess->input));
@@ -549,7 +766,7 @@ The buffer used to generate the EMEW Message-ID is too small.
 		msgid_len = strlen(sess->msg.msg_id);
 
 		if ((ref = malloc(ref_len + 1 + msgid_len + 1)) != NULL) {
-			(void) snprintf(ref, ref_len + 1 + msgid_len + 1, "%s %s", hdr, msgid);
+			(void) snprintf(ref, ref_len + 1 + msgid_len + 1, "%s\t%s", hdr, msgid);
 			headerReplace(sess->msg.headers, "References", ref);
 		}
 	}
@@ -590,21 +807,29 @@ emewHeaders(Session *sess, va_list args)
 	emew->result = EMEW_NONE;
 
 	if (headerFind(headers, "References", &hdr) != -1) {
+		/* Check only the last message-id in the References: header. */
 		offset = strlrcspn(hdr, strlen(hdr), ": \t");
 		if (verb_emew.option.value)
 			syslog(LOG_DEBUG, LOG_MSG(349) "got %s", LOG_ARGS(sess), hdr);
 		if (emewIsValid(sess, hdr+offset) == EMEW_PASS)
 			emew->result = EMEW_PASS;
-	} else if (headerFind(headers, "In-Reply-To", &hdr) != -1) {
+	}
+
+	/*** Consider dropping the check of In-Reply-To header.
+	 *** Concern that spammer could attempt a reply attack
+	 *** by including multiple message-ids. The References
+	 *** header is the far more interesting one.
+	 ***/
+	else if (headerFind(headers, "In-Reply-To", &hdr) != -1) {
 		if (verb_emew.option.value)
 			syslog(LOG_DEBUG, LOG_MSG(350) "got %s", LOG_ARGS(sess), hdr);
 
-		while ((hdr = strstr(hdr, EMEW2_STRING)) != NULL) {
+		while ((hdr = strstr(hdr, "EMEW")) != NULL) {
 			if (emewIsValid(sess, hdr) == EMEW_PASS) {
 				emew->result = EMEW_PASS;
 				break;
 			}
-			hdr += sizeof (EMEW2_STRING)-1;
+			hdr += sizeof ("EMEW")-1;
 		}
 	}
 
