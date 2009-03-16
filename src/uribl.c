@@ -894,7 +894,7 @@ See <a href="summary.html#opt_uri_max_limit">uri-max-limit</a> option.
 				char **host;
 
 				for (host = (char **) VectorBase(ctx->uri_seen); *host != NULL; host++) {
-					syslog(LOG_DEBUG, LOG_MSG(000) "uri-max-test host=%s", LOG_ARGS(sess), *host);
+					syslog(LOG_DEBUG, LOG_MSG(918) "uri-max-test host=%s", LOG_ARGS(sess), *host);
 				}
 
 				syslog(LOG_DEBUG, LOG_MSG(893) "uri-max-test reached skipping host=%s", LOG_ARGS(sess), uri->host);
@@ -914,7 +914,7 @@ See <a href="summary.html#opt_uri_max_limit">uri-max-limit</a> option.
 				if (code == PDQ_SOA_MISSING) {
 					statsCount(&stat_uri_soa_error);
 #ifdef VERSION1
-					return replyPushFmt(sess, SMTPF_REJECT, "450 4.7.1 URI %s SOA lookup error" ID_MSG(000) "\r\n", uri->host, ID_ARG(sess));
+					return replyPushFmt(sess, SMTPF_REJECT, "450 4.7.1 URI %s SOA lookup error" ID_MSG(919) "\r\n", uri->host, ID_ARG(sess));
 #else
 /* Disable the temporary failure for no SOA. Some DNS
  * servers consistently return SERVFAIL for sites like

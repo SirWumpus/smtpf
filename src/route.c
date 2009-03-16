@@ -273,7 +273,7 @@ routeGetRouteCount(RouteCount *rcp)
 
 		if (verb_debug.option.value) {
 			for (table = (char **) VectorBase(rcp->domain_list); *table != NULL; table++)
-				syslog(LOG_DEBUG, LOG_NUM(000) "route uniq domain=%s", *table);
+				syslog(LOG_DEBUG, LOG_NUM(913) "route uniq domain=%s", *table);
 		}
 
 		rcp->unique_domains = VectorLength(rcp->domain_list);

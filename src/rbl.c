@@ -186,7 +186,7 @@ dnsListLookup(Session *sess, DnsList *dnslist, Vector names_seen, const char *na
 		for (seen = (const char **) VectorBase(names_seen); *seen != NULL; seen++) {
 			if (TextInsensitiveCompare(name, *seen) == 0) {
 				if (verb_rbl.option.value)
-					syslog(LOG_DEBUG, LOG_MSG(000) "name=%s previously checked", LOG_ARGS(sess), name);
+					syslog(LOG_DEBUG, LOG_MSG(911) "name=%s previously checked", LOG_ARGS(sess), name);
 				return NULL;
 			}
 		}
@@ -252,7 +252,7 @@ dnsListQueryIp(Session *sess, DnsList *dns_list, Vector names_seen, const char *
 		list_name = dnsListLookup(sess, dns_list, names_seen, ((PDQ_AAAA *) rr)->address.string.value);
 		if (list_name != NULL) {
 			if (verb_rbl.option.value)
-				syslog(LOG_DEBUG, LOG_MSG(000) "%s [%s] listed in %s", LOG_ARGS(sess), name, ((PDQ_AAAA *) rr)->address.string.value, list_name);
+				syslog(LOG_DEBUG, LOG_MSG(912) "%s [%s] listed in %s", LOG_ARGS(sess), name, ((PDQ_AAAA *) rr)->address.string.value, list_name);
 			break;
 		}
 	}

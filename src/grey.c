@@ -292,7 +292,7 @@ int
 greyGcPrepare(mcc_context *mcc, void *data)
 {
 	if (sqlite3_prepare_v2(mcc->db, GREY_SQL_EXPIRE, -1, &grey_sql_expire, NULL) != SQLITE_OK) {
-		syslog(LOG_ERR, "sql=%s statement error: %s %s", mcc->path, GREY_SQL_EXPIRE, sqlite3_errmsg(mcc->db));
+		syslog(LOG_ERR, LOG_NUM(908) "sql=%s statement error: %s %s", mcc->path, GREY_SQL_EXPIRE, sqlite3_errmsg(mcc->db));
 		return -1;
 	}
 
@@ -322,7 +322,7 @@ greyGcExpire(mcc_context *mcc, void *data)
 	if (mccSqlStep(mcc, grey_sql_expire, GREY_SQL_EXPIRE) == SQLITE_ROW) {
 		count = sqlite3_column_int(grey_sql_expire, 0);
 		statsAddValue(&stat_grey_temp_expire, (unsigned long) count);
-		syslog(LOG_INFO, "greyGcExpire count=%d", count);
+		syslog(LOG_INFO, LOG_NUM(910) "greyGcExpire count=%d", count);
 		(void) sqlite3_reset(grey_sql_expire);
 	}
 

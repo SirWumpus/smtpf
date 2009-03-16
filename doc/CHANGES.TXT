@@ -258,6 +258,8 @@ is no set schedule for releases.
 
    !	reply.awk, syslog.awk; added anchor tags by message number to output.
 
+   !	Defined message numbers of those marked 000.
+
 --2.2.14--
 
   !!	emewHeader: fixed an instance of referring to already freed memory.
