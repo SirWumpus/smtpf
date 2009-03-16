@@ -52,7 +52,7 @@ getMsgId(Session *sess, char buffer[20])
 {
 	time62Encode(time(NULL), buffer);
 
-	snprintf(buffer+6, 20-6, "%05u%05u", getpid(), sess->id);
+	(void) snprintf(buffer+TIME62_BUFFER_SIZE, 20-TIME62_BUFFER_SIZE, "%05u%05u", getpid(), sess->id);
 
 	if (62 * 62 <= ++sess->msg.count)
 		sess->msg.count = 1;
