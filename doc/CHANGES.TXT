@@ -254,6 +254,15 @@ is no set schedule for releases.
 	tag:example.com/a
 	tag:example.com
 
+--2.2.14--
+
+  !!	emewHeader: fixed an instance of referring to already freed memory.
+  	This could result in a corrupted References: header. Reported by
+  	Steve Freegard (mystery backquote) and Quentin Campbell (message
+  	starting with a URL merged into References).
+
+   !	emewHeader, emew3Set: removed ineffiecent decoding / recoding of
+	the smtpf's message-id time stamp.
 
 --2.2.13--
 
