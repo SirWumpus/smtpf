@@ -254,6 +254,10 @@ is no set schedule for releases.
 	tag:example.com/a
 	tag:example.com
 
+--2.2.15--
+
+   !	reply.awk, syslog.awk; added anchor tags by message number to output.
+
 --2.2.14--
 
   !!	emewHeader: fixed an instance of referring to already freed memory.

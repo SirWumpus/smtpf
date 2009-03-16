@@ -22,6 +22,10 @@ function html_special()
 	sub(/" _VERSION "/, "@PACKAGE_VERSION@")
 	sub(/" _COPYRIGHT( "|\);)/, "@package_copyright@")
 	html_special();
+	if (match($0, /#[0-9]+/)) {
+		msg_num = substr($0, RSTART, RLENGTH)
+		printf("<a name='%s'></a>\n", msg_num)
+	}
 	print "<dt>", $0, "</dt>"
 }
 !dd_block && /\/\*{LOG/ {

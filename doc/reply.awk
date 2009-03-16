@@ -15,6 +15,10 @@ function html_special()
 	sub(/(const char .*=|.*sess,) "/, "")
 	sub(/" CLIENT_FORMAT "/, "%s [%s]")
 	html_special();
+	if (match($0, /#[0-9]+/)) {
+		msg_num = substr($0, RSTART, RLENGTH)
+		printf("<a name='%s'></a>\n", msg_num)
+	}
 	print "<dt class=\"message\">", $0, "</dt>"
 }
 !dd_block && /\/\*{REPLY/ {
