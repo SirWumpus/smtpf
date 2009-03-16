@@ -587,6 +587,14 @@ attachmentDot(Session *sess, va_list ignore)
 	if (ctx->attachment_found != NULL) {
 		MSG_SET(sess, MSG_POLICY);
 		rc = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.0 message contains blocked file attachment (%s)" ID_MSG(826) "\r\n", ctx->attachment_found, ID_ARG(sess));
+/*{REPLY
+See
+<a href="summary.html#opt_deny_content">deny-content</a>,
+<a href="summary.html#opt_deny_content_type">deny-content-type</a>,
+<a href="summary.html#opt_deny_content_name">deny-content-name</a>, and
+<a href="summary.html#opt_deny_compressed_name">deny-compressed-name</a>
+options.
+}*/
 	}
 
 	return rc;
