@@ -875,7 +875,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			break;
 
 		case SMDB_ACCESS_TEMPFAIL:
-			access = replyPushFmt(sess, SMTPF_DELAY|SMTPF_SESSION|SMTPF_TEMPFAIL, "450 4.7.1 host " CLIENT_FORMAT " %s" ID_MSG(120) "\r\n", CLIENT_INFO(sess), msg == NULL ? "temporary failure" : msg, ID_ARG(sess));
+			access = replyPushFmt(sess, SMTPF_DELAY|SMTPF_SESSION|SMTPF_TEMPFAIL, "450 4.7.1 host " CLIENT_FORMAT " %s" ID_MSG(853) "\r\n", CLIENT_INFO(sess), msg == NULL ? "temporary failure" : msg, ID_ARG(sess));
 /*{REPLY
 There is a <a href="access-map.html#tag_connect"><span class="tag">Connect:</span></a> tag entry for either the
 client name or IP address with a right-hand-side value of TEMPFAIL.
