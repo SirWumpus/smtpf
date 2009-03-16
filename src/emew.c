@@ -324,7 +324,7 @@ emew2Set(Session *sess, time_t when, char *msgid, char *buffer, size_t size)
  *	can only have one at-sign.
  */
 static int
-emew3Set(Session *sess, time_t when, char *msgid, char *buffer, size_t size)
+emew3Set(Session *sess, char *msgid, char *buffer, size_t size)
 {
 	char *secret;
 	md5_state_t md5;
@@ -336,7 +336,6 @@ emew3Set(Session *sess, time_t when, char *msgid, char *buffer, size_t size)
 	 * in particular, they may have neglected the angle brackets.
 	 * We assume that the message-id contains no white space.
 	 */
-	msgid += sizeof ("Message-ID:")-1;
 	msgid += strspn(msgid, " \t");
 	if (*msgid == '<')
 		msgid++;
@@ -358,7 +357,8 @@ emew3Set(Session *sess, time_t when, char *msgid, char *buffer, size_t size)
 	/* Start building the EMEW string. */
 	(void) TextCopy(buffer, size, EMEW3_STRING);
 
-	time62Encode(when, buffer+EMEW3_TIME_OFFSET);
+	/* Copy the time stamp portion of our message-id into the buffer. */
+	(void) memcpy(buffer+EMEW3_TIME_OFFSET, sess->msg.id, TIME62_BUFFER_SIZE);
 
 	/* Save offset of the at-sign within the sender address in hex. */
 	at_offset = sess->msg.mail->address.length - sess->msg.mail->domain.length - 1;
@@ -709,8 +709,8 @@ int
 emewHeader(Session *sess, Vector headers)
 {
 	EMEW *emew;
-	time_t when;
-	char *msgid, *hdr;
+	char *msgid, *hdr, *ref;
+	size_t msgid_len, ref_len;
 	int length, msgid_index, ref_index;
 
 	LOG_TRACE(sess, 345, emewHeader);
@@ -726,9 +726,29 @@ emewHeader(Session *sess, Vector headers)
 	if (strstr(msgid, "EMEW") != NULL)
 		return SMTPF_CONTINUE;
 
-	when = time62Decode(sess->msg.id);
+	/* Find start of Message-ID after the header name. */
+	msgid += sizeof ("Message-ID:")-1;
+	msgid += strspn(msgid, " \t");
 
-	if ((length = emew3Set(sess, when, msgid, sess->input, sizeof (sess->input))) == 0) {
+	/* Do we already have a References header? */
+	if ((ref_index = headerFind(sess->msg.headers, "References", &hdr)) == -1) {
+		/* Create a new References header using the original Message-ID. */
+		length = snprintf(sess->input, sizeof (sess->input), "References: %s", msgid);
+		if (VectorAdd(sess->msg.headers, hdr = strdup(sess->input)))
+			free(hdr);
+	} else {
+		/* Append the original Message-ID value to the end of the References. */
+		ref_len = strlen(hdr);
+		msgid_len = strlen(sess->msg.msg_id);
+
+		if ((ref = malloc(ref_len + 1 + msgid_len + 1)) != NULL) {
+			length = snprintf(ref, ref_len + 1 + msgid_len + 1, "%s %s", hdr, msgid);
+			VectorSet(sess->msg.headers, ref_index, ref);
+		}
+	}
+
+	/* Generate the EMEW. */
+	if ((length = emew3Set(sess, msgid, sess->input, sizeof (sess->input))) == 0) {
 		if (verb_warn.option.value) {
 			syslog(LOG_WARN, LOG_MSG(346) "EMEW Message-ID buffer error or no secret set", LOG_ARGS(sess));
 /*{LOG
@@ -743,33 +763,11 @@ The buffer used to generate the EMEW Message-ID is too small.
 
 	(void) snprintf(hdr, length + sizeof ("Message-ID: <>\r\n"), "Message-ID: <%s>\r\n", sess->input);
 
+	/* Note that the previous Message-ID (msgid) string is freed. */
 	if (verb_emew.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(347) "replacing %s", LOG_ARGS(sess), hdr);
 	VectorSet(headers, msgid_index, hdr);
 	summarySetMsgId(sess, hdr);
-
-	msgid += sizeof ("Message-ID:")-1;
-	msgid += strspn(msgid, " \t");
-
-	/* No CRLF is added to References header since the original
-	 * message-id header will already have a CRLF that will be
-	 * copied.
-	 */
-	if ((ref_index = headerFind(sess->msg.headers, "References", &hdr)) == -1) {
-		(void) snprintf(sess->input, sizeof (sess->input), "References: %s", msgid);
-		headerReplace(sess->msg.headers, "References", strdup(sess->input));
-	} else {
-		char *ref;
-		size_t msgid_len, ref_len;
-
-		ref_len = strlen(hdr);
-		msgid_len = strlen(sess->msg.msg_id);
-
-		if ((ref = malloc(ref_len + 1 + msgid_len + 1)) != NULL) {
-			(void) snprintf(ref, ref_len + 1 + msgid_len + 1, "%s\t%s", hdr, msgid);
-			headerReplace(sess->msg.headers, "References", ref);
-		}
-	}
 
 	return SMTPF_CONTINUE;
 }
