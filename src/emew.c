@@ -19,7 +19,7 @@
  ***
  ***********************************************************************/
 
-#ifdef FILTER_EMEW
+#if defined(FILTER_EMEW) || defined(TEST)
 
 #include "smtpf.h"
 
@@ -61,6 +61,8 @@ Stats stat_emew_fail	= { STATS_TABLE_MSG, "emew-fail" };
 Stats stat_emew_ttl	= { STATS_TABLE_MSG, "emew-ttl" };
 
 Verbose verb_emew	= { { "emew",		"-", "" } };
+
+FilterContext emew_context;
 
 #define EMEW1_DELIM		'-'
 #define EMEW1_STRING		"EMEW-"
@@ -105,8 +107,6 @@ enum {
 	EMEW_FAIL,
 	EMEW_TTL
 };
-
-FilterContext emew_context;
 
 /***********************************************************************
  ***
@@ -323,13 +323,64 @@ emew2Set(Session *sess, time_t when, char *msgid, char *buffer, size_t size)
  *	the original_msg_id will already have an at-sign and a message-id
  *	can only have one at-sign.
  */
+static void
+emew3Make(const char *our_id, ParsePath *mail, const char *msgid, size_t msgid_length, const char *secret, char *buffer, size_t size)
+{
+	md5_state_t md5;
+	long i, at_offset;
+	unsigned char digest[16];
+
+	/* Start building the EMEW string. */
+	(void) TextCopy(buffer, size, EMEW3_STRING);
+
+	/* Copy the time stamp portion of our message-id into the buffer. */
+	(void) memcpy(buffer+EMEW3_TIME_OFFSET, our_id, TIME62_BUFFER_SIZE);
+
+	/* Save offset of the at-sign within the sender address in hex. */
+	at_offset = mail->address.length - mail->domain.length - 1;
+	buffer[EMEW3_SIZE_OFFSET  ] = hex_digit[(at_offset >> 4) & 0x0F];
+	buffer[EMEW3_SIZE_OFFSET+1] = hex_digit[ at_offset       & 0x0F];
+
+	/* Save the original sender and convert the @ sign. */
+	(void) TextCopy(buffer+EMEW3_MAIL_OFFSET, size-EMEW3_MAIL_OFFSET, mail->address.string);
+	if (buffer[EMEW3_MAIL_OFFSET + at_offset] == '@')
+		buffer[EMEW3_MAIL_OFFSET + at_offset] = EMEW3_DELIM;
+
+	/* Append a delimiter and append the original message-id. */
+	buffer[EMEW3_MAIL_OFFSET + mail->address.length] = EMEW3_DELIM;
+	strncpy(buffer+EMEW3_MAIL_OFFSET+mail->address.length+1, msgid, msgid_length);
+	buffer[EMEW3_MAIL_OFFSET + mail->address.length + 1 + msgid_length] = '\0';
+
+
+	md5_init(&md5);
+
+	/* Hash the buffer from the encoded timestamp through
+	 * to the end of the EMEW string.
+	 */
+	md5_append(
+		&md5,
+		(md5_byte_t *) buffer+EMEW3_TIME_OFFSET,
+		EMEW3_MAIL_OFFSET-EMEW3_TIME_OFFSET+mail->address.length+1+msgid_length
+	);
+
+	/* Factor in original sender's secret phrase. */
+	md5_append(&md5, (md5_byte_t *) secret, strlen(secret));
+
+	/* That's all folks. */
+	md5_finish(&md5, (md5_byte_t *) digest);
+
+	/* Insert the digest as a readable hex string. */
+	for (i = 0; i < 16; i++) {
+		buffer[EMEW3_HASH_OFFSET + (i << 1)    ] = hex_digit[(digest[i] >> 4) & 0x0F];
+		buffer[EMEW3_HASH_OFFSET + (i << 1) + 1] = hex_digit[digest[i] & 0x0F];
+	}
+}
+
 static int
 emew3Set(Session *sess, char *msgid, char *buffer, size_t size)
 {
 	char *secret;
-	md5_state_t md5;
-	unsigned char digest[16];
-	long i, msgid_length, at_offset;
+	long msgid_length;
 
 	/* Find the start of message-id value. Note that there are some
 	 * mailers that do not conform to RFC 2822 Message-ID syntax,
@@ -354,49 +405,7 @@ emew3Set(Session *sess, char *msgid, char *buffer, size_t size)
 		return 0;
 	}
 
-	/* Start building the EMEW string. */
-	(void) TextCopy(buffer, size, EMEW3_STRING);
-
-	/* Copy the time stamp portion of our message-id into the buffer. */
-	(void) memcpy(buffer+EMEW3_TIME_OFFSET, sess->msg.id, TIME62_BUFFER_SIZE);
-
-	/* Save offset of the at-sign within the sender address in hex. */
-	at_offset = sess->msg.mail->address.length - sess->msg.mail->domain.length - 1;
-	buffer[EMEW3_SIZE_OFFSET  ] = hex_digit[(at_offset >> 4) & 0x0F];
-	buffer[EMEW3_SIZE_OFFSET+1] = hex_digit[ at_offset       & 0x0F];
-
-	/* Save the original sender and convert the @ sign. */
-	(void) TextCopy(buffer+EMEW3_MAIL_OFFSET, size-EMEW3_MAIL_OFFSET, sess->msg.mail->address.string);
-	if (buffer[EMEW3_MAIL_OFFSET + at_offset] == '@')
-		buffer[EMEW3_MAIL_OFFSET + at_offset] = EMEW3_DELIM;
-
-	/* Append a delimiter and append the original message-id. */
-	buffer[EMEW3_MAIL_OFFSET+sess->msg.mail->address.length] = EMEW3_DELIM;
-	strncpy(buffer+EMEW3_MAIL_OFFSET+sess->msg.mail->address.length+1, msgid, msgid_length);
-	buffer[EMEW3_MAIL_OFFSET+sess->msg.mail->address.length+1+msgid_length] = '\0';
-
-	md5_init(&md5);
-
-	/* Hash the buffer from the encoded timestamp through
-	 * to the end of the EMEW string.
-	 */
-	md5_append(
-		&md5,
-		(md5_byte_t *) buffer+EMEW3_TIME_OFFSET,
-		EMEW3_MAIL_OFFSET-EMEW3_TIME_OFFSET+sess->msg.mail->address.length+1+msgid_length
-	);
-
-	/* Factor in original sender's secret phrase. */
-	md5_append(&md5, (md5_byte_t *) secret, strlen(secret));
-
-	/* That's all folks. */
-	md5_finish(&md5, (md5_byte_t *) digest);
-
-	/* Insert the digest as a readable hex string. */
-	for (i = 0; i < 16; i++) {
-		buffer[EMEW3_HASH_OFFSET + (i << 1)    ] = hex_digit[(digest[i] >> 4) & 0x0F];
-		buffer[EMEW3_HASH_OFFSET + (i << 1) + 1] = hex_digit[digest[i] & 0x0F];
-	}
+	emew3Make(sess->msg.id, sess->msg.mail, msgid, msgid_length, secret, buffer, size);
 
 	if (secret != optEmewSecret.string)
 		free(secret);
@@ -890,7 +899,7 @@ emewContent(Session *sess, va_list args)
 	offset = TextFind(chunk, "*\nMessage-Id: *", size, 1);
 	if (0 <= offset) {
 		if (verb_emew.option.value)
-			syslog(LOG_DEBUG, LOG_MSG(354) "got %.60s", LOG_ARGS(sess), chunk+offset+1);
+			syslog(LOG_DEBUG, LOG_MSG(354) "got %s", LOG_ARGS(sess), chunk+offset+1);
 		emew->result = emewIsValid(sess, chunk+offset+1);
 	} else {
 		emew->result = EMEW_FAIL;
