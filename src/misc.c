@@ -206,18 +206,13 @@ noPtr(Session *sess)
 	 * with a static IP.
 	 */
 	if (optClientPtrRequired.value
-#ifdef OLD
-	&& CLIENT_ANY_SET(sess, CLIENT_NO_PTR)
-	&& CLIENT_NOT_SET(sess, CLIENT_HOLY_TRINITY|CLIENT_IS_MX)
-#else
 	&& CLIENT_IS_SET(sess, CLIENT_HOLY_TRINITY|CLIENT_IS_MX|CLIENT_NO_PTR, CLIENT_NO_PTR)
-#endif
 #ifdef FILTER_SPF
 	&& sess->msg.spf_mail != SPF_PASS
 #endif
 	) {
 		if (CLIENT_ANY_SET(sess, CLIENT_NO_PTR_ERROR)) {
-			return replyPushFmt(sess, SMTPF_TEMPFAIL, "421 4.4.3 PTR record lookup error for [%s]" ID_MSG(415) CRLF, sess->client.addr, ID_ARG(sess));
+			return replyPushFmt(sess, SMTPF_DELAY|SMTPF_SESSION|SMTPF_TEMPFAIL, "421 4.4.3 PTR record lookup error for [%s]" ID_MSG(415) CRLF, sess->client.addr, ID_ARG(sess));
 /*{NEXT}*/
 		} else {
 			return replyPushFmt(sess, SMTPF_DELAY|SMTPF_SESSION|SMTPF_DROP, "554 5.7.1 reject [%s] missing PTR record" ID_MSG(416) CRLF, sess->client.addr, ID_ARG(sess));
