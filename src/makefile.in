@@ -299,3 +299,6 @@ greybody$E : greybody.c
 
 nsnxdomain$E : nxdomain.c
 	${CC} ${CFLAGS} ${LDFLAGS} -onsnxdomain$E nxdomain.c -lsnert
+
+emew-test$E : emew-test.c
+	${CC} ${CFLAGS} ${LDFLAGS} -oemew-test$E emew-test.c -lsnert

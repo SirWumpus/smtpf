@@ -260,6 +260,14 @@ is no set schedule for releases.
 
    !	Defined message numbers of those marked 000.
 
+   !	noPtr: apply SMTPF_DELAY|SMTPF_SESSION flags for CLIENT_NO_PTR_ERROR,
+   	because some DNS servers return SERVFAIL instead of NOERROR.
+
+   !	accessMail: if CLIENT_IS_SAVE is set, then be sure to set MSG_SAVE,
+   	else saveDot will fail to keep the message when connect: SAVE set.
+
+   +	Added emew-test generation and validation tool.
+
 --2.2.14--
 
   !!	emewHeader: fixed an instance of referring to already freed memory.
