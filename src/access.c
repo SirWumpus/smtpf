@@ -1039,6 +1039,8 @@ accessMail(Session *sess, va_list args)
 	LOG_TRACE(sess, 123, accessMail);
 
 	CLIENT_CLEAR(sess, CLIENT_IS_MX);
+	if (CLIENT_ANY_SET(sess, CLIENT_IS_SAVE))
+		MSG_SET(sess, MSG_SAVE);
 	if (CLIENT_ANY_SET(sess, CLIENT_IS_TAG))
 		MSG_SET(sess, MSG_TAG);
 

@@ -140,7 +140,7 @@ saveHeaders(Session *sess, va_list args)
 	LOG_TRACE(sess, 578, saveHeaders);
 
 	if (*optSaveDir.string != '\0'
-	&& (optSaveData.value || MSG_ANY_SET(sess, MSG_SAVE|MSG_TAG) || CLIENT_ANY_SET(sess, CLIENT_IS_SAVE))) {
+	&& (optSaveData.value || MSG_ANY_SET(sess, MSG_SAVE|MSG_TAG))) {
 		(void) snprintf(sess->input, sizeof (sess->input), "%s/%s.tmp", optSaveDir.string, sess->msg.id);
 		if ((save->name = strdup(sess->input)) == NULL) {
 			syslog(LOG_ERR, LOG_MSG(579) "temp. file name \"%s\": %s (%d)", LOG_ARGS(sess), sess->input, strerror(errno), errno);
@@ -216,7 +216,7 @@ saveDot(Session *sess, va_list ignore)
 				syslog(LOG_ERR, LOG_MSG(876) "rename(%s, %s) failed: %s (%d)", LOG_ARGS(sess), save->name, sess->input, strerror(errno), errno);
 #ifdef __unix__
 /* No hard links under Windows. */
-		} else if (MSG_IS_SET(sess, MSG_SAVE, MSG_SAVE)){
+		} else if (MSG_IS_SET(sess, MSG_SAVE, MSG_SAVE)) {
 			(void) snprintf(sess->input, sizeof (sess->input), "%s/%s.msg", optSaveDir.string, sess->msg.id);
 			if (link(save->name, sess->input))
 				syslog(LOG_ERR, LOG_MSG(877) "hard link(%s, %s) failed: %s (%d)", LOG_ARGS(sess), save->name, sess->input, strerror(errno), errno);
