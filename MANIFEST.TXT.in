@@ -96,6 +96,7 @@ com/snert/src/@PACKAGE_NAME@/src/dupmsg.c
 com/snert/src/@PACKAGE_NAME@/src/dupmsg.h
 com/snert/src/@PACKAGE_NAME@/src/emew.c
 com/snert/src/@PACKAGE_NAME@/src/emew.h
+com/snert/src/@PACKAGE_NAME@/src/emew-test.c
 com/snert/src/@PACKAGE_NAME@/src/filter.c
 com/snert/src/@PACKAGE_NAME@/src/filter.h
 com/snert/src/@PACKAGE_NAME@/src/four21.c
