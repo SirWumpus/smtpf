@@ -23,6 +23,7 @@
 
 #include "smtpf.h"
 
+#include <ctype.h>
 #include <com/snert/lib/util/md5.h>
 
 /***********************************************************************
@@ -579,23 +580,39 @@ emew3IsValid(Session *sess, char *msgid)
 	at_offset = qpHexDigit(msgid[EMEW3_SIZE_OFFSET]) * 16 + qpHexDigit(msgid[EMEW3_SIZE_OFFSET+1]);
 
 	/* Convert the delimiter to an at-sign. */
-	if (msgid[EMEW3_MAIL_OFFSET + at_offset] != EMEW3_DELIM)
+	if (msgid[EMEW3_MAIL_OFFSET + at_offset] != EMEW3_DELIM) {
+		if (verb_emew.option.value)
+			syslog(LOG_DEBUG, LOG_MSG(000) "EMEW bad at-offset=%d ch=%c", LOG_ARGS(sess), at_offset, msgid[EMEW3_MAIL_OFFSET + at_offset]);
 		goto error0;
+	}
 	msgid[EMEW3_MAIL_OFFSET + at_offset] = '@';
 
 	/* Find the delimiter between original-sender domain and original-msg-id.
 	 * Note that the EMEW delimiter cannot be a valid domain name character
 	 * and so should be the first one found following the at-sign.
 	 */
-	if ((orig_msgid = strchr(msgid + EMEW3_MAIL_OFFSET + at_offset + 1, '|')) == NULL)
+	if ((orig_msgid = strchr(msgid + EMEW3_MAIL_OFFSET + at_offset + 1, '|')) == NULL) {
+		if (verb_emew.option.value)
+			syslog(LOG_DEBUG, LOG_MSG(000) "EMEW missing delim between orig sender and id", LOG_ARGS(sess));
 		goto error0;
+	}
 
 	/* Terminate the original-sender string. */
 	*orig_msgid = '\0';
 
 	/* Lookup the secret of the original-sender address. */
+	if (verb_emew.option.value)
+		syslog(LOG_DEBUG, LOG_MSG(000) "EMEW address=\"%s\"", LOG_ARGS(sess), msgid+EMEW3_MAIL_OFFSET);
+
 	if (accessEmail(sess, ACCESS_TAG, msgid+EMEW3_MAIL_OFFSET, NULL, &secret) == SMDB_ACCESS_NOT_FOUND)
 		secret = optEmewSecret.string;
+
+	if (verb_emew.option.value) {
+		syslog(
+			LOG_DEBUG, LOG_MSG(000) "EMEW %s secret=\"%s\"", LOG_ARGS(sess),
+			secret == optEmewSecret.string ? "global" : "access-map", secret
+		);
+	}
 
 	/* Restore the EMEW delimiters. */
 	msgid[EMEW3_MAIL_OFFSET + at_offset] = EMEW3_DELIM;
@@ -665,6 +682,10 @@ emewIsValid(Session *sess, char *msgid)
 	if (msgid == NULL)
 		return EMEW_NONE;
 
+	msgid += sizeof ("Message-ID:")-1;
+	msgid += strspn(msgid, " \t");
+	if (verb_emew.option.value)
+		syslog(LOG_DEBUG, LOG_MSG(000) "msgid=%s", LOG_ARGS(sess), msgid);
 	if (*msgid == '<')
 		msgid++;
 
@@ -719,7 +740,7 @@ emewHeader(Session *sess, Vector headers)
 {
 	EMEW *emew;
 	char *msgid, *hdr, *ref;
-	size_t msgid_len, ref_len;
+	size_t msgid_len, ref_size;
 	int length, msgid_index, ref_index;
 
 	LOG_TRACE(sess, 345, emewHeader);
@@ -728,7 +749,7 @@ emewHeader(Session *sess, Vector headers)
 	if (!emew->required || (CLIENT_NOT_SET(sess, CLIENT_HAS_AUTH) && MSG_NOT_SET(sess, MSG_QUEUE)))
 		return SMTPF_CONTINUE;
 
-	if ((msgid_index = headerFind(headers, "Message-Id", &msgid)) == -1)
+	if ((msgid_index = headerFind(headers, "Message-ID", &msgid)) == -1)
 		return SMTPF_CONTINUE;
 
 	/* Has EMEW already been applied. */
@@ -738,22 +759,46 @@ emewHeader(Session *sess, Vector headers)
 	/* Find start of Message-ID after the header name. */
 	msgid += sizeof ("Message-ID:")-1;
 	msgid += strspn(msgid, " \t");
+	msgid_len = strlen(msgid);
 
 	/* Do we already have a References header? */
-	if ((ref_index = headerFind(sess->msg.headers, "References", &hdr)) == -1) {
-		/* Create a new References header using the original Message-ID. */
-		length = snprintf(sess->input, sizeof (sess->input), "References: %s", msgid);
-		if (VectorAdd(sess->msg.headers, hdr = strdup(sess->input)))
-			free(hdr);
-	} else {
-		/* Append the original Message-ID value to the end of the References. */
-		ref_len = strlen(hdr);
-		msgid_len = strlen(sess->msg.msg_id);
+	if ((ref_index = headerFind(sess->msg.headers, "References", &hdr)) == -1)
+		hdr = "References:";
 
-		if ((ref = malloc(ref_len + 1 + msgid_len + 1)) != NULL) {
-			length = snprintf(ref, ref_len + 1 + msgid_len + 1, "%s %s", hdr, msgid);
-			VectorSet(sess->msg.headers, ref_index, ref);
+	/* Size of new References header. */
+	ref_size = strlen(hdr) + 1 + msgid_len + 3;
+
+	/* Allocate space for a References header to be added or replaced.
+	 * Assert that we assign the CRLF.
+	 */
+	if ((ref = malloc(ref_size)) != NULL) {
+		/* When a References headers already exists with a trailing
+		 * CRLF then the space will start a folding header line.
+		 */
+		length = snprintf(ref, ref_size, "%s %s", hdr, msgid);
+		if (ref_size <= length) {
+			syslog(LOG_ERR, log_overflow, LOG_ARGS(sess), FILE_LINENO, ref_size, length);
+			free(ref);
+			return SMTPF_CONTINUE;
 		}
+
+		/* Remove trailing whitespace. */
+		while (isspace(ref[length-1]))
+			length--;
+
+		if (length+2 < ref_size) {
+			/* Assert correct CRLF */
+			ref[length++] = '\r';
+			ref[length++] = '\n';
+			ref[length  ] = '\0';
+		}
+
+		if (verb_emew.option.value)
+			syslog(LOG_DEBUG, LOG_MSG(000) "header \"%s\"", LOG_ARGS(sess), ref);
+		if (0 <= ref_index)
+			VectorSet(sess->msg.headers, ref_index, ref);
+		else if (VectorAdd(sess->msg.headers, ref))
+			free(ref);
 	}
 
 	/* Generate the EMEW. */
@@ -817,7 +862,7 @@ emewHeaders(Session *sess, va_list args)
 		/* Check only the last message-id in the References: header. */
 		offset = strlrcspn(hdr, strlen(hdr), ": \t");
 		if (verb_emew.option.value)
-			syslog(LOG_DEBUG, LOG_MSG(349) "got %s", LOG_ARGS(sess), hdr);
+			syslog(LOG_DEBUG, LOG_MSG(349) "header got %s", LOG_ARGS(sess), hdr);
 		if (emewIsValid(sess, hdr+offset) == EMEW_PASS)
 			emew->result = EMEW_PASS;
 	}
@@ -829,7 +874,7 @@ emewHeaders(Session *sess, va_list args)
 	 ***/
 	else if (headerFind(headers, "In-Reply-To", &hdr) != -1) {
 		if (verb_emew.option.value)
-			syslog(LOG_DEBUG, LOG_MSG(350) "got %s", LOG_ARGS(sess), hdr);
+			syslog(LOG_DEBUG, LOG_MSG(350) "header got %s", LOG_ARGS(sess), hdr);
 
 		while ((hdr = strstr(hdr, "EMEW")) != NULL) {
 			if (emewIsValid(sess, hdr) == EMEW_PASS) {
@@ -899,7 +944,7 @@ emewContent(Session *sess, va_list args)
 	offset = TextFind(chunk, "*\nMessage-Id: *", size, 1);
 	if (0 <= offset) {
 		if (verb_emew.option.value)
-			syslog(LOG_DEBUG, LOG_MSG(354) "got %s", LOG_ARGS(sess), chunk+offset+1);
+			syslog(LOG_DEBUG, LOG_MSG(354) "EMEW chunk offset=%ld", LOG_ARGS(sess), offset+1);
 		emew->result = emewIsValid(sess, chunk+offset+1);
 	} else {
 		emew->result = EMEW_FAIL;
