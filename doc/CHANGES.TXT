@@ -268,6 +268,12 @@ is no set schedule for releases.
 
    +	Added emew-test generation and validation tool.
 
+   !	emewHeader: changed handling of adding / updating of the References
+   	header to assert that we have a CRLF.
+
+   !	emewIsValid: fixed finding and skipping of Message-ID header name
+	when looking for the EMEW in a DSN body.
+
 --2.2.14--
 
   !!	emewHeader: fixed an instance of referring to already freed memory.
