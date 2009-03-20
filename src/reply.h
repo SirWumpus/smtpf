@@ -36,6 +36,7 @@ typedef struct reply {
 extern const char log_init[];
 extern const char log_oom[];
 extern const char log_internal[];
+extern const char log_overflow[];
 extern const char log_pipeline[];
 extern const char log_cache_get[];
 extern const char log_cache_put[];

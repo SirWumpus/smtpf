@@ -1195,7 +1195,7 @@ See <a href="summary.html#opt_stats_map">stats-map</a> option.
 				exit(1);
 			length = snprintf(journal, sizeof (journal), "%s-journal", file);
 			if (sizeof (journal) <= length) {
-				syslog(LOG_ERR, log_internal, FILE_LINENO, "buffer overflow", strerror(errno), errno);
+				syslog(LOG_ERR, log_overflow, SESSION_ID_ZERO, FILE_LINENO, sizeof (journal), length);
 				exit(1);
 			}
 			(void) chownByName(journal, optRunUser.string, optRunGroup.string);

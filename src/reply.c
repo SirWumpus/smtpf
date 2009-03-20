@@ -42,6 +42,11 @@ const char log_pipeline[] = /* LOG_INFO */ LOG_MSG(540) "pipeline input=%ld:%s";
 /*{LOG
 Log any premature input from the connected client.
 }*/
+const char log_overflow[] = /* LOG_ERR */ LOG_MSG(000) "buffer overflow %s(%lu) size=%lu length=%lu";
+/*{LOG
+A buffer overflow check failed reporting file and line number where it occured.
+Not expected to occur outside of code development.
+}*/
 
 const char log_cache_get[] = /* LOG_DEBUG */ LOG_MSG(541) "cache get key={%s} value={%s} %s(%lu)";
 const char log_cache_get_error[] = /* LOG_ERR */ LOG_MSG(542) "cache get error key={%s} %s(%lu)";
@@ -406,7 +411,7 @@ replySendLintReport(Session *sess, const char *report_rcpt)
 	VectorDestroy(hosts);
 
 	if (smtp == NULL) {
-		syslog(LOG_ERR, log_internal, LOG_ARGS(sess), __FILE__, (unsigned long) __LINE__, "lint report", strerror(errno), errno);
+		syslog(LOG_ERR, log_internal, LOG_ARGS(sess), FILE_LINENO, "lint report", strerror(errno), errno);
 		return;
 	}
 
