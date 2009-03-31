@@ -12,7 +12,7 @@ sq3 : access.sq3 .access.cf route.sq3 .route.cf
 
 access.sq3: access.d access.cf
 	cat ${CURDIR}access-defaults.cf ${CURDIR}access/* ${CURDIR}access.cf 2>/dev/null \
-		| kvmap -l "access!sql!${CURDIR}access.sq3"
+		| kvmap -b -l "access!sql!${CURDIR}access.sq3"
 	chmod 660 ${CURDIR}access.sq3
 
 access.cf:
