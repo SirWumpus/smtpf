@@ -1722,11 +1722,11 @@ AccessMapping accessTagWordsMap[] =
 		"|" ACCESS_NEXT_WORD
 		"|" ACCESS_SKIP_WORD
 	},
-	{ 	ACCESS_EMEW_TAG,
-		    ".+"
-	},
 	{ 	ACCESS_SPAM_TAG,
 		    ".+"
+	},
+	{ 	ACCESS_EMEW_TAG,
+		    ".*"
 	},
 	{	NULL, NULL }
 };
@@ -1842,8 +1842,11 @@ AccessMapping accessWordTagsMap[] =
 	},
 	{
 		".+",
+		    ACCESS_SPAM_TAG
+	},
+	{
+		".*",
 		    ACCESS_EMEW_TAG
-		"|" ACCESS_SPAM_TAG
 	},
 	{ 	NULL, NULL }
 };
