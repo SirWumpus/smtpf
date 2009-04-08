@@ -173,7 +173,8 @@ clamd_open_scan(Session *sess, Clamd *clamd)
 static int
 clamd_open_stream(Session *sess, Clamd *clamd)
 {
-	int rc;
+	long length;
+	int rc, assigned;
 	unsigned sessionPort;
 	SocketAddress *saddr;
 	static char buffer[64];
@@ -196,8 +197,8 @@ clamd_open_stream(Session *sess, Clamd *clamd)
 		goto error1;
 	}
 
-	if (socketReadLine(clamd->socket, buffer, sizeof (buffer)) < 0) {
-		clamdError(sess, clamd, "451 4.4.0 clamd read error: %s (%d)" ID_MSG(186), strerror(errno), errno, ID_ARG(sess));
+	if ((length = socketReadLine(clamd->socket, buffer, sizeof (buffer))) < 0) {
+		clamdError(sess, clamd, "451 4.4.0 clamd read error len=%ld: %s (%d)" ID_MSG(186), length, strerror(errno), errno, ID_ARG(sess));
 /*{NEXT}*/
 		goto error1;
 	}
@@ -205,8 +206,8 @@ clamd_open_stream(Session *sess, Clamd *clamd)
 	if (verb_clamd.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(187) "clamd << %s", LOG_ARGS(sess), buffer);
 
-	if (sscanf(buffer, "PORT %u", &sessionPort) != 1) {
-		clamdError(sess, clamd, "451 4.4.0 clamd session port \"%s\" parse error" ID_MSG(188), buffer, ID_ARG(sess));
+	if ((assigned = sscanf(buffer, "PORT %u", &sessionPort)) != 1) {
+		clamdError(sess, clamd, "451 4.4.0 clamd session port parse error (%d) buffer=%ld:\"%s\"" ID_MSG(188), assigned, length, buffer, ID_ARG(sess));
 /*{NEXT}*/
 		goto error1;
 	}
