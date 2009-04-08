@@ -254,6 +254,31 @@ is no set schedule for releases.
 	tag:example.com/a
 	tag:example.com
 
+--2.2.16--
+
+   !	examples/Makefile.in: fix access.cf rule to use kvmap -b.
+
+   !	accessTagWordsMap, accessWordTagsMap: changed emew: tag to allow
+   	an empty RHS.
+
+   !	clamd.c: added addition log information to message #188 (sscanf
+	return code and buffer length). Quentin Campbell has been
+	reporting instances "clamd sesssion port parse error" with clamd
+	0.94.2 and 0.95. On mx.snert.net with 0.95, no such error
+	appears. Current theory is that clamd is being restarted while
+	in the process of transmitting the PORT response line and thus
+	truncating the output.
+
+	Another sign of this would be message #186 "clamd read error",
+	with a disconnect related error, which would occur if the clamd
+	restart happened before any (partial) data was read.
+
+   !	cmdUnknown, smtp-drop-unknown: allow for Postfix's XCLIENT extension
+   	command.
+
+   !	config.h.in.in, options.c: Changed default run-open-file-limit from
+   	1024 to 8192 for Unix-like systems.
+
 --2.2.15--
 
    !	reply.awk, syslog.awk; added anchor tags by message number to output.
