@@ -300,7 +300,7 @@ Option optVersion		= { "version",			NULL,		"Show version and copyright." };
 
 Option optRunGroup		= { "run-group",		RUN_AS_GROUP,	"Run as this Unix group." };
 Option optRunJailed		= { "run-jailed",		"-",		"Run in a chroot jail; run-work-dir used as the new root directory." };
-Option optRunOpenFileLimit	= { "run-open-file-limit",	"1024",		"The maximum open file limit for the process." };
+Option optRunOpenFileLimit	= { "run-open-file-limit",	QUOTE(RUN_FILE_LIMIT),	"The maximum open file limit for the process." };
 Option optRunPidFile 		= { "run-pid-file", 		PID_FILE,	"The file path of where to save the process-id." };
 Option optRunUser		= { "run-user",			RUN_AS_USER,	"Run as this Unix user." };
 Option optRunWorkDir 		= { "run-work-dir", 		WORK_DIR, 	"The working directory of the process." };

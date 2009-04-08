@@ -139,6 +139,14 @@ extern "C" {
 # endif
 #endif
 
+#ifndef RUN_FILE_LIMIT
+# if defined(__WIN32__)
+#  define RUN_FILE_LIMIT		1024
+# else
+#  define RUN_FILE_LIMIT		8192
+# endif
+#endif
+
 #ifndef FD_OVERHEAD
 /* Global file descriptors in use: stdin, stdout, stderr, syslog,
  * accept, cache x 2 (database and journal), and stats x 2
