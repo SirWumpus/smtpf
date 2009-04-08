@@ -130,8 +130,10 @@ cmdUnknown(Session *sess)
 	int rc;
 
 	if (optSmtpDropUnknown.value
-	/* Stupid Cisco PIX obfuscates ESMTP EHLO and some other extensions. */
- 	&& sess->input[0] != 'X' && sess->input[1] != 'X'
+	/* Stupid Cisco PIX obfuscates ESMTP EHLO and some other extensions.
+	 * Also ignore extended SMTP commands like Postfix's XCLIENT
+	 */
+ 	&& (sess->input[0] != 'X' || sess->helo_state == stateHelo)
 	&& CLIENT_NOT_SET(sess, CLIENT_HOLY_TRINITY)) {
 		statsCount(&stat_smtp_drop_unknown);
 		rc = SMTPF_DROP;
