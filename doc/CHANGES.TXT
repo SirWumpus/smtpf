@@ -254,6 +254,28 @@ is no set schedule for releases.
 	tag:example.com/a
 	tag:example.com
 
+
+   !	Steve Freegard: Call-ahead fails with a 'connection error'
+   	if RCPT: argument in route.cf is a host that points to is
+   	a CNAME.
+
+   	routeCallAhead / routeForward / socketOpenClient does NOT
+	perform an MX lookup of the host name given, similar to
+	mailertable:
+
+   		example.com  esmtp:[some.host.name]
+
+   	This might have to be a change in socketOpen, in which it
+   	handles CNAME -> A redirections.
+
+   +	XCLIENT support http://www.postfix.org/XCLIENT_README.html
+
+--2.2.17--
+
+   *	Requires Libsnert 1.71.1
+
+   !	grey.c: Changes to corresponding to MIME API overhaul.
+
 --2.2.16--
 
    !	examples/Makefile.in: fix access.cf rule to use kvmap -b.

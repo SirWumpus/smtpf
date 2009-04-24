@@ -421,7 +421,7 @@ greyMimeInit(Grey *grey)
 		return -1;
 
 	grey->mime->mime_header = greyMimeHeader;
-	grey->mime->mime_source_line = greyHashLine;
+	grey->mime->mime_source_flush = greyHashLine;
 	grey->mime->mime_body_finish = greyMimeResetPart;
 
 	return 0;
