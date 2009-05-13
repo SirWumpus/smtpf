@@ -572,7 +572,7 @@ uriblTestURI(Session *sess, URI *uri, int post_data)
 	if (uri == NULL || sess->msg.policy != '\0')
 		return SMTPF_CONTINUE;
 
-	if (uri->host == NULL || isRFC2606(uri->host) || indexValidTLD(uri->host) <= 0)
+	if (uri->host == NULL || (indexValidTLD(uri->host) <= 0 && spanIP(uri->host) <= 0))
 		goto ignore0;
 
 	/* Session cache for previously tested hosts/domains. */
@@ -870,7 +870,9 @@ uriblCheckUri(Session *sess, URI *uri)
 	int rc = SMTPF_CONTINUE;
 	Uribl *ctx = filterGetContext(sess, uribl_context);
 
-	if (uri != NULL && uri->host != NULL && !isRFC2606(uri->host) && 0 < indexValidTLD(uri->host)) {
+	if (uri != NULL && uri->host != NULL
+	&& (0 < indexValidTLD(uri->host) || 0 < spanIP(uri->host))
+	) {
 		if (1 < verb_uri.option.value)
 			syslog(LOG_DEBUG, LOG_MSG(892) "uriDecoded=%s", LOG_ARGS(sess), uri->uriDecoded);
 
@@ -903,7 +905,15 @@ See <a href="summary.html#opt_uri_max_limit">uri-max-limit</a> option.
 			if (uriblNs(sess, uri->host, &stat_ns_bl_uri) != SMTPF_CONTINUE)
 				return replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 rejected URI NS, %s" ID_MSG(894) "\r\n", sess->msg.reject, ID_ARG(sess));
 
-			if ((rc = testList(sess, uri->query, "&")) == SMTPF_CONTINUE)
+			/* Check for redirected URL in query string or path. */
+			if (uri->query == NULL) {
+				rc = testList(sess, uri->path, "&");
+			} else {
+				rc = testList(sess, uri->query, "&");
+				if (rc == SMTPF_CONTINUE)
+					rc = testList(sess, uri->query, "/");
+			}
+			if (rc == SMTPF_CONTINUE)
 				rc = testList(sess, uri->path, "/");
 
 			if (rc == SMTPF_CONTINUE && optUriValidSoa.value
@@ -1060,8 +1070,10 @@ uriblContent(Session *sess, va_list args)
 			if (rc == SMTPF_SKIP_REMAINDER)
 				break;
 
-			if (rc != SMTPF_CONTINUE)
+			if (rc != SMTPF_CONTINUE) {
+				MSG_SET(sess, MSG_POLICY);
 				return rc;
+			}
 
 			keepAlive(sess);
 		}

@@ -270,6 +270,20 @@ is no set schedule for releases.
 
    +	XCLIENT support http://www.postfix.org/XCLIENT_README.html
 
+
+--2.2.18--
+
+   *	Requires Libsnert 1.71.3
+
+   !	uribl.c: Corrections for testing redirections in (pseudo) query
+	string elements.
+
+   !	uribl.c: set MSG_POLICY for URI blocked content to disable
+   	click white listing.
+
+   !	uriblCheckUri: if the guard check for a valid TLD fails, then
+   	also check if the URI host is instead an IP address.
+
 --2.2.17--
 
    *	Requires Libsnert 1.71.1
