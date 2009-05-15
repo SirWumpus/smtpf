@@ -30,7 +30,7 @@ static const char usage_mail_strict[] =
 "#"
 ;
 
-Option optMailStrict		= { "mail-strict", "+", usage_mail_strict };
+Option optMailStrict		= { "mail-strict", "-", usage_mail_strict };
 
 Stats stat_mail_strict_pass	= { STATS_TABLE_MAIL, "mail-strict-pass" };
 Stats stat_mail_strict_fail	= { STATS_TABLE_MAIL, "mail-strict-fail" };
