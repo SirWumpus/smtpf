@@ -52,7 +52,8 @@ static FreemailTable freemail_table[] = {
 	{ "yahoo.*",		"*.yahoo.*"	},
 	{ "ymail.com",		"*.yahoo.*"	},
 	{ "rocketmail.com",	"*.yahoo.*"	},
-	{ NULL, NULL}
+	{ "*groups.yahoo.com",	"*.yahoo.*"	},
+	{ NULL, NULL }
 };
 
 /***********************************************************************
@@ -95,7 +96,7 @@ freemailMail(Session *sess, va_list args)
 
 	if (TextFind(item->ptr, sess->client.name, -1, 1) < 0) {
 		statsCount(&stat_mail_strict_fail);
-		return replyPushFmt(sess, SMTPF_REJECT, "550 5.7.0 client " CLIENT_FORMAT " sender <%s> mismatch" ID_MSG(000) "\r\n", CLIENT_INFO(sess), sess->msg.mail->address.string, ID_ARG(sess));
+		return replyPushFmt(sess, SMTPF_REJECT, "550 5.7.0 client " CLIENT_FORMAT " sender <%s> must be sent from %s" ID_MSG(000) "\r\n", CLIENT_INFO(sess), sess->msg.mail->address.string, sess->msg.mail->domain.string, ID_ARG(sess));
 	}
 
 	statsCount(&stat_mail_strict_pass);
