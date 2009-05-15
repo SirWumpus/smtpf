@@ -525,6 +525,7 @@ nsListLookup0(Session *sess, DnsList *dns_list, Vector names_seen, int recurse, 
 				list_name = nsListLookup0(sess, dns_list, names_seen, recurse-1, rr->name.string.value);
 				break;
 			} else if (rr->rcode == PDQ_RCODE_OK && rr->type == PDQ_TYPE_NS) {
+				recurse = 0;
 				if ((list_name = isNameListed(sess, dns_list, names_seen, optNsSubDomains.value, ((PDQ_PTR *) rr)->host.string.value)) != NULL)
 					break;
 			}
