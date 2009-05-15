@@ -121,6 +121,9 @@ FilterHandler filter_register_table	[] = {
 #ifdef FILTER_ATTACHMENT
 	FILTER_HANDLER(attachmentRegister),
 #endif
+#ifdef FILTER_FREEMAIL
+	FILTER_HANDLER(freemailRegister),
+#endif
 #ifdef FILTER_FOUR21
 	FILTER_HANDLER(four21Register),
 #endif
@@ -819,6 +822,9 @@ FilterHandler filter_mail_table	[] = {
 	FILTER_HANDLER(accessMail),
 #ifdef FILTER_CLICK
 	FILTER_HANDLER(clickMail),
+#endif
+#ifdef FILTER_FREEMAIL
+	FILTER_HANDLER(freemailMail),
 #endif
 #ifdef FILTER_MSG_LIMIT
 	FILTER_HANDLER(msgLimitMail),

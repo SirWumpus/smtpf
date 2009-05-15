@@ -99,14 +99,14 @@ title :
 	@echo
 
 MODULE_H = access.h attachment.h avastd.h clamd.h cli.h click.h concurrent.h \
-	digest.h dupmsg.h emew.h four21.h fpscand.h grey.h misc.h msglimit.h null.h pad.h \
-	p0f.h rate.h rbl.h sav.h save.h savdid.h siq.h size.h spamd.h spamd2.h spf.h \
-	timelimit.h uribl.h
+	digest.h dupmsg.h emew.h freemail.h four21.h fpscand.h grey.h misc.h \
+	msglimit.h null.h pad.h p0f.h rate.h rbl.h sav.h save.h savdid.h siq.h \
+	size.h spamd.h spamd2.h spf.h timelimit.h uribl.h
 
 MODULE_O = access$O attachment$O avastd$O clamd$O cli$O click$O concurrent$O \
-	digest$O dupmsg$O emew$O four21$O fpscand$O grey$O misc$O msglimit$O null$O pad$O \
-	p0f$O rate$O rbl$O sav$O save$O savdid$O siq$O size$O spamd$O spamd2$O spf$O \
-	timelimit$O uribl$O
+	digest$O dupmsg$O emew$O freemail$O four21$O fpscand$O grey$O misc$O \
+	msglimit$O null$O pad$O p0f$O rate$O rbl$O sav$O save$O savdid$O siq$O \
+	size$O spamd$O spamd2$O spf$O timelimit$O uribl$O
 
 CORE = server$O smtpf$O cache$O cmd$O dsn$O filter$O mx$O options$O \
        route$O reply$O stats$O summary$O verbose$O
@@ -194,6 +194,9 @@ filter$O : config.h ${TARNAME}.h filter.c
 
 filter2$O : config.h ${TARNAME}.h filter2.c
 	${CC} ${CFLAGS} -c filter2.c
+
+freemail$O : config.h ${TARNAME}.h freemail.c
+	${CC} ${CFLAGS} -c freemail.c
 
 four21$O : config.h ${TARNAME}.h four21.c
 	${CC} ${CFLAGS} -c four21.c

@@ -284,6 +284,9 @@ is no set schedule for releases.
    !	uriblCheckUri: if the guard check for a valid TLD fails, then
    	also check if the URI host is instead an IP address.
 
+   +	Added mail-strict option to validate the free mail sender
+   	originated from a free mail server.
+
 --2.2.17--
 
    *	Requires Libsnert 1.71.1

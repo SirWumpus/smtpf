@@ -201,6 +201,7 @@ extern "C" {
 #undef FILTER_DIGEST
 #undef FILTER_DUPMSG
 #undef FILTER_EMEW
+#undef FILTER_FREEMAIL
 #undef FILTER_FOUR21
 #undef FILTER_FPSCAND
 #undef FILTER_GREY

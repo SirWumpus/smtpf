@@ -577,6 +577,9 @@ extern void filterClearAllContexts(Session *sess);
 #ifdef FILTER_EMEW
 # include "emew.h"
 #endif
+#ifdef FILTER_FREEMAIL
+# include "freemail.h"
+#endif
 #ifdef FILTER_FOUR21
 # include "four21.h"
 #endif
