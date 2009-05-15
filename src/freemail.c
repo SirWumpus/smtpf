@@ -63,7 +63,7 @@ static FreemailTable freemail_table[] = {
 int
 freemailRegister(Session *sess, va_list ignore)
 {
-	optionsRegister(&optMailStrict, 1);
+	optionsRegister(&optMailStrict, 0);
 
 	(void) statsRegister(&stat_mail_strict_pass);
 	(void) statsRegister(&stat_mail_strict_fail);
@@ -72,11 +72,11 @@ freemailRegister(Session *sess, va_list ignore)
 }
 
 int
-freemailMail(Session *sess, va_list args)
+freemailRcpt(Session *sess, va_list args)
 {
 	FreemailTable *item;
 
-	LOG_TRACE(sess, 000, freemailMail);
+	LOG_TRACE(sess, 920, freemailMail);
 
 	if (!optMailStrict.value || CLIENT_ANY_SET(sess, CLIENT_USUAL_SUSPECTS|CLIENT_IS_2ND_MX))
 		return SMTPF_CONTINUE;
@@ -91,12 +91,12 @@ freemailMail(Session *sess, va_list args)
 
 	if (CLIENT_ANY_SET(sess, CLIENT_IS_FORGED)) {
 		statsCount(&stat_mail_strict_fail);
-		return replyPushFmt(sess, SMTPF_REJECT, "550 5.7.0 client " CLIENT_FORMAT " forged" ID_MSG(000) "\r\n", CLIENT_INFO(sess), ID_ARG(sess));
+		return replyPushFmt(sess, SMTPF_REJECT, "550 5.7.0 client " CLIENT_FORMAT " sender <%s> must be sent from %s" ID_MSG(921) "\r\n", CLIENT_INFO(sess), sess->msg.mail->address.string, sess->msg.mail->domain.string, ID_ARG(sess));
 	}
 
-	if (TextFind(item->ptr, sess->client.name, -1, 1) < 0) {
+	if (TextFind(sess->client.name, item->ptr, -1, 1) < 0) {
 		statsCount(&stat_mail_strict_fail);
-		return replyPushFmt(sess, SMTPF_REJECT, "550 5.7.0 client " CLIENT_FORMAT " sender <%s> must be sent from %s" ID_MSG(000) "\r\n", CLIENT_INFO(sess), sess->msg.mail->address.string, sess->msg.mail->domain.string, ID_ARG(sess));
+		return replyPushFmt(sess, SMTPF_REJECT, "550 5.7.0 client " CLIENT_FORMAT " sender <%s> must be sent from %s" ID_MSG(922) "\r\n", CLIENT_INFO(sess), sess->msg.mail->address.string, sess->msg.mail->domain.string, ID_ARG(sess));
 	}
 
 	statsCount(&stat_mail_strict_pass);

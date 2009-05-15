@@ -823,9 +823,6 @@ FilterHandler filter_mail_table	[] = {
 #ifdef FILTER_CLICK
 	FILTER_HANDLER(clickMail),
 #endif
-#ifdef FILTER_FREEMAIL
-	FILTER_HANDLER(freemailMail),
-#endif
 #ifdef FILTER_MSG_LIMIT
 	FILTER_HANDLER(msgLimitMail),
 #endif
@@ -898,6 +895,9 @@ FilterHandler filter_rcpt_table	[] = {
 #ifdef FILTER_MISC
 	FILTER_HANDLER(rcptTestsRcpt),
 	FILTER_HANDLER(heloIsPtrRcpt),
+#endif
+#ifdef FILTER_FREEMAIL
+	FILTER_HANDLER(freemailRcpt),
 #endif
 #ifdef FILTER_SPF
 	FILTER_HANDLER(spfRcpt),

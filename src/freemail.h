@@ -21,7 +21,7 @@ extern Stats stat_mail_strict_pass;
 extern Stats stat_mail_strict_fail;
 
 extern int freemailRegister(Session *sess, va_list ignore);
-extern int freemailMail(Session *sess, va_list args);
+extern int freemailRcpt(Session *sess, va_list args);
 
 /***********************************************************************
  ***
