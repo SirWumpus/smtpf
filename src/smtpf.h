@@ -388,6 +388,7 @@ typedef struct {
 	const char *spf_mail_error;
 	char reject[SMTP_REPLY_LINE_LENGTH+1];
 	unsigned rcpt_count;
+	unsigned bad_rcpt_count;
 	unsigned long eoh;
 	unsigned long length;
 	unsigned long max_size;

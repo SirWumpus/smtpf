@@ -1194,6 +1194,7 @@ Only the reply codes from the forward host are relayed to the client with a stan
 error2:
 	statsCount(&stat_rcpt_reject);
 error1:
+	sess->msg.bad_rcpt_count++;
 	summaryRecipient(sess, sess->input+span);
 	free(rcpt);
 
@@ -1561,50 +1562,6 @@ error0:
 #endif
 
 static int
-isClientConnected(Session *sess)
-{
-	/* Check if the socket has been dropped. This assumes that
-	 * socketHasInput() will return an interesting errno whether
-	 * poll() or select() was used under the hood.
-	 */
-        if (socketHasInput(sess->client.socket, 0)) {
-        	int peek_byte = socketPeekByte(sess->client.socket);
-
-        	/* Was there actual data waiting? Or was this an empty
-        	 * packet donoting end of connection? Have observed that
-        	 * disconnecting a telnet test session results in
-        	 * socketHasInput() returning true while socketPeekByte()
-        	 * returns SOCKET_ERROR (zero length packet). Is this
-        	 * normal TCP or OS specific?
-        	 */
-                if (peek_byte == SOCKET_ERROR) {
-                        syslog(LOG_ERR, LOG_MSG(314) "" CLIENT_FORMAT " I/O error: %s (%d)", LOG_ARGS(sess), CLIENT_INFO(sess), errno != 0 ? strerror(errno) : "", errno);
-/*{LOG
-The connected client disconnected or generated an I/O error after sending the final dot to end a message,
-but before the SMTP response was sent.
-}*/
-			CLIENT_SET(sess, CLIENT_IO_ERROR);
-			return SMTPF_DROP;
-		}
-
-		if (verb_info.option.value)
-			syslog(LOG_INFO, LOG_MSG(315) "pipelining byte=%.2x", LOG_ARGS(sess), peek_byte);
-        }
-
-        else if (errno != 0 && errno != ETIMEDOUT) {
-                syslog(LOG_ERR, LOG_MSG(316) "" CLIENT_FORMAT " I/O error: %s (%d)", LOG_ARGS(sess), CLIENT_INFO(sess), strerror(errno), errno);
-/*{LOG
-The connected client disconnected or generated an I/O error after sending the final dot to end a message,
-but before the SMTP response was sent.
-}*/
-		CLIENT_SET(sess, CLIENT_IO_ERROR);
-		return SMTPF_DROP;
-        }
-
-       	return SMTPF_CONTINUE;
-}
-
-static int
 readClientData(Session *sess, unsigned char *chunk, long *size)
 {
 	long length, offset;
@@ -1732,13 +1689,6 @@ See <a href="summary.html#opt_rfc2821_line_length">rfc2821-line-length</a>.
 
 	(void) time(&sess->last_mark);
 	*size = offset;
-
-        if (optSmtpDisconnectAfterDot.value
-        && CLIENT_NOT_SET(sess, CLIENT_USUAL_SUSPECTS)
-        && sess->msg.seen_final_dot && isClientConnected(sess) != SMTPF_CONTINUE) {
-		statsCount(&stat_disconnect_after_dot);
-		longjmp(sess->on_error, SMTPF_DROP);
-        }
 
 	if (chunk == sess->msg.chunk0) {
 		rc = filterRun(sess, filter_headers_table, sess->msg.headers);

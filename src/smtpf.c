@@ -615,6 +615,7 @@ sessionReset(Session *sess)
 	sess->msg.fwd_to_queue = NULL;
 	sess->msg.length = 0;
 	sess->msg.rcpt_count = 0;
+	sess->msg.bad_rcpt_count = 0;
 	sess->msg.reject[0] = '\0';
 	sess->msg.id[0] = '\0';
 	sess->msg.msg_id = NULL;

@@ -89,7 +89,6 @@ extern Option optSmtpKeepAliveTimeout;
 extern Option optSmtpDataLineTimeout;
 extern Option optSmtpDotTimeout;
 extern Option optSmtpDelayChecks;
-extern Option optSmtpDisconnectAfterDot;
 extern Option optSmtpDropAfter;
 extern Option optSmtpDropNoop;
 extern Option optSmtpDropRset;

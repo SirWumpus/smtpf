@@ -244,8 +244,9 @@ summaryHeaders(Session *sess, va_list args)
 		rcpt = strdup(rcptFlags(sess));
 
 		length = snprintf(
-			sess->input, sizeof (sess->input), "%s: client=%s; mail=%s; rcpt=%s\r\n",
-			optSmtpReportHeader.string, TextEmpty(client), TextEmpty(mail), TextEmpty(rcpt)
+			sess->input, sizeof (sess->input), "%s: client=%s; mail=%s; rcpt=%s; nrcpt=%u:%u\r\n",
+			optSmtpReportHeader.string, TextEmpty(client), TextEmpty(mail), TextEmpty(rcpt),
+			sess->msg.rcpt_count, sess->msg.bad_rcpt_count
 		);
 
 		free(client);

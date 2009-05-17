@@ -227,14 +227,6 @@ static const char usage_smtp_strict_relay[] =
 "#"
 ;
 
-static const char usage_smtp_disconnect_after_dot[] =
-  "If the SMTP client drops the connection after sending the dot for end\n"
-"# of message, but before the SMTP response is sent indicating whether the\n"
-"# message was accepted or not, then the message is discarded and our end\n"
-"# of the connection closed.\n"
-"#"
-;
-
 /*
  * First pass option table.
  */
@@ -322,7 +314,6 @@ static const char usage_smtp_keep_alive_timeout[] =
 ;
 Option optSmtpKeepAliveTimeout	= { "smtp-keep-alive-timeout",	"60",		usage_smtp_keep_alive_timeout };
 
-Option optSmtpDisconnectAfterDot= { "smtp-disconnect-after-dot","-",		usage_smtp_disconnect_after_dot };
 Option optSmtpEnableEsmtp	= { "smtp-enable-esmtp",	"+",		usage_smtp_enable_esmtp };
 Option optSmtpRejectFile	= { "smtp-reject-file",		"",		usage_smtp_reject_file };
 Option optSmtpServerQueue	= { "smtp-server-queue",	"20",		usage_smtp_server_queue };
@@ -528,7 +519,6 @@ optionsRegister0(Session *sess, va_list ignore)
 	optionsRegister(&optSmtpConnectTimeout, 	0);
 	optionsRegister(&optSmtpDataLineTimeout, 	0);
 	optionsRegister(&optSmtpDelayChecks,		0);
-	optionsRegister(&optSmtpDisconnectAfterDot,	0);
 	optionsRegister(&optSmtpDotTimeout, 		0);
 	optionsRegister(&optSmtpDropAfter, 		0);
 	optionsRegister(&optSmtpDropUnknown, 		0);
