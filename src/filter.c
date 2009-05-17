@@ -896,11 +896,11 @@ FilterHandler filter_rcpt_table	[] = {
 	FILTER_HANDLER(rcptTestsRcpt),
 	FILTER_HANDLER(heloIsPtrRcpt),
 #endif
-#ifdef FILTER_FREEMAIL
-	FILTER_HANDLER(freemailRcpt),
-#endif
 #ifdef FILTER_SPF
 	FILTER_HANDLER(spfRcpt),
+#endif
+#ifdef FILTER_FREEMAIL
+	FILTER_HANDLER(freemailRcpt),
 #endif
 #ifdef FILTER_MSG_LIMIT
 	FILTER_HANDLER(msgLimitRcpt),
