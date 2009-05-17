@@ -512,7 +512,7 @@ greyFini(Session *null, va_list ignore)
 	return SMTPF_CONTINUE;
 }
 
-static void
+void
 digestToString(unsigned char digest[16], char digest_string[33])
 {
 	int i;

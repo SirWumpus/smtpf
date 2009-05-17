@@ -15,6 +15,13 @@ extern "C" {
  ***
  ***********************************************************************/
 
+typedef struct {
+	const char *mail;
+	const char *ptr;
+} FreemailTable;
+
+extern FreemailTable freemail_table[];
+
 extern Option optMailStrict;
 
 extern Stats stat_mail_strict_pass;

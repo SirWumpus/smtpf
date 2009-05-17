@@ -271,10 +271,27 @@ is no set schedule for releases.
    +	XCLIENT support http://www.postfix.org/XCLIENT_README.html
 
 
---2.2.18--
+--2.2.20--
+
+   *	Requires Libsnert 1.71.5
+
+   +	Add mail-bl, mail-bl-headers, mail-bl-max options.
+
+   -	Removed stat mail-strict-pass.
+
+   -	Removed smtp-disconnect-after-dot; left over version 1 dupmsg
+	handling. Cause version 2 dupmsg handling to break when enabled.
+
+--2.2.19--
 
    +	Added mail-strict option to validate the free mail sender
    	originated from a free mail server.
+
+   !	nsListLookup0: was recursing if both NS and an SOA was returned
+	with the initial NS lookup. This would incorrectly cause a 2nd
+	lookup on the SOA domain.
+
+   !	Added per message bad recipient counter for X-Smtpf-Report.
 
 --2.2.18--
 

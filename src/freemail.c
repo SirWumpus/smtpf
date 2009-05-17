@@ -32,15 +32,10 @@ static const char usage_mail_strict[] =
 
 Option optMailStrict		= { "mail-strict", "-", usage_mail_strict };
 
-Stats stat_mail_strict_pass	= { STATS_TABLE_MAIL, "mail-strict-pass" };
 Stats stat_mail_strict_fail	= { STATS_TABLE_MAIL, "mail-strict-fail" };
 
-typedef struct {
-	const char *mail;
-	const char *ptr;
-} FreemailTable;
-
-static FreemailTable freemail_table[] = {
+FreemailTable freemail_table[] = {
+	{ "aim.*",		"*.aol.*" 	},
 	{ "aol.*",		"*.aol.*" 	},
 	{ "gmail.*",		"*.google.*"	},
 	{ "googlemail.*",	"*.google.*"	},
@@ -65,7 +60,6 @@ freemailRegister(Session *sess, va_list ignore)
 {
 	optionsRegister(&optMailStrict, 0);
 
-	(void) statsRegister(&stat_mail_strict_pass);
 	(void) statsRegister(&stat_mail_strict_fail);
 
 	return SMTPF_CONTINUE;
@@ -98,8 +92,6 @@ freemailRcpt(Session *sess, va_list args)
 		statsCount(&stat_mail_strict_fail);
 		return replyPushFmt(sess, SMTPF_REJECT, "550 5.7.0 client " CLIENT_FORMAT " sender <%s> must be sent from %s" ID_MSG(922) "\r\n", CLIENT_INFO(sess), sess->msg.mail->address.string, sess->msg.mail->domain.string, ID_ARG(sess));
 	}
-
-	statsCount(&stat_mail_strict_pass);
 
 	return SMTPF_CONTINUE;
 }

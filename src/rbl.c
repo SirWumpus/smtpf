@@ -19,6 +19,7 @@
 #include "smtpf.h"
 
 #include <com/snert/lib/io/Dns.h>
+#include <com/snert/lib/util/md5.h>
 
 /***********************************************************************
  ***
@@ -258,6 +259,49 @@ dnsListQueryIp(Session *sess, DnsList *dns_list, Vector names_seen, const char *
 	}
 
 	pdqFree(list);
+
+	return list_name;
+}
+
+static const char *mail_ignore_table[] = {
+ 	"abuse@*",
+ 	"contact@*",
+ 	"helpdesk@*",
+ 	"info@*",
+ 	"kontakt@*",
+ 	"sales@*",
+ 	"support@*",
+	"*master@*",
+	"bounce*@*",
+	"request*@*",
+	NULL
+};
+
+const char *
+dnsListQueryMail(Session *sess, DnsList *dns_list, Vector mails_seen, const char *mail)
+{
+	md5_state_t md5;
+	char digest_string[33];
+	unsigned char digest[16];
+	const char *list_name = NULL, **item;
+	extern void digestToString(unsigned char *, char *);
+
+	if (dns_list == NULL || mail == NULL || *mail == '\0')
+		return NULL;
+
+	for (item = mail_ignore_table; *item != NULL; item++) {
+		if (0 <= TextFind(mail, *item, -1, 1))
+			return NULL;
+	}
+
+	md5_init(&md5);
+	md5_append(&md5, (md5_byte_t *) mail, strlen(mail));
+	md5_finish(&md5, (md5_byte_t *) digest);
+	digestToString(digest, digest_string);
+
+	list_name = dnsListLookup(sess, dns_list, mails_seen, digest_string);
+	if (list_name != NULL && verb_rbl.option.value)
+		syslog(LOG_DEBUG, LOG_MSG(000) "<%s> listed in %s", LOG_ARGS(sess), mail, list_name);
 
 	return list_name;
 }
