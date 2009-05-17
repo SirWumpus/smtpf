@@ -20,6 +20,7 @@
 
 #include <ctype.h>
 #include <com/snert/lib/mail/tlds.h>
+#include <com/snert/lib/net/dnsList.h>
 
 /***********************************************************************
  ***
@@ -293,7 +294,6 @@ typedef struct {
 	Vector uri_seen;
 	Vector uri_ns_seen;
 	Vector uri_mail_seen;
-	unsigned mail_count;
 #ifdef CONFUSING
 	unsigned uri_count;
 #endif
@@ -316,10 +316,10 @@ uriblInit(Session *null, va_list ignore)
 {
 	LOG_TRACE0(000, uriblInit);
 
-	uri_dns_bl = dnsListCreate(&optUriDnsBL);
-	mail_bl = dnsListCreate(&optMailBl);
-	uri_bl = dnsListCreate(&optUriBL);
-	ns_bl = dnsListCreate(&optNsBL);
+	uri_dns_bl = dnsListCreate(optUriDnsBL.string);
+	mail_bl = dnsListCreate(optMailBl.string);
+	uri_bl = dnsListCreate(optUriBL.string);
+	ns_bl = dnsListCreate(optNsBL.string);
 
 	return SMTPF_CONTINUE;
 }
@@ -342,6 +342,7 @@ uriCheckIp(Session *sess, const char *host)
 {
 	PDQ_rr *list, *rr, *plist;
 	int rc, missing_ptr, a_count, rcode;
+	Uribl *ctx = filterGetContext(sess, uribl_context);
 
 	rc = SMTPF_CONTINUE;
 
@@ -353,7 +354,7 @@ uriCheckIp(Session *sess, const char *host)
 		snprintf(sess->msg.reject, sizeof (sess->msg.reject), "URI host %s in non-existant domain" ID_MSG(740), host, ID_ARG(sess));
 /*{REPLY
 }*/
-		sess->msg.policy = *optUriBlPolicy.string;
+		ctx->policy = *optUriBlPolicy.string;
 		statsCount(&stat_uri_ns_nxdomain);
 		rc = SMTPF_REJECT;
 		goto error0;
@@ -376,7 +377,7 @@ options.
 }*/
 				if (0 < verb_uri.option.value)
 					syslog(LOG_DEBUG, LOG_MSG(742) "%s", LOG_ARGS(sess), sess->msg.reject);
-				sess->msg.policy = *optUriBlPolicy.string;
+				ctx->policy = *optUriBlPolicy.string;
 				statsCount(&stat_uri_ip_in_ns);
 				rc = SMTPF_REJECT;
 				goto error0;
@@ -390,7 +391,7 @@ See <a href="summary.html#opt_uri_ns_nxdomain">uri-ns-nxdomain</a>
 and <a href="summary.html#opt_uri_bl_policy">uri-bl-policy</a>
 options.
 }*/
-				sess->msg.policy = *optUriBlPolicy.string;
+				ctx->policy = *optUriBlPolicy.string;
 				statsCount(&stat_uri_ns_nxdomain);
 				rc = SMTPF_REJECT;
 				goto error0;
@@ -412,7 +413,7 @@ See <a href="summary.html#opt_uri_reject_on_timeout">uri-reject-on-timeout</a>
 and <a href="summary.html#opt_uri_bl_policy">uri-bl-policy</a>
 options.
 }*/
-			sess->msg.policy = *optUriBlPolicy.string;
+			ctx->policy = *optUriBlPolicy.string;
 			rc = SMTPF_REJECT;
 		}
 		goto error0;
@@ -427,7 +428,7 @@ See <a href="summary.html#opt_uri_reject_unknown">uri-reject-unknown</a>
 and <a href="summary.html#opt_uri_bl_policy">uri-bl-policy</a>
 options.
 }*/
-			sess->msg.policy = *optUriBlPolicy.string;
+			ctx->policy = *optUriBlPolicy.string;
 			rc = SMTPF_REJECT;
 		}
 		goto error0;
@@ -465,7 +466,7 @@ options.
 }*/
 			if (0 < verb_uri.option.value)
 				syslog(LOG_DEBUG, LOG_MSG(747) "%s", LOG_ARGS(sess), sess->msg.reject);
-			sess->msg.policy = *optUriBlPolicy.string;
+			ctx->policy = *optUriBlPolicy.string;
 			statsCount(&stat_uri_ip_in_name);
 			rc = SMTPF_REJECT;
 			goto error0;
@@ -492,7 +493,7 @@ options.
 }*/
 		if (0 < verb_uri.option.value)
 			syslog(LOG_DEBUG, LOG_MSG(749) "%s", LOG_ARGS(sess), sess->msg.reject);
-		sess->msg.policy = *optUriBlPolicy.string;
+		ctx->policy = *optUriBlPolicy.string;
 		statsCount(&stat_uri_require_ptr);
 		rc = SMTPF_REJECT;
 	}
@@ -505,6 +506,8 @@ error0:
 static void
 setRejectMessage(Session *sess, const char *name, const char *list_name, int post_data, int msg_flag, Stats *stat)
 {
+	Uribl *ctx = filterGetContext(sess, uribl_context);
+
 	snprintf(sess->msg.reject, sizeof (sess->msg.reject), "black listed %s by %s" ID_NUM(762), name, list_name);
 /*{REPLY
 See
@@ -514,7 +517,7 @@ See
 and <a href="summary.html#opt_uri_bl_policy">uri-bl-policy</a>
 options.
 }*/
-	sess->msg.policy = *optUriBlPolicy.string;
+	ctx->policy = *optUriBlPolicy.string;
 
 	if (post_data) {
 		MSG_SET(sess, msg_flag);
@@ -522,147 +525,20 @@ options.
 	}
 }
 
-const char *
-isNameListed(Session *sess, DnsList *dns_list, Vector names_seen, int test_sub_domains, const char *name)
-{
-	int offset;
-	const char *list_name;
-
-	/* Find start of TLD. */
-	offset = indexValidTLD(name);
-
-	if (offset < 0) {
-		unsigned char ipv6[IPV6_BYTE_LENGTH];
-
-		if (parseIPv6(name, ipv6) <= 0)
-			return NULL;
-
-		/* Is an IP address. */
-		offset = 0;
-	}
-
-	/* Scan domain and subdomains from right-to-left. */
-	do {
-		offset = strlrcspn(name, offset-1, ".");
-
-		if (1 < verb_uri.option.value)
-			syslog(LOG_DEBUG, LOG_MSG(890) "isNameListed=%s", LOG_ARGS(sess), name+offset);
-
-		if ((list_name = dnsListLookup(sess, dns_list, names_seen, name+offset)) != NULL) {
-			if (0 < verb_uri.option.value)
-				syslog(LOG_DEBUG, LOG_MSG(890) "%s listed by %s", LOG_ARGS(sess), name+offset, list_name);
-			return list_name;
-		}
-	} while (test_sub_domains && 0 < offset);
-
-	return NULL;
-}
-
-static const char *
-nsListLookup0(Session *sess, DnsList *dns_list, Vector names_seen, int recurse, const char *name)
-{
-	PDQ_rr *rr, *ns_list;
-	const char *list_name = NULL;
-
-	if ((ns_list = pdqGet(sess->pdq, PDQ_CLASS_IN, PDQ_TYPE_NS, name, NULL)) != NULL) {
-		for (rr = ns_list; rr != NULL; rr = rr->next) {
-			if (0 < recurse && rr->rcode == PDQ_RCODE_OK && rr->type == PDQ_TYPE_SOA) {
-				list_name = nsListLookup0(sess, dns_list, names_seen, recurse-1, rr->name.string.value);
-				break;
-			} else if (rr->rcode == PDQ_RCODE_OK && rr->type == PDQ_TYPE_NS) {
-				recurse = 0;
-				if ((list_name = isNameListed(sess, dns_list, names_seen, optNsSubDomains.value, ((PDQ_PTR *) rr)->host.string.value)) != NULL)
-					break;
-			}
-		}
-
-		pdqFree(ns_list);
-	}
-
-	return list_name;
-}
-
-const char *
-nsListLookup(Session *sess, DnsList *dns_list, Vector names_seen, const char *name)
-{
-	/* Version 1 did an initial SOA lookup wnrl37.cheesereason.com
-	 * assuming the DNS server would return an SOA for the queried
-	 * host or parent domain. This does not always appear to be the
-	 * case. Example:
-	 *
-	 * 	dig soa wnrl37.cheesereason.com		SERVFAIL
-	 * 	dig soa cheesereason.com		OK (SOA result)
-	 * 	dig ns wnrl37.cheesereason.com    	OK (SOA result)
-	 * 	dig ns cheesereason.com    		OK (NS list)
-	 *
-	 * However if you do a NS lookup and get an SOA result, then
-	 * recurse once using the SOA domain. This still works fine for
-	 * CNAME records, like www.snert.com.
-	 *
-	 * An added benefit of this , is that you may often do in one
-	 * lookup what always took two before.
-	 */
-	return nsListLookup0(sess, dns_list, names_seen, 1, name);
-}
-
-static const char *free_mail_table[] = {
-	"gmail.*",
-	"googlemail.*",
-	"hotmail.*",
-	"yahoo.*",
-	"aol.*",
-	"aim.*",
-	"live.*",
-	"ymail.com",
-	"rocketmail.com",
-	"centrum.cz",
-	"centrum.sk",
-	"inmail24.com",
-	"libero.it",
-	"mail2world.com",
-	"msn.com",
-	"she.com",
-	"shuf.com",
-	"sify.com",
-	"terra.es",
-	"tiscali.it",
-	"ubbi.com",
-	"virgilio.it",
-	"voila.fr",
-	"walla.com",
-	"y7mail.com",
-	"yeah.net",
-	NULL
-};
-
 int
 mailBlLookup(Session *sess, const char *mail, Stats *stat)
 {
-	const char *list_name, *domain, **item;
+	const char *list_name;
 	Uribl *ctx = filterGetContext(sess, uribl_context);
 
-	if (optMailBlMax.value <= ctx->mail_count)
+	if (optMailBlMax.value <= VectorLength(ctx->uri_mail_seen))
 		return SMTPF_CONTINUE;
 
-	if ((domain = strchr(mail, '@')) == NULL)
-		return SMTPF_CONTINUE;
-	domain++;
-
-	/* Only test the free mail services commonly used for drop boxes. */
-	for (item = free_mail_table; *item != NULL; item++) {
-		if (0 <= TextFind(domain, *item, -1, 1))
-			break;
-	}
-
-	if (*item == NULL)
-		return SMTPF_CONTINUE;
-
-	ctx->mail_count++;
-
-	if ((list_name = dnsListQueryMail(sess, mail_bl, ctx->uri_mail_seen, mail)) != NULL) {
+	if ((list_name = dnsListQueryMail(mail_bl, sess->pdq, ctx->uri_mail_seen, mail)) != NULL) {
 		statsCount(stat);
-		sess->msg.policy = *optMailBlPolicy.string;
-		return replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 blacklisted <%s> by %s" ID_MSG(000) "\r\n", mail, list_name ID_ARG(sess));
+		ctx->policy = *optMailBlPolicy.string;
+		dnsListLogSys(sess, "mail-bl", mail, list_name);
+		return replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 rejected mail address, <%s> black listed by %s" ID_MSG(000) "\r\n", mail, list_name, ID_ARG(sess));
 	}
 
 	return SMTPF_CONTINUE;
@@ -678,7 +554,7 @@ uriblTestURI(Session *sess, URI *uri, int post_data)
 	Uribl *ctx = filterGetContext(sess, uribl_context);
 	const char *error, *body_tag, *msg, *host, *list_name;
 
-	if (uri == NULL || sess->msg.policy != '\0')
+	if (uri == NULL || ctx->policy != '\0')
 		return SMTPF_CONTINUE;
 
 	if (uri->host == NULL || (indexValidTLD(uri->host) <= 0 && spanIP(uri->host) <= 0))
@@ -737,7 +613,7 @@ See <a href="summary.html#opt_uri_require_domain">uri-require-domain</a>
 and <a href="summary.html#opt_uri_bl_policy">uri-bl-policy</a>
 options.
 }*/
-		sess->msg.policy = *optUriBlPolicy.string;
+		ctx->policy = *optUriBlPolicy.string;
 		statsCount(&stat_uri_require_domain);
 		goto error0;
 	}
@@ -754,7 +630,7 @@ options.
 /*{REPLY
 See <a href="summary.html#opt_uri_links_policy">uri-links-policy</a> option.
 }*/
-		sess->msg.policy = *optUriLinksPolicy.string;
+		ctx->policy = *optUriLinksPolicy.string;
 		if (post_data)
 			statsCount(&stat_uri_links_policy);
 		goto error0;
@@ -765,21 +641,25 @@ See <a href="summary.html#opt_uri_links_policy">uri-links-policy</a> option.
 
 	origin_is_different = origin != NULL && origin->host != NULL && strcmp(uri->host, origin->host) != 0;
 
-	if ((list_name = isNameListed(sess, uri_bl, NULL, optUriSubDomains.value, uri->host)) != NULL) {
+	if ((list_name = dnsListQuery(uri_bl, sess->pdq, ctx->uri_seen, optUriSubDomains.value, uri->host)) != NULL) {
 		setRejectMessage(sess, uri->host, list_name, post_data, MSG_IS_URIBL, &stat_uri_bl);
+		dnsListLogSys(sess, "uri-bl", uri->host, list_name);
 		goto error1;
 	}
-	if (origin_is_different && (list_name = isNameListed(sess, uri_bl, NULL, optUriSubDomains.value, origin->host)) != NULL) {
+	if (origin_is_different && (list_name = dnsListQuery(uri_bl, sess->pdq, ctx->uri_seen, optUriSubDomains.value, origin->host)) != NULL) {
 		setRejectMessage(sess, origin->host, list_name, post_data, MSG_IS_URIBL, &stat_uri_bl);
+		dnsListLogSys(sess, "uri-bl", origin->host, list_name);
 		goto error1;
 	}
 
-	if ((list_name = dnsListQueryIp(sess, uri_dns_bl, NULL, uri->host)) != NULL) {
+	if ((list_name = dnsListQueryIP(uri_dns_bl, sess->pdq, NULL, uri->host)) != NULL) {
 		setRejectMessage(sess, uri->host, list_name, post_data, MSG_IS_URIBL, &stat_uri_bl);
+		dnsListLogSys(sess, "uri-dns-bl", uri->host, list_name);
 		goto error1;
 	}
-	if (origin_is_different && (list_name = dnsListQueryIp(sess, uri_dns_bl, NULL, origin->host)) != NULL) {
+	if (origin_is_different && (list_name = dnsListQueryIP(uri_dns_bl, sess->pdq, NULL, origin->host)) != NULL) {
 		setRejectMessage(sess, origin->host, list_name, post_data, MSG_IS_URIBL, &stat_uri_bl);
+		dnsListLogSys(sess, "uri-dns-bl", origin->host, list_name);
 		goto error1;
 	}
 ignore1:
@@ -935,6 +815,8 @@ uriblConnect(Session *sess, va_list ignore)
 
 	LOG_TRACE(sess, 779, uriblConnect);
 
+	ctx->policy = '\0';
+
 	if ((ctx->uri_seen = VectorCreate(10)) != NULL)
 		VectorSetDestroyEntry(ctx->uri_seen, free);
 
@@ -944,7 +826,7 @@ uriblConnect(Session *sess, va_list ignore)
 	if ((ctx->uri_mail_seen = VectorCreate(10)) != NULL)
 		VectorSetDestroyEntry(ctx->uri_mail_seen, free);
 
-	sess->msg.policy = '\0';
+	ctx->policy = '\0';
 
 	return SMTPF_CONTINUE;
 }
@@ -956,12 +838,12 @@ uriblData(Session *sess, va_list ignore)
 
 	LOG_TRACE(sess, 780, uriblData);
 
-	sess->msg.policy = '\0';
 	*sess->msg.reject = '\0';
 
 #ifdef CONFUSED
 	ctx->uri_count = 0;
 #endif
+	ctx->policy = '\0';
 	ctx->distinct_uri_tested = 0;
 	ctx->mime = uriMimeCreate(0);
 
@@ -979,7 +861,7 @@ uriblNs(Session *sess, const char *host, Stats *stat)
 	if (*optNsBL.string == '\0'|| host == NULL || *host == '\0')
 		return SMTPF_CONTINUE;
 
-	if ((list_name = nsListLookup(sess, ns_bl, ctx->uri_ns_seen, host)) != NULL) {
+	if ((list_name = dnsListQueryNs(ns_bl, sess->pdq, ctx->uri_ns_seen, host)) != NULL) {
 		setRejectMessage(sess, host, list_name, 0, 0, stat);
 		statsCount(stat);
 		return SMTPF_REJECT;
@@ -1008,7 +890,7 @@ uriblCheckUri(Session *sess, URI *uri)
 See <a href="summary.html#opt_uri_max_limit">uri-max-limit</a> option.
 }*/
 			statsCount(&stat_uri_max_limit);
-			sess->msg.policy = 'r';
+			ctx->policy = 'r';
 			rc = SMTPF_REJECT;
 		} else
 #endif
@@ -1063,7 +945,7 @@ See <a href="summary.html#opt_uri_max_limit">uri-max-limit</a> option.
 
 				snprintf(sess->msg.reject, sizeof (sess->msg.reject), "URI %s invalid SOA (%d)" ID_NUM(000), uri->host, code);
 				statsCount(&stat_uri_valid_soa);
-				sess->msg.policy = 'r';
+				ctx->policy = 'r';
 				rc = SMTPF_REJECT;
 			}
 		}
@@ -1255,9 +1137,11 @@ uriblContent(Session *sess, va_list args)
 int
 uriblDot(Session *sess, va_list ignore)
 {
+	Uribl *ctx = filterGetContext(sess, uribl_context);
+
 	LOG_TRACE(sess, 784, uriblDot);
 
-	if (sess->msg.policy == 'd') {
+	if (ctx->policy == 'd') {
 		syslog(LOG_ERR, LOG_MSG(785) "discarded: %s", LOG_ARGS(sess), sess->msg.reject);
 /*{LOG
 See <a href="summary.html#opt_uri_bl_policy">uri-bl-policy</a> option.

@@ -22,6 +22,7 @@
 #include <com/snert/lib/mail/mime.h>
 #include <com/snert/lib/util/Text.h>
 #include <com/snert/lib/util/md5.h>
+#include <com/snert/lib/net/dnsList.h>
 
 /***********************************************************************
  ***
@@ -69,7 +70,7 @@ digestRegister(Session *sess, va_list ignore)
 int
 digestInit(Session *null, va_list ignore)
 {
-	digest_bl = dnsListCreate(&optDigestBL);
+	digest_bl = dnsListCreate(optDigestBL.string);
 	return SMTPF_CONTINUE;
 }
 
@@ -110,7 +111,7 @@ digestListLookup(Session *sess, DnsList *dnslist, const char *name)
 	);
 
 	if (answers != NULL) {
-		list_name = dnsListIsListed(sess, dnslist, name, answers);
+		list_name = dnsListIsNameListed(dnslist, name, answers);
 		pdqFree(answers);
 	}
 

@@ -37,20 +37,7 @@ extern int rblConnect(Session *sess, va_list ignore);
 extern int rblIdle(Session *sess, va_list ignore);
 extern int rblHeaders(Session *sess, va_list args);
 
-#ifdef ENABLE_PDQ
-typedef struct {
-	Option *option;
-	Vector suffixes;
-	unsigned long *masks;
-} DnsList;
-
-extern void dnsListFree(void *_list);
-extern DnsList *dnsListCreate(Option *option);
-extern const char *dnsListIsListed(Session *sess, DnsList *dnslist, const char *name, PDQ_rr *list);
-extern const char *dnsListLookup(Session *sess, DnsList *dnslist, Vector names_seen, const char *name);
-extern const char *dnsListQueryIp(Session *sess, DnsList *dns_list, Vector names_seen, const char *name);
-extern const char *dnsListQueryMail(Session *sess, DnsList *dns_list, Vector mails_seen, const char *mail);
-#endif
+extern void dnsListLogSys(Session *sess, const char *option, const char *name, const char *list);
 
 /***********************************************************************
  ***
