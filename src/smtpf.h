@@ -373,7 +373,6 @@ typedef struct {
 	unsigned long mail_flags;
 	unsigned long rcpt_flags;
 	int count;
-	int policy;
 	int bw_state;
 	int spf_mail;
 	int seen_final_dot;
@@ -423,7 +422,7 @@ typedef struct {
 #define CLIENT_IS_GREY_EXEMPT		0x00100000	/* * Client exempt from grey-listing. */
 #define CLIENT_PASSED_GREY		0x00200000	/* Client has previously passed grey-listing. */
 #define CLIENT_PIPELINING		0x00400000	/* Client sent next command before end of reply. */
-#define CLIENT_PIPELINING_OK		0x00800000	/* Client allowed to pipeline. */
+#define CLIENT_SMTP_LOWER_CASE		0x00800000
 #define CLIENT_IO_ERROR			0x01000000
 #define CLIENT_RATE_LIMIT		0x02000000
 #define CLIENT_CONCURRENCY_LIMIT	0x04000000

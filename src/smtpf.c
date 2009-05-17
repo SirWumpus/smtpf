@@ -367,11 +367,7 @@ writeClient(Session *sess, const char *line, long length)
 
 			statsCount(&stat_client_pipelining_seen);
 			CLIENT_SET(sess, CLIENT_PIPELINING);
-#ifdef ENABLE_PIPELINE_TAG
-			if (accessClient(sess, "pipeline:", sess->client.name, sess->client.addr, NULL, NULL, 1) == SMDB_ACCESS_OK)
-				CLIENT_SET(sess, CLIENT_PIPELINING_OK);
-			else
-#endif
+
 			/* Save a rejection message if pipelining seen
 			 * during pre-greeting traffic, following a HELO
 			 * where it cannot be assumed, or following EHLO
@@ -1139,6 +1135,7 @@ testOnCommandInit(void)
 void
 sessionProcess(Session *sess)
 {
+	char *p;
 	Command *s;
 	time_t elapsed;
 	TIMER_DECLARE(banner);
@@ -1276,6 +1273,13 @@ SMTP commands and their arguments can only consist of printable ASCII characters
 			for (s = &sess->state[1]; s->command != NULL; s++) {
 				if (0 <= TextInsensitiveStartsWith(sess->input, s->command))
 					break;
+			}
+
+			for (p = sess->input; !isspace(*p) && *p != '\0'; p++) {
+				if (islower(*p)) {
+					CLIENT_SET(sess, CLIENT_SMTP_LOWER_CASE);
+					break;
+				}
 			}
 
 #if defined(HAS_BEEN_MOVED)

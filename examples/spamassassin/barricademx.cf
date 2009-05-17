@@ -1,7 +1,14 @@
 #
 # BarricadeMX SpamAssassin ruleset
-# Version: 1.1 (2009-02-20)
+# Version: 1.3 (2009-05-17)
 #
+
+# Load plug-in
+loadplugin Mail::SpamAssassin::Plugin::BarricadeMX barricademx.pm
+
+ifplugin Mail::SpamAssassin::Plugin::BarricadeMX
+header   __BMX_HEADER		eval:bmx_get_sid()
+endif
 
 header   BMX_FROM_LAN		X-smtpf-Report =~ /[=,;]lan[,;]?/
 describe BMX_FROM_LAN		BarricadeMX: SMTP client is from rfc1918 address space
@@ -60,3 +67,23 @@ score    BMX_GREY 		0.001
 header   BMX_BLACK 		X-smtpf-Report =~ /[=,;]black[,;]?/
 describe BMX_BLACK 		BarricadeMX: blacklisted
 score    BMX_BLACK 		10
+
+header   BMX_BAD_RCPTS		X-smtpf-Report =~ /nrcpt=\d+:(?!0)\d+/
+describe BMX_BAD_RCPTS		BarricadeMX: message was sent to one or more recipients that were rejected at SMTP time
+score    BMX_BAD_RCPTS		2.0
+
+header   BMX_P0F_WINDOWS	X-p0f-Report =~ /\bWindows\b/
+describe BMX_P0F_WINDOWS	BarricadeMX: delivered by a host running Windows
+score    BMX_P0F_WINDOWS	0.001
+
+header   BMX_P0F_LINUX		X-p0f-Report =~ /\bLinux\b/
+describe BMX_P0F_LINUX		BarricadeMX: delivered by a host running Linux
+score    BMX_P0F_LINUX		0.001
+
+header   BMX_P0F_UNIX		X-p0f-Report =~ /\b(AIX|Solaris|FreeBSD|OpenBSD|NetBSD|Irix|Tru64|HP-UX|BSD\/OS|SCO)\b/
+describe BMX_P0F_UNIX		BarricadeMX: delivered by a host running UNIX
+score    BMX_P0F_UNIX		0.001
+
+header   BMX_SMTP_LOWERCASE	X-smtpf-Report =~ /[=,;]smtp_lower_case[,;]?/
+describe BMX_SMTP_LOWERCASE	BarricadeMX: SMTP client used lower/mixed case commands
+score    BMX_SMTP_LOWERCASE	2.0
