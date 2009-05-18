@@ -37,7 +37,7 @@ extern int rblConnect(Session *sess, va_list ignore);
 extern int rblIdle(Session *sess, va_list ignore);
 extern int rblHeaders(Session *sess, va_list args);
 
-extern void dnsListLogSys(Session *sess, const char *option, const char *name, const char *list);
+extern void dnsListSysLog(Session *sess, const char *option, const char *name, const char *list);
 
 /***********************************************************************
  ***

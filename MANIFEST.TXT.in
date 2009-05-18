@@ -57,8 +57,7 @@ com/snert/src/@PACKAGE_NAME@/examples/welcome.txt
 com/snert/src/@PACKAGE_NAME@/examples/startup.sh.in
 com/snert/src/@PACKAGE_NAME@/examples/sendmail-hub.mc
 com/snert/src/@PACKAGE_NAME@/examples/spamassassin/barricademx.cf
-com/snert/src/@PACKAGE_NAME@/examples/spamassassin/smf.cf
-com/snert/src/@PACKAGE_NAME@/examples/spamassassin/smf.pm
+com/snert/src/@PACKAGE_NAME@/examples/spamassassin/barricademx.pm
 com/snert/src/@PACKAGE_NAME@/examples/extra/bmx-antiphishingreply-update.pl
 com/snert/src/@PACKAGE_NAME@/examples/extra/bmx-uribl-update.pl
 com/snert/src/@PACKAGE_NAME@/install.sh.in

@@ -282,6 +282,15 @@ is no set schedule for releases.
    -	Removed smtp-disconnect-after-dot; left over version 1 dupmsg
 	handling. Cause version 2 dupmsg handling to break when enabled.
 
+   -	rbl.c, digest.c, uribl.c: Removed old DNS query code; removed
+	duplicated dnsList functions in favour of using libsnert
+	versions.
+
+   -	Removed CLIENT_PIPELINING_OK; never enabled.
+
+   +	Added CLIENT_SMTP_LOWER_CASE flag for SpamAssassin scoring.
+   	Requested by Steve Freegard.
+
 --2.2.19--
 
    +	Added mail-strict option to validate the free mail sender

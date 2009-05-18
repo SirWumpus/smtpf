@@ -70,7 +70,7 @@ rblRegister(Session *null, va_list ignore)
 }
 
 void
-dnsListLogSys(Session *sess, const char *option, const char *name, const char *list)
+dnsListSysLog(Session *sess, const char *option, const char *name, const char *list)
 {
        if (verb_info.option.value)
 	       syslog(LOG_INFO, LOG_MSG(523) "%s found %s %s", LOG_ARGS(sess), option, name, list);
@@ -113,7 +113,7 @@ rblConnect(Session *sess, va_list ignore)
 		if ((list_name = dnsListQueryName(dns_bl, sess->pdq, NULL, sess->client.addr)) != NULL) {
 			statsCount(&stat_dns_bl);
 			CLIENT_SET(sess, CLIENT_IS_BLACK);
-			dnsListLogSys(sess, "dns-bl", sess->client.addr, list_name);
+			dnsListSysLog(sess, "dns-bl", sess->client.addr, list_name);
 			return replyPushFmt(sess, SMTPF_DELAY|SMTPF_SESSION|SMTPF_DROP, "550 5.7.0 " CLIENT_FORMAT " black listed by %s" ID_MSG(525) "\r\n", CLIENT_INFO(sess), list_name, ID_ARG(sess));
 		}
 	}
@@ -139,7 +139,7 @@ rblCheckString(Session *sess, const char *value)
 			if ((list_name = dnsListQueryName(dns_bl, sess->pdq, NULL, ip)) != NULL) {
 				MSG_SET(sess, MSG_IS_DNSBL);
 				statsCount(&stat_dns_bl_headers);
-				dnsListLogSys(sess, "dns-bl", ip, list_name);
+				dnsListSysLog(sess, "dns-bl", ip, list_name);
 				return replyPushFmt(sess, SMTPF_REJECT, "550 5.7.0 IP [%s] in header black listed by %s" ID_MSG(873) "\r\n", ip, list_name, ID_ARG(sess));
 			}
 
@@ -238,7 +238,7 @@ dnswlConnect(Session *sess, va_list ignore)
 	if ((list_name = dnsListQueryName(dnswl, sess->pdq, NULL, sess->client.addr)) != NULL) {
 		statsCount(&stat_dns_wl);
 		CLIENT_SET(sess, CLIENT_IS_WHITE);
-		dnsListLogSys(sess, "dns-wl", sess->client.addr, list_name);
+		dnsListSysLog(sess, "dns-wl", sess->client.addr, list_name);
 		return sess->client.bw_state = SMTPF_ACCEPT;
 	}
 
@@ -286,7 +286,7 @@ dnsglConnect(Session *sess, va_list ignore)
 	if ((list_name = dnsListQueryName(dnsgl, sess->pdq, NULL, sess->client.addr)) != NULL) {
 		statsCount(&stat_dns_gl);
 		CLIENT_SET(sess, CLIENT_IS_GREY);
-		dnsListLogSys(sess, "dns-gl", sess->client.addr, list_name);
+		dnsListSysLog(sess, "dns-gl", sess->client.addr, list_name);
 		return sess->client.bw_state = SMTPF_GREY;
 	}
 

@@ -141,14 +141,12 @@ static const char usage_mail_bl[] =
 ;
 Option optMailBl		= { "mail-bl",		"",			usage_mail_bl };
 
-#ifdef NOT_YET
 static const char usage_mail_bl_headers[] =
   "A list of mail headers to parse for mail addresses and check against\n"
 "# one or more MAIL BL. Specify the empty list to disable.\n"
 "#"
 ;
-Option optMailBlHeaders		= { "mail-bl-headers",	"",			usage_mail_bl_headers };
-#endif
+Option optMailBlHeaders		= { "mail-bl-headers",	"From;Reply-To",	usage_mail_bl_headers };
 
 static const char usage_mail_bl_max[] =
   "Maximum number of unique mail addresses to check. Specify zero for\n"
@@ -166,9 +164,7 @@ static const char usage_mail_bl_policy[] =
 Option optMailBlPolicy		= { "mail-bl-policy",	"reject",		usage_mail_bl_policy };
 
 Stats stat_mail_bl_mail		= { STATS_TABLE_MAIL,	"mail-bl-mail" };
-#ifdef NOT_YET
 Stats stat_mail_bl_hdr		= { STATS_TABLE_MSG,	"mail-bl-hdr" };
-#endif
 Stats stat_mail_bl_body		= { STATS_TABLE_MSG,	"mail-bl-body" };
 
 static const char usage_ns_bl[] =
@@ -537,7 +533,7 @@ mailBlLookup(Session *sess, const char *mail, Stats *stat)
 	if ((list_name = dnsListQueryMail(mail_bl, sess->pdq, ctx->uri_mail_seen, mail)) != NULL) {
 		statsCount(stat);
 		ctx->policy = *optMailBlPolicy.string;
-		dnsListLogSys(sess, "mail-bl", mail, list_name);
+		dnsListSysLog(sess, "mail-bl", mail, list_name);
 		return replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 rejected mail address, <%s> black listed by %s" ID_MSG(000) "\r\n", mail, list_name, ID_ARG(sess));
 	}
 
@@ -643,23 +639,23 @@ See <a href="summary.html#opt_uri_links_policy">uri-links-policy</a> option.
 
 	if ((list_name = dnsListQuery(uri_bl, sess->pdq, ctx->uri_seen, optUriSubDomains.value, uri->host)) != NULL) {
 		setRejectMessage(sess, uri->host, list_name, post_data, MSG_IS_URIBL, &stat_uri_bl);
-		dnsListLogSys(sess, "uri-bl", uri->host, list_name);
+		dnsListSysLog(sess, "uri-bl", uri->host, list_name);
 		goto error1;
 	}
 	if (origin_is_different && (list_name = dnsListQuery(uri_bl, sess->pdq, ctx->uri_seen, optUriSubDomains.value, origin->host)) != NULL) {
 		setRejectMessage(sess, origin->host, list_name, post_data, MSG_IS_URIBL, &stat_uri_bl);
-		dnsListLogSys(sess, "uri-bl", origin->host, list_name);
+		dnsListSysLog(sess, "uri-bl", origin->host, list_name);
 		goto error1;
 	}
 
 	if ((list_name = dnsListQueryIP(uri_dns_bl, sess->pdq, NULL, uri->host)) != NULL) {
 		setRejectMessage(sess, uri->host, list_name, post_data, MSG_IS_URIBL, &stat_uri_bl);
-		dnsListLogSys(sess, "uri-dns-bl", uri->host, list_name);
+		dnsListSysLog(sess, "uri-dns-bl", uri->host, list_name);
 		goto error1;
 	}
 	if (origin_is_different && (list_name = dnsListQueryIP(uri_dns_bl, sess->pdq, NULL, origin->host)) != NULL) {
 		setRejectMessage(sess, origin->host, list_name, post_data, MSG_IS_URIBL, &stat_uri_bl);
-		dnsListLogSys(sess, "uri-dns-bl", origin->host, list_name);
+		dnsListSysLog(sess, "uri-dns-bl", origin->host, list_name);
 		goto error1;
 	}
 ignore1:
@@ -759,9 +755,7 @@ uriRegister(Session *sess, va_list ignore)
 	optionsRegister(&optUriValidSoa,		0);
 
 	optionsRegister(&optMailBl, 			1);
-#ifdef NOT_YET
 	optionsRegister(&optMailBlHeaders, 		0);
-#endif
 	optionsRegister(&optMailBlMax, 			0);
 	optionsRegister(&optMailBlPolicy,		0);
 
@@ -769,9 +763,7 @@ uriRegister(Session *sess, va_list ignore)
 	optionsRegister(&optNsSubDomains, 		0);
 
 	(void) statsRegister(&stat_mail_bl_mail);
-#ifdef NOT_YET
 	(void) statsRegister(&stat_mail_bl_hdr);
-#endif
 	(void) statsRegister(&stat_mail_bl_body);
 
 	(void) statsRegister(&stat_ns_bl_ptr);
@@ -991,7 +983,6 @@ uriCheckString(Session *sess, const char *value)
 	return rc;
 }
 
-#ifdef NOT_YET
 static int
 mailBlCheckString(Session *sess, const char *value)
 {
@@ -1000,7 +991,7 @@ mailBlCheckString(Session *sess, const char *value)
 	Mime *mime;
 
 	if (1 < verb_uri.option.value)
-		syslog(LOG_DEBUG, LOG_MSG(000) "mailCheckString value=\"%s\"", LOG_ARGS(sess), value);
+		syslog(LOG_DEBUG, LOG_MSG(000) "mailBlCheckString value=\"%s\"", LOG_ARGS(sess), value);
 
 	if ((mime = uriMimeCreate(0)) == NULL)
 		return SMTPF_CONTINUE;
@@ -1021,7 +1012,6 @@ mailBlCheckString(Session *sess, const char *value)
 
 	return rc;
 }
-#endif
 
 int
 uriblHeaders(Session *sess, va_list args)
@@ -1029,7 +1019,7 @@ uriblHeaders(Session *sess, va_list args)
 	int rc;
 	long i, length;
 	char *hdr, **table;
-	Vector headers, search;
+	Vector headers, uri_hdrs, mail_hdrs;
 	Uribl *ctx = filterGetContext(sess, uribl_context);
 
 	LOG_TRACE(sess, 897, uriblHeaders);
@@ -1050,10 +1040,13 @@ uriblHeaders(Session *sess, va_list args)
 		}
 	}
 
-	if (*optUriBlHeaders.string == '\0' || CLIENT_ANY_SET(sess, CLIENT_USUAL_SUSPECTS))
+	if (CLIENT_ANY_SET(sess, CLIENT_USUAL_SUSPECTS))
 		return SMTPF_CONTINUE;
 
-	if ((search = TextSplit(optUriBlHeaders.string, ";, ", 0)) == NULL)
+	uri_hdrs = TextSplit(optUriBlHeaders.string, ";, ", 0);
+	mail_hdrs = TextSplit(optMailBlHeaders.string, ";, ", 0);
+
+	if (uri_hdrs == NULL && mail_hdrs == NULL)
 		return SMTPF_CONTINUE;
 
 	rc = SMTPF_CONTINUE;
@@ -1061,18 +1054,29 @@ uriblHeaders(Session *sess, va_list args)
 		if ((hdr = VectorGet(headers, i)) == NULL)
 			continue;
 
-		for (table = (char **) VectorBase(search); *table != NULL; table++) {
+		for (table = (char **) VectorBase(uri_hdrs); *table != NULL; table++) {
 			if (0 < (length = TextInsensitiveStartsWith(hdr, *table)) && hdr[length] == ':') {
 				if (verb_uri.option.value)
-					syslog(LOG_DEBUG, LOG_MSG(898) "uriblHeaders hdr=\"%s\"", LOG_ARGS(sess), hdr);
+					syslog(LOG_DEBUG, LOG_MSG(898) "uri-bl-headers hdr=\"%s\"", LOG_ARGS(sess), hdr);
 
 				if ((rc = uriCheckString(sess, hdr + length + 1)) != SMTPF_CONTINUE)
 					goto done;
 			}
 		}
+
+		for (table = (char **) VectorBase(mail_hdrs); *table != NULL; table++) {
+			if (0 < (length = TextInsensitiveStartsWith(hdr, *table)) && hdr[length] == ':') {
+				if (verb_uri.option.value)
+					syslog(LOG_DEBUG, LOG_MSG(000) "mail-bl-headers hdr=\"%s\"", LOG_ARGS(sess), hdr);
+
+				if ((rc = mailBlCheckString(sess, hdr + length + 1)) != SMTPF_CONTINUE)
+					goto done;
+			}
+		}
 	}
 done:
-	VectorDestroy(search);
+	VectorDestroy(mail_hdrs);
+	VectorDestroy(uri_hdrs);
 
 	return rc;
 }
