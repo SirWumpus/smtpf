@@ -1060,13 +1060,43 @@ Reject if a sender's NS is in a non-existant domain.
 </dd>
 -->
 
+<a name="opt_mail_bl"></a>
+<dt><span class="syntax">mail-bl=</span><span class="param"></span></dt>
+<dd>
+A list of MD5 based MAIL BL suffixes to consult. Aggregate lists are
+supported using suffix/mask. Without a /mask, suffix is the same as
+suffix/0x00FFFFFE.
+</dd>
+
+<a name="opt_mail_bl_headers"></a>
+<dt><span class="syntax">mail-bl-headers=</span><span class="param">From;Reply-To</span></dt>
+<dd>
+A list of mail headers to parse for mail addresses and check against
+one or more MAIL BL. Specify the empty list to disable.
+</dd>
+
+<a name="opt_mail_bl_max"></a>
+<dt><span class="syntax">mail-bl-max=</span><span class="param">10</span></dt>
+<dd>
+Maximum number of unique mail addresses to check. Specify zero for
+unlimited.
+</dd>
+
+<a name="opt_mail_bl_max"></a>
+<dt><span class="syntax">mail-bl-reject=</span><span class="param">reject</span></dt>
+<dd>
+Check if the message contains a black listed mail address found by
+mail-bl.  Specify one of none, tag, quarantine, reject, or discard.
+</dd>
+
+
 <a name="opt_mail_require_mx"></a>
 <dt>+<span class="option">mail-require-mx</span></dt>
 <dd>
 Reject if the sender's domain has no MX record.
 </dd>
 
-<a name="opt_mail_require_mx"></a>
+<a name="opt_mail_retest_client"></a>
 <dt>-<span class="option">mail-retest-client</span></dt>
 <dd>
 If set, recheck the client IP every message transaction. A client's
