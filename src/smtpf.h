@@ -662,6 +662,7 @@ extern int serverOptn1(Session *null, va_list ignore);
 
 extern int getRFC2821DateTime(struct tm *local, char *buffer, size_t size);
 extern ParsePath *rcptFindFirstValid(Session *sess);
+extern int welcome(Session *sess);
 
 /***********************************************************************
  ***

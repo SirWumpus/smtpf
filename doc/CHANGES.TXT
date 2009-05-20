@@ -268,8 +268,10 @@ is no set schedule for releases.
    	This might have to be a change in socketOpen, in which it
    	handles CNAME -> A redirections.
 
-   +	XCLIENT support http://www.postfix.org/XCLIENT_README.html
 
+--2.2.21--
+
+   +	XCLIENT support http://www.postfix.org/XCLIENT_README.html
 
 --2.2.21--
 

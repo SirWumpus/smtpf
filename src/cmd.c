@@ -270,6 +270,8 @@ we force the client to down grade to the older HELO command per RFC 2821.
 		reply = REPLY_APPEND_CONST(reply, "250-PIPELINING\r\n");
 	if (optRFC16528bitmime.value)
 		reply = REPLY_APPEND_CONST(reply, "250-8BITMIME\r\n");
+	if (CLIENT_ANY_SET(sess, CLIENT_IS_LOCALHOST))
+		reply = REPLY_APPEND_CONST(reply, "250-XCLIENT NAME ADDR HELO PROTO\r\n");
 #ifdef ENABLE_STARTTLS
 	reply = REPLY_APPEND_CONST(reply, "250-STARTTLS\r\n");
 #endif
@@ -2201,6 +2203,106 @@ or there is a typo in the session ID given.
 	return rc;
 }
 
+int
+cmdXclient(Session *sess)
+{
+	long length;
+	Vector args;
+	int rc, type;
+	PDQ_rr *rr = NULL, *rr_list;
+	const char **list, *value;
+
+	if (CLIENT_NOT_SET(sess, CLIENT_USUAL_SUSPECTS))
+		return cmdOutOfSequence(sess);
+
+	statsCount(&stat_admin_commands);
+
+	if ((rc = cmdMissingArg(sess, sizeof ("XCLIENT ")-1)) != SMTPF_CONTINUE)
+		return rc;
+
+	sess->state = state0;
+	CLIENT_CLEAR_ALL(sess);
+	sess->client.helo[0] = '\0';
+
+	args = TextSplit(sess->input+sizeof ("XCLIENT ")-1, " ", 0);
+	for (list = (const char **) VectorBase(args);  *list != NULL; list++) {
+		if (0 <= TextInsensitiveStartsWith(*list, "NAME=")) {
+			value = *list + sizeof ("NAME=")-1;
+			if (TextInsensitiveCompare(value, "[UNAVAILABLE]") == 0) {
+				CLIENT_SET(sess, CLIENT_NO_PTR);
+				statsCount(&stat_client_ptr_required);
+
+			} else if (TextInsensitiveCompare(value, "[TEMPUNAVAIL]") == 0) {
+				CLIENT_SET(sess, CLIENT_NO_PTR|CLIENT_NO_PTR_ERROR);
+				statsCount(&stat_client_ptr_required_error);
+				statsCount(&stat_client_ptr_required);
+			} else {
+				length = TextCopy(sess->client.name, sizeof (sess->client.name), value);
+				if (0 < length && sess->client.name[length-1] == '.')
+					sess->client.name[length-1] = '\0';
+				TextLower(sess->client.name, length);
+			}
+			continue;
+		}
+		if (0 <= TextInsensitiveStartsWith(*list, "ADDR=")) {
+			value = *list + sizeof ("ADDR=")-1;
+			if (0 < parseIPv6(value, sess->client.ipv6))
+				length = TextCopy(sess->client.addr, sizeof (sess->client.addr), value);
+			continue;
+		}
+		if (0 <= TextInsensitiveStartsWith(*list, "HELO=")) {
+			value = *list + sizeof ("HELO=")-1;
+			length = TextCopy(sess->client.helo, sizeof (sess->client.helo), value);
+			continue;
+		}
+		if (0 <= TextInsensitiveStartsWith(*list, "PROTO=")) {
+			value = *list + sizeof ("PROTO=")-1;
+			if (TextInsensitiveCompare(value, "SMTP") == 0) {
+				sess->state = sess->helo_state = stateHelo;
+			} else if (TextInsensitiveCompare(value, "ESMTP") == 0) {
+				sess->state = sess->helo_state = stateEhlo;
+			}
+			continue;
+		}
+
+		return replySetFmt(sess, SMTPF_REJECT, "501 5.5.4 invalid argument %s" ID_MSG(000) CRLF, *list, ID_ARG(sess));
+	}
+
+	if (isReservedIPv6(sess->client.ipv6, IS_IP_LOCAL)) {
+		CLIENT_SET(sess, CLIENT_IS_LOCALHOST);
+	}
+	if (isReservedIPv6(sess->client.ipv6, IS_IP_LAN)) {
+		CLIENT_SET(sess, CLIENT_IS_LAN);
+	}
+	if (routeKnownClientAddr(sess) || routeKnownClientName(sess)) {
+		CLIENT_SET(sess, CLIENT_IS_RELAY);
+	}
+
+	type = isReservedIPv6(sess->client.ipv6, IS_IP_V4) ? PDQ_TYPE_A : PDQ_TYPE_AAAA;
+
+	if (CLIENT_NOT_SET(sess, CLIENT_IS_RELAY) && type == PDQ_TYPE_A
+	&& isIPv4InClientName(sess->client.name, sess->client.ipv6+IPV6_OFFSET_IPV4))
+		CLIENT_SET(sess, CLIENT_IS_IP_IN_PTR);
+
+	CLIENT_SET(sess, CLIENT_IS_FORGED);
+	if ((rr_list = pdqGet(sess->pdq, PDQ_CLASS_IN, type, sess->client.name, NULL)) != NULL) {
+		for (rr = rr_list; rr != NULL; rr = rr->next) {
+			if (rr->rcode == PDQ_RCODE_OK && rr->type == type
+			&& memcmp(sess->client.ipv6, ((PDQ_A *) rr)->address.ip.value, sizeof (sess->client.ipv6)) == 0) {
+				CLIENT_CLEAR(sess, CLIENT_IS_FORGED);
+				break;
+			}
+		}
+
+		pdqFree(rr_list);
+	}
+
+	syslog(LOG_INFO, LOG_MSG(000) "xclient " CLIENT_FORMAT " f=\"%s\" h=\"%s\"", LOG_ARGS(sess), CLIENT_INFO(sess), clientFlags(sess), sess->client.helo);
+	VectorDestroy(args);
+
+	return welcome(sess);
+}
+
 struct command state0[] = {
 	{ "CONN", cmdUnknown },		/* First entry is state name. */
 #ifdef ENABLE_TEST_ON_COMMAND
@@ -2228,6 +2330,7 @@ struct command state0[] = {
 	{ "KILL", cmdKill },
 	{ "CACHE", cacheCommand },
 	{ "INFO", infoCommand },
+	{ "XCLIENT", cmdXclient },
 	{ NULL, cmdUnknown }
 };
 
@@ -2258,6 +2361,7 @@ struct command stateHelo[] = {
 	{ "KILL", cmdKill },
 	{ "CACHE", cacheCommand },
 	{ "INFO", infoCommand },
+	{ "XCLIENT", cmdXclient },
 	{ NULL, cmdUnknown }
 };
 
@@ -2292,6 +2396,7 @@ struct command stateEhlo[] = {
 	{ "KILL", cmdKill },
 	{ "CACHE", cacheCommand },
 	{ "INFO", infoCommand },
+	{ "XCLIENT", cmdXclient },
 	{ NULL, cmdUnknown }
 };
 
@@ -2322,6 +2427,7 @@ struct command stateMail[] = {
 	{ "KILL", cmdOutOfSequence },
 	{ "CACHE", cmdOutOfSequence },
 	{ "INFO", cmdOutOfSequence },
+	{ "XCLIENT", cmdOutOfSequence },
 	{ NULL, cmdUnknown }
 };
 
@@ -2352,6 +2458,7 @@ struct command stateRcpt[] = {
 	{ "KILL", cmdOutOfSequence },
 	{ "CACHE", cmdOutOfSequence },
 	{ "INFO", cmdOutOfSequence },
+	{ "XCLIENT", cmdOutOfSequence },
 	{ NULL, cmdUnknown }
 };
 
@@ -2387,6 +2494,7 @@ struct command stateSink[] = {
 	{ "KILL", cmdOutOfSequence },
 	{ "CACHE", cmdOutOfSequence },
 	{ "INFO", cmdOutOfSequence },
+	{ "XCLIENT", cmdOutOfSequence },
 	{ NULL, cmdUnknown }
 };
 

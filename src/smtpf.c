@@ -671,7 +671,8 @@ static char *welcome_default[] = {
 	NULL
 };
 
-static int
+#ifdef OLD_WELCOME
+int
 welcome(Session *sess)
 {
 	int rc;
@@ -716,6 +717,47 @@ The first line of possible a multiline welcome banner.
 
 	return 0;
 }
+#else
+int
+welcome(Session *sess)
+{
+	char **p;
+	Reply *reply;
+
+	/* Some broken SMTP client software (Trend Micro?) cannot
+	 * handle multiple line banners, and so get out of sync
+	 * with the response codes. So if we white list a host,
+	 * just give them a simple one line banner.
+	 */
+	if (CLIENT_ANY_SET(sess, CLIENT_USUAL_SUSPECTS|CLIENT_IS_GREY)) {
+		return replySetFmt(
+				sess, SMTPF_CONTINUE, "220 %s %sSMTP" ID_MSG(632) CRLF,
+				sess->iface->name, optSmtpEnableEsmtp.value ? "E" : "",
+				ID_ARG(sess)
+		);
+/*{REPLY
+A stripped down single line welcome banner sent to only localhost, LAN, and relays.
+}*/
+	}
+
+	p = 0 < VectorLength(welcome_msg) ? (char **) VectorBase(welcome_msg) : welcome_default;
+	reply = replyFmt(
+		SMTPF_CONTINUE, "220%c%s %sSMTP %s" ID_MSG(633) CRLF,
+		p[1] == NULL ? ' ' : '-', sess->iface->name,
+		optSmtpEnableEsmtp.value || CLIENT_ANY_SET(sess, CLIENT_HOLY_TRINITY) ? "E" : "",
+		*p, ID_ARG(sess)
+	);
+/*{REPLY
+The first line of possible a multiline welcome banner.
+}*/
+
+	for (p++; *p != NULL; p++) {
+		reply = replyAppendFmt(reply, "220%c%s" CRLF, p[1] == NULL ? ' ' : '-', *p);
+	}
+
+	return replyPush(sess, reply);
+}
+#endif
 
 void
 keepAlive(Session *sess)
@@ -1185,6 +1227,7 @@ the session "end" log line only.
 			syslog(LOG_DEBUG, LOG_MSG(638) "before welcome time-elapsed=" TIMER_FORMAT, LOG_ARGS(sess), TIMER_FORMAT_ARG(diff_banner));
 	}
 
+#ifdef OLD_WELCOME
  	switch (filterRun(sess, filter_connect_table)) {
 	case SMTPF_TEMPFAIL:
 		(void) replySend(sess);
@@ -1200,6 +1243,23 @@ the session "end" log line only.
 			goto error0;
 		break;
  	}
+#else
+ 	switch (filterRun(sess, filter_connect_table)) {
+	default:
+		(void) welcome(sess);
+		/*@fallthrough@*/
+
+	case SMTPF_TEMPFAIL:
+		break;
+
+ 	case SMTPF_DROP:
+ 	case SMTPF_REJECT:
+		(void) replySend(sess);
+		goto error0;
+	}
+
+	(void) replySend(sess);
+#endif
 
 	/* Black listed clients get less priority. */
 	if (CLIENT_ANY_SET(sess, CLIENT_IS_BLACK))
