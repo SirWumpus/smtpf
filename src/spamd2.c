@@ -126,7 +126,7 @@ spamd_user(Session *sess)
 
 	/* A single recipient? */
 	else if (sess->msg.rcpt_count == 1)
-		(void) accessEmail(sess, ACCESS_TAG, sess->msg.fwds->rcpts->rcpt->address.string, NULL, &value);
+		(void) accessEmail(sess, ACCESS_TAG, first_rcpt->address.string, NULL, &value);
 
 	/* Otherwise check that all the recipients are within the
 	 * same domain before looking up by domain name.
