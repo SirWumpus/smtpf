@@ -271,6 +271,13 @@ is no set schedule for releases.
    +	XCLIENT support http://www.postfix.org/XCLIENT_README.html
 
 
+--2.2.21--
+
+   *	Requires Libsnert 1.71.6
+
+   +	Added mail-bl-domains to accept a list of domains for which
+   	to test against MAIL BLs, typically only free mail services.
+
 --2.2.20--
 
    *	Requires Libsnert 1.71.5
