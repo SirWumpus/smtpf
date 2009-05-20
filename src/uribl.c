@@ -134,7 +134,7 @@ Verbose verb_mail_bl		= { { "mail-bl",	"-", "" } };
 
 
 static const char usage_mail_bl[] =
-  "A list of name based MAIL BL suffixes to consult. Aggregate lists are\n"
+  "A list of MD5 based MAIL BL suffixes to consult. Aggregate lists are\n"
 "# supported using suffix/mask. Without a /mask, suffix is the same as\n"
 "# suffix/0x00FFFFFE.\n"
 "#"
@@ -156,12 +156,56 @@ static const char usage_mail_bl_max[] =
 Option optMailBlMax		= { "mail-bl-max",	"10",			usage_mail_bl_max };
 
 static const char usage_mail_bl_policy[] =
-  "Check if the message contains a black listed mail address found by\n"
-"# mail-bl. Specify one of none, reject, or discard. When set to none,\n"
-"# the test is disabled.\n"
+  "If the message contains a black listed mail address found by mail-bl\n"
+"# the apply one of the following policies: none, reject, or discard.\n"
 "#"
 ;
 Option optMailBlPolicy		= { "mail-bl-policy",	"reject",		usage_mail_bl_policy };
+
+static const char usage_mail_bl_domains[] =
+  "A list of domain glob-like patterns for which to test against mail-bl,\n"
+"# typically free mail services. This reduces the load on public BLs.\n"
+"# Specify * to test all domains, empty list to disable.\n"
+"#"
+;
+Option optMailBlDomains		= {
+	"mail-bl-domains",
+
+	 "gmail.*"
+	";hotmail.*"
+	";live.*"
+	";yahoo.*"
+	";aol.*"
+	";aim.com"
+	";cantv.net"
+	";centrum.cz"
+	";centrum.sk"
+	";googlemail.com"
+	";inmail24.com"
+	";jmail.co.za"
+	";libero.it"
+	";luckymail.com"
+	";mail2world.com"
+	";msn.com"
+	";rocketmail.com"
+	";she.com"
+	";shuf.com"
+	";sify.com"
+	";terra.es"
+	";tiscali.it"
+	";tom.com"
+	";ubbi.com"
+	";virgilio.it"
+	";voila.fr"
+	";walla.com"
+	";wanadoo.fr"
+	";windowslive.com"
+	";y7mail.com"
+	";yeah.net"
+	";ymail.com"
+
+	, usage_mail_bl_domains
+};
 
 Stats stat_mail_bl_mail		= { STATS_TABLE_MAIL,	"mail-bl-mail" };
 Stats stat_mail_bl_hdr		= { STATS_TABLE_MSG,	"mail-bl-hdr" };
@@ -306,11 +350,14 @@ static DnsList *ns_bl;
 static DnsList *uri_bl;
 static DnsList *mail_bl;
 static DnsList *uri_dns_bl;
+static Vector mail_domains;
 
 int
 uriblInit(Session *null, va_list ignore)
 {
 	LOG_TRACE0(000, uriblInit);
+
+	mail_domains = TextSplit(optMailBlDomains.string, ";, ", 0);
 
 	uri_dns_bl = dnsListCreate(optUriDnsBL.string);
 	mail_bl = dnsListCreate(optMailBl.string);
@@ -530,11 +577,11 @@ mailBlLookup(Session *sess, const char *mail, Stats *stat)
 	if (optMailBlMax.value <= VectorLength(ctx->uri_mail_seen))
 		return SMTPF_CONTINUE;
 
-	if ((list_name = dnsListQueryMail(mail_bl, sess->pdq, ctx->uri_mail_seen, mail)) != NULL) {
+	if ((list_name = dnsListQueryMail(mail_bl, sess->pdq, mail_domains, ctx->uri_mail_seen, mail)) != NULL) {
 		statsCount(stat);
 		ctx->policy = *optMailBlPolicy.string;
 		dnsListSysLog(sess, "mail-bl", mail, list_name);
-		return replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 rejected mail address, <%s> black listed by %s" ID_MSG(000) "\r\n", mail, list_name, ID_ARG(sess));
+		return replyPushFmt(sess, SMTPF_DELAY|SMTPF_REJECT, "550 5.7.1 rejected mail address, <%s> black listed by %s" ID_MSG(000) "\r\n", mail, list_name, ID_ARG(sess));
 	}
 
 	return SMTPF_CONTINUE;
@@ -755,6 +802,7 @@ uriRegister(Session *sess, va_list ignore)
 	optionsRegister(&optUriValidSoa,		0);
 
 	optionsRegister(&optMailBl, 			1);
+	optionsRegister(&optMailBlDomains,		1);
 	optionsRegister(&optMailBlHeaders, 		0);
 	optionsRegister(&optMailBlMax, 			0);
 	optionsRegister(&optMailBlPolicy,		0);
