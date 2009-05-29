@@ -1167,9 +1167,9 @@ error4:
 #else
 	if (fwd->smtp_code != SMTP_ERROR_IO) {
 #endif
-		(void) TextCopy(sess->input, sizeof (sess->input), sess->reply);
+		(void) TextCopy(sess->msg.chunk0, sizeof (sess->msg.chunk0), sess->reply);
 		(void) mxCommand(sess, fwd, "QUIT\r\n", 221);
-		(void) TextCopy(sess->reply, sizeof (sess->reply), sess->input);
+		(void) TextCopy(sess->reply, sizeof (sess->reply), sess->msg.chunk0);
 	}
 	connectionClose(fwd);
 error3:
