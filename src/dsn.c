@@ -1,7 +1,7 @@
 /*
  * cmd.c
  *
- * Copyright 2006 by Anthony Howe. All rights reserved.
+ * Copyright 2006, 2009 by Anthony Howe. All rights reserved.
  */
 
 /***********************************************************************
@@ -39,11 +39,6 @@ CRLF									\
 
 #define DSN_REASON_LINE							\
 "\t%s" CRLF
-
-#define DSN_DIVIDER							\
-CRLF									\
-"================================================================" CRLF	\
-CRLF
 
 /***********************************************************************
  ***
@@ -90,22 +85,30 @@ A forward host has rejected a message and a DSN has been sent,
 	(void) smtp2Printf(smtp, "Message-ID: <%s@[%s]>" CRLF, smtp->id_string, smtp->local_ip);
 	(void) smtp2Printf(smtp, "Subject: Mail delivery failed." CRLF);
 	(void) smtp2Printf(smtp, "MIME-Version: 1.0" CRLF);
-	(void) smtp2Printf(smtp, "Content-Type: text/plain" CRLF);
-	(void) smtp2Printf(smtp, "Content-Transfer-Encoding: 8bit" CRLF);
+	/* RFC 3464 DSN Format */
+	(void) smtp2Printf(smtp, "Content-Type: multipart/report; report-type=delivery-status; boundary=\"--=_%s\"" CRLF, sess->msg.id);
 	(void) smtp2Printf(smtp, "Auto-Submitted: auto-generated (failure)" CRLF);
 	(void) smtp2Printf(smtp, "Precedence: first-class" CRLF);
 	(void) smtp2Printf(smtp, "Priority: normal" CRLF);
 	(void) smtp2Print(smtp, CRLF, 2);
 
+	(void) smtp2Printf(smtp, "This is a multi-part message in MIME format." CRLF);
+
+	/* Human readable section. */
+	(void) smtp2Printf(smtp, "----=_%s" CRLF, sess->msg.id);
+	(void) smtp2Print(smtp, CRLF, 2);
+
 	if (*optSmtpDsnReplyTo.string != '\0')
 		(void) smtp2Printf(smtp, DSN_REPLY_TO, optSmtpDsnReplyTo.string);
 
+#ifdef OLD
 	(void) smtp2Printf(smtp, "Message %s" CRLF, sess->msg.id);
+
 	(void) smtp2Printf(smtp, DSN_RECIPIENT_LEAD_IN);
 
 	for (rcpt = fwd->rcpts; rcpt != NULL; rcpt = rcpt->next)
 		(void) smtp2Printf(smtp, DSN_RECIPIENT_LINE, rcpt->rcpt->address.string);
-
+#endif
 	(void) smtp2Printf(smtp, DSN_REASON_LEAD_IN);
 
 	if (fwd->reply == NULL) {
@@ -115,11 +118,34 @@ A forward host has rejected a message and a DSN has been sent,
 			(void) smtp2Printf(smtp, DSN_REASON_LINE, *line);
 	}
 
-	(void) smtp2Printf(smtp, DSN_DIVIDER);
+	/* Machine readable section. */
+	(void) smtp2Printf(smtp, "----=_%s" CRLF, sess->msg.id);
+	(void) smtp2Printf(smtp, "Content-Type: message/delivery-status" CRLF);
+	(void) smtp2Print(smtp, CRLF, 2);
+
+	(void) smtp2Printf(smtp, "Reporting-MTA: dns; %s" CRLF, sess->iface->name);
+	(void) smtp2Printf(smtp, "Received-From-MTA: dns; %s" CRLF, sess->client.name);
+	(void) smtp2Printf(smtp, "X-Reporting-Envelope-Id: %s (%s)" CRLF, sess->msg.id, sess->long_id);
+	(void) smtp2Print(smtp, CRLF, 2);
+
+	for (rcpt = fwd->rcpts; rcpt != NULL; rcpt = rcpt->next) {
+		(void) smtp2Printf(smtp, "Final-Recipient: rfc822; %s" CRLF, rcpt->rcpt->address.string);
+		(void) smtp2Printf(smtp, "Action: failed" CRLF);
+		(void) smtp2Printf(smtp, "Status: %c.0.0" CRLF, SMTP_IS_TEMP(fwd->smtp_code) ? '4' : '5');
+		(void) smtp2Printf(smtp, "Diagnostic-Code: smtp; %d" CRLF, fwd->smtp_code);
+		(void) smtp2Print(smtp, CRLF, 2);
+	}
 
 	/* Send the original message headers. */
+	(void) smtp2Printf(smtp, "----=_%s" CRLF, sess->msg.id);
+	(void) smtp2Printf(smtp, "Content-Type: text/rfc822-headers" CRLF);
+	(void) smtp2Print(smtp, CRLF, 2);
+
 	sess->msg.chunk0[sess->msg.eoh] = '\0';
 	(void) smtp2Print(smtp, sess->msg.chunk0, sess->msg.eoh);
+
+	(void) smtp2Print(smtp, CRLF, 2);
+	(void) smtp2Printf(smtp, "----=_%s--" CRLF, sess->msg.id);
 
 	if (smtp2Dot(smtp) != SMTP_OK)
 		goto error1;
