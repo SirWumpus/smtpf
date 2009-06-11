@@ -601,7 +601,7 @@ replySend(Session *sess)
 			 * listed, recipients to be accepted.
 			 */
 			case SMTPF_DROP:
-				reply->code = SMTPF_REJECT;
+				reply->code = (reply->code & (SMTPF_DELAY|SMTPF_SESSION)) | SMTPF_REJECT;
 				/*@fallthrough@*/
 
 			/* For a reject in the RCPT state, downgrade the
