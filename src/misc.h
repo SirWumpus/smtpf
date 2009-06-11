@@ -30,6 +30,7 @@ extern Option optMailRetestClient;
 extern Option optRFC2821StrictHelo;
 extern Option optRFC28227bitHeaders;
 extern Option optRFC2822MinHeaders;
+extern Option optRFC2822MissingEOH;
 extern Option optRFC2822StrictDate;
 extern Option optSmtpCommandPause;
 extern Option optSmtpGreetPause;
@@ -54,6 +55,7 @@ extern Stats stat_smtp_reject_delay;
 extern Stats stat_rfc2821_strict_helo;
 extern Stats stat_rfc2822_7bit_headers;
 extern Stats stat_rfc2822_min_headers;
+extern Stats stat_rfc2822_missing_eoh;
 extern Stats stat_rfc2822_strict_date;
 
 extern Verbose verb_headers;

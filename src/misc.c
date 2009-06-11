@@ -1027,10 +1027,12 @@ static const char usage_rfc2822_strict_date[] =
 Option optRFC28227bitHeaders		= { "rfc2822-7bit-headers", 	"-", 	"Strict RFC 2822 7-bit ASCII printable message headers." };
 Option optRFC2822MinHeaders		= { "rfc2822-min-headers", 	"-", 	"Require RFC 2822 minimum required headers." };
 Option optRFC2822StrictDate		= { "rfc2822-strict-date", 	"-", 	usage_rfc2822_strict_date };
+Option optRFC2822MissingEOH		= { "rfc2822-missing-eoh", 	"-", 	"Reject messages missing the RFC 2822 eof-of-headers line." };
 
 Stats stat_rfc2822_7bit_headers		= { STATS_TABLE_MSG, "rfc2822-7bit-headers" };
 Stats stat_rfc2822_min_headers		= { STATS_TABLE_MSG, "rfc2822-min-headers" };
 Stats stat_rfc2822_strict_date		= { STATS_TABLE_MSG, "rfc2822-strict-date" };
+Stats stat_rfc2822_missing_eoh		= { STATS_TABLE_MSG, "rfc2822-missing-eoh" };
 
 Verbose verb_headers			= { { "headers",		"-", "" } };
 
@@ -1253,6 +1255,7 @@ miscRegister(Session *sess, va_list ignore)
 	optionsRegister(&optOneRcptPerNull, 0);
 	optionsRegister(&optRFC28227bitHeaders, 0);
 	optionsRegister(&optRFC2822MinHeaders, 0);
+	optionsRegister(&optRFC2822MissingEOH, 0);
 	optionsRegister(&optRFC2822StrictDate, 0);
 
 	(void) statsRegister(&stat_bogus_helo);
@@ -1273,6 +1276,7 @@ miscRegister(Session *sess, va_list ignore)
 	(void) statsRegister(&stat_rfc2821_strict_helo);
 	(void) statsRegister(&stat_rfc2822_7bit_headers);
 	(void) statsRegister(&stat_rfc2822_min_headers);
+	(void) statsRegister(&stat_rfc2822_missing_eoh);
 	(void) statsRegister(&stat_rfc2822_strict_date);
 #endif /* FILTER_MISC */
 
