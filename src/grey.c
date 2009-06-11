@@ -1058,6 +1058,9 @@ break_outer_loop:
 	}
 
 	switch (rc) {
+	case SMTPF_CONTINUE:
+		statsCount(&stat_grey_accept);
+		break;
 	case SMTPF_TEMPFAIL:
 		statsCount(&stat_grey_tempfail);
 		if (verb_info.option.value) {
@@ -1090,13 +1093,14 @@ and <a href="summary.html#opt_grey_temp_fail_period">grey-temp-fail-period</a> o
 		(void) replyPushFmt(sess, rc, msg_451_try_again, ID_ARG(sess));
 		break;
 
-	case SMTPF_REJECT:
-		(void) replyPushFmt(sess, rc, "550 5.7.1 " CLIENT_FORMAT " failed grey listing" ID_MSG(388) "\r\n", CLIENT_INFO(sess), ID_ARG(sess));
-		statsCount(&stat_grey_reject);
-		break;
-
 	default:
-		statsCount(&stat_grey_accept);
+#ifdef ENABLE_GREY_TO_BLACK
+		(void) replyPushFmt(sess, rc, "550 5.7.1 " CLIENT_FORMAT " failed grey listing" ID_MSG(388) "\r\n", CLIENT_INFO(sess), ID_ARG(sess));
+#else
+		syslog(LOG_WARN, LOG_MSG(000) "WARNING grey list {%s} rc=%d unexpected, check cache", LOG_ARGS(sess), tuple, rc);
+		rc = SMTPF_CONTINUE;
+#endif
+		statsCount(&stat_grey_reject);
 		break;
 	}
 
