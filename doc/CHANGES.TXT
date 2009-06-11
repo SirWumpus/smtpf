@@ -269,9 +269,35 @@ is no set schedule for releases.
    	handles CNAME -> A redirections.
 
 
---2.2.21--
+--2.2.22--
+
+   *	Requires Libsnert 1.72.1
 
    +	XCLIENT support http://www.postfix.org/XCLIENT_README.html
+
+   !	cmdRcpt: Fixed summaryRecipient when there is a forward host
+	error at HELO or MAIL.
+
+   +	sendDSN: added support for RFC 3464 DSN format.
+
+   !	readClientData: if eoh has not been seen by the end of the first
+	chunk, then assume the end of first chunk is the end of headers.
+
+	Consider an email that consists only of message headers followed
+	by EOF such that there is no CRLF separating headers and a
+	potentially empty message body.
+
+   !	greyData: disabled reply #388 which was a carry-over from
+	ENABLE_GREY_TO_BLACK, which is disabled. The code has been
+	changed to log a warning message about potential cache
+	corruption.
+
+  !!	reply.c: when +smtp-delay-checks, a SMTPF_DROP reply would be
+	converted to SMTPF_REJECT, but loose the SMTPF_DELAY and
+	SMTPF_SESSION flags. This meant that a session reject, like a
+	black listed IP address would be rejected on the first
+	transaction but not on subsequent transactions during the
+	session.
 
 --2.2.21--
 
