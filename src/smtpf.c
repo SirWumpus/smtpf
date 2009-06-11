@@ -806,7 +806,7 @@ keepAlive(Session *sess)
 }
 
 #ifdef ENABLE_PDQ
-static void
+void
 checkClientIP(Session *sess)
 {
 	int type;
