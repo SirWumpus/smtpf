@@ -856,6 +856,8 @@ routeCallAhead(Session *sess, const char *host, ParsePath *rcpt)
 				rc = SMTPF_CONTINUE;
 				goto error2;
 			}
+
+			sess->reply[0] = '\0';
 		}
 	}
 #endif
