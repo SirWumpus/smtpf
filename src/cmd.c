@@ -271,7 +271,7 @@ we force the client to down grade to the older HELO command per RFC 2821.
 	if (optRFC16528bitmime.value)
 		reply = REPLY_APPEND_CONST(reply, "250-8BITMIME\r\n");
 	if (CLIENT_ANY_SET(sess, CLIENT_IS_LOCALHOST))
-		reply = REPLY_APPEND_CONST(reply, "250-XCLIENT NAME ADDR HELO PROTO\r\n");
+		reply = REPLY_APPEND_CONST(reply, "250-XCLIENT ADDR HELO NAME PROTO\r\n");
 #ifdef ENABLE_STARTTLS
 	reply = REPLY_APPEND_CONST(reply, "250-STARTTLS\r\n");
 #endif
@@ -1663,6 +1663,7 @@ See <a href="summary.html#opt_rfc2821_line_length">rfc2821-line-length</a>.
 			size_t n;
 			char *hdr, *bigger;
 
+			/* Detect the start of a header line or a blank header/body separator. */
 			if ((!isspace(chunk[offset]) && strchr((char *) chunk+offset+1, ':') == NULL)
 			||  (length == 2 && chunk[offset] == '\r' && chunk[offset+1] == '\n')) {
 				sess->msg.eoh = offset;
@@ -1693,6 +1694,16 @@ See <a href="summary.html#opt_rfc2821_line_length">rfc2821-line-length</a>.
 	*size = offset;
 
 	if (chunk == sess->msg.chunk0) {
+		/* Was the end-of-headers found before the end of the first chunk? */
+		if (sess->msg.eoh == 0) {
+			if (optRFC2822MissingEOH.value) {
+				rc = replySetFmt(sess, SMTPF_REJECT, "550 5.7.1 missing of end-of-header line" ID_MSG(000), ID_ARG(sess));
+				statsCount(&stat_rfc2822_missing_eoh);
+			} else {
+				sess->msg.eoh = offset;
+			}
+		}
+
 		rc = filterRun(sess, filter_headers_table, sess->msg.headers);
 		if (verb_data.option.value)
 			syslog(LOG_DEBUG, LOG_MSG(863) "filter-table=%s rc=%d", LOG_ARGS(sess), filter_headers_table[0].name, rc);
@@ -2206,11 +2217,11 @@ or there is a typo in the session ID given.
 int
 cmdXclient(Session *sess)
 {
+	int rc;
 	long length;
 	Vector args;
-	int rc, type;
-	PDQ_rr *rr = NULL, *rr_list;
-	const char **list, *value;
+	extern void checkClientIP(Session *);
+	const char **list, *value, *name = NULL;
 
 	if (CLIENT_NOT_SET(sess, CLIENT_USUAL_SUSPECTS))
 		return cmdOutOfSequence(sess);
@@ -2222,32 +2233,44 @@ cmdXclient(Session *sess)
 
 	sess->state = state0;
 	CLIENT_CLEAR_ALL(sess);
+	sess->client.name[0] = '\0';
 	sess->client.helo[0] = '\0';
 
 	args = TextSplit(sess->input+sizeof ("XCLIENT ")-1, " ", 0);
 	for (list = (const char **) VectorBase(args);  *list != NULL; list++) {
 		if (0 <= TextInsensitiveStartsWith(*list, "NAME=")) {
 			value = *list + sizeof ("NAME=")-1;
-			if (TextInsensitiveCompare(value, "[UNAVAILABLE]") == 0) {
+			if (TextInsensitiveCompare(name, "[UNAVAILABLE]") == 0) {
 				CLIENT_SET(sess, CLIENT_NO_PTR);
 				statsCount(&stat_client_ptr_required);
-
-			} else if (TextInsensitiveCompare(value, "[TEMPUNAVAIL]") == 0) {
+			} else if (TextInsensitiveCompare(name, "[TEMPUNAVAIL]") == 0) {
 				CLIENT_SET(sess, CLIENT_NO_PTR|CLIENT_NO_PTR_ERROR);
 				statsCount(&stat_client_ptr_required_error);
 				statsCount(&stat_client_ptr_required);
 			} else {
-				length = TextCopy(sess->client.name, sizeof (sess->client.name), value);
+				length = TextCopy(sess->client.name, sizeof (sess->client.name), name);
 				if (0 < length && sess->client.name[length-1] == '.')
 					sess->client.name[length-1] = '\0';
 				TextLower(sess->client.name, length);
+				CLIENT_CLEAR(sess, CLIENT_IS_RELAY);
 			}
 			continue;
 		}
 		if (0 <= TextInsensitiveStartsWith(*list, "ADDR=")) {
 			value = *list + sizeof ("ADDR=")-1;
-			if (0 < parseIPv6(value, sess->client.ipv6))
+			if (0 < parseIPv6(value, sess->client.ipv6)) {
 				length = TextCopy(sess->client.addr, sizeof (sess->client.addr), value);
+			}
+			if (isReservedIPv6(sess->client.ipv6, IS_IP_LOCAL)) {
+				CLIENT_SET(sess, CLIENT_IS_LOCALHOST);
+			}
+			if (isReservedIPv6(sess->client.ipv6, IS_IP_LAN)) {
+				CLIENT_SET(sess, CLIENT_IS_LAN);
+			}
+			if (routeKnownClientAddr(sess)) {
+				CLIENT_SET(sess, CLIENT_IS_RELAY);
+			}
+			checkClientIP(sess);
 			continue;
 		}
 		if (0 <= TextInsensitiveStartsWith(*list, "HELO=")) {
@@ -2268,34 +2291,14 @@ cmdXclient(Session *sess)
 		return replySetFmt(sess, SMTPF_REJECT, "501 5.5.4 invalid argument %s" ID_MSG(000) CRLF, *list, ID_ARG(sess));
 	}
 
-	if (isReservedIPv6(sess->client.ipv6, IS_IP_LOCAL)) {
-		CLIENT_SET(sess, CLIENT_IS_LOCALHOST);
-	}
-	if (isReservedIPv6(sess->client.ipv6, IS_IP_LAN)) {
-		CLIENT_SET(sess, CLIENT_IS_LAN);
-	}
-	if (routeKnownClientAddr(sess) || routeKnownClientName(sess)) {
+	if (routeKnownClientName(sess)) {
 		CLIENT_SET(sess, CLIENT_IS_RELAY);
 	}
 
-	type = isReservedIPv6(sess->client.ipv6, IS_IP_V4) ? PDQ_TYPE_A : PDQ_TYPE_AAAA;
+	(void) filterRun(sess, filter_connect_table);
 
-	if (CLIENT_NOT_SET(sess, CLIENT_IS_RELAY) && type == PDQ_TYPE_A
-	&& isIPv4InClientName(sess->client.name, sess->client.ipv6+IPV6_OFFSET_IPV4))
-		CLIENT_SET(sess, CLIENT_IS_IP_IN_PTR);
-
-	CLIENT_SET(sess, CLIENT_IS_FORGED);
-	if ((rr_list = pdqGet(sess->pdq, PDQ_CLASS_IN, type, sess->client.name, NULL)) != NULL) {
-		for (rr = rr_list; rr != NULL; rr = rr->next) {
-			if (rr->rcode == PDQ_RCODE_OK && rr->type == type
-			&& memcmp(sess->client.ipv6, ((PDQ_A *) rr)->address.ip.value, sizeof (sess->client.ipv6)) == 0) {
-				CLIENT_CLEAR(sess, CLIENT_IS_FORGED);
-				break;
-			}
-		}
-
-		pdqFree(rr_list);
-	}
+	if (CLIENT_ANY_SET(sess, CLIENT_IS_BLACK))
+		socketSetTimeout(sess->client.socket, optSmtpCommandTimeoutBlack.value);
 
 	syslog(LOG_INFO, LOG_MSG(000) "xclient " CLIENT_FORMAT " f=\"%s\" h=\"%s\"", LOG_ARGS(sess), CLIENT_INFO(sess), clientFlags(sess), sess->client.helo);
 	VectorDestroy(args);
