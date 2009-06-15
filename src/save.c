@@ -160,9 +160,7 @@ option being defined in order to function.
 }*/
 		} else {
 			cliFdCloseOnExec(fileno(save->fp), 1);
-#ifdef ASSERT_FILE_OWNER
-			chownByName(save->name, optRunUser.string, optRunGroup.string);
-#endif
+			(void) chownByName(save->name, optRunUser.string, optRunGroup.string);
 			if (verb_save.option.value) {
 				struct stat sb;
 				(void) fstat(fileno(save->fp), &sb);
@@ -212,8 +210,8 @@ saveDot(Session *sess, va_list ignore)
 
 		if (MSG_IS_SET(sess, MSG_TRAP, MSG_TRAP)) {
 			(void) snprintf(sess->input, sizeof (sess->input), "%s/%s.trap", optTrapDir.string, sess->msg.id);
-			if (rename(save->name, sess->input))
-				syslog(LOG_ERR, LOG_MSG(876) "rename(%s, %s) failed: %s (%d)", LOG_ARGS(sess), save->name, sess->input, strerror(errno), errno);
+			if (link(save->name, sess->input))
+				syslog(LOG_ERR, LOG_MSG(876) "hard link(%s, %s) failed: %s (%d)", LOG_ARGS(sess), save->name, sess->input, strerror(errno), errno);
 #ifdef __unix__
 /* No hard links under Windows. */
 		} else if (MSG_IS_SET(sess, MSG_SAVE, MSG_SAVE)) {

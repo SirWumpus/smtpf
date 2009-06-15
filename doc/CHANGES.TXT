@@ -271,7 +271,11 @@ is no set schedule for releases.
 
 --2.2.23--
 
+   *	Required ClamAV 0.95 be installed.
+
    +	summary.c: added extra fields for session temp/perm failures.
+
+   !	clamd.c: support for ClamAV 0.95 updated protocol for INSTREAM.
 
 --2.2.22--
 

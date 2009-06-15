@@ -36,7 +36,6 @@
 
 typedef struct {
 	Socket2 *socket;
-	Socket2 *session;
 	int io_error;
 } Clamd;
 
@@ -87,9 +86,6 @@ clamdError(Session *sess, Clamd *clamd, const char *fmt, ...)
 		(void) vsnprintf(sess->msg.reject, sizeof (sess->msg.reject), fmt, args);
 		va_end(args);
 
-		socketClose(clamd->session);
-		clamd->session = NULL;
-
 		socketClose(clamd->socket);
 		clamd->socket = NULL;
 
@@ -124,8 +120,6 @@ clamd_open(Session *sess, Clamd *clamd)
 	if (socketClient(clamd->socket, optClamdTimeout.value)) {
 		clamdError(sess, clamd, "451 4.4.0 clamd connect error: %s (%d)" ID_MSG(180), strerror(errno), errno, ID_ARG(sess));
 /*{NEXT}*/
-		socketClose(clamd->socket);
-		clamd->socket = NULL;
 		goto error1;
 	}
 
@@ -146,7 +140,7 @@ clamd_open_scan(Session *sess, Clamd *clamd)
 	if (*optClamdSocket.string == '\0' || !clamd_is_local)
 		return SMTPF_CONTINUE;
 
-	length = snprintf(buffer, sizeof (buffer), "SCAN %s\n", saveGetName(sess));
+	length = snprintf(buffer, sizeof (buffer), "nSCAN %s\n", saveGetName(sess));
 	if (sizeof (buffer) <= length) {
 		rc = replyPushFmt(sess, SMTPF_REJECT, "451 4.4.0 clamd buffer overflow" ID_MSG(181) "\r\n");
 /*{NEXT}*/
@@ -171,13 +165,9 @@ clamd_open_scan(Session *sess, Clamd *clamd)
 }
 
 static int
-clamd_open_stream(Session *sess, Clamd *clamd)
+clamd_open_instream(Session *sess, Clamd *clamd)
 {
-	long length;
-	int rc, assigned;
-	unsigned sessionPort;
-	SocketAddress *saddr;
-	static char buffer[64];
+	int rc;
 
 	if (*optClamdSocket.string == '\0' || clamd_is_local)
 		return SMTPF_CONTINUE;
@@ -189,57 +179,15 @@ clamd_open_stream(Session *sess, Clamd *clamd)
 	rc = SMTPF_TEMPFAIL;
 
 	if (verb_clamd.option.value)
-		syslog(LOG_DEBUG, LOG_MSG(184) "clamd >> STREAM", LOG_ARGS(sess));
+		syslog(LOG_DEBUG, LOG_MSG(184) "clamd >> nINSTREAM", LOG_ARGS(sess));
 
-	if (socketWrite(clamd->socket, (unsigned char *) "STREAM\n", sizeof ("STREAM\n")-1) != sizeof ("STREAM\n")-1) {
+	if (socketWrite(clamd->socket, (unsigned char *) "nINSTREAM\n", sizeof ("nINSTREAM\n")-1) != sizeof ("nINSTREAM\n")-1) {
 		clamdError(sess, clamd, "451 4.4.0 clamd write error: %s (%d)" ID_MSG(185), strerror(errno), errno, ID_ARG(sess));
 /*{NEXT}*/
 		goto error1;
 	}
 
-	if ((length = socketReadLine(clamd->socket, buffer, sizeof (buffer))) < 0) {
-		clamdError(sess, clamd, "451 4.4.0 clamd read error len=%ld: %s (%d)" ID_MSG(186), length, strerror(errno), errno, ID_ARG(sess));
-/*{NEXT}*/
-		goto error1;
-	}
-
-	if (verb_clamd.option.value)
-		syslog(LOG_DEBUG, LOG_MSG(187) "clamd << %s", LOG_ARGS(sess), buffer);
-
-	if ((assigned = sscanf(buffer, "PORT %u", &sessionPort)) != 1) {
-		clamdError(sess, clamd, "451 4.4.0 clamd session port parse error (%d) buffer=%ld:\"%s\"" ID_MSG(188), assigned, length, buffer, ID_ARG(sess));
-/*{NEXT}*/
-		goto error1;
-	}
-
-	if ((saddr = socketAddressCreate(*optClamdSocket.string == '/' ? "0.0.0.0" : optClamdSocket.string, sessionPort)) == NULL) {
-		clamdError(sess, clamd, "451 4.4.0 clamd address error: %s (%d)" ID_MSG(189), strerror(errno), errno, ID_ARG(sess));
-/*{NEXT}*/
-		goto error1;
-	}
-
-	if (*optClamdSocket.string != '/')
-		(void) socketAddressSetPort(saddr, sessionPort);
-
-	if ((clamd->session = socketOpen(saddr, 1)) == NULL) {
-		clamdError(sess, clamd, "451 4.4.0 clamd session open error: %s (%d)" ID_MSG(190), strerror(errno), errno, ID_ARG(sess));
-/*{NEXT}*/
-		goto error2;
-	}
-
-	cliFdCloseOnExec(socketGetFd(clamd->session), 1);
-
-	if (socketClient(clamd->session, optClamdTimeout.value)) {
-		clamdError(sess, clamd, "451 4.4.0 clamd session connection error: %s (%d)" ID_MSG(191), strerror(errno), errno, ID_ARG(sess));
-/*{NEXT}*/
-		goto error2;
-	}
-
-	socketSetTimeout(clamd->session, optClamdTimeout.value);
-
 	rc = SMTPF_CONTINUE;
-error2:
-	free(saddr);
 error1:
 	return rc;
 }
@@ -308,34 +256,11 @@ clamdRset(Session *sess, va_list ignore)
 	clamd = filterGetContext(sess, clamd_context);
 
 	/* Assert that these are closed between messages. */
-	socketClose(clamd->session);
-	clamd->session = NULL;
-
 	socketClose(clamd->socket);
 	clamd->socket = NULL;
 
 	return SMTPF_CONTINUE;
 }
-
-#ifdef MOVED
-int
-clamdData(Session *sess, va_list ignore)
-{
-	Clamd *clamd;
-	clamd = filterGetContext(sess, clamd_context);
-
-	LOG_TRACE(sess, 194, clamdData);
-
-	*sess->msg.reject = '\0';
-	clamd->io_error = 0;
-
-	if (clamd_open_stream(sess, clamd) != SMTPF_CONTINUE) {
-		return replyPushFmt(sess, SMTPF_TEMPFAIL, "%s\r\n", sess->msg.reject);
-	}
-
-	return SMTPF_CONTINUE;
-}
-#endif
 
 int
 clamdHeaders(Session *sess, va_list args)
@@ -344,6 +269,7 @@ clamdHeaders(Session *sess, va_list args)
 	char *hdr;
 	Clamd *clamd;
 	size_t length;
+	uint32_t size;
 	Vector headers;
 
 	LOG_TRACE(sess, 195, clamdHeaders);
@@ -361,10 +287,10 @@ clamdHeaders(Session *sess, va_list args)
 			return SMTPF_CONTINUE;
 	}
 
-	if (clamd_open_stream(sess, clamd) != SMTPF_CONTINUE)
+	if (clamd_open_instream(sess, clamd) != SMTPF_CONTINUE)
 		return replyPushFmt(sess, SMTPF_TEMPFAIL, "%s\r\n", sess->msg.reject);
 
-	if (clamd->session == NULL)
+	if (clamd->socket == NULL)
 		return SMTPF_CONTINUE;
 
 	for (i = 0; i < VectorLength(headers); i++) {
@@ -372,7 +298,10 @@ clamdHeaders(Session *sess, va_list args)
 			continue;
 
 		length = strlen(hdr);
-		if (socketWrite(clamd->session, (unsigned char *) hdr, length) != length) {
+		size = htonl(length);
+
+		if (socketWrite(clamd->socket, (unsigned char *) &size, sizeof (size)) != sizeof (size)
+		||  socketWrite(clamd->socket, (unsigned char *) hdr, length) != length) {
 			clamdError(sess, clamd, "451 4.4.0 clamd session write error after %lu bytes" ID_MSG(196), sess->msg.length, ID_ARG(sess));
 /*{NEXT}*/
 			return SMTPF_CONTINUE;
@@ -387,8 +316,6 @@ clamdHeaders(Session *sess, va_list args)
 		 */
 		if (verb_clamd.option.value)
 			syslog(LOG_DEBUG, LOG_MSG(197) "clamd >> (EOF)", LOG_ARGS(sess));
-		socketClose(clamd->session);
-		clamd->session = NULL;
 	}
 
 	return SMTPF_CONTINUE;
@@ -397,41 +324,45 @@ clamdHeaders(Session *sess, va_list args)
 int
 clamdContent(Session *sess, va_list args)
 {
-	long size;
+	long length;
 	Clamd *clamd;
+	uint32_t size;
 	unsigned char *chunk;
 
 	clamd = filterGetContext(sess, clamd_context);
 	chunk = va_arg(args, unsigned char *);
-	size = va_arg(args, long);
+	length = va_arg(args, long);
+
 
 	if (verb_trace.option.value)
-		syslog(LOG_DEBUG, LOG_MSG(198) "clamdContent(%lx, chunk=%lx, size=%ld)", LOG_ARGS(sess), (long) sess, (long) chunk, size);
+		syslog(LOG_DEBUG, LOG_MSG(198) "clamdContent(%lx, chunk=%lx, size=%ld)", LOG_ARGS(sess), (long) sess, (long) chunk, length);
 
-	if (clamd->session == NULL)
+	if (clamd->socket == NULL)
 		return SMTPF_CONTINUE;
 
 	if (optClamdMaxSize.value <= sess->msg.length)
 		return SMTPF_CONTINUE;
 
-	if (socketWrite(clamd->session, chunk, size) != size) {
+	size = htonl(length);
+
+	if (socketWrite(clamd->socket, (unsigned char *) &size, sizeof (size)) != sizeof (size)
+	||  socketWrite(clamd->socket, chunk, length) != length) {
 		clamdError(sess, clamd, "451 4.4.0 clamd session write error after %lu bytes" ID_MSG(199), sess->msg.length, ID_ARG(sess));
 /*{NEXT}*/
 		return SMTPF_CONTINUE;
 	}
 
 	if (verb_clamd.option.value)
-		syslog(LOG_DEBUG, LOG_MSG(200) "clamd >> (wrote %ld bytes)", LOG_ARGS(sess), size);
+		syslog(LOG_DEBUG, LOG_MSG(200) "clamd >> (wrote %ld bytes)", LOG_ARGS(sess), length);
 
-	if (optClamdMaxSize.value <= sess->msg.length + size) {
+	if (optClamdMaxSize.value <= sess->msg.length + length) {
 		/* Signal EOF to clamd so that it can begin processing now.
 		 * This should improve performance so that the result is
 		 * ready by the time filterDot() needs it.
 		 */
 		if (verb_clamd.option.value)
 			syslog(LOG_DEBUG, LOG_MSG(201) "clamd >> (EOF)", LOG_ARGS(sess));
-		socketClose(clamd->session);
-		clamd->session = NULL;
+
 		if (verb_warn.option.value) {
 			syslog(LOG_WARN, LOG_MSG(202) "clamd-max-size=%ld reached", LOG_ARGS(sess), optClamdMaxSize.value);
 /*{LOG
@@ -450,6 +381,7 @@ clamdDot(Session *sess, va_list ignore)
 {
 	int rc;
 	Clamd *clamd;
+	uint32_t zero = 0;
 	char *result, *found;
 
 	LOG_TRACE(sess, 203, clamdDot);
@@ -457,9 +389,6 @@ clamdDot(Session *sess, va_list ignore)
 	clamd = filterGetContext(sess, clamd_context);
 
 	rc = SMTPF_CONTINUE;
-
-	socketClose(clamd->session);
-	clamd->session = NULL;
 
 	if (clamd->io_error) {
 		rc = replyPushFmt(sess, SMTPF_REJECT, "%s\r\n", sess->msg.reject);
@@ -470,6 +399,14 @@ clamdDot(Session *sess, va_list ignore)
 
 	if (clamd->socket == NULL)
 		goto error0;
+
+	if (!clamd_is_local
+	&& socketWrite(clamd->socket, (unsigned char *) &zero, sizeof (zero)) != sizeof (zero)) {
+		clamdError(sess, clamd, "451 4.4.0 clamd session write error after %lu bytes" ID_MSG(000), sess->msg.length, ID_ARG(sess));
+/*{NEXT}*/
+		rc = replyPushFmt(sess, SMTPF_REJECT, "%s\r\n", sess->msg.reject);
+		goto error1;
+	}
 
 	if (socketReadLine(clamd->socket, sess->reply, sizeof (sess->reply)) <= 0) {
 		clamdError(sess, clamd, "451 4.4.0 clamd session read error: %s (%d)" ID_MSG(204), strerror(errno), errno, ID_ARG(sess));
@@ -544,8 +481,8 @@ clamdClose(Session *sess, va_list ignore)
 	 * clamdDot() is not called ,because of a rejection or dropped
 	 * connection betweem DATA and DOT.
 	 */
-	socketClose(clamd->session);
 	socketClose(clamd->socket);
+	clamd->socket = NULL;
 
 	return SMTPF_CONTINUE;
 }
