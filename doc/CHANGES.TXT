@@ -269,6 +269,10 @@ is no set schedule for releases.
    	handles CNAME -> A redirections.
 
 
+--2.2.23--
+
+   +	summary.c: added extra fields for session temp/perm failures.
+
 --2.2.22--
 
    *	Requires Libsnert 1.72.1

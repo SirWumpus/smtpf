@@ -497,7 +497,10 @@ with attachments for viruses.
 <dd>
 The unix domain socket or Internet host[:port] of the clamd
 server. Specify the empty string to disable clamd scan. The
-default clamd port is 3310.
+default clamd port is 3310. If clamd is running on the same
+host as smtpf, then the special token SCAN can be specified
+to use scanning by file path instead of by socket stream for
+an I/O efficiency gain.
 </dd>
 
 <a name="opt_clamd_timeout"></a>
