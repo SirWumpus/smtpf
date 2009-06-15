@@ -244,10 +244,11 @@ summaryHeaders(Session *sess, va_list args)
 		rcpt = strdup(rcptFlags(sess));
 
 		length = snprintf(
-			sess->input, sizeof (sess->input), "%s: sid=%s; client=%s; mail=%s; rcpt=%s; nrcpt=%u:%u\r\n",
+			sess->input, sizeof (sess->input), "%s: sid=%s; client=%s; mail=%s; rcpt=%s; nrcpt=%u:%u; fails=%d\r\n",
 			optSmtpReportHeader.string, sess->long_id,
 			TextEmpty(client), TextEmpty(mail), TextEmpty(rcpt),
-			sess->msg.rcpt_count, sess->msg.bad_rcpt_count
+			sess->msg.rcpt_count, sess->msg.bad_rcpt_count,
+			sess->client.reject_count
 		);
 
 		free(client);
@@ -329,9 +330,9 @@ summaryMessage(Session *sess)
 		*sess->msg.chunk0 = '\0';
 
 	syslog(
-		LOG_INFO, LOG_MSG(720) "message <%s> f=\"%s\" b=%lu r=%u m=%s %sx=\"%s\"", LOG_ARGS(sess),
+		LOG_INFO, LOG_MSG(720) "message <%s> f=\"%s\" b=%lu r=%u m=%s R=%d %sx=\"%s\"", LOG_ARGS(sess),
 		sess->msg.id, messageFlags(sess), sess->msg.length, sess->msg.rcpt_count,
-		sess->msg.msg_id, sess->msg.chunk0, sess->input
+		sess->msg.msg_id, sess->client.reject_count, sess->msg.chunk0, sess->input
 	);
 /*{LOG
 The end of a message transaction. This line gives a summary of message highlights.
@@ -372,10 +373,11 @@ void
 summarySession(Session *sess, time_t elapsed)
 {
 	syslog(
-		LOG_INFO, LOG_MSG(721) "end i=%s p=\"%s\" f=\"%s\" h=\"%s\" m=%u/%u b=%lu t=%lu %s", LOG_ARGS(sess),
+		LOG_INFO, LOG_MSG(721) "end i=%s p=\"%s\" f=\"%s\" h=\"%s\" m=%u/%u b=%lu R=%d t=%lu %s", LOG_ARGS(sess),
 		sess->client.addr, sess->client.name, clientFlags(sess),
 		sess->client.helo, sess->client.forward_count, sess->client.mail_count,
-		sess->client.octets, (unsigned long) elapsed, p0fSummary(sess)
+		sess->client.octets, sess->client.reject_count, (unsigned long) elapsed,
+		p0fSummary(sess)
 	);
 /*{LOG
 The end of a connected client's session. This line gives a summary of client information.
