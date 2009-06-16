@@ -1472,6 +1472,9 @@ See <a href="summary.html#opt_rfc2606_special_domains">rfc2606-special-domains</
 See <a href="summary.html#opt_reject_unknown_tld">reject-unknown-tld</a>.
 }*/
 	} else {
+		/*** TODO: Ideally "dns-gl < SPF fail < CONTENT", but currently
+		 *** the precedence is actually "SPF fail < dns-gl = CONTENT".
+		 ***/
 		access = sess->msg.bw_state;
 	}
 
