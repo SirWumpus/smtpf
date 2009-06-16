@@ -1968,9 +1968,6 @@ reject0:
 	);
 	summaryMessage(sess);
 
-	sess->state = sess->helo_state;
-	sess->msg.smtpf_code = rc;
-
 	switch (rc) {
 	case SMTPF_ACCEPT:
 	case SMTPF_CONTINUE:
@@ -1982,6 +1979,8 @@ reject0:
 		break;
 	case SMTPF_REJECT:
 		statsCount(&stat_msg_reject);
+		if (optSmtpDropDot.value)
+			rc = SMTPF_DROP;
 		break;
 	case SMTPF_TEMPFAIL:
 		statsCount(&stat_msg_tempfail);
@@ -1990,6 +1989,9 @@ reject0:
 		statsCount(&stat_msg_discard);
 		break;
 	}
+
+	sess->state = sess->helo_state;
+	sess->msg.smtpf_code = rc;
 
 	return rc;
 }

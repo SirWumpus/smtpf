@@ -1382,7 +1382,7 @@ See the <a href="access-map.html#access_tags">access-map</a> concerning the
 			 */
 			(void) (*s->function)(sess);
 
-			if (replySend(sess) == SMTPF_DROP) {
+			if (replySend(sess) == SMTPF_DROP || sess->msg.smtpf_code == SMTPF_DROP) {
 				(void) filterRun(sess, filter_drop_table);
 				break;
 			}

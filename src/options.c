@@ -332,6 +332,12 @@ Option optTestOnCommand		= { "test-on-command",		"",		USAGE_TEST_ON_COMMAND };
 Option optTestPauseAfterDot	= { "test-pause-after-dot", 	"0",		"Delay in seconds to pause after dot. Zero to disable." };
 
 
+static const char usage_smtp_drop_dot[] =
+  "Drop the connection at dot after any 5xy response.\n"	\
+"#"
+;
+Option optSmtpDropDot		= { "smtp-drop-dot",		"-",		usage_smtp_drop_dot };
+
 static const char usage_rfc1652_8bitmime[] =
   "Enables support for RFC 1652 8BITMIME transfers when the client sends\n"
 "# EHLO. Note that the support for this is weak, pass through only. If\n"
@@ -521,6 +527,7 @@ optionsRegister0(Session *sess, va_list ignore)
 	optionsRegister(&optSmtpDelayChecks,		0);
 	optionsRegister(&optSmtpDotTimeout, 		0);
 	optionsRegister(&optSmtpDropAfter, 		0);
+	optionsRegister(&optSmtpDropDot,		0);
 	optionsRegister(&optSmtpDropUnknown, 		0);
 	optionsRegister(&optSmtpDsnReplyTo, 		0);
 	optionsRegister(&optSmtpEnableEsmtp,		0);
