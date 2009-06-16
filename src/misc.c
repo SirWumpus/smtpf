@@ -174,26 +174,6 @@ miscInit(Session *null, va_list ignore)
 	return SMTPF_CONTINUE;
 }
 
-int
-commandPauseConnect(Session *sess, va_list ignore)
-{
-	char *value;
-
-	if (verb_trace.option.value)
-		syslog(LOG_DEBUG, LOG_MSG(413) "commandPauseConnect", LOG_ARGS(sess));
-
-	/* Connect:, dns-wl, and dns-gl disable command-pause. */
-	if (accessClient(sess, "commandpause:", sess->client.name, sess->client.addr, NULL, &value, 1) != SMDB_ACCESS_NOT_FOUND) {
-		if (CLIENT_ANY_SET(sess, CLIENT_USUAL_SUSPECTS|CLIENT_IS_GREY|CLIENT_PASSED_GREY))
-			sess->client.command_pause = 0;
-		else
-			sess->client.command_pause = strtol(value, NULL, 10);
-		free(value);
-	}
-
-	return SMTPF_CONTINUE;
-}
-
 static int
 noPtr(Session *sess)
 {

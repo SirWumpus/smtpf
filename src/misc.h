@@ -65,9 +65,6 @@ extern int infoCommand(Session *sess);
 extern int miscRegister(Session *sess, va_list ignore);
 extern int miscInit(Session *null, va_list ignore);
 
-extern int commandPauseConnect(Session *null, va_list ignore);
-extern int greetPauseConnect(Session *sess, va_list ignore);
-
 extern int noPtrConnect(Session *null, va_list ignore);
 extern int ipInPtrConnect(Session *null, va_list ignore);
 
