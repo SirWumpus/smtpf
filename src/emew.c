@@ -722,9 +722,19 @@ emewMailRcpt(Session *sess, va_list args)
 	if (emew->required)
 		return SMTPF_CONTINUE;
 
-	/* Ignore double bounce messages that are sent to postmaster. */
-	if (sess->msg.mail->address.length == 0 && TextInsensitiveCompare(rcpt->localLeft.string, "postmaster") == 0)
+	/* If message from null sender and ...*/
+	if (sess->msg.mail->address.length == 0
+
+	/* ... it is going to be queued, typically the usual suspects
+	 * sending outbound, like auto-replies, then ignore it;
+	 */
+	&& (MSG_ANY_SET(sess, MSG_QUEUE)
+
+	/* ... or destined for postmaster (a double bounce), also ignore. */
+	  || TextInsensitiveCompare(rcpt->localLeft.string, "postmaster") == 0)) {
+		emew->required = 0;
 		return SMTPF_CONTINUE;
+	}
 
 	if (*optEmewSecret.string != '\0')
 		emew->required = 1;
