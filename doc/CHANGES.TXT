@@ -268,6 +268,19 @@ is no set schedule for releases.
    	This might have to be a change in socketOpen, in which it
    	handles CNAME -> A redirections.
 
+   +	ideally "dns-gl < SPF fail < CONTENT", but currently the precedence
+   	is actually "SPF fail < dns-gl = CONTENT".
+
+
+--2.2.24--
+
+   !	emewMailRcpt: Fix logic as to whether a message sent from null
+	sender should be tagged, tested, or ignored. Previous assumption
+	was that messages from null sender were always inbound and were
+	either a double bounce or should be tested. However, when a
+	local server relays auto-replies sent by null sender, then the
+	previous assumption is invalid; the message should be ignored
+	and not tagged. Reported from Jan-Peter Koopmann.
 
 --2.2.23--
 
@@ -276,6 +289,8 @@ is no set schedule for releases.
    +	summary.c: added extra fields for session temp/perm failures.
 
    !	clamd.c: support for ClamAV 0.95 updated protocol for INSTREAM.
+
+   +	Added experimental smtp-drop-dot option.
 
 --2.2.22--
 
