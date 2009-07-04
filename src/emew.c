@@ -728,7 +728,7 @@ emewMailRcpt(Session *sess, va_list args)
 	/* ... it is going to be queued, typically the usual suspects
 	 * sending outbound, like auto-replies, then ignore it;
 	 */
-	&& (MSG_ANY_SET(sess, MSG_QUEUE)
+	&& (CLIENT_ANY_SET(sess, CLIENT_USUAL_SUSPECTS)
 
 	/* ... or destined for postmaster (a double bounce), also ignore. */
 	  || TextInsensitiveCompare(rcpt->localLeft.string, "postmaster") == 0)) {
