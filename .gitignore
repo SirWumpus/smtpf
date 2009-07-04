@@ -31,6 +31,7 @@ doc/manual.shtml
 doc/smtpf.0
 doc/reply.html.in
 doc/syslog.html.in
+examples/smtpf.cf
 examples/startup.sh
 package/FreeBSD/+COMMENT
 package/FreeBSD/+CONTENTS
