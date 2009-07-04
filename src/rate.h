@@ -28,7 +28,7 @@ extern int rateFini(Session *null, va_list ignore);
 extern int rateAccept(Session *sess, va_list ignore);
 extern int rateConnect(Session *sess, va_list ignore);
 
-extern unsigned long djb_hash_index(unsigned char *buffer, unsigned long size, unsigned long table_size);
+extern unsigned long djb_hash_index(unsigned char *buffer, size_t size, size_t table_size);
 
 /***********************************************************************
  ***

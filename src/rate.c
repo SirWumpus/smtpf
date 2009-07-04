@@ -101,7 +101,7 @@ static time_t last_connection;
  * D.J. Bernstien Hash version 2 (+ replaced by ^).
  */
 unsigned long
-djb_hash_index(unsigned char *buffer, unsigned long size, unsigned long table_size)
+djb_hash_index(unsigned char *buffer, size_t size, size_t table_size)
 {
 	unsigned long hash = 5381;
 
