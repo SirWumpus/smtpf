@@ -272,6 +272,26 @@ is no set schedule for releases.
    	is actually "SPF fail < dns-gl = CONTENT".
 
 
+--2.2.26--
+
+  ++	Added CACHE ACTIVE command to dump a list of active cache and global
+  	cluster hosts stats.
+
+   !	Replaced chownByName and chmodByName by libsnert's pathSetPermsByName.
+
+--2.2.25--
+
+   !	emewMailRcpt: Now tests
+
+   		CLIENT_ANY_SET(sess, CLIENT_USUAL_SUSPECTS)
+
+   	instead of
+
+		MSG_ANY_SET(sess, MSG_QUEUE)
+
+   	The MSG_QUEUE flag is not set until after the filters have been
+   	run in cmdRcpt. Thus MSG_QUEUE is only available after RCPT state.
+
 --2.2.24--
 
    !	emewMailRcpt: Fix logic as to whether a message sent from null

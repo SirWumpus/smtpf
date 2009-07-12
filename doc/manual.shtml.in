@@ -21,7 +21,7 @@ SnertSoft - @PACKAGE_NAME@/@PACKAGE_VERSION@
 <img alt="SnertSoft: We Serve Your Server" src="Img/logo-300x74.png" width="300" height="74" border="0" /></a>
 
 <div align="center">
-<h1 class="title">Barricade MX</h1>
+<h1 class="title">BarricadeMX</h1>
 <h2>
 @PACKAGE_NAME@/@PACKAGE_VERSION@
 <br/><span class="large">&laquo;An SMTP Filtering Proxy&raquo;</span>
