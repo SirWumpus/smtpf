@@ -15,6 +15,8 @@ extern "C" {
  ***
  ***********************************************************************/
 
+#include <com/snert/lib/util/timer.h>
+
 #define STATS_ROUTE
 
 typedef enum {
@@ -62,6 +64,9 @@ extern Stats stat_high_connections_per_second;
 extern Stats stat_high_connections_per_minute;
 extern Stats stat_connections_per_minute;
 extern Stats stat_total_kb;
+
+extern Stats stat_open_files;
+extern Stats stat_high_open_files;
 
 extern Stats stat_connect_count;
 extern Stats stat_connect_dropped;
@@ -163,6 +168,7 @@ extern void statsLoad(void);
 extern int  statsRegister(Stats *stat);
 extern void statsLock(void);
 extern void statsUnlock(void);
+extern void statsTimerTask(Timer *);
 
 /*
  * Not mutex protected.

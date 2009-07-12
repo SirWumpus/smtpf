@@ -147,6 +147,9 @@ Stats stat_high_session_time		= { STATS_TABLE_GENERAL, "high-session-time", 1 };
 Stats stat_connections_per_minute	= { STATS_TABLE_GENERAL, "connections-per-minute", 1 };
 Stats stat_total_kb			= { STATS_TABLE_GENERAL, "total-KB" };
 
+Stats stat_open_files			= { STATS_TABLE_GENERAL, "open-files", 1 };
+Stats stat_high_open_files		= { STATS_TABLE_GENERAL, "high-open-files", 1 };
+
 Stats stat_connect_count		= { STATS_TABLE_CONNECT, "CLIENTS" };
 Stats stat_connect_dropped		= { STATS_TABLE_CONNECT, "dropped" };
 Stats stat_clean_quit			= { STATS_TABLE_CONNECT, "clean-quit" };
@@ -220,6 +223,7 @@ Stats stat_virus_infected		= { STATS_TABLE_MSG, "virus-infected" };
 
 Vector stats;
 time_t start_time;
+Timer *stats_timer;
 int stats_table_indices[STATS_TABLE_SIZE];
 
 Verbose verb_stats = { { "stats", "-", "" } };
@@ -1080,6 +1084,9 @@ statsRegister0(Session *sess, va_list ignore)
 	(void) statsRegister(&stat_connections_per_minute);
 	(void) statsRegister(&stat_total_kb);
 
+	(void) statsRegister(&stat_open_files);
+	(void) statsRegister(&stat_high_open_files);
+
 	/*** Connection ********************************************************/
 
 	(void) statsRegister(&stat_connect_count);
@@ -1165,10 +1172,13 @@ statsInit(void)
 {
 	int length;
 	const char *file;
+	CLOCK period = { 60 };
 
 	(void) pthread_mutex_init(&stats_mutex, NULL);
 	(void) pthread_mutex_init(&routes_mutex, NULL);
 	(void) time(&start_time);
+
+	stats_timer = timerCreate(statsTimerTask, NULL, &period, 0);
 
 #if defined(FILTER_CLI) && defined(HAVE_PTHREAD_ATFORK)
 	if (pthread_atfork(statsAtForkPrepare, statsAtForkParent, statsAtForkChild)) {
@@ -1189,16 +1199,14 @@ See <a href="summary.html#opt_stats_map">stats-map</a> option.
 		if ((file = stats_map->filepath(stats_map)) != NULL) {
 			char journal[PATH_MAX];
 
-			if (chownByName(file, optRunUser.string, optRunGroup.string))
-				exit(1);
-			if (chmodByName(file, 0664))
+			if (pathSetPermsByName(file, optRunUser.string, optRunGroup.string, 0664))
 				exit(1);
 			length = snprintf(journal, sizeof (journal), "%s-journal", file);
 			if (sizeof (journal) <= length) {
 				syslog(LOG_ERR, log_overflow, SESSION_ID_ZERO, FILE_LINENO, sizeof (journal), length);
 				exit(1);
 			}
-			(void) chownByName(journal, optRunUser.string, optRunGroup.string);
+			(void) pathSetPermsByName(journal, optRunUser.string, optRunGroup.string, 0664);
 		}
 	}
 }
@@ -1215,6 +1223,9 @@ statsFini(void)
 	statsRouteFini();
 	statsUnlock();
 	(void) pthread_mutex_destroy(&stats_mutex);
+
+	timerCancel(stats_timer);
+	pthread_join(stats_timer->thread, NULL);
 }
 
 int
@@ -1464,25 +1475,102 @@ Not used at this time.
 #endif
 
 void
+statsNotify(unsigned long one, unsigned long five, unsigned long fifteen)
+{
+	mcc_row row;
+	char buffer[128];
+	unsigned long processed;
+	unsigned long pct_of, pct_max_of, pct_capacity;
+
+	latencySend(mcc);
+
+	processed = stat_connect_count.runtime
+		  - stat_admin_commands.runtime
+		  - (stat_grey_tempfail.runtime + stat_grey_accept.runtime)
+		  + stat_msg_count.runtime;
+
+	statsSetValue(&stat_open_files, (unsigned long) getOpenFileCount());
+	if (0 < stat_open_files.runtime)
+		statsSetHighWater(&stat_high_open_files, stat_open_files.runtime, verb_info.option.value);
+
+	pct_of = stat_open_files.runtime * 100 / optRunOpenFileLimit.value;
+	pct_max_of = stat_high_open_files.runtime * 100 / optRunOpenFileLimit.value;
+	pct_capacity = (server.connections * FD_PER_THREAD + FD_OVERHEAD) * 100 / optRunOpenFileLimit.value;
+
+	row.hits = 0;
+	row.created = row.touched = time(NULL);
+	row.expires = row.created + optCacheGcInterval.value;
+	row.key_size = TextCopy(row.key_data, sizeof (row.key_data), "__loadavg");
+	row.value_size = snprintf(
+		row.value_data, sizeof (row.value_data),
+		"%lu,%lu,%lu %lu %lu %lu/%lu/%lu %lu/%lu %lu",
+		one, five, fifteen,
+		(unsigned long)(row.created - start_time),
+		stat_connect_count.runtime,
+		stat_msg_accept.runtime,
+		processed - stat_msg_accept.runtime,
+		stat_total_kb.runtime,
+		pct_of, pct_max_of,
+		pct_capacity
+	);
+
+	(void) mccSend(mcc, &row, MCC_CMD_OTHER);
+
+	(void) snprintf(
+		buffer, sizeof (buffer), "la=%lu,%lu,%lu ut=%lu tc=%lu arv=%lu/%lu/%lu of=%lu/%lu cap=%lu",
+		one, five, fifteen,
+		(unsigned long)(row.created - start_time),
+		stat_connect_count.runtime,
+		stat_msg_accept.runtime,
+		processed - stat_msg_accept.runtime,
+		stat_total_kb.runtime,
+		pct_of, pct_max_of,
+		pct_capacity
+	);
+
+	mccNotesUpdate(mcc, "127.0.0.1", "la=", buffer);
+}
+
+void
+statsTimerTask(Timer *ignore)
+{
+	double avg[3];
+	unsigned long int_avg[3];
+
+	if (getloadavg(avg, 3) != -1) {
+		int_avg[0] = (unsigned long)(avg[0] * 1000);
+		int_avg[1] = (unsigned long)(avg[1] * 1000);
+		int_avg[2] = (unsigned long)(avg[2] * 1000);
+
+		statsNotify(int_avg[0], int_avg[1], int_avg[2]);
+	}
+}
+
+void
 statsGetLoadAvg(void)
 {
 #ifdef HAVE_GETLOADAVG
 	double avg[3];
+	unsigned long int_avg[3];
 
 	if (getloadavg(avg, 3) != -1) {
+		int_avg[0] = (unsigned long)(avg[0] * 1000);
+		int_avg[1] = (unsigned long)(avg[1] * 1000);
+		int_avg[2] = (unsigned long)(avg[2] * 1000);
+
 		/* Convert double to 3 decimals place into an integer. */
-		statsSetValue(&stat_load_avg_1, (unsigned long)(avg[0] * 1000));
-		statsSetValue(&stat_load_avg_5, (unsigned long)(avg[1] * 1000));
-		statsSetValue(&stat_load_avg_15, (unsigned long)(avg[2] * 1000));
+		statsSetValue(&stat_load_avg_1,  int_avg[0]);
+		statsSetValue(&stat_load_avg_5,  int_avg[1]);
+		statsSetValue(&stat_load_avg_15, int_avg[2]);
 
 # ifdef LOW_LOAD_AVG
-		statsSetLowWater(&stat_low_load_avg_1, (unsigned long)(avg[0] * 1000), 0);
-		statsSetLowWater(&stat_low_load_avg_5, (unsigned long)(avg[1] * 1000), 0);
-		statsSetLowWater(&stat_low_load_avg_15, (unsigned long)(avg[2] * 1000), 0);
+		statsSetLowWater(&stat_low_load_avg_1,  int_avg[0], 0);
+		statsSetLowWater(&stat_low_load_avg_5,  int_avg[1], 0);
+		statsSetLowWater(&stat_low_load_avg_15, int_avg[2], 0);
 # endif
-		statsSetHighWater(&stat_high_load_avg_1, (unsigned long)(avg[0] * 1000), verb_info.option.value);
-		statsSetHighWater(&stat_high_load_avg_5, (unsigned long)(avg[1] * 1000), verb_info.option.value);
-		statsSetHighWater(&stat_high_load_avg_15, (unsigned long)(avg[2] * 1000), verb_info.option.value);
+		statsSetHighWater(&stat_high_load_avg_1,  int_avg[0], verb_info.option.value);
+		statsSetHighWater(&stat_high_load_avg_5,  int_avg[1], verb_info.option.value);
+		statsSetHighWater(&stat_high_load_avg_15, int_avg[2], verb_info.option.value);
 	}
 #endif
 }

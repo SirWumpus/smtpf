@@ -394,6 +394,47 @@ cacheRegister(Session *null, va_list ignore)
 	return SMTPF_CONTINUE;
 }
 
+static void
+cache_loadavg_process(mcc_context *mcc, mcc_key_hook *hook, const char *ip, mcc_row *row)
+{
+	char buffer[128], *uptime, *clients, *arv, *of, *cap;
+
+	row->value_data[row->value_size] = '\0';
+	uptime = strchr(row->value_data, ' ');
+	*uptime++ = '\0';
+	clients = strchr(uptime, ' ');
+	*clients++ = '\0';
+	arv = strchr(clients, ' ');
+	*arv++ = '\0';
+
+	if ((of = strchr(arv, ' ')) != NULL) {
+		*of++ = '\0';
+
+		if ((cap = strchr(of, ' ')) != NULL)
+			*cap++ = '\0';
+		else
+			cap = "";
+	} else {
+		of = cap = "";
+	}
+
+	(void) snprintf(
+		buffer, sizeof (buffer),
+		"la=%s ut=%s tc=%s arv=%s of=%s cap=%s td=%ld",
+		row->value_data, uptime, clients, arv, of, cap,
+		(long) (time(NULL) - (time_t) row->touched)
+	);
+
+	mccNotesUpdate(mcc, ip, "la=", buffer);
+}
+
+static mcc_key_hook cache_loadavg_hook = {
+	NULL,
+	"__loadavg", sizeof ("__loadavg")-1,
+	cache_loadavg_process,
+	NULL
+};
+
 void
 cacheInit(void)
 {
@@ -435,19 +476,19 @@ An invalid value was specified for this option.
 		exit(1);
 	}
 
+	mccRegisterKey(mcc, &cache_loadavg_hook);
+
 #if defined(FILTER_CLI) && defined(HAVE_PTHREAD_ATFORK)
 	if (pthread_atfork(cacheAtForkPrepare, cacheAtForkParent, cacheAtForkChild)) {
 		syslog(LOG_ERR, log_init, FILE_LINENO, "", strerror(errno), errno);
 		exit(1);
 	}
 #endif
-	if (chownByName(optCachePath.string, optRunUser.string, optRunGroup.string))
-		exit(1);
-	if (chmodByName(optCachePath.string, 0664))
+	if (pathSetPermsByName(optCachePath.string, optRunUser.string, optRunGroup.string, 0664))
 		exit(1);
 
 	snprintf(buffer, sizeof (buffer), "%s-journal", optCachePath.string);
-	(void) chownByName(buffer, optRunUser.string, optRunGroup.string);
+	(void) pathSetPermsByName(buffer, optRunUser.string, optRunGroup.string, 0664);
 
 	if (*optCacheSecret.string != '\0')
 		(void) mccSetSecret(mcc, optCacheSecret.string);
@@ -564,10 +605,14 @@ cacheGcStart(void)
 int
 cacheCommand(Session *sess)
 {
+	time_t now;
 	Reply *reply;
+	Vector active;
 	struct tm local;
+	unsigned long ticks;
 	int key_len, value_len;
 	char *cmd, *key, *value;
+	mcc_active_host **cache;
 	mcc_row old_row, new_row;
 	char cstamp[40], tstamp[40], estamp[40];
 
@@ -604,11 +649,53 @@ cacheCommand(Session *sess)
 
 	switch (toupper(*cmd)) {
 	default:
-		reply = replyFmt(SMTPF_REJECT, "214-2.0.0 CACHE GET key\r\n");
+		reply = replyFmt(SMTPF_REJECT, "214-2.0.0 CACHE ACTIVE\r\n");
+		reply = replyAppendFmt(reply,  "214-2.0.0 CACHE GET key\r\n");
 		reply = replyAppendFmt(reply,  "214-2.0.0 CACHE PUT key value\r\n");
 		reply = replyAppendFmt(reply,  "214-2.0.0 CACHE DELETE key\r\n");
 		reply = replyAppendFmt(reply, msg_end, ID_ARG(sess));
 		goto error0;
+
+	case 'A': /* ACTIVE */
+		if ((active = mccGetActive(mcc)) == NULL) {
+			reply = replyFmt(SMTPF_REJECT, "510 5.0.0 ACTIVE error\r\n");
+			break;
+		}
+
+		(void) time(&now);
+		reply = replyMsg(SMTPF_CONTINUE, "", 0);
+		for (cache = (mcc_active_host **) VectorBase(active); *cache != NULL; cache++) {
+			long td;
+			mcc_string *notes;
+
+			td = 0;
+			notes = mccNotesFind((*cache)->notes, "td=");
+			if (notes != NULL)
+				td = strtol(strstr(notes->string, "td=")+sizeof("td=")-1, NULL, 10);
+
+			ticks = (*cache)->touched / MCC_TICK;
+
+			reply = replyAppendFmt(
+				reply,
+				"211-2.0.0 ip=%s age=%lu ppm=%lu max-ppm=%lu",
+				(*cache)->ip,
+				(unsigned long) (now - (*cache)->touched) - td,
+				mccGetRate((*cache)->intervals, ticks),
+				(*cache)->max_ppm
+			);
+
+			/* Append the notes to the reply line and truncate if necessary. */
+			for (notes = (*cache)->notes; notes != NULL; notes = notes->next)
+				reply = replyAppendFmt(reply, " %s", notes->string);
+			if (SMTP_REPLY_LINE_LENGTH-2 <= reply->length)
+				reply->string[SMTP_REPLY_LINE_LENGTH-2] = '\0';
+
+			reply = replyAppendFmt(reply, "\r\n", reply->string);
+		}
+
+		reply = replyAppendFmt(reply, "211 2.0.0 end\r\n");
+		VectorDestroy(active);
+		break;
 
 	case 'G': /* GET */
 	case 'P': /* PUT */
@@ -662,9 +749,6 @@ cacheCommand(Session *sess)
 	}
 
 	switch (toupper(*cmd)) {
-	case 'G': /* GET */
-		break;
-
 	case 'P': /* PUT */
 		new_row.hits = old_row.hits;
 		new_row.created = old_row.created;
