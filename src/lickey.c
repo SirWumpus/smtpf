@@ -1168,20 +1168,6 @@ dropPrivilages(void)
 	return 0;
 }
 
-int
-chownByName(const char *path, const char *user, const char *group)
-{
-	/* Do nothing (yet). */
-	return 0;
-}
-
-int
-chmodByName(const char *path, mode_t mode)
-{
-	/* Do nothing (yet). */
-	return 0;
-}
-
 #ifdef ENABLE_LICENSE_CONTROL
 /*** REMOVAL OF THIS CODE IS IN VIOLATION
  *** OF THE TERMS OF THE SOFTWARE LICENSE.

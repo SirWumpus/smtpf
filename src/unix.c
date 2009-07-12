@@ -367,49 +367,6 @@ A fatal initialisation error occured while setting up signal handlers.
 }
 #endif
 
-int
-chownByName(const char *path, const char *user, const char *group)
-{
-	struct group *gr;
-	struct passwd *pw;
-
-	if ((pw = getpwnam(user)) == NULL) {
-		syslog(LOG_ERR, LOG_NUM(727) "user \"%s\" not found", user);
-/*{NEXT}*/
-		return -1;
-	}
-
-	if ((gr = getgrnam(group)) == NULL) {
-		syslog(LOG_ERR, LOG_NUM(728) "group \"%s\" not found", group);
-/*{NEXT}*/
-		return -1;
-	}
-
-	if (chown(path, pw->pw_uid, gr->gr_gid) && errno != ENOENT) {
-		syslog(LOG_ERR, LOG_NUM(729) "chown(\"%s\", \"%s\", \"%s\") error: %s (%d)", path, user, group, strerror(errno), errno);
-/*{LOG
-Failure to set user and group ownership on a specific file or directory.
-}*/
-		return -1;
-	}
-
-	return 0;
-}
-
-int
-chmodByName(const char *path, mode_t mode)
-{
-	if (chmod(path, mode)) {
-		syslog(LOG_ERR, LOG_NUM(730) "chmod(\"%s\", %o) error: %s (%d)", path, mode, strerror(errno), errno);
-/*{LOG
-Failure to set file permission on a specific file or directory.
-}*/
-		return -1;
-	}
-
-	return 0;
-}
-
 void
 atExitCleanUp(void)
 {

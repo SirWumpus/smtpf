@@ -546,6 +546,7 @@ extern uid_t euid;
 #include "stats.h"
 #include "route.h"
 #include "filter.h"
+#include "latency.h"
 #include "lickey.h"
 #include "summary.h"
 
@@ -605,8 +606,6 @@ extern void _atExitCleanUp(void);
 extern void atExitCleanUp(void);
 extern int dropPrivilages(void);
 extern int getMyDetails(void);
-extern int chownByName(const char *path, const char *user, const char *group);
-extern int chmodByName(const char *path, mode_t);
 
 extern long addPtrOrIpSuffix(Session *sess, char *buffer, long size);
 extern long headerFind(Vector headers, const char *name, char **header);

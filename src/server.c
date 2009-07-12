@@ -72,20 +72,6 @@ pthread_cond_t slow_quit_cv;
  *** Mutex Wrappers
  ***********************************************************************/
 
-#ifdef HAVE_CLOCK_GETTIME
-void
-timespec_subtract(struct timespec *acc, struct timespec *b)
-{
-	if (acc->tv_nsec < b->tv_nsec) {
-		acc->tv_nsec += 1000000000;
-		acc->tv_sec--;
-	}
-
-	acc->tv_nsec -= b->tv_nsec;
-	acc->tv_sec -= b->tv_sec;
-}
-#endif
-
 #if defined(FILTER_CLI) && defined(HAVE_PTHREAD_ATFORK)
 void
 mutex_destroy(pthread_mutex_t *mutexp)
@@ -748,8 +734,8 @@ serverInit(void)
 	/* The stats must be loaded after all the filters have had
 	 * a chance to register their stat variables.
 	 */
-	statsInit();
 	cacheInit();
+	statsInit();
 	filterInit();
 	statsLoad();
 
@@ -859,6 +845,7 @@ See <a href="summary.html#opt_interfaces">interfaces</a> option.
 		exit(0);
 
 	cacheGcStart();
+	latencyInit(mcc);
 
 	/* We have to create the .pid file after we become a daemon process
 	 * but before we change process ownership, particularly if we intend
@@ -879,7 +866,7 @@ See <a href="summary.html#opt_run_pid_file">run-pid-file</a> option.
 			exit(1);
 		}
 
-		if (chownByName(optRunPidFile.string, optRunUser.string, optRunGroup.string))
+		if (pathSetPermsByName(optRunPidFile.string, optRunUser.string, optRunGroup.string, 0664))
 			exit(1);
 	}
 

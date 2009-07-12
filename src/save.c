@@ -160,7 +160,7 @@ option being defined in order to function.
 }*/
 		} else {
 			cliFdCloseOnExec(fileno(save->fp), 1);
-			(void) chownByName(save->name, optRunUser.string, optRunGroup.string);
+			(void) pathSetPermsByName(save->name, optRunUser.string, optRunGroup.string, 0660);
 			if (verb_save.option.value) {
 				struct stat sb;
 				(void) fstat(fileno(save->fp), &sb);
