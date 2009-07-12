@@ -696,12 +696,12 @@ See <a href="summary.html#opt_uri_links_policy">uri-links-policy</a> option.
 	}
 
 	if ((list_name = dnsListQueryIP(uri_dns_bl, sess->pdq, NULL, uri->host)) != NULL) {
-		setRejectMessage(sess, uri->host, list_name, post_data, MSG_IS_URIBL, &stat_uri_bl);
+		setRejectMessage(sess, uri->host, list_name, post_data, MSG_IS_URIBL, &stat_uri_dns_bl);
 		dnsListSysLog(sess, "uri-dns-bl", uri->host, list_name);
 		goto error1;
 	}
 	if (origin_is_different && (list_name = dnsListQueryIP(uri_dns_bl, sess->pdq, NULL, origin->host)) != NULL) {
-		setRejectMessage(sess, origin->host, list_name, post_data, MSG_IS_URIBL, &stat_uri_bl);
+		setRejectMessage(sess, origin->host, list_name, post_data, MSG_IS_URIBL, &stat_uri_dns_bl);
 		dnsListSysLog(sess, "uri-dns-bl", origin->host, list_name);
 		goto error1;
 	}
