@@ -251,8 +251,13 @@ we force the client to down grade to the older HELO command per RFC 2821.
 
 	resetHelo(sess);
 
-	if ((rc = filterRun(sess, filter_helo_table, sess->client.helo)) != SMTPF_CONTINUE)
+	rc = filterRun(sess, filter_helo_table, sess->client.helo);
+	switch (rc & SMTPF_FLAGS) {
+	case SMTPF_DROP:
+	case SMTPF_REJECT:
+	case SMTPF_TEMPFAIL:
 		return rc;
+	}
 
 	sess->state = sess->helo_state = stateEhlo;
 
@@ -309,8 +314,13 @@ The client has sent HELO or EHLO more than once with different arguments each ti
 	(void) TextCopy(sess->client.helo, sizeof (sess->client.helo), sess->input + sizeof ("HELO ")-1);
 	resetHelo(sess);
 
-	if ((rc = filterRun(sess, filter_helo_table, sess->client.helo)) != SMTPF_CONTINUE)
+	rc = filterRun(sess, filter_helo_table, sess->client.helo);
+	switch (rc & SMTPF_FLAGS) {
+	case SMTPF_DROP:
+	case SMTPF_REJECT:
+	case SMTPF_TEMPFAIL:
 		return rc;
+	}
 
 	sess->state = sess->helo_state = stateHelo;
 
@@ -1134,11 +1144,18 @@ open relay.
 	/* Send RCPT TO: to MX. */
 	sess->input_length = snprintf(sess->input, sizeof (sess->input), "RCPT TO:<%s>\r\n", rcpt->address.string);
 	if (mxCommand(sess, fwd, sess->input, 250)) {
+		if (*rcpt->localRight.string != '\0') {
+			sess->input_length = snprintf(sess->input, sizeof (sess->input), "RCPT TO:<%s@%s>\r\n", rcpt->localLeft.string, rcpt->domain.string);
+			if (!mxCommand(sess, fwd, sess->input, 250))
+				goto unplussed_rcpt;
+		}
+
 		statsCount(SMTP_IS_TEMP(fwd->smtp_code) ? &stat_forward_rcpt_tempfail : &stat_forward_rcpt_reject);
 		RCPT_SET(sess, RCPT_FAILED);
 		goto error3;
 	}
 
+unplussed_rcpt:
 	if (routeAddRcpt(fwd, rcpt)) {
 		rc = replySetFmt(sess, SMTPF_DROP, msg_resources, ID_ARG(sess));
 		statsCount(&stat_rcpt_tempfail);
@@ -1697,7 +1714,7 @@ See <a href="summary.html#opt_rfc2821_line_length">rfc2821-line-length</a>.
 		/* Was the end-of-headers found before the end of the first chunk? */
 		if (sess->msg.eoh == 0) {
 			if (optRFC2822MissingEOH.value) {
-				rc = replySetFmt(sess, SMTPF_REJECT, "550 5.7.1 missing of end-of-header line" ID_MSG(000), ID_ARG(sess));
+				rc = replySetFmt(sess, SMTPF_REJECT, "550 5.7.1 missing of end-of-header line" ID_MSG(927), ID_ARG(sess));
 				statsCount(&stat_rfc2822_missing_eoh);
 			} else {
 				sess->msg.eoh = offset;
@@ -2290,7 +2307,7 @@ cmdXclient(Session *sess)
 			continue;
 		}
 
-		return replySetFmt(sess, SMTPF_REJECT, "501 5.5.4 invalid argument %s" ID_MSG(000) CRLF, *list, ID_ARG(sess));
+		return replySetFmt(sess, SMTPF_REJECT, "501 5.5.4 invalid argument %s" ID_MSG(928) CRLF, *list, ID_ARG(sess));
 	}
 
 	if (routeKnownClientName(sess)) {
@@ -2302,7 +2319,7 @@ cmdXclient(Session *sess)
 	if (CLIENT_ANY_SET(sess, CLIENT_IS_BLACK))
 		socketSetTimeout(sess->client.socket, optSmtpCommandTimeoutBlack.value);
 
-	syslog(LOG_INFO, LOG_MSG(000) "xclient " CLIENT_FORMAT " f=\"%s\" h=\"%s\"", LOG_ARGS(sess), CLIENT_INFO(sess), clientFlags(sess), sess->client.helo);
+	syslog(LOG_INFO, LOG_MSG(929) "xclient " CLIENT_FORMAT " f=\"%s\" h=\"%s\"", LOG_ARGS(sess), CLIENT_INFO(sess), clientFlags(sess), sess->client.helo);
 	VectorDestroy(args);
 
 	return welcome(sess);
