@@ -161,6 +161,9 @@ Stats stat_connect_gl		= { STATS_TABLE_CONNECT, "connect-gl" };
 Stats stat_connect_wl		= { STATS_TABLE_CONNECT, "connect-wl" };
 Stats stat_connect_mail_bl	= { STATS_TABLE_MAIL, "connect-mail-bl" };
 Stats stat_connect_mail_wl	= { STATS_TABLE_MAIL, "connect-mail-wl" };
+Stats stat_helo_bl		= { STATS_TABLE_CONNECT, "helo-bl" };
+Stats stat_helo_gl		= { STATS_TABLE_CONNECT, "helo-gl" };
+Stats stat_helo_wl		= { STATS_TABLE_CONNECT, "helo-wl" };
 Stats stat_mail_bl		= { STATS_TABLE_MAIL, "mail-bl" };
 Stats stat_mail_wl		= { STATS_TABLE_MAIL, "mail-wl" };
 Stats stat_connect_rcpt_bl	= { STATS_TABLE_RCPT, "connect-rcpt-bl" };
@@ -695,6 +698,9 @@ accessRegister(Session *null, va_list ignore)
 	(void) statsRegister(&stat_connect_bl);
 	(void) statsRegister(&stat_connect_gl);
 	(void) statsRegister(&stat_connect_wl);
+	(void) statsRegister(&stat_helo_bl);
+	(void) statsRegister(&stat_helo_gl);
+	(void) statsRegister(&stat_helo_wl);
 	(void) statsRegister(&stat_connect_mail_bl);
 	(void) statsRegister(&stat_connect_mail_wl);
 	(void) statsRegister(&stat_mail_bl);
@@ -894,7 +900,7 @@ There is a <a href="access-map.html#tag_connect"><span class="tag">Connect:</spa
 client name or IP address with a right-hand-side value of IREJECT.
 See <a href="access-map.html#access_tags">access-map</a>.
 }*/
-			CLIENT_SET(sess, CLIENT_IS_BLACK|CLIENT_IS_LOCAL_BLACK);
+				CLIENT_SET(sess, CLIENT_IS_BLACK|CLIENT_IS_LOCAL_BLACK);
 				statsCount(&stat_connect_bl);
 			}
 
@@ -1039,6 +1045,8 @@ accessMail(Session *sess, va_list args)
 	LOG_TRACE(sess, 123, accessMail);
 
 	CLIENT_CLEAR(sess, CLIENT_IS_MX);
+	if (CLIENT_ANY_SET(sess, CLIENT_IS_TRAP))
+		MSG_SET(sess, MSG_TRAP);
 	if (CLIENT_ANY_SET(sess, CLIENT_IS_SAVE))
 		MSG_SET(sess, MSG_SAVE);
 	if (CLIENT_ANY_SET(sess, CLIENT_IS_TAG))
@@ -1484,14 +1492,101 @@ See <a href="summary.html#opt_reject_unknown_tld">reject-unknown-tld</a>.
 }
 
 int
-accessHelo(Session *sess, va_list ignore)
+accessHelo(Session *sess, va_list args)
 {
+	int access = SMTPF_CONTINUE;
+	char *helo, *msg, *value = NULL;
+
 	LOG_TRACE(sess, 142, accessHelo);
 
 	if (CLIENT_ANY_SET(sess, CLIENT_USUAL_SUSPECTS|CLIENT_IS_GREY))
 		return SMTPF_SKIP_REMAINDER;
 
-	return SMTPF_CONTINUE;
+	helo = va_arg(args, char *);
+
+	if ((access = accessClient(sess, "helo:", helo, NULL, NULL, &value, 1)) != SMDB_ACCESS_NOT_FOUND) {
+		if ((msg = strchr(value, ':')) != NULL)
+			msg++;
+
+		switch (access = smdbAccessIsOk(access)) {
+		case SMDB_ACCESS_OK:
+			if (verb_info.option.value) {
+				syslog(LOG_INFO, LOG_MSG(923) "helo %s %s", LOG_ARGS(sess), helo, msg == NULL ? "white listed" : msg);
+/*{LOG
+There is a <a href="access-map.html#tag_helo"><span class="tag">Helo:</span></a> tag entry for
+HELO/EHLO argument with a right-hand-side value of OK.
+See <a href="access-map.html#access_tags">access-map</a>.
+}*/
+			}
+			if (CLIENT_NOT_SET(sess, CLIENT_HOLY_TRINITY))
+				statsCount(&stat_helo_wl);
+			CLIENT_SET(sess, CLIENT_IS_WHITE);
+			access = SMTPF_ACCEPT;
+			break;
+
+		case SMDB_ACCESS_REJECT:
+			access = replyPushFmt(sess, SMTPF_DELAY|SMTPF_SESSION|SMTPF_DROP, "550 5.7.1 helo %s %s" ID_MSG(924) "\r\n", helo, msg == NULL ? "black listed" : msg, ID_ARG(sess));
+/*{REPLY
+There is a <a href="access-map.html#tag_helo"><span class="tag">Helo:</span></a>
+tag entry for HELO/EHLO argument a right-hand-side value of REJECT.
+See <a href="access-map.html#access_tags">access-map</a>.
+}*/
+			CLIENT_SET(sess, CLIENT_IS_BLACK|CLIENT_IS_LOCAL_BLACK);
+			statsCount(&stat_helo_bl);
+			break;
+
+		case SMDB_ACCESS_TEMPFAIL:
+			access = replyPushFmt(sess, SMTPF_DELAY|SMTPF_SESSION|SMTPF_TEMPFAIL, "450 4.7.1 helo %s %s" ID_MSG(925) "\r\n", helo, msg == NULL ? "temporary failure" : msg, ID_ARG(sess));
+/*{REPLY
+There is a <a href="access-map.html#tag_helo"><span class="tag">Helo:</span></a>
+tag entry for HELO/EHLO argument a right-hand-side value of TEMPFAIL.
+See <a href="access-map.html#access_tags">access-map</a>.
+}*/
+			CLIENT_SET(sess, CLIENT_IS_TEMPFAIL);
+			break;
+
+		default:
+			access = SMTPF_CONTINUE;
+
+			if (strcmp(value, "IREJECT") == 0) {
+				access = replyPushFmt(sess, SMTPF_DROP, "550 5.7.1 helo %s %s" ID_MSG(926) "\r\n", helo, msg == NULL ? "black listed" : msg, ID_ARG(sess));
+/*{REPLY
+There is a <a href="access-map.html#tag_helo"><span class="tag">Helo:</span></a>
+tag entry for HELO/EHLO argument a right-hand-side value of IREJECT.
+See <a href="access-map.html#access_tags">access-map</a>.
+}*/
+				CLIENT_SET(sess, CLIENT_IS_BLACK|CLIENT_IS_LOCAL_BLACK);
+				statsCount(&stat_helo_bl);
+			}
+
+			else if (strcmp(value, "CONTENT") == 0) {
+				access = SMTPF_GREY;
+				statsCount(&stat_helo_gl);
+				CLIENT_SET(sess, CLIENT_IS_GREY);
+				sess->client.bw_state = SMTPF_GREY;
+			}
+
+			else if (strcmp(value, "SAVE") == 0) {
+				access = SMTPF_CONTINUE;
+				CLIENT_SET(sess, CLIENT_IS_SAVE);
+			}
+
+			else if (strcmp(value, "TRAP") == 0) {
+				access = SMTPF_DISCARD;
+				CLIENT_SET(sess, CLIENT_IS_TRAP);
+				sess->client.bw_state = SMTPF_DISCARD;
+			}
+
+			else if (strcmp(value, "TAG") == 0) {
+				access = SMTPF_CONTINUE;
+				CLIENT_SET(sess, CLIENT_IS_TAG);
+			}
+		}
+
+		free(value);
+	}
+
+	return access;
 }
 
 static int
@@ -1595,6 +1690,19 @@ accessMapClose(Session *sess)
 AccessMapping accessTagWordsMap[] =
 {
 	{	 ACCESS_CONN_TAG,
+		    ACCESS_OK_WORD
+		"|" ACCESS_DISCARD_WORD
+		"|" ACCESS_REJECT_WORD
+		"|" ACCESS_IREJECT_WORD
+		"|" ACCESS_TEMPFAIL_WORD
+		"|" ACCESS_SAVE_WORD
+		"|" ACCESS_TRAP_WORD
+		"|" ACCESS_NEXT_WORD
+		"|" ACCESS_SKIP_WORD
+		"|" ACCESS_TAG_WORD
+		"|" ACCESS_CONTENT_WORD
+	},
+	{	 ACCESS_HELO_TAG,
 		    ACCESS_OK_WORD
 		"|" ACCESS_DISCARD_WORD
 		"|" ACCESS_REJECT_WORD
@@ -1739,6 +1847,7 @@ AccessMapping accessWordTagsMap[] =
 	{
 		ACCESS_OK_WORD,
 		    ACCESS_CONN_TAG
+		"|" ACCESS_HELO_TAG
 		"|" ACCESS_MAIL_TAG
 		"|" ACCESS_RCPT_TAG
 		"|" ACCESS_CONN_MAIL_TAG
@@ -1749,10 +1858,12 @@ AccessMapping accessWordTagsMap[] =
 	{
 		ACCESS_CONTENT_WORD,
 		    ACCESS_CONN_TAG
+		"|" ACCESS_HELO_TAG
 	},
 	{
 		ACCESS_DISCARD_WORD,
 		    ACCESS_CONN_TAG
+		"|" ACCESS_HELO_TAG
 		"|" ACCESS_MAIL_TAG
 		"|" ACCESS_RCPT_TAG
 		"|" ACCESS_CONN_MAIL_TAG
@@ -1762,6 +1873,7 @@ AccessMapping accessWordTagsMap[] =
 	{
 		ACCESS_IREJECT_WORD,
 		    ACCESS_CONN_TAG
+		"|" ACCESS_HELO_TAG
 		"|" ACCESS_MAIL_TAG
 		"|" ACCESS_CONN_MAIL_TAG
 	},
@@ -1772,6 +1884,7 @@ AccessMapping accessWordTagsMap[] =
 	{
 		ACCESS_REJECT_WORD,
 		    ACCESS_CONN_TAG
+		"|" ACCESS_HELO_TAG
 		"|" ACCESS_MAIL_TAG
 		"|" ACCESS_RCPT_TAG
 		"|" ACCESS_CONN_MAIL_TAG
@@ -1782,6 +1895,7 @@ AccessMapping accessWordTagsMap[] =
 	{
 		ACCESS_SAVE_WORD,
 		    ACCESS_CONN_TAG
+		"|" ACCESS_HELO_TAG
 		"|" ACCESS_MAIL_TAG
 		"|" ACCESS_RCPT_TAG
 		"|" ACCESS_CONN_MAIL_TAG
@@ -1800,6 +1914,7 @@ AccessMapping accessWordTagsMap[] =
 	{
 		ACCESS_TAG_WORD,
 		    ACCESS_CONN_TAG
+		"|" ACCESS_HELO_TAG
 		"|" ACCESS_MAIL_TAG
 		"|" ACCESS_RCPT_TAG
 		"|" ACCESS_CONN_MAIL_TAG
@@ -1809,6 +1924,7 @@ AccessMapping accessWordTagsMap[] =
 	{
 		ACCESS_TEMPFAIL_WORD,
 		    ACCESS_CONN_TAG
+		"|" ACCESS_HELO_TAG
 		"|" ACCESS_MAIL_TAG
 		"|" ACCESS_RCPT_TAG
 		"|" ACCESS_CONN_MAIL_TAG
@@ -1818,6 +1934,7 @@ AccessMapping accessWordTagsMap[] =
 	{
 		ACCESS_TRAP_WORD,
 		    ACCESS_CONN_TAG
+		"|" ACCESS_HELO_TAG
 		"|" ACCESS_MAIL_TAG
 		"|" ACCESS_RCPT_TAG
 		"|" ACCESS_CONN_MAIL_TAG

@@ -65,6 +65,7 @@ extern int accessClose(Session *sess, va_list ignore);
 #define ACCESS_BODY_TAG		"body:"
 #define ACCESS_CONN_TAG		"connect:"
 #define ACCESS_CONCURRENT_TAG	"concurrent-connect:"
+#define ACCESS_HELO_TAG		"helo:"
 #define ACCESS_MAIL_TAG		"from:"
 #define ACCESS_RCPT_TAG		"to:"
 #define ACCESS_EMEW_TAG		"emew:"
@@ -116,6 +117,7 @@ extern int accessClose(Session *sess, va_list ignore);
 #define ACCESS_CONN_MAIL_KEY	ACCESS_CONN_TAG "%s:" ACCESS_MAIL_TAG "%s"	/* IP | domain, mail */
 #define ACCESS_CONN_RCPT_KEY	ACCESS_CONN_TAG "%s:" ACCESS_RCPT_TAG "%s"	/* IP | domain, mail */
 #define ACCESS_CONCURRENT_KEY	ACCESS_CONCURRENT_TAG "%s"			/* IP | domain */
+#define ACCESS_HELO_KEY		ACCESS_HELO_TAG	"%s"		/* IP | domain */
 #define ACCESS_MAIL_KEY		ACCESS_MAIL_TAG	"%s"		/* mail */
 #define ACCESS_MAIL_RCPT_KEY	ACCESS_MAIL_TAG "%s:" ACCESS_RCPT_TAG "%s"	/* mail, mail */
 #define ACCESS_RCPT_KEY		ACCESS_RCPT_TAG	"%s"		/* mail */
