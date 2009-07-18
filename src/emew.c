@@ -582,7 +582,7 @@ emew3IsValid(Session *sess, char *msgid)
 	/* Convert the delimiter to an at-sign. */
 	if (msgid[EMEW3_MAIL_OFFSET + at_offset] != EMEW3_DELIM) {
 		if (verb_emew.option.value)
-			syslog(LOG_DEBUG, LOG_MSG(000) "EMEW bad at-offset=%d ch=%c", LOG_ARGS(sess), at_offset, msgid[EMEW3_MAIL_OFFSET + at_offset]);
+			syslog(LOG_DEBUG, LOG_MSG(930) "EMEW bad at-offset=%d ch=%c", LOG_ARGS(sess), at_offset, msgid[EMEW3_MAIL_OFFSET + at_offset]);
 		goto error0;
 	}
 	msgid[EMEW3_MAIL_OFFSET + at_offset] = '@';
@@ -593,7 +593,7 @@ emew3IsValid(Session *sess, char *msgid)
 	 */
 	if ((orig_msgid = strchr(msgid + EMEW3_MAIL_OFFSET + at_offset + 1, '|')) == NULL) {
 		if (verb_emew.option.value)
-			syslog(LOG_DEBUG, LOG_MSG(000) "EMEW missing delim between orig sender and id", LOG_ARGS(sess));
+			syslog(LOG_DEBUG, LOG_MSG(931) "EMEW missing delim between orig sender and id", LOG_ARGS(sess));
 		goto error0;
 	}
 
@@ -602,14 +602,14 @@ emew3IsValid(Session *sess, char *msgid)
 
 	/* Lookup the secret of the original-sender address. */
 	if (verb_emew.option.value)
-		syslog(LOG_DEBUG, LOG_MSG(000) "EMEW address=\"%s\"", LOG_ARGS(sess), msgid+EMEW3_MAIL_OFFSET);
+		syslog(LOG_DEBUG, LOG_MSG(932) "EMEW address=\"%s\"", LOG_ARGS(sess), msgid+EMEW3_MAIL_OFFSET);
 
 	if (accessEmail(sess, ACCESS_TAG, msgid+EMEW3_MAIL_OFFSET, NULL, &secret) == SMDB_ACCESS_NOT_FOUND)
 		secret = optEmewSecret.string;
 
 	if (verb_emew.option.value) {
 		syslog(
-			LOG_DEBUG, LOG_MSG(000) "EMEW %s secret=\"%s\"", LOG_ARGS(sess),
+			LOG_DEBUG, LOG_MSG(933) "EMEW %s secret=\"%s\"", LOG_ARGS(sess),
 			secret == optEmewSecret.string ? "global" : "access-map", secret
 		);
 	}
@@ -685,7 +685,7 @@ emewIsValid(Session *sess, char *msgid)
 	msgid += sizeof ("Message-ID:")-1;
 	msgid += strspn(msgid, " \t");
 	if (verb_emew.option.value)
-		syslog(LOG_DEBUG, LOG_MSG(000) "msgid=%s", LOG_ARGS(sess), msgid);
+		syslog(LOG_DEBUG, LOG_MSG(934) "msgid=%s", LOG_ARGS(sess), msgid);
 	if (*msgid == '<')
 		msgid++;
 
@@ -804,7 +804,7 @@ emewHeader(Session *sess, Vector headers)
 		}
 
 		if (verb_emew.option.value)
-			syslog(LOG_DEBUG, LOG_MSG(000) "header \"%s\"", LOG_ARGS(sess), ref);
+			syslog(LOG_DEBUG, LOG_MSG(935) "header \"%s\"", LOG_ARGS(sess), ref);
 		if (0 <= ref_index)
 			VectorSet(sess->msg.headers, ref_index, ref);
 		else if (VectorAdd(sess->msg.headers, ref))

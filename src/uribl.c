@@ -581,7 +581,7 @@ mailBlLookup(Session *sess, const char *mail, Stats *stat)
 		statsCount(stat);
 		ctx->policy = *optMailBlPolicy.string;
 		dnsListSysLog(sess, "mail-bl", mail, list_name);
-		return replyPushFmt(sess, SMTPF_DELAY|SMTPF_REJECT, "550 5.7.1 rejected mail address, <%s> black listed by %s" ID_MSG(000) "\r\n", mail, list_name, ID_ARG(sess));
+		return replyPushFmt(sess, SMTPF_DELAY|SMTPF_REJECT, "550 5.7.1 rejected mail address, <%s> black listed by %s" ID_MSG(940) "\r\n", mail, list_name, ID_ARG(sess));
 	}
 
 	return SMTPF_CONTINUE;
@@ -1039,7 +1039,7 @@ mailBlCheckString(Session *sess, const char *value)
 	Mime *mime;
 
 	if (1 < verb_uri.option.value)
-		syslog(LOG_DEBUG, LOG_MSG(000) "mailBlCheckString value=\"%s\"", LOG_ARGS(sess), value);
+		syslog(LOG_DEBUG, LOG_MSG(941) "mailBlCheckString value=\"%s\"", LOG_ARGS(sess), value);
 
 	if ((mime = uriMimeCreate(0)) == NULL)
 		return SMTPF_CONTINUE;
@@ -1115,7 +1115,7 @@ uriblHeaders(Session *sess, va_list args)
 		for (table = (char **) VectorBase(mail_hdrs); *table != NULL; table++) {
 			if (0 < (length = TextInsensitiveStartsWith(hdr, *table)) && hdr[length] == ':') {
 				if (verb_uri.option.value)
-					syslog(LOG_DEBUG, LOG_MSG(000) "mail-bl-headers hdr=\"%s\"", LOG_ARGS(sess), hdr);
+					syslog(LOG_DEBUG, LOG_MSG(942) "mail-bl-headers hdr=\"%s\"", LOG_ARGS(sess), hdr);
 
 				if ((rc = mailBlCheckString(sess, hdr + length + 1)) != SMTPF_CONTINUE)
 					goto done;

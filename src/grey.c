@@ -1097,7 +1097,7 @@ and <a href="summary.html#opt_grey_temp_fail_period">grey-temp-fail-period</a> o
 #ifdef ENABLE_GREY_TO_BLACK
 		(void) replyPushFmt(sess, rc, "550 5.7.1 " CLIENT_FORMAT " failed grey listing" ID_MSG(388) "\r\n", CLIENT_INFO(sess), ID_ARG(sess));
 #else
-		syslog(LOG_WARN, LOG_MSG(000) "WARNING grey list {%s} rc=%d unexpected, check cache", LOG_ARGS(sess), tuple, rc);
+		syslog(LOG_WARN, LOG_MSG(937) "WARNING grey list {%s} rc=%d unexpected, check cache", LOG_ARGS(sess), tuple, rc);
 		rc = SMTPF_CONTINUE;
 #endif
 		statsCount(&stat_grey_reject);

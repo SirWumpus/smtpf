@@ -619,6 +619,7 @@ cacheCommand(Session *sess)
 	if (CLIENT_NOT_SET(sess, CLIENT_IS_LOCALHOST))
 		return cmdUnknown(sess);
 
+	reply = NULL;
 	statsCount(&stat_admin_commands);
 
 	/* Format of commands:

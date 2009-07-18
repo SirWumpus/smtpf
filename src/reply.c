@@ -403,6 +403,7 @@ replySendLintReport(Session *sess, const char *report_rcpt)
 		return;
 
 	/* Try to connect to one of the local routes. */
+	smtp = NULL;
 	for (table = (char **) VectorBase(hosts); *table != NULL; table++) {
 		if ((smtp = smtp2Open(*table, optSmtpConnectTimeout.value, optSmtpCommandTimeout.value, SMTP_FLAG_LOG)) != NULL)
 			break;

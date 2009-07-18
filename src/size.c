@@ -164,12 +164,12 @@ sizeRcpt(Session *sess, va_list args)
 		if (sess->msg.max_size_rcpt < size_limit)
 			sess->msg.max_size_rcpt = size_limit;
 		free(value);
+
+		if (verb_size.option.value)
+			syslog(LOG_DEBUG, LOG_MSG(902) "length-connect=%lu length-from=%lu length-to=%lu mail-size=%lu", LOG_ARGS(sess), sess->client.max_size, sess->msg.max_size, size_limit, sess->msg.mail_size);
 	}
 
 	max_bytes = 0 < sess->msg.max_size_rcpt ? sess->msg.max_size_rcpt : sess->msg.max_size;
-
-	if (verb_size.option.value)
-		syslog(LOG_DEBUG, LOG_MSG(902) "length-connect=%lu length-from=%lu length-to=%lu mail-size=%lu", LOG_ARGS(sess), sess->client.max_size, sess->msg.max_size, size_limit, sess->msg.mail_size);
 
 	if (max_bytes != ULONG_MAX && max_bytes < sess->msg.mail_size) {
 		statsCount(&stat_message_size);
