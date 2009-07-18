@@ -248,6 +248,7 @@ int
 routeGetRouteCount(RouteCount *rcp)
 {
 	int rc;
+	char *value;
 	smdb *route_map;
 
 	if (rcp == NULL) {
@@ -265,7 +266,13 @@ routeGetRouteCount(RouteCount *rcp)
 		smdbClose(route_map);
 	}
 
-	if (rcp->domain_list != NULL) {
+	if (0 < TextInsensitiveCompare(route_map_path, "socketmap")) {
+		if ((value = smdbGetValue(route_map, ROUTE_TAG "__counts__")) != NULL
+		&& sscanf(value, "%lu %lu %lu %lu", &rcp->domains, &rcp->accounts, &rcp->addresses, &rcp->unique_domains) == 4) {
+			free(value);
+			rc = KVM_OK;
+		}
+	} else if (rcp->domain_list != NULL) {
 		char **table;
 
 		VectorSort(rcp->domain_list, (int (*)(const void *, const void *)) route_compare_domain);
@@ -278,9 +285,10 @@ routeGetRouteCount(RouteCount *rcp)
 
 		rcp->unique_domains = VectorLength(rcp->domain_list);
 
-		VectorDestroy(rcp->domain_list);
-		rcp->domain_list = NULL;
 	}
+
+	VectorDestroy(rcp->domain_list);
+	rcp->domain_list = NULL;
 
 	if (rc == KVM_ERROR)
 		return -1;
@@ -784,10 +792,16 @@ routeCallAhead(Session *sess, const char *host, ParsePath *rcpt)
 
 	(void) snprintf(sess->input, sizeof (sess->input), "RCPT TO:<%s>\r\n", rcpt->address.string);
 	if (mxCommand(sess, conn, sess->input, 250)) {
+		if (*rcpt->localRight.string != '\0') {
+			(void) snprintf(sess->input, sizeof (sess->input), "RCPT TO:<%s>\r\n", rcpt->address.string);
+			if (!mxCommand(sess, conn, sess->input, 250))
+				goto unplussed_rcpt;
+		}
+
 		rc = SMTP_IS_PERM(conn->smtp_code) ? SMTPF_REJECT : SMTPF_TEMPFAIL;
 		goto error2;
 	}
-
+unplussed_rcpt:
 #ifdef ENABLE_FALSE_RCPT_TEST
 	/* If the recipient's call-ahead host status hasn't been
 	 * cached, then perform the false address test.
