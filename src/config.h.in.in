@@ -156,9 +156,9 @@ extern "C" {
 #endif
 
 #ifndef FD_PER_THREAD
-/* client, pdq, forward, extra
+/* client, pdq, forward, spamd, clamd, temp.
  */
-#define FD_PER_THREAD			4
+#define FD_PER_THREAD			6
 #endif
 
 #if defined(__WIN32__) && !defined(FD_SETSIZE)
