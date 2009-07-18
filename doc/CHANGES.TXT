@@ -271,6 +271,27 @@ is no set schedule for releases.
    +	ideally "dns-gl < SPF fail < CONTENT", but currently the precedence
    	is actually "SPF fail < dns-gl = CONTENT".
 
+--2.2.27--
+
+   +	Added new access-map tag Helo:
+
+   !	When route-map points to a socketmap, then request a special
+   	key from the socketmap with the assorted route counts used for
+   	license checks. Doing a walk of the map would be inefficient
+   	and tracking the routes as they're seen would be impractical,
+   	since the point of using a socketmap would be for sites with
+   	huge numbers of domains.
+
+   !	Fix session TRAP for transactions.
+
+   +	cmdRcpt, routeCallAhead: Added more support for Sendmail's
+   	plussed mail addresses. Plussed mail addresses can be used
+   	even when the forward host does not support them.
+
+   !	cmdEhlo, cmdHelo: fixed handling of lesser used return codes
+   	from the HELO filters.
+
+   !	Restore FD_PER_THREAD to 6.
 
 --2.2.26--
 

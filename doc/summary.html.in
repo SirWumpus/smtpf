@@ -244,13 +244,16 @@ by one 16-bit word from right to left until a match is found.
 </table>
 </blockquote>
 <p>
-
- If a key is found and is a milter specific tag (ie. @PACKAGE_NAME@-Connect, @PACKAGE_NAME@-From, @PACKAGE_NAME@-Auth, @PACKAGE_NAME@-To), then the value is processed as a pattern list
- and the result returned. The Sendmail variants cannot have a pattern list.
- A pattern list is a whitespace separated
- list of <i class="syntax">pattern-action</i> pairs followed by an optional default
- <i class="syntax">action</i>. The supported patterns are:
-
+The tags <span class="tag">Connect:</span>, <span class="tag">Helo:</span>, <span class="tag">From:</span>, and <span class="tag">To:</span> are used for black / white list
+lookup by connecting client IP or domain, HELO/EHLO argument, sender address,
+and recipient address respectively. Other options may specify other tags.
+See the <a href="access-map.html">access-map</a> chapter.
+</p>
+<p>
+If a key is found, then the value is processed as a pattern list
+and the result returned. A pattern list is a whitespace separated
+list of <i class="syntax">pattern-action</i> pairs followed by an optional default
+action. The support pattern formats are:
 </p>
 <blockquote>
 <table border="0" cellspacing="0" cellpadding="0" width="100%">
@@ -283,9 +286,21 @@ by one 16-bit word from right to left until a match is found.
 <p>
 
 For black-white lookups, the following actions are recognised:
-OK (white list), SPF-PASS (white-list sender if SPF passed), REJECT (black list), DISCARD (accept &amp; discard),
-SKIP or DUNNO (stop lookup, no result), and NEXT (opposite of
-SKIP, resume lookup). It is possible to specify an empty action
+
+OK (white list),
+CONTENT	(white list pre-DATA)
+DISCARD (accept &amp; discard),
+SPF-PASS (white-list sender if SPF passed),
+REJECT (black list),
+IREJECT (black list immediately),
+TEMPFAIL,
+SAVE (save copy if delivered),
+TRAP (accept, save, but do not deliver),
+TAG (tag Subject instead of reject or drop),
+SKIP or DUNNO (stop lookup, no result),
+and NEXT (opposite of SKIP, resume lookup).
+
+It is possible to specify an empty action
 after a pattern, which is treated like SKIP returning an undefined
 result. Other options may specify other actions.
 </p>

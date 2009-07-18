@@ -297,7 +297,6 @@ by-passes all the filtering except anti-virus. The connection can also be "grey-
 only white lists a connection as far as, but not including, the data content filters.
 </dd>
 
-
 <a name="tag_connect_from"></a>
 <dt><span class="tag">Connect:</span>ip<span class="tag">:From:</span>mail</dt>
 <dt><span class="tag">Connect:</span>domain<span class="tag">:From:</span>mail</dt>
@@ -377,6 +376,24 @@ This is the amount of time in seconds a correspondent's grey-list
 record will be temporarily rejected before being accepted.
 If several keys are possible for a given message, then the minimum value is used.
 Specify an integer number of seconds or zero (0) to disable.
+</dd>
+
+<a name="tag_helo"></a>
+<dt><span class="tag">Helo:</span>ip</dt>
+<dt><span class="tag">Helo:</span>domain</dt>
+<dd>
+Used to black or white list an SMTP client based on the HELO/EHLO argument. If black listed
+(<code>REJECT</code>), the connection will be dropped. If white listed (<code>OK</code>),
+then the messages from this connection by-passes all the filtering except anti-virus. The
+connection can also be "grey-listed" (<code>CONTENT</code>), similar to
+<a href="summary.html#opt_dns_gl">dns-gl</a>, which only white lists a connection as far as,
+but not including, the data content filters.
+<p class="note">
+This tag is not recommended for white listing as the HELO argument it can be too easily
+falsified. It is primarily intended for data gathering and diagnostics when used with
+<code>SAVE</code>, <code>TAG</code>, or <code>TRAP</code> actions. The other actions are
+supported for completeness.
+</p>
 </dd>
 
 <a name="tag_length"></a>
@@ -534,7 +551,7 @@ The action words supported are:
 <blockquote>
 <table border="0" cellspacing="0" cellpadding="0" width="100%">
 <tr valign="top"><td width="41%" class="value bdotted tline">OK</td><td width="59%" class="bdotted tline">white list, by-pass one or more tests</td></tr>
-<tr valign="top"><td width="41%" class="value bdotted">CONTENT</td><td width="59%" class="bdotted">white list as far as, but not including, the content filters;<br/>used only with <span class="tag">Connect:</span></td></tr>
+<tr valign="top"><td width="41%" class="value bdotted">CONTENT</td><td width="59%" class="bdotted">white list as far as, but not including, the content filters;<br/>used only with <span class="tag">Connect:</span> or <span class="tag">Helo:</span>.</td></tr>
 <tr valign="top"><td width="41%" class="value bdotted">DISCARD</td><td width="59%" class="bdotted">accept &amp; discard message</td></tr>
 <tr valign="top"><td width="41%" class="value bdotted">NEXT</td><td width="59%" class="bdotted">resume lookup, opposite of SKIP</td></tr>
 <tr valign="top"><td width="41%" class="value bdotted">SAVE</td><td width="59%" class="bdotted">save a copy of message if delivered</td></tr>
