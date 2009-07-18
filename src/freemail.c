@@ -83,14 +83,10 @@ freemailRcpt(Session *sess, va_list args)
 	if (item->mail == NULL)
 		return SMTPF_CONTINUE;
 
-	if (CLIENT_ANY_SET(sess, CLIENT_IS_FORGED)) {
+	if (CLIENT_ANY_SET(sess, CLIENT_IS_FORGED)
+	|| TextFind(sess->client.name, item->ptr, -1, 1) < 0) {
 		statsCount(&stat_mail_strict_fail);
 		return replyPushFmt(sess, SMTPF_REJECT, "550 5.7.0 client " CLIENT_FORMAT " sender <%s> must be sent from %s" ID_MSG(921) "\r\n", CLIENT_INFO(sess), sess->msg.mail->address.string, sess->msg.mail->domain.string, ID_ARG(sess));
-	}
-
-	if (TextFind(sess->client.name, item->ptr, -1, 1) < 0) {
-		statsCount(&stat_mail_strict_fail);
-		return replyPushFmt(sess, SMTPF_REJECT, "550 5.7.0 client " CLIENT_FORMAT " sender <%s> must be sent from %s" ID_MSG(922) "\r\n", CLIENT_INFO(sess), sess->msg.mail->address.string, sess->msg.mail->domain.string, ID_ARG(sess));
 	}
 
 	return SMTPF_CONTINUE;
