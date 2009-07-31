@@ -101,7 +101,8 @@ timeLimitRcpt(Session *sess, va_list args)
 			optTimeLimitDelimiters.string
 		);
 
-	at_sign = strchr(rcpt->address.string, '@');
+	if ((at_sign = strchr(rcpt->address.string, '@')) == NULL)
+		return SMTPF_CONTINUE;
 	*at_sign = '\0';
 	span = delim = strcspn(rcpt->address.string, optTimeLimitDelimiters.string);
 
