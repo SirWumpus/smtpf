@@ -188,7 +188,7 @@ msgLimitParse(const char *specifier, MsgLimit *limit)
 {
 	int unit = 's';
 	char *next, *stop;
-	long messages = -1, seconds = 1, number;
+	long messages = 0, seconds = 1, number;
 
 	number = strtol(specifier, &stop, 10);
 	if (specifier < stop)
