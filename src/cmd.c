@@ -2211,7 +2211,9 @@ cmdKill(Session *sess)
 
 				/* Don't try to send this to ourself. */
 				if (strcmp(conn->long_id, sess->long_id) != 0) {
-#ifdef HAVE_PTHREAD_KILL
+#ifdef USE_PTHREAD_CANCEL
+					pthread_cancel(conn->thread);
+#elif defined(HAVE_PTHREAD_KILL)
 					pthread_kill(conn->thread, SIGUSR1);
 #else
 					SetEvent(conn->kill_event);
