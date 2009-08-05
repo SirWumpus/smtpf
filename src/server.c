@@ -915,8 +915,10 @@ serverChild(void *ignore)
 	while (server.running) {
 		TIMER_DECLARE(mark);
 
-		if (mutex_lock(SESSION_ID_ZERO, FILE_LINENO, &server.accept_mutex))
+		if (mutex_lock(SESSION_ID_ZERO, FILE_LINENO, &server.accept_mutex)) {
+			syslog(LOG_ERR, LOG_NUM(000) "accept mutex lock: %s (%d)", strerror(errno), errno);
 			break;
+		}
 
 		if (!server.running) {
 			(void) mutex_unlock(SESSION_ID_ZERO, FILE_LINENO, &server.accept_mutex);
@@ -953,7 +955,8 @@ serverChild(void *ignore)
 		}
 
 		if (session->client.socket == NULL
-		&& errno != ECONNABORTED && optServerMinThreads.value < server.threads) {
+		&& errno != EINTR && errno != ECONNABORTED
+		&& optServerMinThreads.value < server.threads) {
 			if (errno != 0 && errno != ETIMEDOUT)
 				syslog(LOG_ERR, LOG_NUM(602) "socket accept: %s (%d); th=%u cn=%u", strerror(errno), errno, server.threads, server.connections);
 /*{LOG
