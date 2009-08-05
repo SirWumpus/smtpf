@@ -273,6 +273,8 @@ is no set schedule for releases.
 
 --2.2.27--
 
+   *	Requires Libsnert 1.72.5
+
    +	Added new access-map tag Helo:
 
    !	When route-map points to a socketmap, then request a special
@@ -292,6 +294,10 @@ is no set schedule for releases.
    	from the HELO filters.
 
    !	Restore FD_PER_THREAD to 6.
+
+  !!	timeLimitRcpt: Fixed seg. fault when RCPT address has no at-sign.
+
+   !	Replace setjmp / longjmp with SIGSETJMP / SIGLONGJMP wrappers.
 
 --2.2.26--
 
