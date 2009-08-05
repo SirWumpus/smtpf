@@ -1302,7 +1302,7 @@ filterGetContext(Session *sess, FilterContext offset)
 {
 	if (offset == 0) {
 		syslog(LOG_ERR, log_internal, LOG_ARGS(sess), FILE_LINENO, "filterGetContext", strerror(EINVAL), EINVAL);
-		longjmp(sess->on_error, SMTPF_DROP);
+		SIGLONGJMP(sess->on_error, SMTPF_DROP);
 	}
 
 	return (char *) &sess[1] + offset;

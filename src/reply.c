@@ -326,7 +326,7 @@ replyInternalError(Session *sess, const char *file, unsigned long lineno)
 {
 	syslog(LOG_ERR, log_internal, LOG_ARGS(sess), file, lineno, "", strerror(errno), errno);
 	(void) sendClientReply(sess, msg_421_internal, ID_ARG(sess));
-	longjmp(sess->on_error, SMTPF_DROP);
+	SIGLONGJMP(sess->on_error, SMTPF_DROP);
 }
 
 void
@@ -339,7 +339,7 @@ Check the process status and ulimit settings.
 Typically the only solution is to restart the process.
 }*/
 	(void) sendClientReply(sess, msg_resources, ID_ARG(sess));
-	longjmp(sess->on_error, SMTPF_DROP);
+	SIGLONGJMP(sess->on_error, SMTPF_DROP);
 }
 
 /***********************************************************************
@@ -589,7 +589,7 @@ replySend(Session *sess)
 
 		if (error) {
 			/* Server I/O error while writing to client. */
-			longjmp(sess->on_error, SMTPF_DROP);
+			SIGLONGJMP(sess->on_error, SMTPF_DROP);
 		}
 	} else if (sess->response.delayed != NULL) {
 		/* A delayed reply is sent in response to RCPT. */
@@ -634,7 +634,7 @@ replySend(Session *sess)
 		}
 		if (error) {
 			/* Server I/O error while writing to client. */
-			longjmp(sess->on_error, SMTPF_DROP);
+			SIGLONGJMP(sess->on_error, SMTPF_DROP);
 		}
 	} else {
 		replyInternalError(sess, FILE_LINENO);

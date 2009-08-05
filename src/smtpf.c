@@ -1184,7 +1184,7 @@ sessionProcess(Session *sess)
 
 	if (verb_timers.option.value)
 		TIMER_START(banner);
-	if (0 < setjmp(sess->on_error))
+	if (0 < SIGSETJMP(sess->on_error, 1))
 		goto error0;
 
 	/* We need at least N file descriptors per client. More are
@@ -1265,7 +1265,7 @@ the session "end" log line only.
 	if (CLIENT_ANY_SET(sess, CLIENT_IS_BLACK))
 		socketSetTimeout(sess->client.socket, optSmtpCommandTimeoutBlack.value);
 
-	if (setjmp(sess->on_error) == 0) {
+	if (SIGSETJMP(sess->on_error, 1) == 0) {
 		while (sess->state != NULL) {
 #ifdef __WIN32__
 			if (WaitForSingleObject(sess->kill_event, 0) == WAIT_OBJECT_0)

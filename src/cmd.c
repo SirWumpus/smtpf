@@ -1628,7 +1628,7 @@ The client appears to have disconnected. A read error occured in the DATA collec
 #else
 			sess->smtp_code = SMTP_ERROR_IO;
 #endif
-			longjmp(sess->on_error, SMTPF_DROP);
+			SIGLONGJMP(sess->on_error, SMTPF_DROP);
 		}
 
 		sess->client.octets += length;

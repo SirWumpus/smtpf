@@ -115,8 +115,8 @@ extern "C" {
 #include "valgrind/valgrind.h"
 #include "valgrind/memcheck.h"
 
-#if LIBSNERT_MAJOR < 1 || LIBSNERT_MINOR < 70
-# error "LibSnert/1.70 or better is required"
+#if LIBSNERT_MAJOR < 1 || LIBSNERT_MINOR < 72
+# error "LibSnert/1.72 or better is required"
 #endif
 
 /***********************************************************************
@@ -491,14 +491,12 @@ struct smtpf {
 		Reply *delayed;
 		Reply *immediate;
 	} response;
-	jmp_buf on_error;
+	JMP_BUF on_error;
 	int smtp_code;
 #ifdef OLD_SMTP_ERROR_CODES
 	int smtp_error;
 #endif
-#ifdef ENABLE_PDQ
 	PDQ *pdq;
-#endif
 #ifdef ENABLE_LINT
 	Reply *lint_replies;
 #endif
@@ -579,10 +577,6 @@ extern void mutex_destroy(pthread_mutex_t *mutexp);
 extern int mutex_lock(session_id id, const char *name, unsigned long line, pthread_mutex_t *mutexp);
 extern int mutex_trylock(session_id id, const char *name, unsigned long line, pthread_mutex_t *mutexp);
 extern int mutex_unlock(session_id id, const char *name, unsigned long line, pthread_mutex_t *mutexp);
-
-#ifndef ENABLE_PDQ
-extern int mxPrune(Vector mxlist);
-#endif
 
 extern int mxPrint(Session *sess, Connection *relay, const char *line, size_t length);
 extern int mxResponse(Session *sess, Connection *relay);
