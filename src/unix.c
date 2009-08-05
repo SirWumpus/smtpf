@@ -155,7 +155,10 @@ signalThread(void *data)
 # ifdef SIGUSR2
 		case SIGUSR2:
 # endif
-			syslog(LOG_INFO, LOG_NUM(724) "signal %d received, cn=%u", signal, srv->connections);
+# ifdef SIGPIPE
+		case SIGPIPE:
+# endif
+			syslog(LOG_INFO, LOG_NUM(724) "signal %d ignored, cn=%u", signal, srv->connections);
 /*{LOG
 A special signal not currently acted upon was received.
 Normally this message should never be seen.
@@ -190,29 +193,11 @@ signalExit(int signum)
 void
 signalInit(Server *ignore)
 {
-#ifdef SIGPIPE
-# ifdef HAVE_SIGACTION
-{
-	struct sigaction signal_ignore;
-
-	signal_ignore.sa_flags = 0;
-	signal_ignore.sa_handler = SIG_IGN;
-	(void) sigemptyset(&signal_ignore.sa_mask);
-
-	if (sigaction(SIGPIPE, &signal_ignore, NULL)) {
-		syslog(LOG_ERR, log_init, FILE_LINENO, "SIGPIPE", strerror(errno), errno);
-		exit(1);
-	}
-}
-# else
-	if (signal(SIGPIPE, SIG_IGN) == SIG_ERR) {
-		syslog(LOG_ERR, log_init, FILE_LINENO, "SIGPIPE", strerror(errno), errno);
-		exit(1);
-	}
-# endif
-#endif
 #if defined(HAVE_PTHREAD_SIGMASK)
         (void) sigemptyset(&signal_set);
+# ifdef SIGPIPE
+	(void) sigaddset(&signal_set, SIGPIPE);
+# endif
 # ifdef SIGHUP
         (void) sigaddset(&signal_set, SIGHUP);
 # endif
@@ -259,6 +244,10 @@ signalInit(Server *ignore)
 #  endif
 # endif
 #else
+	if (signal(SIGPIPE, SIG_IGN) == SIG_ERR) {
+		syslog(LOG_ERR, log_init, FILE_LINENO, "SIGPIPE", strerror(errno), errno);
+		exit(1);
+	}
 	if (signal(SIGQUIT, signalExit) == SIG_ERR) {
 		syslog(LOG_ERR, log_init, FILE_LINENO, "SIGQUIT", strerror(errno), errno);
 		exit(1);
@@ -287,24 +276,12 @@ signalInit(Server *ignore)
 void
 signalFini(Server *ignore)
 {
-#ifdef SIGPIPE
-# ifdef HAVE_SIGACTION
-{
-	struct sigaction signal_default;
-
-	signal_default.sa_flags = 0;
-	signal_default.sa_handler = SIG_DFL;
-	(void) sigemptyset(&signal_default.sa_mask);
-
-	(void) sigaction(SIGPIPE, &signal_default, NULL);
-}
-# else
-	(void) signal(SIGPIPE, SIG_DFL);
-# endif
-#endif
 #if defined(HAVE_PTHREAD_SIGMASK)
 	(void) pthread_sigmask(SIG_UNBLOCK, &signal_set, NULL);
 #else
+# ifdef SIGPIPE
+	(void) signal(SIGPIPE, SIG_DFL);
+# endif
 # ifdef SIGUSR1
 	(void) signal(SIGUSR1, SIG_DFL);
 # endif
