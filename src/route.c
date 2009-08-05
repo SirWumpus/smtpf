@@ -261,37 +261,43 @@ routeGetRouteCount(RouteCount *rcp)
 	VectorSetDestroyEntry(rcp->domain_list, free);
 
 	rc = KVM_ERROR;
-	if ((route_map = smdbOpen(route_map_path, 1)) != NULL) {
-		rc = route_map->walk(route_map, route_walk_count, rcp);
-		smdbClose(route_map);
-	}
+	if ((route_map = smdbOpen(route_map_path, 1)) == NULL)
+		return -1;
 
-	if (0 < TextInsensitiveCompare(route_map_path, "socketmap")) {
-		if ((value = smdbGetValue(route_map, ROUTE_TAG "__counts__")) != NULL
+	if (TextMatch(route_map_path, "*socketmap!*", -1 , 1)) {
+		value = smdbGetValue(route_map, ROUTE_TAG "__counts__");
+		if (verb_kvm.option.value)
+			syslog(LOG_DEBUG, ROUTE_TAG "__counts__=\"%s\"", TextNull(value));
+		if (value != NULL
 		&& sscanf(value, "%lu %lu %lu %lu", &rcp->domains, &rcp->accounts, &rcp->addresses, &rcp->unique_domains) == 4) {
+			if (verb_kvm.option.value)
+				syslog(LOG_DEBUG, ROUTE_TAG "__counts__ parsed ok");
 			free(value);
 			rc = KVM_OK;
 		}
-	} else if (rcp->domain_list != NULL) {
-		char **table;
+	} else {
+		rc = route_map->walk(route_map, route_walk_count, rcp);
 
-		VectorSort(rcp->domain_list, (int (*)(const void *, const void *)) route_compare_domain);
-		VectorUniq(rcp->domain_list, (int (*)(const void *, const void *)) route_compare_domain);
+		if (rcp->domain_list != NULL) {
+			char **table;
 
-		if (verb_debug.option.value) {
-			for (table = (char **) VectorBase(rcp->domain_list); *table != NULL; table++)
-				syslog(LOG_DEBUG, LOG_NUM(913) "route uniq domain=%s", *table);
+			VectorSort(rcp->domain_list, (int (*)(const void *, const void *)) route_compare_domain);
+			VectorUniq(rcp->domain_list, (int (*)(const void *, const void *)) route_compare_domain);
+
+			if (verb_debug.option.value) {
+				for (table = (char **) VectorBase(rcp->domain_list); *table != NULL; table++)
+					syslog(LOG_DEBUG, LOG_NUM(913) "route uniq domain=%s", *table);
+			}
+
+			rcp->unique_domains = VectorLength(rcp->domain_list);
+			rc = KVM_OK;
 		}
 
-		rcp->unique_domains = VectorLength(rcp->domain_list);
-
+		VectorDestroy(rcp->domain_list);
+		rcp->domain_list = NULL;
 	}
 
-	VectorDestroy(rcp->domain_list);
-	rcp->domain_list = NULL;
-
-	if (rc == KVM_ERROR)
-		return -1;
+	smdbClose(route_map);
 
 	if (verb_info.option.value) {
 		syslog(LOG_INFO, LOG_NUM(557) "route domains=%lu addresses=%lu accounts=%lu unique-domains=%lu", rcp->domains, rcp->addresses, rcp->accounts, rcp->unique_domains);
@@ -320,7 +326,7 @@ by-account.
 
 	}
 
-	return 0;
+	return -(rc == KVM_ERROR);
 }
 
 /***********************************************************************
