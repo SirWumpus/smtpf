@@ -375,8 +375,8 @@ atExitCleanUpOptions(void)
 	optionFree(optTable, lickeyOptTable, NULL);
 }
 
-static int
-options(int argc, char **argv)
+void
+serverOptions(int argc, char **argv)
 {
 	int argi;
 
@@ -457,8 +457,6 @@ options(int argc, char **argv)
 
 	if (optTestLickey.value)
 		optDaemon.value = 0;
-
-	return 0;
 }
 
 VOID WINAPI

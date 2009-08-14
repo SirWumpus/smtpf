@@ -126,7 +126,7 @@ Option optRouteForwardSelection	= { "route-forward-selection", "ordered", usage_
 #ifdef ENABLE_CACHE_UPDATE_MUTEX
 static pthread_mutex_t route_mutex;
 #endif
-static char *route_map_path;
+char *route_map_path;
 
 /***********************************************************************
  *** Route Database Lookups

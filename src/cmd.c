@@ -52,7 +52,11 @@ getMsgId(Session *sess, char buffer[20])
 {
 	time62Encode(time(NULL), buffer);
 
+#ifdef OLD_SERVER_MODEL
 	(void) snprintf(buffer+TIME62_BUFFER_SIZE, 20-TIME62_BUFFER_SIZE, "%05u%05u", getpid(), sess->id);
+#else
+	(void) snprintf(buffer+TIME62_BUFFER_SIZE, 20-TIME62_BUFFER_SIZE, "%05u%05u", getpid(), sess->session->id);
+#endif
 
 	if (62 * 62 <= ++sess->msg.count)
 		sess->msg.count = 1;
@@ -2032,8 +2036,8 @@ cmdHelp(Session *sess)
 		"214-2.0.0     EXPN    TURN    VRFY\r\n"
 		"214-2.0.0\r\n"
 		"214-2.0.0 Administration commands:\r\n"
-		"214-2.0.0     CONN    CACHE   KILL    LKEY    OPTN    STAT\r\n"
-		"214-2.0.0     VERB\r\n"
+		"214-2.0.0     CONN    CACHE   INFO    KILL    LKEY    OPTN\r\n"
+		"214-2.0.0     STAT    VERB    XCLIENT\r\n"
 		"214-2.0.0 \r\n"
 		"214 2.0.0 End\r\n"
 	);
@@ -2151,11 +2155,20 @@ cmdConnections(Session *sess)
 	 * start or finish while the list is being displayed and so alter
 	 * the count.
 	 */
+#ifdef OLD_SERVER_MODEL
 	reply = replyFmt(SMTPF_CONTINUE, "214-2.0.0 th=%lu cn=%lu cs=%lu\r\n", server.threads, server.connections, connections_per_second);
+#else
+{
+	unsigned numbers[3];
+	serverNumbers(sess->session->server, numbers);
+	reply = replyFmt(SMTPF_CONTINUE, "214-2.0.0 th=%lu cn=%lu cs=%lu\r\n", numbers[0], numbers[1], connections_per_second);
+}
+#endif
 	if (reply == NULL)
 		replyInternalError(sess, FILE_LINENO);
 
 	/* Lock the list from alteration while we display it. */
+#ifdef OLD_SERVER_MODEL
 	if (!mutex_lock(SESSION_ID_ZERO, FILE_LINENO, &server.connections_mutex)) {
 		for (conn = server.head; conn != NULL; conn = conn->next) {
 			state = conn->state;
@@ -2171,6 +2184,27 @@ cmdConnections(Session *sess)
 		}
 		(void) mutex_unlock(SESSION_ID_ZERO, FILE_LINENO, &server.connections_mutex);
 	}
+#else
+	if (!mutex_lock(SESSION_ID_ZERO, FILE_LINENO, &server.workers.mutex)) {
+		ServerListNode *node;
+
+		for (node = server.workers.head; node != NULL; node = node->next) {
+			conn = ((ServerWorker *) node->data)->session->data;
+
+			state = conn->state;
+			if (state == NULL)
+				continue;
+
+			reply = replyAppendFmt(
+				reply, "214-2.0.0 %s %s " CLIENT_FORMAT " %lu %lu %lu\r\n",
+				conn->long_id, state[0].command, CLIENT_INFO(conn),
+				now - conn->start, now - conn->last_mark,
+				conn->client.octets
+			);
+		}
+		(void) mutex_unlock(SESSION_ID_ZERO, FILE_LINENO, &server.workers.mutex);
+	}
+#endif
 	reply = replyAppendFmt(reply, msg_end, ID_ARG(sess));
 
 	return replyPush(sess, reply);
@@ -2196,6 +2230,7 @@ cmdKill(Session *sess)
 
 	/* Lock the list from alteration while we display it. */
 	rc = SMTPF_UNKNOWN;
+#ifdef OLD_SERVER_MODEL
 	if (!mutex_lock(SESSION_ID_ZERO, FILE_LINENO, &server.connections_mutex)) {
 		for (conn = server.head; conn != NULL; conn = conn->next) {
 			if (strcmp(conn->long_id, arg) == 0) {
@@ -2224,6 +2259,41 @@ cmdKill(Session *sess)
 		}
 		(void) mutex_unlock(SESSION_ID_ZERO, FILE_LINENO, &server.connections_mutex);
 	}
+#else
+	if (!mutex_lock(SESSION_ID_ZERO, FILE_LINENO, &server.workers.mutex)) {
+		ServerListNode *node;
+		ServerWorker *worker;
+
+		for (node = server.workers.head; node != NULL; node = node->next) {
+			worker = node->data;
+
+			if (strcmp(worker->session->id_log, arg) == 0) {
+				rc = replySetFmt(sess, SMTPF_CONTINUE, "214 2.0.0 killing session %s" ID_MSG(324) "\r\n", arg, ID_ARG(sess));
+/*{REPLY
+}*/
+				(void) replySetFmt(conn, SMTPF_DROP, "550 5.0.0 session %s killed" ID_MSG(325) "\r\n", arg, ID_ARG(sess));
+/*{REPLY
+}*/
+				(void) socketSetLinger(worker->session->client, 0);
+				(void) shutdown(socketGetFd(worker->session->client), SHUT_RDWR);
+				closesocket(socketGetFd(worker->session->client));
+
+				/* Don't try to send this to ourself. */
+				if (strcmp(worker->session->id_log, sess->session->id_log) != 0) {
+#ifdef USE_PTHREAD_CANCEL
+					pthread_cancel(worker->thread);
+#elif defined(HAVE_PTHREAD_KILL)
+					pthread_kill(worker->thread, SIGUSR1);
+#else
+					SetEvent(worker->kill_event);
+#endif
+				}
+				break;
+			}
+		}
+		(void) mutex_unlock(SESSION_ID_ZERO, FILE_LINENO, &server.workers.mutex);
+	}
+#endif
 
 	if (rc == SMTPF_UNKNOWN)
 		rc = replySetFmt(sess, SMTPF_REJECT, "504 5.5.4 session %s not found" ID_MSG(326) "\r\n", arg, ID_ARG(sess));

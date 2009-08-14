@@ -271,6 +271,18 @@ is no set schedule for releases.
    +	ideally "dns-gl < SPF fail < CONTENT", but currently the precedence
    	is actually "SPF fail < dns-gl = CONTENT".
 
+--2.2.28--
+
+   *	Requires Libsnert 1.72.6
+
+  !!	server.c: conversion to recently updated server API in libsnert
+	in order workaround an unusual bug related to use of socketmap
+	for access-map and route-map. When the socketmap daemon is
+	stopped the current peer server thread pool appaears to kill off
+	all the listener threads. The libsnert server API uses a more
+	traditional produce/consumer model (accept thread / message
+	queue / worker thread pool)
+
 --2.2.27--
 
    *	Requires Libsnert 1.72.5

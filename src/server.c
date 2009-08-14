@@ -50,7 +50,7 @@ static const char usage_server_new_threads[] =
 ;
 
 static const char usage_server_accept_timeout[] =
-  "Time in seconds a server thread waits for a new connection.\n"
+  "Time in seconds the server thread waits for a new connections.\n"
 "#"
 ;
 
@@ -60,6 +60,9 @@ Option optServerNewThreads	= { "server-new-threads",	"10",		usage_server_new_thr
 Option optServerAcceptTimeout	= { "smtp-accept-timeout",	"10",		usage_server_accept_timeout };
 
 int pid_fd;
+
+#ifdef OLD_SERVER_MODEL
+
 Server server;
 pthread_attr_t thread_attr;
 
@@ -67,6 +70,14 @@ pthread_attr_t thread_attr;
 /* Moved from unix.c to here so that lickey CLI can be compiled and linked. */
 pthread_cond_t slow_quit_cv;
 #endif
+
+#else /* OLD_SERVER_MODEL */
+
+Server server;
+ServerSignals signals;
+pthread_mutex_t title_mutex;
+
+#endif /* OLD_SERVER_MODEL */
 
 /***********************************************************************
  *** Mutex Wrappers
@@ -157,6 +168,8 @@ mutex_unlock(session_id id, const char *name, unsigned long line, pthread_mutex_
 /***********************************************************************
  *** Session Data
  ***********************************************************************/
+
+#ifdef OLD_SERVER_MODEL
 
 static void
 serverCheckThreadPool(Session *session)
@@ -356,7 +369,7 @@ sessionAccept(Session *session)
  * Initialise the remaining Session structure elements require by
  * sessionProcess(). There is no mutex locked when this is called.
  */
-int
+static int
 sessionStart(Session *session)
 {
 	LOG_TRACE(session, 593, sessionStart);
@@ -394,7 +407,7 @@ sessionStart(Session *session)
 	return 0;
 }
 
-void
+static void
 sessionFinish(Session *session)
 {
 	if (verb_trace.option.value)
@@ -430,14 +443,14 @@ sessionFinish(Session *session)
 	/* */
 
 #ifdef VERB_VALGRIND
-	if (1 < verb_valgrind.option.value) {
+	if (verb_valgrind.option.value) {
 		VALGRIND_PRINTF("sessionFinish\n");
 		VALGRIND_DO_LEAK_CHECK;
 	}
 #endif
 }
 
-Session *
+static Session *
 sessionCreate(void)
 {
 	Session *session;
@@ -495,7 +508,7 @@ error0:
 	return NULL;
 }
 
-void
+static void
 sessionFree(void *_session)
 {
 	Session *session = _session;
@@ -648,6 +661,8 @@ serverAtForkChild(void)
 }
 #endif
 
+#endif /* OLD_SERVER_MODEL */
+
 int
 serverOptn0(Session *null, va_list ignore)
 {
@@ -702,6 +717,7 @@ offered only for special partnership deals and is not generally available to cus
 }
 #endif
 
+#ifdef OLD_SERVER_MODEL
 static int
 serverInit(void)
 {
@@ -1037,7 +1053,7 @@ serverChildTest(void *ignore)
 	return NULL;
 }
 
-void
+int
 serverMain(void)
 {
 	pthread_t thread;
@@ -1053,12 +1069,12 @@ Version and copyright notices.
 }*/
 
 	if (serverInit())
-		exit(1);
+		return EXIT_FAILURE;
 
 	signalInit(&server);
 
 #ifdef VERB_VALGRIND
-	if (1 < verb_valgrind.option.value) {
+	if (verb_valgrind.option.value) {
 		VALGRIND_PRINTF("serverMain before 1st serverChild\n");
 		VALGRIND_DO_LEAK_CHECK;
 	}
@@ -1079,7 +1095,407 @@ Version and copyright notices.
 	(void) signalThread(&server);
 
 	serverFini();
+
+	return EXIT_SUCCESS;
 }
+
+#else /* OLD_SERVER_MODEL */
+
+static void
+server_fini(Server *server)
+{
+	(void) pthreadMutexDestroy(&title_mutex);
+}
+
+static int
+server_init(Server *server)
+{
+	(void) serverOptn0(NULL, NULL);
+
+	/* Reparse the verbose option, since there may have been some
+	 * late additions to the verbose list made in filterInit().
+	 */
+	verboseParse(optVerbose.string);
+
+	if (atexit(atExitCleanUp)) {
+		syslog(LOG_ERR, log_init, FILE_LINENO, "", strerror(errno), errno);
+		exit(1);
+	}
+
+	/* Be sure to specify these global SQLite settings before
+	 * opening any databases.
+	 */
+	sqlite3_enable_shared_cache(1);
+	sqlite3_soft_heap_limit(SQLITE_SOFT_HEAP_LIMIT);
+
+	/* The stats must be loaded after all the filters have had
+	 * a chance to register their stat variables.
+	 */
+	cacheInit();
+	statsInit();
+	filterInit();
+	statsLoad();
+	welcomeInit();
+
+	(void) pthread_mutex_init(&title_mutex, NULL);
+
+#if defined(FILTER_CLI) && defined(HAVE_PTHREAD_ATFORK)
+	if (pthread_atfork(serverAtForkPrepare, serverAtForkParent, serverAtForkChild)) {
+		syslog(LOG_ERR, log_init, FILE_LINENO, "", strerror(errno), errno);
+		exit(1);
+	}
+#endif
+	if (tldInit()) {
+		syslog(LOG_ERR, log_init, FILE_LINENO, "", strerror(errno), errno);
+		return -1;
+	}
+
+	srand(time(NULL) ^ getpid());
+
+	/* REMOVAL OF THIS CODE IS IN VIOLATION OF THE TERMS OF
+	 * THE SOFTWARE LICENSE AS AGREED TO BY DOWNLOADING OR
+	 * INSTALLING THIS SOFTWARE.
+	 */
+	lickeyInit(server->interfaces);
+#ifdef ENABLE_LINT
+	(void) serverOptn1(NULL, NULL);
+#endif
+	/* Needs to check and set the license route counters after
+	 * lickeyInit() in main(), routeInit(), and statInit().
+	 */
+	lickeyRouteCount();
+	if (optTestLickey.value)
+		exit(0);
+
+	cacheGcStart();
+	latencyInit(mcc);
+
+	/* We have to create the .pid file after we become a daemon process
+	 * but before we change process ownership, particularly if we intend
+	 * to create a file in /var/run, which is owned and writeable by root.
+	 */
+	if (*optRunPidFile.string != '\0') {
+		if (pidSave(optRunPidFile.string)) {
+			syslog(LOG_ERR, LOG_NUM(598) "create \"%s\" failed: %s (%d)", optRunPidFile.string, strerror(errno), errno);
+/*{NEXT}*/
+			exit(1);
+		}
+
+		if ((pid_fd = pidLock(optRunPidFile.string)) < 0) {
+			syslog(LOG_ERR, LOG_NUM(905) "lock \"%s\" failed: %s (%d)", optRunPidFile.string, strerror(errno), errno);
+/*{LOG
+See <a href="summary.html#opt_run_pid_file">run-pid-file</a> option.
+}*/
+			exit(1);
+		}
+
+		if (pathSetPermsByName(optRunPidFile.string, optRunUser.string, optRunGroup.string, 0664))
+			exit(1);
+	}
+
+	if (processDropPrivilages(optRunUser.string, optRunGroup.string, optRunWorkDir.string, optRunJailed.value))
+		exit(1);
+	(void) processDumpCore(1);
+/*{LOG
+The SMTP service is ready to accept connections.
+}*/
+	return 0;
+}
+
+int
+session_free(ServerSession *session)
+{
+	if (session != NULL) {
+		free(session->data);
+	}
+
+	return 0;
+}
+
+int
+session_create(ServerSession *session)
+{
+	Session *sess;
+
+	if ((sess = malloc(sizeof (*sess) + filter_context_size)) == NULL)
+		return -1;
+
+	session->data = sess;
+	sess->session = session;
+
+	sess->client.octets = 0;
+	sess->client.name[0] = '\0';
+	sess->client.helo[0] = '\0';
+	sess->client.command_pause = 0;
+	sess->client.auth_count = 0;
+	sess->client.mail_count = 0;
+	sess->client.forward_count = 0;
+	sess->client.reject_count = 0;
+	sess->client.reject_delay = SMTP_REJECT_DELAY;
+
+	sess->msg.eoh = 0;
+	sess->msg.mail = NULL;
+	sess->msg.fwds = NULL;
+	sess->msg.length = 0;
+	sess->msg.rcpt_count = 0;
+	sess->msg.reject[0] = '\0';
+	sess->msg.count = (int) RAND_MSG_COUNT;
+	sess->msg.fwd_to_queue = NULL;
+	sess->msg.smtpf_code = SMTPF_UNKNOWN;
+	sess->client.fwd_to_queue = NULL;
+
+	MAIL_CLEAR_ALL(sess);
+	RCPT_CLEAR_ALL(sess);
+
+	/* This should be an SPF filter context. */
+	sess->client.spf_helo = SPF_NONE;
+	sess->client.spf_helo_error = "";
+	sess->msg.spf_mail = SPF_NONE;
+	sess->msg.spf_mail_error = "";
+
+	sess->state = state0;
+	sess->helo_state = NULL;
+	sess->max_concurrent = -1;
+
+	sess->smtp_code = 0;
+#ifdef OLD_SMTP_ERROR_CODES
+	sess->smtp_error = 0;
+#endif
+
+	sess->msg.id[0] = '\0';
+	sess->msg.headers = NULL;
+
+	return 0;
+}
+
+int
+session_accept(ServerSession *session)
+{
+	Session *data = session->data;
+
+	data->start = time(NULL);
+	data->last_mark = data->start;
+	data->last_test = data->start;
+
+	switch (filterRun(data, filter_accept_table)) {
+	case SMTPF_DROP:
+	case SMTPF_REJECT:
+	case SMTPF_TEMPFAIL:
+		(void) replySend(data);
+		/*@fallthrough@*/
+
+	case SMTPF_DELAY|SMTPF_DROP:
+	case SMTPF_DELAY|SMTPF_REJECT:
+	case SMTPF_DELAY|SMTPF_SESSION|SMTPF_DROP:
+	case SMTPF_DELAY|SMTPF_SESSION|SMTPF_REJECT:
+		filterRun(data, filter_close_table);
+		return -1;
+	}
+
+	return 0;
+}
+
+extern void sessionProcess(Session *);
+
+void
+serverNumbers(Server *server, unsigned numbers[2])
+{
+	numbers[0] = serverListLength(&server->workers);
+	numbers[1] = serverListLength(&server->workers_idle);
+}
+
+int
+session_process(ServerSession *session)
+{
+	unsigned numbers[3];
+	Session *sess = session->data;
+
+	serverNumbers(session->server, numbers);
+	statsSetHighWater(&stat_high_connections, numbers[0], verb_info.option.value);
+
+	(void) mutex_lock(SESSION_ID_ZERO, FILE_LINENO, &title_mutex);
+	ProcTitleSet(
+#if !defined(__OpenBSD__) && !defined(__FreeBSD__)
+		_NAME " "
+#endif
+		"th=%u cn=%u cs=%lu",
+		numbers[0]+numbers[1], numbers[0], connections_per_second
+	);
+	(void) mutex_unlock(SESSION_ID_ZERO, FILE_LINENO, &title_mutex);
+
+	/* Server model transition code... */
+	sess->client.socket = session->client;
+
+	TextCopy(sess->if_addr, sizeof (sess->if_addr), session->if_addr);
+	memcpy(sess->client.ipv6, session->ipv6, sizeof (sess->client.ipv6));
+	TextCopy(sess->client.addr, sizeof (sess->client.addr), session->address);
+
+	sess->access_map = ((Worker *) session->worker->data)->access_map;
+	sess->route_map = ((Worker *) session->worker->data)->route_map;
+	sess->pdq = ((Worker *) session->worker->data)->pdq;
+
+	filterClearAllContexts(sess);
+
+	CLIENT_CLEAR_ALL(sess);
+	CLIENT_SET(sess, CLIENT_NO_PTR);
+	MSG_CLEAR_ALL(sess);
+
+#ifdef HAVE_STRUCT_SOCKADDR_IN6
+	if (session->client->address.sa.sa_family == AF_INET6) {
+		CLIENT_SET(sess, CLIENT_IS_IPV6);
+	}
+#endif
+	if (isReservedIPv6(session->ipv6, IS_IP_LOCAL)) {
+		CLIENT_SET(sess, CLIENT_IS_LOCALHOST);
+		statsCount(&stat_connect_localhost);
+	}
+	if (isReservedIPv6(session->ipv6, IS_IP_LAN)) {
+		CLIENT_SET(sess, CLIENT_IS_LAN);
+		statsCount(&stat_connect_lan);
+	}
+	if (routeKnownClientAddr(sess)) {
+		CLIENT_SET(sess, CLIENT_IS_RELAY);
+		statsCount(&stat_connect_relay);
+	}
+
+	statsCount(&stat_connect_count);
+
+	sessionProcess(sess);
+
+	if (verb_trace.option.value)
+		syslog(LOG_DEBUG, LOG_MSG(594) "client [%s] close", LOG_ARGS(sess), session->address);
+
+	if (sess->state != NULL)
+		(void) statsCount(&stat_connect_dropped);
+
+	filterRun(sess, filter_close_table);
+	VectorDestroy(sess->msg.headers);
+
+	serverNumbers(session->server, numbers);
+	(void)  mutex_lock(SESSION_ID_ZERO, FILE_LINENO, &title_mutex);
+	ProcTitleSet(
+#if !defined(__OpenBSD__) && !defined(__FreeBSD__)
+		_NAME " "
+#endif
+		"th=%u cn=%u cs=%lu",
+		numbers[0]+numbers[1], numbers[0], connections_per_second
+	);
+	(void) mutex_unlock(SESSION_ID_ZERO, FILE_LINENO, &title_mutex);
+
+	if (1 < session->server->debug.valgrind) {
+		VALGRIND_PRINTF("session finish\n");
+		VALGRIND_DO_LEAK_CHECK;
+	}
+
+	return 0;
+}
+
+int
+worker_free(ServerWorker *worker)
+{
+	Worker *data;
+
+	if (worker != NULL) {
+		data = worker->data;
+		pdqClose(data->pdq);
+		smdbClose(data->route_map);
+		smdbClose(data->access_map);
+		free(data);
+	}
+
+	return 0;
+}
+
+int
+worker_create(ServerWorker *worker)
+{
+	Worker *data;
+
+	if ((data = calloc(1, sizeof (*data))) == NULL)
+		goto error0;
+
+	worker->data = data;
+
+	if ((data->route_map = smdbOpen(route_map_path, 1)) == NULL)
+		goto error1;
+
+	if ((data->access_map = smdbOpen(access_map_path, 1)) == NULL)
+		goto error1;
+
+	if ((data->pdq = pdqOpen()) == NULL)
+		goto error1;
+
+	return 0;
+error1:
+	worker_free(worker);
+error0:
+	return -1;
+}
+
+int
+serverMain(void)
+{
+	int rc, signal;
+
+	rc = EXIT_FAILURE;
+
+	if (serverInit(&server, optInterfaces.string, SMTP_PORT))
+		goto error0;
+
+	if (server_init(&server))
+		goto error1;
+
+	/* Update the default settings. The guards are here more
+	 * for debugging and avoiding inane stupid settings.
+	 */
+	if (SERVER_MIN_THREADS < optServerMinThreads.value)
+		server.option.min_threads = optServerMinThreads.value;
+	if (SERVER_MAX_THREADS < optServerMaxThreads.value)
+		server.option.max_threads = optServerMaxThreads.value;
+	if (SERVER_NEW_THREADS < optServerNewThreads.value)
+		server.option.new_threads = optServerNewThreads.value;
+	if (SERVER_QUEUE_SIZE < optServerQueueSize.value)
+		server.option.queue_size  = optServerQueueSize.value;
+	if (SERVER_ACCEPT_TO < optServerAcceptTimeout.value)
+		server.option.accept_to   = optServerAcceptTimeout.value;
+	if (SERVER_READ_TO < optSmtpCommandTimeout.value)
+		server.option.read_to     = optSmtpCommandTimeout.value;
+
+	serverSetStackSize(&server, THREAD_STACK_SIZE);
+
+	server.debug.level = verb_connect.option.value;
+#ifdef VERB_VALGRIND
+	server.debug.valgrind = verb_valgrind.option.value;
+#endif
+	server.hook.worker_create = worker_create;
+	server.hook.worker_free = worker_free;
+
+	server.hook.session_create = session_create;
+	server.hook.session_accept = session_accept;
+	server.hook.session_process = session_process;
+	server.hook.session_free = session_free;
+
+	if (serverSignalsInit(&signals, _NAME))
+		goto error1;
+
+	if (serverStart(&server))
+		goto error2;
+
+	syslog(LOG_INFO, LOG_NUM(599) "ready");
+	signal = serverSignalsLoop(&signals);
+	serverStop(&server, signal == SIGQUIT);
+
+	syslog(LOG_INFO, "signal %d, terminating process", signal);
+	rc = EXIT_SUCCESS;
+error2:
+	serverSignalsFini(&signals);
+	server_fini(&server);
+error1:
+	serverFini(&server);
+error0:
+	return rc;
+}
+#endif/* OLD_SERVER_MODEL */
 
 void
 serverPrintVersion(void)
@@ -1092,6 +1508,7 @@ serverPrintVersion(void)
 #endif
 }
 
+#ifdef OLD_SERVER_MODEL
 void
 serverPrintVar(int columns, const char *name, const char *value)
 {
@@ -1121,39 +1538,40 @@ serverPrintVar(int columns, const char *name, const char *value)
 		VectorDestroy(list);
 	}
 }
+#endif
 
 void
 serverPrintInfo(void)
 {
 #ifdef _NAME
-	serverPrintVar(0, "SMTPF_NAME", _NAME);
+	printVar(0, "SMTPF_NAME", _NAME);
 #endif
 #ifdef _VERSION
-	serverPrintVar(0, "SMTPF_VERSION", _VERSION);
+	printVar(0, "SMTPF_VERSION", _VERSION);
 #endif
 #ifdef _COPYRIGHT
-	serverPrintVar(0, "SMTPF_COPYRIGHT", _COPYRIGHT);
+	printVar(0, "SMTPF_COPYRIGHT", _COPYRIGHT);
 #endif
 #ifdef _BUILT
-	serverPrintVar(0, "SMTPF_BUILT", _BUILT);
+	printVar(0, "SMTPF_BUILT", _BUILT);
 #endif
 #ifdef _CONFIGURE
-	serverPrintVar(LINE_WRAP, "SMTPF_CONFIGURE", _CONFIGURE);
+	printVar(LINE_WRAP, "SMTPF_CONFIGURE", _CONFIGURE);
 #endif
 #ifdef LIBSNERT_VERSION
-	serverPrintVar(0, "LIBSNERT_VERSION", LIBSNERT_VERSION);
+	printVar(0, "LIBSNERT_VERSION", LIBSNERT_VERSION);
 #endif
 #ifdef LIBSNERT_CONFIGURE
-	serverPrintVar(LINE_WRAP, "LIBSNERT_CONFIGURE", LIBSNERT_CONFIGURE);
+	printVar(LINE_WRAP, "LIBSNERT_CONFIGURE", LIBSNERT_CONFIGURE);
 #endif
-	serverPrintVar(0, "SQLITE3_VERSION", sqlite3_libversion());
+	printVar(0, "SQLITE3_VERSION", sqlite3_libversion());
 #ifdef _CFLAGS
-	serverPrintVar(LINE_WRAP, "CFLAGS", _CFLAGS);
+	printVar(LINE_WRAP, "CFLAGS", _CFLAGS);
 #endif
 #ifdef _LDFLAGS
-	serverPrintVar(LINE_WRAP, "LDFLAGS", _LDFLAGS);
+	printVar(LINE_WRAP, "LDFLAGS", _LDFLAGS);
 #endif
 #ifdef _LIBS
-	serverPrintVar(LINE_WRAP, "LIBS", _LIBS);
+	printVar(LINE_WRAP, "LIBS", _LIBS);
 #endif
 }

@@ -53,6 +53,7 @@ gid_t gid;		/* Desired group. */
 int suid_dump_core;	/* Old value */
 int internal_restart;
 
+#ifdef OLD_SERVER_MODEL
 /***********************************************************************
  *** Signals
  ***********************************************************************/
@@ -300,6 +301,7 @@ signalFini(Server *ignore)
 	(void) pthread_cond_destroy(&slow_quit_cv);
 #endif
 }
+#endif /* OLD_SERVER_MODEL */
 
 /***********************************************************************
  *** Unix Daemon
@@ -369,17 +371,10 @@ atExitCleanUpOptions(void)
 	optionFree(optTable0, optTable, lickeyOptTable, NULL);
 }
 
-int
-main(int argc, char **argv)
+void
+serverOptions(int argc, char **argv)
 {
 	int argi;
-
-#ifdef NOT_YET
-restart_main:
-#endif
-
-	filterRegister();
-        ProcTitleInit(argc, argv);
 
 	/* Parse command line options looking for a file= option. */
 	optionInit(optTable0, NULL);
@@ -436,9 +431,22 @@ restart_main:
 	else if (optSlowQuit.string != NULL)
 		exit(pidKill(optRunPidFile.string, SIGQUIT) != 0);
 #endif
-	(void) umask(0007);
+	if (optTestLickey.value)
+		optDaemon.value = 0;
+}
 
+int
+main(int argc, char **argv)
+{
+#ifdef NOT_YET
+restart_main:
+#endif
+	filterRegister();
 	LogSetProgramName(_NAME);
+        ProcTitleInit(argc, argv);
+	serverOptions(argc, argv);
+
+	(void) umask(0007);
 
 	if (optDaemon.value)
 		openlog(_NAME, LOG_PID|LOG_NDELAY, LOG_MAIL);
@@ -458,28 +466,6 @@ not start.
 		sleep(2);
 	}
 
-#ifdef MOVED
-/* See serverInit. */
-	if (getMyDetails()) {
-		syslog(LOG_ERR, LOG_NUM(734) "host info error: %s (%d)", strerror(errno), errno);
-/*{LOG
-A fatal initialisation error while trying to obtain the host and network interface details
-of the machine @PACKAGE_NAME@ is running on, such as host name and IP address.
-}*/
-		exit(1);
-	}
-
-	/* REMOVAL OF THIS CODE IS IN VIOLATION OF THE TERMS OF
-	 * THE SOFTWARE LICENSE AS AGREED TO BY DOWNLOADING OR
-	 * INSTALLING THIS SOFTWARE.
-	 */
-	lickeyInit();
-	if (optTestLickey.value)
-		exit(0);
-#else
-	if (optTestLickey.value)
-		optDaemon.value = 0;
-#endif
 	/* The default is to always start as a daemon or Windows service.
 	 *
 	 * The Unix way is typically to start as an application and use an
@@ -523,6 +509,7 @@ run @PACKAGE_NAME@ as a foreground application.
 #endif
 	}
 
+#ifdef OLD_SERVER_MODEL
 	if (pthread_attr_init(&thread_attr)) {
 		syslog(LOG_ERR, log_init, FILE_LINENO, "", strerror(errno), errno);
 		exit(1);
@@ -533,6 +520,7 @@ run @PACKAGE_NAME@ as a foreground application.
 #if defined(HAVE_PTHREAD_ATTR_SETSTACKSIZE)
 	(void) pthread_attr_setstacksize(&thread_attr, THREAD_STACK_SIZE);
 #endif
+#endif /* OLD_SERVER_MODEL */
 #if defined(HAVE_SIGALTSTACK) && !defined(__OpenBSD__)
 	initAlternateSignalStack();
 #endif
@@ -570,17 +558,5 @@ run @PACKAGE_NAME@ as a foreground application.
 		rlimits();
 	}
 # endif
-
-	serverMain();
-
-#ifdef NOT_YET
-	if (internal_restart) {
-		/* Simulate the behaviour of exit() to clean up memory. */
-		_atExitCleanUp();
-		atExitCleanUpOptions();
-		internal_restart = 0;
-		goto restart_main;
-	}
-#endif
-	return 0;
+	return serverMain();
 }

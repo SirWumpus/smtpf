@@ -174,7 +174,7 @@ Stats stat_rcpt_bl		= { STATS_TABLE_RCPT, "rcpt-bl" };
 Stats stat_rcpt_wl		= { STATS_TABLE_RCPT, "rcpt-wl" };
 Stats stat_tagged		= { STATS_TABLE_MSG, "msg-tagged" };
 
-static char *access_map_path;
+char *access_map_path;
 static Verbose verb_access	= { { "access", "-", "" } };
 
 /***********************************************************************

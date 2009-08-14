@@ -176,7 +176,11 @@ p0fConnect(Session *sess, va_list ignore)
 
 	data->p_query.magic = QUERY_MAGIC;
 	data->p_query.type = QTYPE_FINGERPRINT;
+#ifdef OLD_SERVER_MODEL
 	data->p_query.id = sess->id;
+#else
+	data->p_query.id = sess->session->id;
+#endif
 	data->p_query.dst_port = socketAddressGetPort(&sess->iface->socket->address);
 	data->p_query.src_port = socketAddressGetPort(&sess->client.socket->address);
 

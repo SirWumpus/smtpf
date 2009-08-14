@@ -53,8 +53,8 @@ extern void rlimits(void);
  *** Global Variables
  ***********************************************************************/
 
-int rand_seed;
 Socket2 *listener;
+unsigned rand_seed;
 int parse_path_flags;
 
 const char *smtpf_code_names[] = {
@@ -1181,21 +1181,32 @@ sessionProcess(Session *sess)
 	Command *s;
 	time_t elapsed;
 	TIMER_DECLARE(banner);
-
+#ifndef OLD_SERVER_MODEL
+	unsigned numbers[2];
+#endif
 	if (verb_timers.option.value)
 		TIMER_START(banner);
 	if (0 < SIGSETJMP(sess->on_error, 1))
 		goto error0;
+
 
 	/* We need at least N file descriptors per client. More are
 	 * required for forwarding and some other tests, but its
 	 * assumed that not all connections will require the max
 	 * possible.
 	 */
+#ifdef OLD_SERVER_MODEL
 	if (optRunOpenFileLimit.value <= server.connections * FD_PER_THREAD + FD_OVERHEAD) {
 		errno = EMFILE;
 		replyResourcesError(sess, FILE_LINENO);
 	}
+#else
+	serverNumbers(sess->session->server, numbers);
+	if (optRunOpenFileLimit.value <= numbers[0] * FD_PER_THREAD + FD_OVERHEAD) {
+		errno = EMFILE;
+		replyResourcesError(sess, FILE_LINENO);
+	}
+#endif
 
 	if ((sess->msg.headers = VectorCreate(25)) == NULL)
 		replyResourcesError(sess, FILE_LINENO);
@@ -1210,7 +1221,11 @@ sessionProcess(Session *sess)
 		syslog(
 			LOG_INFO, LOG_MSG(637) "start " CLIENT_FORMAT " f=\"%s\" th=%u cn=%u cs=%lu",
 			LOG_ARGS(sess), CLIENT_INFO(sess), clientFlags(sess),
+#ifdef OLD_SERVER_MODEL
 			server.threads, server.connections,
+#else
+			numbers[0]+numbers[1], numbers[0],
+#endif
 			connections_per_second
 		);
 /*{LOG

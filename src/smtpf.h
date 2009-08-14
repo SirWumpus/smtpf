@@ -99,6 +99,9 @@ extern "C" {
 #include <com/snert/lib/mail/parsePath.h>
 #include <com/snert/lib/net/network.h>
 #include <com/snert/lib/net/pdq.h>
+#ifndef OLD_SERVER_MODEL
+#include <com/snert/lib/net/server.h>
+#endif
 #include <com/snert/lib/sys/pthread.h>
 #include <com/snert/lib/type/kvm.h>
 #include <com/snert/lib/type/mcc.h>
@@ -185,7 +188,13 @@ extern void freeThreadData(void);
 #define LOG_FMT			"%s "
 #define LOG_NUM(n)		"#" #n " "
 #define LOG_MSG(n)		LOG_FMT LOG_NUM(n)
+
+#ifdef OLD_SERVER_MODEL
 #define LOG_ARGS(s)		(s)->long_id
+#else
+#define LOG_ARGS(s)		(s)->session->id_log
+#endif
+
 #define LOG_TRACE0(n, f)	if (verb_trace.option.value) syslog(LOG_DEBUG, LOG_NUM(n) #f)
 #define LOG_TRACE(s, n, f)	if (verb_trace.option.value) syslog(LOG_DEBUG, LOG_MSG(n) #f, LOG_ARGS(s))
 
@@ -195,7 +204,12 @@ extern void freeThreadData(void);
 #define ID_FMT			" (%s)"
 #define ID_NUM(n)		" #" #n
 #define ID_MSG(n)		ID_NUM(n) ID_FMT
+
+#ifdef OLD_SERVER_MODEL
 #define ID_ARG(s)		(s)->long_id
+#else
+#define ID_ARG(s)		(s)->session->id_log
+#endif
 
 #define NULL_TAG_STRING_LENGTH		47	/* "Null-Tag: <%32s>\r\n\0" */
 #define NULL_TAG_STRING_LENGTH_S	"47"
@@ -246,7 +260,11 @@ extern const char *smtpf_code_names[];
  ***********************************************************************/
 
 typedef struct smtpf Session;
+#ifdef OLD_SERVER_MODEL
 typedef struct boundip BoundIp;
+#else
+#define BoundIp ServerInterface
+#endif
 
 typedef int (*CommandFunction)(Session *);
 
@@ -461,30 +479,45 @@ typedef struct {
 	unsigned long max_size;
 	Connection *fwd_to_queue;
 	const char *spf_helo_error;
-	char addr[IPV6_STRING_LENGTH+8];
+	char addr[SOCKET_ADDRESS_STRING_SIZE];
 	char name[SMTP_DOMAIN_LENGTH+1];
 	char auth[SMTP_TEXT_LINE_LENGTH+1];
 	char helo[SMTP_COMMAND_LINE_LENGTH+1];
 	unsigned char ipv6[IPV6_BYTE_LENGTH];
 } Client;
 
+#ifndef OLD_SERVER_MODEL
+typedef struct {
+	PDQ *pdq;
+	smdb *route_map;
+	smdb *access_map;
+} Worker;
+#endif
+
 typedef char (session_id)[20];
 
 #include "reply.h"
 
 struct smtpf {
+#ifdef OLD_SERVER_MODEL
 	Session *prev;
 	Session *next;
 	BoundIp *iface;
 	pthread_t thread;
+	unsigned short id;
+	session_id long_id;
 #ifdef __WIN32__
 	HANDLE kill_event;
+#endif
+
+#else
+	ServerSession *session;
+# define iface	session->iface
+# define long_id session->id_log
 #endif
 	time_t start;
 	time_t last_mark;
 	time_t last_test;
-	unsigned short id;
-	session_id long_id;
 	Command *state;
 	Command *helo_state;
 	struct {
@@ -496,21 +529,22 @@ struct smtpf {
 #ifdef OLD_SMTP_ERROR_CODES
 	int smtp_error;
 #endif
-	PDQ *pdq;
+	PDQ *pdq;		/* OLD_SERVER_MODEL */
 #ifdef ENABLE_LINT
 	Reply *lint_replies;
 #endif
-	smdb *route_map;
-	smdb *access_map;
+	smdb *route_map;	/* OLD_SERVER_MODEL */
+	smdb *access_map;	/* OLD_SERVER_MODEL */
 	Message msg;
 	Client client;
 	long input_length;
 	long max_concurrent;
-	char if_addr[IPV6_STRING_LENGTH+8];
+	char if_addr[SOCKET_ADDRESS_STRING_SIZE];		/* OLD_SERVER_MODEL */
 	char input[SMTP_TEXT_LINE_LENGTH+1];
 	char reply[SMTP_TEXT_LINE_LENGTH+1];
 };
 
+#ifdef OLD_SERVER_MODEL
 struct boundip{
 	Socket2 *socket;
 #ifdef FIND_IF_ADDR
@@ -533,6 +567,10 @@ typedef struct {
 	volatile unsigned connections;
 } Server;
 
+#else
+
+#endif
+
 #ifdef __unix__
 extern uid_t ruid;
 extern uid_t euid;
@@ -548,8 +586,11 @@ extern uid_t euid;
 #include "lickey.h"
 #include "summary.h"
 
-extern int rand_seed;
+extern unsigned rand_seed;
 extern int parse_path_flags;
+
+extern char *route_map_path;
+extern char *access_map_path;
 
 extern const char base62[];
 extern struct bitword verbose_bits[];
@@ -624,24 +665,21 @@ extern void blFree(void *list);
 extern int pid_fd;
 extern Server server;
 extern int internal_restart;
-extern pthread_attr_t thread_attr;
-
-extern void serverMain(void);
-extern void *serverChild(void *);
 extern void serverPrintVersion(void);
 extern void serverPrintInfo(void);
 
+#ifdef OLD_SERVER_MODEL
+extern pthread_attr_t thread_attr;
 
-extern Session *sessionCreate(void);
-extern void sessionKillAll(int signal);
-extern void sessionFree(void *_session);
-extern int sessionStart(Session *session);
-extern void sessionFinish(Session *session);
-extern void sessionProcess(Session *session);
+extern int serverMain(void);
+extern void *serverChild(void *);
 
 extern void signalInit(Server *);
 extern void signalFini(Server *);
 extern void *signalThread(void *data);
+#else
+extern void serverNumbers(Server *server, unsigned numbers[2]);
+#endif
 
 extern void welcomeInit(void);
 extern void smtpRejectTextInit(void);

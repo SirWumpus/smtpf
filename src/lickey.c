@@ -699,7 +699,7 @@ void
 lickeyInit(Vector interfaces)
 {
 	long i;
-	BoundIp *iface;
+	BoundIp *interface;
 	char ip[IPV6_STRING_LENGTH];
 
 	if (interfaces == NULL) {
@@ -718,7 +718,7 @@ lickeyInit(Vector interfaces)
 	 * find one that matches.
 	 */
 	for (i = 0; i < VectorLength(interfaces); i++) {
-		if ((iface = VectorGet(interfaces, i)) == NULL)
+		if ((interface = VectorGet(interfaces, i)) == NULL)
 			continue;
 
 #if defined(HAVE_GETADDRINFO)
@@ -728,7 +728,7 @@ lickeyInit(Vector interfaces)
 		memset(&hints, 0, sizeof (hints));
 		hints.ai_protocol = IPPROTO_TCP;
 
-		if (getaddrinfo(iface->name, NULL, &hints, &answers)) {
+		if (getaddrinfo(interface->name, NULL, &hints, &answers)) {
 			syslog(LOG_ERR, log_init, FILE_LINENO, "", strerror(errno), errno);
 			continue;
 		}
@@ -749,7 +749,7 @@ lickeyInit(Vector interfaces)
 		char **addr;
 		struct hostent *hosts;
 
-		if ((hosts = gethostbyname2(iface->name, iface->socket->address.sa.sa_family)) == NULL)
+		if ((hosts = gethostbyname2(interface->name, interface->socket->address.sa.sa_family)) == NULL)
 			continue;
 
 		for (addr = hosts->h_addr_list; *addr != NULL; addr++) {
@@ -764,7 +764,7 @@ lickeyInit(Vector interfaces)
 		char **addr;
 		struct hostent *hosts;
 
-		if ((hosts = gethostbyname(iface->name)) == NULL)
+		if ((hosts = gethostbyname(interface->name)) == NULL)
 			continue;
 
 		for (addr = hosts->h_addr_list; *addr != NULL; addr++) {
