@@ -893,7 +893,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 		default:
 			access = SMTPF_CONTINUE;
 
-			if (strcmp(value, "IREJECT") == 0) {
+			if (0 < TextSensitiveStartsWith(value, "IREJECT")) {
 				access = replyPushFmt(sess, SMTPF_DROP, "550 5.7.1 host " CLIENT_FORMAT " %s" ID_MSG(854) "\r\n", CLIENT_INFO(sess), msg == NULL ? "black listed" : msg, ID_ARG(sess));
 /*{REPLY
 There is a <a href="access-map.html#tag_connect"><span class="tag">Connect:</span></a> tag entry for either the
@@ -1107,7 +1107,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			break;
 
 		default:
-			if (strcmp(value, "IREJECT") == 0) {
+			if (0 < TextSensitiveStartsWith(value, "IREJECT")) {
 				access = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 host " CLIENT_FORMAT " sender <%s> %s" ID_MSG(855) "\r\n", CLIENT_INFO(sess), sess->msg.mail->address.string, msg == NULL ? "black listed" : msg, ID_ARG(sess));
 /*{REPLY
 There is a <a href="access-map.html#tag_connect_from"><span class="tag">Connect:From:</span></a> combo tag entry for either the
@@ -1183,7 +1183,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			break;
 
 		default:
-			if (strcmp(value, "IREJECT") == 0) {
+			if (0 < TextSensitiveStartsWith(value, "IREJECT")) {
 				access = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 sender <%s> %s" ID_MSG(856) "\r\n", path->address.string, msg == NULL ? "black listed" : msg, ID_ARG(sess));
 /*{REPLY
 There is a <a href="access-map.html#tag_from"><span class="tag">From:</span></a> tag entry for
@@ -1548,7 +1548,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 		default:
 			access = SMTPF_CONTINUE;
 
-			if (strcmp(value, "IREJECT") == 0) {
+			if (0 < TextSensitiveStartsWith(value, "IREJECT")) {
 				access = replyPushFmt(sess, SMTPF_DROP, "550 5.7.1 helo %s %s" ID_MSG(926) "\r\n", helo, msg == NULL ? "black listed" : msg, ID_ARG(sess));
 /*{REPLY
 There is a <a href="access-map.html#tag_helo"><span class="tag">Helo:</span></a>
