@@ -1,0 +1,134 @@
+Avast Daemon Interface
+======================
+
+The following is a description of the avast! socket daemon interface. The
+interface is identical in both Windows and Linux versions of avast. It uses a
+text-based protocol where individual responses are prefixed by a number
+(return code), optionally followed by a white space and extra info. Each
+line is terminated by the CRLF pair.
+
+By default, the daemon is listening on TCP port 5037.
+
+List of supported commands:
+	SCAN
+	VPS
+	VER
+	QUIT
+
+After connecting, the daemon sends the following welcome message:
+
+220 Welcome to avast! Virus scanning daemon x.x (VPS yy-yy dd.mm.yyyy)
+
+and is ready to work. If it is not ready to work, it returns
+
+421 Service not available
+
+and closes the connection to the client.
+
+
+SCAN
+====
+The SCAN command is used to scan a file for viruses.
+
+Syntax:
+
+SCAN FileName
+
+Possible return codes:
+One of the following:
+	501 Syntax error in arguments
+	451 Engine error %d
+	200 OK
+
+If the return value is 200 OK, there will follow one or more (in the case of
+archives) lines with scan status, each in the following format: 
+
+Filepath\t[Status]\tMoreInfo
+
+where:
+	\t is ASCII character 9 (tab)
+	FilePath is full path to the scanned file
+	[Status] is one of the following values
+	[+] - scan succeeded, the file is clean
+	[L] - scan succeeded, the file is infected, for more info see
+MoreInfo
+	[E] - scan failed, for more info see MoreInfo
+	MoreInfo has the following meaning
+	In case [Status] = [L], contains the name of the virus
+	In case [Status] = [E], contains the error code and the error
+descriptions
+	(In case [Status] = [+], doesn't contain any information)
+
+Following these lines there is a blank line which signals the end of data
+transter from the daemon side.
+
+Note
+The return code (at the beginning of the first line) does not say anything
+about the infection status of the file! To find out the virus status, it is
+necessary to parse the result lines that follow the first line - provided
+the return code was 200. 
+
+VPS
+===
+The VPS command is used to find out the current version of the virus
+database (aka VPS file)
+
+Syntax:
+
+VPS
+
+Possible return codes:
+One of the following:
+	501 Syntax error in arguments
+	200 OK
+
+If it is 200 OK, another line will follow, with the format: 
+
+VerMajor-VerMinor MM.DD.YYYY
+
+VerMajor and VerMinor make us the VPS version tag, MM.DD.YYYY is its release
+time stamp.
+
+
+VER
+===
+The VER command is used to find out the current version of the scanning
+engine.
+ 
+Syntax:
+
+VER
+
+Possible return codes:
+One of the following:
+	501 Syntax error in arguments
+	200 OK
+
+If it is 200 OK, another line will follow, with the format: 
+
+VerMajor.VerMinor
+
+
+QUIT
+====
+The QUIT is used to terminate the session. After the command is sent, the
+daemon will automatically close the connection.
+
+Syntax:
+
+QUIT
+
+Possible return codes:
+Just one:
+
+221 Service closing transmission channel
+
+(eventual arguments of this command are ignored).
+
+
+Notes
+-----
+Any other command returns the following response:
+
+500 Syntax error, command unrecognized
+

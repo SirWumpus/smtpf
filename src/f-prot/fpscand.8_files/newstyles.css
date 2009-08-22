@@ -1,0 +1,270 @@
+.yui-t7 #yui-main .yui-b {
+display:block;
+margin:0em;
+}
+.navbar {
+  text-align: right;
+  }
+body#fprot {
+font-family: "Helvetica neue", Helvetica, Arial, sans-serif;
+    }
+    #doc3 {
+      }
+    #fdoc {
+ margin:auto;text-align:left; /* leave unchanged */ 
+width:73.84em;/* non-IE */ 
+*width:72.06em;/* IE */ 
+min-width:960px;/* optional but recommended */      
+      }
+      
+  .nav:link, .nav:visited {
+    color: #303030;
+    text-decoration: none;
+  padding-left: 0.4em;
+  padding-right: 0.4em;
+    }
+
+    .nav:hover {
+    color: #cc3300;
+    text-decoration: underline;
+    }
+  .nav:visited {
+color: #cc3300;
+}  
+    
+#hd {
+  }
+
+#flogo {
+  padding: 3px;
+  margin-top: 0px;
+  padding-left: 15px;
+  }
+#flogo a {
+  padding: 0px;
+  margin: 0px;
+  }
+
+#ft {
+  border-top: #ebebeb 1px solid;
+  }
+#footerlinks {
+  text-align: left; 
+  background-color: #f7f7f7;
+  border-bottom: 1px solid #ebebeb; 
+  line-height: 100%;
+  font-weight: bold;
+  font-size: 85%;
+  }
+  
+  #footerlinks, .navbar {
+    color: #303030;
+    }
+    
+    .nav {
+      color: #303030;
+      }
+  
+#subheader {
+  background-color: #f7f7f7;
+  background-position: center center;
+  border-bottom: 1px solid #ebebeb;
+  border-left: 1px solid #ebebeb;
+  border-right: 1px solid #ebebeb;
+  padding-bottom: 0px;
+  padding-top: 0px;
+  clear: both;
+  }
+  #fourcolumns, .fsupport {
+    
+margin-top: 0.5em;
+    }
+  #subheader form {
+    margin-right: 10px;
+    }
+    #searchbutton {
+
+}
+
+#searchspace {
+background-color:#F2F2F2;
+ border-color:#335C85;
+border-style:solid;
+border-width:1px;
+color:#003366;
+margin:3px 0px 3px 15px;
+}
+ #searchspace:focus {
+background-color:#FcFcFc;
+border-color:#cc3300;
+border-style:solid;
+border-width:1px;
+color:#003366;
+}   
+#subheader .breadcrumbs a:link{
+  text-align: left;
+color: #003366;
+font-weight: bold;
+  }    
+    
+    #searchform {
+  text-align: right;
+      
+      }
+    
+#subheader .breadcrumbs  {
+  margin: 0px;
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+  padding-left: 1em;
+  font-size: 85%;
+color: #303030;
+  }  
+#fourcolumns {
+  margin-right: 0px;
+  margin: 0px;
+  padding: 0px;
+  } 
+#fourcolumns ul, #fourcolumns dl.news, #brandheader dl, #brandheader ul {
+  margin-left: 1.2em;
+  margin-bottom: 15px;
+  }
+#brandheader dl, #brandheader ul {
+  margin-left: 1.5em;
+  margin-bottom: 0px;
+  }
+  
+#fourcolumns .yui-u p{
+  padding-right: 0.75em;
+  padding-bottom: 0.75em;
+  }
+
+    .linkbar a:link {
+ /* font-size: 85%; */
+  color: #003366;
+  text-decoration: none;
+  }
+  .linkbar a:visited {
+/*  font-size: 85%; */
+  color: #663300;
+  text-decoration: none;
+  }
+.linkbar .heading h3 a {
+  font-weight: bold;
+  background-image:url(http://www.f-prot.com/img/headingarrow.gif);
+background-position:95% 50%;
+background-repeat:no-repeat;
+color:#303030;
+text-decoration:none;
+margin:0px;
+display: block;
+ font-size: 92%;
+  }
+  
+.linkbar a:hover, .linkbar a:visited:hover  {
+  color: #cc3300; !important
+  text-decoration: none; !important
+  }
+  .linkbar .heading h3 {
+color:#303030;
+text-decoration:none;
+  border-bottom: 1px solid #f0f0f0;
+margin:0px;
+padding: 0px;margin-bottom: 3px;
+  font-weight: bold;
+
+  }
+  #infohead {
+    background: none;
+    }
+  
+.news{
+  font-size: 85%;
+}
+
+    
+      .linkbar  {
+        padding-right: 1.4em; 
+        padding-left: 1.1em; 
+  padding-top: 1em;
+font-size: 85%;
+  }
+    
+  .news {
+    color: #303030;
+        padding-left: 1.1em; 
+    }    
+  .news a:link {
+    color: #303030;
+    text-decoration: none;
+    }
+      .news a:link:hover {
+    color: #cc3300;
+    text-decoration: underline;
+    }      .news a:visited {
+    color: #663300;
+    text-decoration: none;
+    }
+       .news a:visited:hover {
+    color: #cc3300;
+    text-decoration: underline;
+    }   
+    .news dt {
+      color:#303030;
+font-size:100%;
+line-height:1em;
+margin-right:2em;
+padding:0pt 0pt 3px;
+text-align:right;
+margin-top: 0.6em;
+      }
+      
+      .news dd {
+        
+padding:3px;
+margin-right:1em;
+margin-top: 0px;
+padding-top: 0px;
+padding-right: 0px;
+        }
+#footerlinks {
+  margin: 0px;
+  padding:0.3em;padding-left: 0em;
+  }
+#fdoc {
+  background-color: #ffffff;
+  }
+html, body {
+  
+  background-color: #ffffff;
+  }
+#ft .nav {
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+  padding-left: 1em;
+color: #303030;
+  }
+  
+  #ft a.nav:link {
+    
+  text-align: left;
+color: #003366;
+    }  #ft a.nav:link:hover {
+text-decoration: underline;
+color: #cc3300;
+    }
+  
+  #ft a.nav:visited:hover {
+text-decoration: underline;
+color: #cc3300;
+    }
+  
+.fsupport {
+
+}
+
+#error {
+padding: 1em;
+border: solid #909090;
+background-color: #cccccc;
+}

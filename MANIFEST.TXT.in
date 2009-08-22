@@ -166,6 +166,13 @@ com/snert/src/@PACKAGE_NAME@/src/windows.c
 com/snert/src/@PACKAGE_NAME@/src/number_msg.awk
 com/snert/src/@PACKAGE_NAME@/src/number_msg.txt
 com/snert/src/@PACKAGE_NAME@/src/number_msg.sh
+com/snert/src/@PACKAGE_NAME@/src/avast/avastd_interface.txt
+com/snert/src/@PACKAGE_NAME@/src/clamd/clamdoc.pdf
+com/snert/src/@PACKAGE_NAME@/src/f-prot/fpscand.8.html
+com/snert/src/@PACKAGE_NAME@/src/f-prot/appendix_a.html
+com/snert/src/@PACKAGE_NAME@/src/f-prot/appendix_c.html
+com/snert/src/@PACKAGE_NAME@/src/sophos/savi_dynamic_10_men.pdf
+com/snert/src/@PACKAGE_NAME@/src/sophos/savi_sssp_12_men.pdf
 com/snert/src/@PACKAGE_NAME@/src/valgrind/valgrind.h
 com/snert/src/@PACKAGE_NAME@/src/valgrind/memcheck.h
 com/snert/src/@PACKAGE_NAME@/src/valgrind/helgrind.h

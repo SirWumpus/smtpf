@@ -1,0 +1,11 @@
+#navigation, #subheader, #fprot #fdoc #hd #bd .sidebarthing, #sidebarthing {
+display: none;
+}
+
+.fsupport, .fproduct {
+width: 95%;
+}
+
+#friskbanner {
+background: none;
+}

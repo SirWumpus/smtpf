@@ -1,0 +1,732 @@
+h1, h2, h3, h4, h5, h6 {
+font-weight: bold;
+}
+
+div.out_links, p.out_links, td.out_links {
+padding: 1em;
+text-align: right;
+font-size: 95%;
+}
+
+.spamtrap {
+display: none;
+}
+
+a.out_links {
+padding-right: 1em;
+text-align: right;
+font-size: 95%;
+background-image: url(http://www.f-prot.com/images/link_out.gif);
+background-repeat:no-repeat;
+background-position: 100% 50%;
+}
+
+
+div.out_links a, p.out_links a, td.out_links a {
+
+padding-right: 1em;
+background-image: url(http://www.f-prot.com/images/link_out.gif);
+background-repeat:no-repeat;
+background-position: 100% 50%;
+}
+
+ul.linkbar img{
+border: none;
+}
+
+pre, code {
+padding-left: 0.2em;
+padding-top: 0.5em;
+padding-bottom: 0.5em;
+padding-right: 0em;
+white-space: pre;
+background-color: #f0f0f0;
+font-size: 95%;
+}
+
+code {
+padding-left: 0.2em;
+padding-top: 0.5em;
+padding-bottom: 0.5em;
+padding-right: 0em;
+background-color: transparent;
+font-size: 95%;
+}
+
+form code {
+padding-left: 2em;
+padding-right: 2em;
+white-space: normal;
+font-size: 77%;
+}
+
+h1 {
+font-size: 159%;
+}
+
+h2 {
+font-size: 152%;
+}
+
+h3 {
+font-size: 144%;
+}
+
+h4 {
+font-size: 136%;
+}
+
+h5 {
+font-size: 129%;
+}
+
+h6 {
+font-size: 122%;
+}
+
+
+.newbox {
+border: 1px solid #cccccc;
+background-color: white;
+
+}
+.newbox td {
+padding: 5px;
+}
+
+.newbox_header {
+ background-color: #003366;  background-image: url(img/bluemenu.gif); color: white;
+border-bottom: solid 1px #cccccc;
+}
+
+
+
+#friskbanner {
+background-color:#eeeeee;
+background-image:url(http://www.f-prot.com/img/greybanner.gif);
+background-repeat:no-repeat;
+background-position: top right;
+height:87px;
+margin:0px;
+padding:0px;
+width:100%;
+}
+#friskbanner img {
+border:0px none black;
+margin:0px;
+padding-left:20px;
+padding-top:10px;
+}
+#navigation ul {
+list-style-type:none;
+margin:0px;
+padding:0px;
+}
+#navigation {
+background-image:url(http://www.f-prot.com/img/bluemenu.gif);
+background-repeat:repeat-x;
+font-size:92%;
+line-height:1em;
+margin-top:0px;
+padding-left: 0.5em;
+}
+#navigation li {
+display:inline;
+float:left;
+margin:0px;
+padding:0px;
+}
+a:hover, a:visited:hover {
+	color: #cc3300;
+	}
+
+a:visited {
+	color: #663300;
+	}
+	
+a:link {
+	color: #003366;
+	}
+#navigation a {
+background-image:url(http://www.f-prot.com/img/bluemenu.gif);
+background-repeat:repeat-x;
+border-left:1px solid #335C85;
+border-right:1px solid #003366;
+color:#FFFFFF;
+padding: 0px;
+padding-left:6px;
+padding-right:6px;
+padding-top: 5px;
+padding-bottom: 5px;
+line-height: 250%;
+text-decoration:none;
+}
+#navigation ul form {
+font-size:90%;
+margin:0px;
+padding:0px;
+}
+#searchbutton {
+background-color:#F2F2F2;
+background-image:url(http://www.f-prot.com/img/search.gif);
+background-position:0.2em 0.1em;
+background-repeat:no-repeat;
+border-color:#335C85;
+border-style:solid;
+border-width:1px;
+color:#003366;
+font-family:Helvetica,Geneva,SunSans-Regular,sans-serif;
+font-size:93%;
+font-weight:bold;
+margin:2px 0px 3px 0.4em;
+padding:3px 4px 3px 20px;
+text-decoration:none;
+}
+#searchspace {
+background-color:#F2F2F2;
+border-color:#335C85;
+border-style:solid;
+border-width:1px;
+color:#003366;
+line-height:100%;
+margin:2px 0px 2px 15px;
+padding:1px;
+}
+#navigation a:hover {
+background-image:url(http://www.f-prot.com/img/bluewhite.gif);
+background-repeat:repeat-x;
+border-left:1px solid #335C85;
+border-right:1px solid #003366;
+color:#CC3300;
+text-decoration:none;
+}
+
+.highlight {
+	border: 1px solid #ebebeb;
+	background-color: #f0f0f0;
+	padding: 2px;
+	margin-bottom: 0.5em;
+	}
+	.whitehighlight {
+	border: 1px solid #ebebeb;
+	background-color: #f9f9f9;
+	padding: 2px;
+	margin-bottom: 0.5em;
+	}
+.highcontent {
+	border: 1px solid #000000;
+	background-color: #003366;
+	color: white;
+	}
+.whitehighcontent {
+	border: 1px solid #ebebeb;
+	background-color: #e5e5e6;
+	background-color: #f9f9f9;
+	color: #303030;
+	}
+	.whitehighcontent h3 {
+background-repeat:repeat-x;
+background-position: 0px -29px;
+border-left: 1px solid #BEBFC1;
+border-left: 1px solid #f0f0f0;
+border-right: 1px solid #BEBFC1;
+border-right: 1px solid #f0f0f0;
+border-top: 1px solid #BEBFC1;
+border-top: 1px solid #f0f0f0;
+color:#000000;
+padding: 0px;
+padding-left:6px;
+padding-right:6px;
+padding-top: 10px;
+padding-bottom: 10px;
+font-weight: bold;
+text-align: center;
+font-size: 129%;
+	}
+	
+	.whitehighcontent h3 a, .whitehighcontent h4 a  {
+		text-decoration: none;
+		color: #003366;
+		}
+	
+	.whitehighcontent h4 {
+background-image:url(http://www.f-prot.com/img/bluewhite.gif);
+background-repeat:repeat-x;
+background-position: 0px 29px;
+border-left: 1px solid #BEBFC1;
+border-left: 1px solid #f0f0f0;
+border-right: 1px solid #BEBFC1;
+border-right: 1px solid #f0f0f0;
+color:#000000;
+padding: 0px;
+padding-left:6px;
+padding-right:6px;
+padding-top: 10px;
+padding-bottom: 10px;
+font-weight: bold;
+text-align: center;
+font-size: 129%;
+	}
+	.whitehighcontent dl {
+border-left: 1px solid #BEBFC1;
+border-left: 1px solid #f0f0f0;
+border-right: 1px solid #BEBFC1;
+border-right: 1px solid #f0f0f0;
+font-size: 100%;
+margin: 0px;
+padding: 0px;
+padding-bottom: 0.7em;
+		
+		}
+		
+	.whitehighcontent dl.bottom {
+border-left: 1px solid #BEBFC1;
+border-left: 1px solid #f0f0f0;
+border-right: 1px solid #BEBFC1;
+border-right: 1px solid #f0f0f0;
+font-size: 100%;
+margin: 0px;
+padding: 0px;
+padding-bottom: 0.7em;
+background-repeat:repeat-x;
+background-position: 0px 68px;
+border-bottom: 1px solid #BEBFC1;
+border-bottom: 1px solid #f0f0f0;
+		
+		}
+	.whitehighcontent dd {
+font-size: 100%;
+margin: 0px;
+padding-right: 0.7em;
+padding-left: 0.7em;
+		}
+		.whitehighcontent dd a:link {
+		color: #003366;
+		text-decoration: none;
+		}
+		.whitehighcontent dd a:visited {
+		color: #663300;
+		text-decoration: none;
+		}
+		.whitehighcontent dd a:hover {
+		color: #cc3300;
+		text-decoration: underline;
+		}
+.whitehighcontent dt {
+font-size: 92%;
+margin: 0px;
+font-weight: bold;
+padding-right: 0.5em;
+padding-left: 0.5em;
+text-align: right;
+		}	
+		
+.highcontent h3 {
+background-image:url(http://www.f-prot.com/img/bluemenu.gif);
+background-repeat:repeat-x;
+color:#FFFFFF;
+padding: 0px;
+font-weight: bold;
+text-align: center;
+font-size: 129%;
+	}
+	.highcontent h3 a, .highcontent h4 a {
+color:#FFFFFF;
+display: block;
+padding: 0px;
+padding-left:6px;
+padding-right:6px;
+padding-top: 10px;
+padding-bottom: 10px;
+text-decoration: none;
+	}
+	.highcontent h3 a:hover, .highcontent h4 a:hover {
+color:#cc3300;
+background-image:url(http://www.f-prot.com/img/bluewhite.gif);
+background-repeat:repeat-x;
+	}
+	
+.highcontent h4 {
+background-image:url(bluemenu_flip.gif);
+background-repeat:repeat-x;
+color:#FFFFFF;
+padding: 0px;
+font-weight: bold;
+text-align: center;
+font-size: 129%;
+	}
+
+.highcontent p {
+	padding: 0.90em;
+font-size: 114%;
+	}
+#fdoc div.highlight div.highcontent ul {
+	list-style: disc;
+	padding: 0.90em;
+	padding-left: 0.6em;
+	padding-bottom: 0.3em;
+	margin-bottom: 4px;
+	}
+.highcontent ul a {
+	color: #ffffff;
+	font-weight: bold;
+	}
+.highcontent ul a:hover {
+	color: #cc3300;
+	}
+	
+#brandheader h1 {
+	text-align: right;
+	border: none;
+	padding: 0.75em;
+	padding-bottom: 0em;
+	}
+#brandheader h2{
+	font-family: "Helvetica neue", helvetica;
+	text-align: left;
+	font-size: 224%;
+	color: #003366;
+	font-weight: bold;
+	padding: 0.75em;
+	padding-top: 0.3em;
+	padding-left: 1em;
+	padding-bottom: 0em;
+	line-height: 300%;
+	}
+	
+	
+#brandheader h2 a:link {
+	color: #cc3300;
+	}
+#brandheader {
+	padding: 0px;
+	margin: 0px;
+	border-bottom: 1px solid #ededed;
+	border-left: 1px solid #ededed;
+	border-right: 1px solid #ededed;
+	line-height: 80%;
+	margin-bottom: 0.3em;
+	background-color: #FBFBFB;
+	text-align: center;
+	}
+#brandheader img {
+	padding: 0px;
+	margin: 0px;
+	}
+#brandheader .rssbox a:link {
+	text-align: left;
+	font-size: 122%;
+	color: #003366;
+	font-weight: bold;
+	text-decoration: none;
+	}
+
+#brandheader .rssbox a:visited {
+	text-align: left;
+	font-size: 122%;
+	color: #663300;
+	font-weight: bold;
+	text-decoration: none;
+	}
+#brandheader .rssbox .rssinfolink{
+	padding-left: 1.2em;
+	
+	}
+	
+	.virusinfo_header {
+		margin-top: 15px;
+		font-size: 114%;
+		font-weight: bold;
+		}
+		
+#fdoc div.fsupport table.box_5 td{
+		padding-left: 1em;
+	border-top: #f0f0f0 1px solid;
+	border-bottom: #f0f0f0 1px solid;
+	border-right: #ebebeb 1px solid;
+	border-left: #ebebeb 1px solid;
+		}		
+#fdoc div.fsupport table.box_5 {
+	background-color: #f9f9f9; !important
+	padding: 2px; !important
+	border: #f7f7f7 1px solid; !important
+		}
+		
+		
+#fdoc div.fsupport p {
+	margin-top: 0.7em;
+	margin-bottom: 0.4em;
+	}
+
+#fdoc div.fsupport ul {
+	list-style: disc;
+	
+	margin-top: 0.4em;
+	margin-bottom: 0.9em;
+		padding-left: 1.2em;
+	}
+	#fdoc div.fsupport ul ul{
+	list-style: disc;
+	
+	margin-top: 0.4em;
+	margin-bottom: 0.4em;
+		padding-left: 2em;
+	}
+
+blockquote {
+margin-left: 2em;
+margin-right: 2em;
+}
+
+ol li {
+list-style: decimal;
+margin-left:3em;
+padding-left:0em;
+}
+
+ol ul li {
+list-style: disc;
+margin-left:3.5em;
+padding-left:0em;
+}
+ol ul ol li {
+list-style: decimal;
+margin-left:4em;
+padding-left:0em;
+}
+ol ul ol ul li {
+list-style: disc;
+margin-left:4.5em;
+padding-left:0em;
+}
+
+
+#fdoc div.fsupport .box_5 p {
+	text-align: left; !important;
+line-height:100%;font-size:85%;
+	}
+#fdoc div.fsupport .box_5 p a{
+	color:#003366;
+font-weight:bold;padding-bottom:0.5em;
+padding-left:1em;
+padding-right:1em;
+padding-top:0.5em;
+	}
+	
+#fdoc .left_links {
+  font-weight: bold;
+  background-image:url(http://www.f-prot.com/img/headingarrow.gif);
+background-position:95% 75%;
+background-repeat:no-repeat;
+background-color: #FFFFFF;  !important
+color:#303030; !important
+text-decoration:none;
+margin:0px;
+padding-top: 1em;
+font-size: 92%;
+border-bottom: 1px solid #f0f0f0;
+padding-right: 1em;
+	}
+	#fdoc  .left_links a{
+color:#303030;
+display: block;
+text-decoration:none;
+	}	#fdoc  .left_links a:hover{
+color:#cc3300;
+text-decoration:underline;
+	}
+	
+	#fdoc  td.left_content  {
+padding: 1em;
+padding-top: 0.3em; 
+padding-bottom: 0em;
+		
+		}
+	#fdoc td.left_content 	td.left_content   {
+padding: 0em; !important
+		
+		}
+.box_2  {
+background-color:#F7F7F7;
+border:1px solid #CCCCCC;
+padding: 1em;
+		
+		}
+		
+.support_header {
+background-image:url(http://www.f-prot.com/img/bluemenu.gif);
+background-repeat:repeat-x;
+border-left:1px solid #335C85;
+border-right:1px solid #003366;
+color:#FFFFFF;
+padding: 0px;
+padding-left:6px;
+padding-right:6px;
+padding-top: 5px;
+padding-bottom: 5px;
+font-weight: bold;
+	}
+.support_header a {
+color: white;
+}
+
+.support_list {
+	padding-top: 3px;
+border-left:1px solid #f0f0f0;
+border-right:1px solid #f0f0f0;
+border-bottom:1px solid #f0f0f0;
+	
+	}
+
+.fsupport h3 {
+	font-size: 122%;
+	font-weight: bold;
+	margin-bottom: 0.5em;
+	}
+.fsupport .in_links {
+	font-size: 92%;
+	padding-left: 0.5em;
+	line-height: 1.4;
+	}
+.fsupport form {
+	margin-bottom: 1em;
+	}
+.virusinfo_header {
+	background-color: #f9f9f9;
+	border: 1px solid #f0f0f0;
+	padding-left: 0.2em;
+	font-size: 92%;
+	}
+.underline {
+	}
+.box_3 {
+background-color:#FFFFFF;
+border:1px solid #f0f0f0;
+margin-bottom:3px;
+padding:3px;
+}
+
+
+.salesbox {
+background-color:#FFFFFF;
+border:1px solid #CCCCCC;
+color:#303030;
+font-family:helvetica;
+font-size:10px;
+margin:5px;
+padding:2px 6px;
+text-align:right;
+width:130px;
+}
+
+.salesbox h4 {
+color:#303030;
+font-size:13px;
+font-weight:bold;
+margin:0px;
+padding:0px;
+text-align:right;
+}
+
+.salesbox img {
+border:medium none;
+display:inline;
+float:left;
+margin:0px;
+padding:0px;
+}
+
+.salesbox a, .salesbox a:link, .salesbox a:visited {
+color:#303030;
+margin:0px;
+padding:0px;
+text-decoration:none;
+}
+#fdoc #bd div.salesbox p {
+margin:0px; !important
+padding:0px; !important
+}
+.salesbox a:hover {
+color:#CC3300;
+}
+.yui-gf div.first {
+width:24%; !important
+}
+
+#fdoc div.fproduct ul {
+list-style-image:none;
+list-style-position:outside;
+list-style-type:disc;
+margin-bottom:0.9em;
+margin-top:0.4em;
+padding-left:1.2em;
+}
+
+.prodsidebar {
+margin-top: 10px;
+	}
+.prodsidebar h3 {
+	text-align: center;
+	}
+	
+	
+	#fdoc div.prodsidebar div.highlight div.highcontent ul {
+padding:0em 0em 0em 1.4em;
+}
+
+.whitehighlight .greysales h3 {
+	border-top:none;
+	border-bottom: #ebebeb 1px solid;
+	border-right: #ebebeb 1px solid;
+color:#003366;
+	background-color: #f5f5f5;
+	padding: 0px;
+	
+	}
+.whitehighlight .greysales h3 a {
+	display: block;
+color:#003366;
+	background-color: #f5f5f5;
+	padding:10px 6px;
+	}
+
+.whitehighlight .greysales h3 a:hover {
+color:#cc3300;
+background-image:url(http://www.f-prot.com/img/bluewhite.gif);
+background-repeat:repeat-x;
+	}
+	
+h4.prodtitle {
+	background: none;
+	border: none;
+	font-size: 167%;
+	}
+.proditems {
+	margin-bottom: 1em;
+	}
+#fdoc div.proditems ul, .proditems p {
+	padding: 0.4em;
+	padding-left: 2em;
+	
+	}
+div.proditems ul ul {
+	padding-left: 2.4em;
+	}
+
+div.proditems ul li {
+	padding: 0.3em;
+	padding-right: 2em;
+	}
+div.proditems ul ul li {
+	padding: 0em;
+	padding-right: 2em;
+	}
+
+	dt {
+font-weight: bold;
+}
+
+dd {
+/* margin-left: 1.4em; */
+margin-right: 2em;
+}
