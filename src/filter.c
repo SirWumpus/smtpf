@@ -515,54 +515,6 @@ FilterHandler filter_drop_table	[] = {
 };
 
 /**
- * New server thread.
- *
- * @param sess
- *	A pointer to a partialy initialised session structure.
- *
- * @param args
- *	Always empty.
- *
- * @return
- *	Always returns SMTPF_CONTINUE.
- *
- * @example
- *	filterRun(sess, filter_thread_create_table)
- */
-FilterHandler filter_thread_create_table	[] = {
-	FILTER_TABLE_BEGIN(thread_create),
-#ifdef NOT_YET
-	FILTER_HANDLER(routeThreadCreate),
-	FILTER_HANDLER(accessThreadCreate),
-#endif
-	FILTER_TABLE_END
-};
-
-/**
- * New server thread.
- *
- * @param sess
- *	A pointer to a partialy initialised session structure.
- *
- * @param args
- *	Always empty.
- *
- * @return
- *	Always returns SMTPF_CONTINUE.
- *
- * @example
- *	filterRun(sess, filter_thread_create_table)
- */
-FilterHandler filter_thread_free_table	[] = {
-	FILTER_TABLE_BEGIN(thread_free),
-#ifdef NOT_YET
-	FILTER_HANDLER(accessThreadFree),
-	FILTER_HANDLER(routeThreadFree),
-#endif
-	FILTER_TABLE_END
-};
-
-/**
  * Server listener loop just after a client connection has been
  * accepted.
  *

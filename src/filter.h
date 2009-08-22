@@ -133,40 +133,6 @@ extern FilterHandler filter_cache_gc_table[];
 extern FilterHandler filter_optn_table	[];	/* int fn(sess, void) */
 
 /**
- * New server thread.
- *
- * @param sess
- *	A pointer to a partialy initialised session structure.
- *
- * @param args
- *	Always empty.
- *
- * @return
- *	Always returns SMTPF_CONTINUE.
- *
- * @example
- *	filterRun(sess, filter_thread_create_table)
- */
-extern FilterHandler filter_thread_create_table	[];
-
-/**
- * New server thread.
- *
- * @param sess
- *	A pointer to a partialy initialised session structure.
- *
- * @param args
- *	Always empty.
- *
- * @return
- *	Always returns SMTPF_CONTINUE.
- *
- * @example
- *	filterRun(sess, filter_thread_create_table)
- */
-extern FilterHandler filter_thread_free_table	[];
-
-/**
  * Server listener loop just after a client connection has been
  * accepted.
  *
