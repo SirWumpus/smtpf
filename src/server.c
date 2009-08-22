@@ -718,6 +718,21 @@ offered only for special partnership deals and is not generally available to cus
 #endif
 
 #ifdef OLD_SERVER_MODEL
+
+void
+_atExitCleanUp(void)
+{
+	filterFini();
+	statsFini();
+	cacheFini();
+	ProcTitleFini();
+
+	VectorDestroy(reject_msg);
+	VectorDestroy(welcome_msg);
+
+	closelog();
+}
+
 static int
 serverInit(void)
 {
@@ -1101,10 +1116,19 @@ Version and copyright notices.
 
 #else /* OLD_SERVER_MODEL */
 
-static void
-server_fini(Server *server)
+void
+_atExitCleanUp(void)
 {
+	filterFini();
+	statsFini();
+	cacheFini();
+	ProcTitleFini();
 	(void) pthreadMutexDestroy(&title_mutex);
+
+	VectorDestroy(reject_msg);
+	VectorDestroy(welcome_msg);
+
+	closelog();
 }
 
 static int
@@ -1277,6 +1301,9 @@ session_accept(ServerSession *session)
 	data->last_mark = data->start;
 	data->last_test = data->start;
 
+	(void) socketSetNonBlocking(session->client, 1);
+	socketSetTimeout(session->client, optSmtpCommandTimeout.value);
+
 	switch (filterRun(data, filter_accept_table)) {
 	case SMTPF_DROP:
 	case SMTPF_REJECT:
@@ -1300,18 +1327,20 @@ extern void sessionProcess(Session *);
 void
 serverNumbers(Server *server, unsigned numbers[2])
 {
-	numbers[0] = serverListLength(&server->workers);
-	numbers[1] = serverListLength(&server->workers_idle);
+	(void) pthread_mutex_lock(&server->workers.mutex);
+	numbers[0] = server->workers.length;
+	numbers[1] = server->workers_active;
+	(void) pthread_mutex_unlock(&server->workers.mutex);
 }
 
 int
 session_process(ServerSession *session)
 {
-	unsigned numbers[3];
+	unsigned numbers[2];
 	Session *sess = session->data;
 
 	serverNumbers(session->server, numbers);
-	statsSetHighWater(&stat_high_connections, numbers[0], verb_info.option.value);
+	statsSetHighWater(&stat_high_connections, numbers[1], verb_info.option.value);
 
 	(void) mutex_lock(SESSION_ID_ZERO, FILE_LINENO, &title_mutex);
 	ProcTitleSet(
@@ -1378,7 +1407,7 @@ session_process(ServerSession *session)
 		_NAME " "
 #endif
 		"th=%u cn=%u cs=%lu",
-		numbers[0]+numbers[1], numbers[0], connections_per_second
+		numbers[0], numbers[1], connections_per_second
 	);
 	(void) mutex_unlock(SESSION_ID_ZERO, FILE_LINENO, &title_mutex);
 
@@ -1395,8 +1424,9 @@ worker_free(ServerWorker *worker)
 {
 	Worker *data;
 
-	if (worker != NULL) {
+	if (worker != NULL && worker->data != NULL) {
 		data = worker->data;
+		worker->data = NULL;
 		pdqClose(data->pdq);
 		smdbClose(data->route_map);
 		smdbClose(data->access_map);
@@ -1416,13 +1446,13 @@ worker_create(ServerWorker *worker)
 
 	worker->data = data;
 
+	if ((data->pdq = pdqOpen()) == NULL)
+		goto error1;
+
 	if ((data->route_map = smdbOpen(route_map_path, 1)) == NULL)
 		goto error1;
 
 	if ((data->access_map = smdbOpen(access_map_path, 1)) == NULL)
-		goto error1;
-
-	if ((data->pdq = pdqOpen()) == NULL)
 		goto error1;
 
 	return 0;
@@ -1445,35 +1475,14 @@ serverMain(void)
 	if (server_init(&server))
 		goto error1;
 
-	/* Update the default settings. The guards are here more
-	 * for debugging and avoiding inane stupid settings.
-	 */
-	if (SERVER_MIN_THREADS < optServerMinThreads.value)
-		server.option.min_threads = optServerMinThreads.value;
-	if (SERVER_MAX_THREADS < optServerMaxThreads.value)
-		server.option.max_threads = optServerMaxThreads.value;
-	if (SERVER_NEW_THREADS < optServerNewThreads.value)
-		server.option.new_threads = optServerNewThreads.value;
-	if (SERVER_QUEUE_SIZE < optServerQueueSize.value)
-		server.option.queue_size  = optServerQueueSize.value;
-	if (SERVER_ACCEPT_TO < optServerAcceptTimeout.value)
-		server.option.accept_to   = optServerAcceptTimeout.value;
-	if (SERVER_READ_TO < optSmtpCommandTimeout.value)
-		server.option.read_to     = optSmtpCommandTimeout.value;
-
-	serverSetStackSize(&server, THREAD_STACK_SIZE);
-
-	server.debug.level = verb_connect.option.value;
-#ifdef VERB_VALGRIND
-	server.debug.valgrind = verb_valgrind.option.value;
-#endif
 	server.hook.worker_create = worker_create;
 	server.hook.worker_free = worker_free;
-
 	server.hook.session_create = session_create;
 	server.hook.session_accept = session_accept;
 	server.hook.session_process = session_process;
 	server.hook.session_free = session_free;
+
+	serverSetStackSize(&server, THREAD_STACK_SIZE);
 
 	if (serverSignalsInit(&signals, _NAME))
 		goto error1;
@@ -1483,13 +1492,12 @@ serverMain(void)
 
 	syslog(LOG_INFO, LOG_NUM(599) "ready");
 	signal = serverSignalsLoop(&signals);
-	serverStop(&server, signal == SIGQUIT);
 
 	syslog(LOG_INFO, "signal %d, terminating process", signal);
+	serverStop(&server, signal == SIGQUIT);
 	rc = EXIT_SUCCESS;
 error2:
 	serverSignalsFini(&signals);
-	server_fini(&server);
 error1:
 	serverFini(&server);
 error0:

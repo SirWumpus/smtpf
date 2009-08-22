@@ -72,26 +72,12 @@ const char *smtpf_code_names[] = {
 	NULL
 };
 
-static Vector reject_msg;
-static Vector welcome_msg;
+Vector reject_msg;
+Vector welcome_msg;
 
 /***********************************************************************
  *** Routines
  ***********************************************************************/
-
-void
-_atExitCleanUp(void)
-{
-	filterFini();
-	statsFini();
-	cacheFini();
-	ProcTitleFini();
-
-	VectorDestroy(reject_msg);
-	VectorDestroy(welcome_msg);
-
-	closelog();
-}
 
 #ifdef ENABLE_PDQ
 void
@@ -671,53 +657,6 @@ static char *welcome_default[] = {
 	NULL
 };
 
-#ifdef OLD_WELCOME
-int
-welcome(Session *sess)
-{
-	int rc;
-	char **p;
-
-	/* Some broken SMTP client software (Trend Micro?) cannot
-	 * handle multiple line banners, and so get out of sync
-	 * with the response codes. So if we white list a host,
-	 * just give them a simple one line banner.
-	 */
-	if (CLIENT_ANY_SET(sess, CLIENT_USUAL_SUSPECTS|CLIENT_IS_GREY)) {
-		return -(
-			sendClientReply(
-				sess, "220 %s %sSMTP" ID_MSG(632) "\r\n",
-				sess->iface->name, optSmtpEnableEsmtp.value ? "E" : "",
-				ID_ARG(sess)
-			) != 0
-		);
-/*{REPLY
-A stripped down single line welcome banner sent to only localhost, LAN, and relays.
-}*/
-	}
-
-	p = 0 < VectorLength(welcome_msg) ? (char **) VectorBase(welcome_msg) : welcome_default;
-	rc = sendClientReply(
-		sess, "220%c%s %sSMTP %s" ID_MSG(633) "\r\n", p[1] == NULL ? ' ' : '-', sess->iface->name,
-		optSmtpEnableEsmtp.value || CLIENT_ANY_SET(sess, CLIENT_HOLY_TRINITY) ? "E" : "",
-		*p, ID_ARG(sess)
-	);
-/*{REPLY
-The first line of possible a multiline welcome banner.
-}*/
-
-	if (rc != 0)
-		return -1;
-
-	for (p++; *p != NULL; p++) {
-		rc = sendClientReply(sess, "220%c%s\r\n", p[1] == NULL ? ' ' : '-', *p);
-		if (rc != 0)
-			return -1;
-	}
-
-	return 0;
-}
-#else
 int
 welcome(Session *sess)
 {
@@ -757,7 +696,6 @@ The first line of possible a multiline welcome banner.
 
 	return replyPush(sess, reply);
 }
-#endif
 
 void
 keepAlive(Session *sess)
@@ -805,7 +743,6 @@ keepAlive(Session *sess)
 		syslog(LOG_DEBUG, LOG_MSG(634) "keep-alive relays=%d sent=%d fail=%d", LOG_ARGS(sess),  count, sent, count - sent);
 }
 
-#ifdef ENABLE_PDQ
 void
 checkClientIP(Session *sess)
 {
@@ -854,7 +791,7 @@ checkClientIP(Session *sess)
 		}
 	}
 
-	if (CLIENT_ANY_SET(sess, CLIENT_NO_PTR)) {
+	if (rr == NULL || CLIENT_ANY_SET(sess, CLIENT_NO_PTR)) {
 #ifdef FILTER_MISC
 		statsCount(&stat_client_ptr_required);
 #endif
@@ -924,7 +861,7 @@ checkClientIP(Session *sess)
 	 * tests and controls such as smtp-greet-pause or smtp-slow-reply.
 	 */
 	sess->msg.spf_mail = SPF_NONE;
-	row.key_size = greyMakeKey(sess, optGreyKey.value & ~(GREY_TUPLE_HELO|GREY_TUPLE_MAIL|GREY_TUPLE_RCPT), NULL, row.key_data, sizeof (row.key_data));
+	row.key_size = greyMakeKey(sess, optGreyKey.value & ~(GREY_TUPLE_HELO|GREY_TUPLE_MAIL|GREY_TUPLE_RCPT), NULL, (char *) row.key_data, sizeof (row.key_data));
 	if (mccGetRow(mcc, &row) == MCC_OK) {
 		row.value_data[row.value_size] = '\0';
 		if (verb_cache.option.value)
@@ -935,159 +872,6 @@ checkClientIP(Session *sess)
 }
 #endif
 }
-
-#else
-
-static void
-checkClientIP(Session *sess)
-{
-	int i, type;
-	long length;
-	Vector answers;
-	DnsEntry *entry;
-
-	/* Assume the client is forged or unconfirmed,
-	 * excluding localhost and the private LAN IPs.
-	 */
-	if (CLIENT_NOT_SET(sess, CLIENT_IS_LAN|CLIENT_IS_LOCALHOST))
-		CLIENT_SET(sess, CLIENT_IS_FORGED);
-
-	/* Assume the client has one PTR record or if multihomed that
-	 * they are all for the same domain. Used for grey-listing PTR
-	 * key.
-	 */
-	CLIENT_CLEAR(sess, CLIENT_IS_PTR_MULTIDOMAIN);
-
-	if (CLIENT_ANY_SET(sess, CLIENT_IS_LOCALHOST)) {
-		/* Skip the lookup and assign the localhost name ourselves. */
-		length = TextCopy(sess->client.name, sizeof (sess->client.name), "localhost.localhost");
-		CLIENT_CLEAR(sess, CLIENT_NO_PTR|CLIENT_IS_FORGED);
-		return;
-	}
-
-	switch (DnsGet2(DNS_TYPE_PTR, 0, sess->client.addr, &answers, NULL)) {
-	case DNS_RCODE_OK:
-		for (i = 0; i < VectorLength(answers); i++) {
-			if ((entry = VectorGet(answers, i)) == NULL)
-				continue;
-
-			if (entry->type == DNS_TYPE_PTR) {
-				CLIENT_CLEAR(sess, CLIENT_NO_PTR);
-				break;
-			} else if (verb_info.option.value && entry->type == DNS_TYPE_CNAME) {
-				syslog(
-					LOG_INFO, LOG_MSG(636) "client [%s] has CNAME/PTR delegation %s",
-					LOG_ARGS(sess), sess->client.addr, (char *) entry->value
-				);
-/*{LOG
-}*/
-			}
-		}
-
-		if (CLIENT_NOT_SET(sess, CLIENT_NO_PTR))
-			break;
-
-		VectorDestroy(answers);
-		/*@fallthrough@*/
-
-	case DNS_RCODE_UNDEFINED:
-#ifdef FILTER_MISC
-		statsCount(&stat_client_ptr_required);
-#endif
-		CLIENT_SET(sess, CLIENT_NO_PTR);
-		return;
-
-	case DNS_RCODE_ERRNO:
-		if (errno == EMFILE || errno == ENFILE)
-			replyResourcesError(sess, FILE_LINENO);
-		/*@fallthrough@*/
-	default:
-#ifdef FILTER_MISC
-		statsCount(&stat_client_ptr_required_error);
-#endif
-		CLIENT_SET(sess, CLIENT_NO_PTR|CLIENT_NO_PTR_ERROR);
-		return;
-	}
-
-	/* Copy the client's host name into our buffer. This name will
-	 * almost certainly have a trailing dot for the root domain, as
-	 * will any additional records returned from the DNS lookup.
-	 */
-	length = TextCopy(sess->client.name, sizeof (sess->client.name), entry->value);
-
-#ifdef FILTER_GREY
-	/* Consider dig -x 63.84.135.34, which has a multihomed PTR
-	 * record for many different unrelated domains. This affects
-	 * our choice to use the grey-listing PTR key or not. If the
-	 * multihomed PTR were all for the same domain suffix, then
-	 * the grey-listing PTR key will work, otherwise we have to
-	 * fall back on just using the IP address.
-	 */
-	if (1 < VectorLength(answers) && 0 < greyPtrSuffix(sess, sess->input, sizeof (sess->input))) {
-		for (i = 0; i < VectorLength(answers); i++) {
-			if ((entry = VectorGet(answers, i)) == NULL)
-				continue;
-
-			if (entry->type == DNS_TYPE_PTR && TextInsensitiveEndsWith(entry->value, sess->input) == -1) {
-				CLIENT_SET(sess, CLIENT_IS_PTR_MULTIDOMAIN);
-				break;
-			}
-		}
-	}
-#endif
-	/* Wait to remove the trailing dot for the root domain from
-	 * the client's host name until after any multihomed PTR list
-	 * is reviewed above.
-	 */
-	if (0 < length && sess->client.name[length-1] == '.')
-		sess->client.name[length-1] = '\0';
-	TextLower(sess->client.name, length);
-
-	/* Now we can discard our result from the PTR lookup. */
-	VectorDestroy(answers);
-
-	type = isReservedIPv6(sess->client.ipv6, IS_IP_V4) ? DNS_TYPE_A : DNS_TYPE_AAAA;
-
-	if (CLIENT_NOT_SET(sess, CLIENT_IS_RELAY) && type == DNS_TYPE_A
-	&& isIPv4InClientName(sess->client.name, sess->client.ipv6+IPV6_OFFSET_IPV4))
-		CLIENT_SET(sess, CLIENT_IS_IP_IN_PTR);
-
-	if (DnsGet2(type, 1, sess->client.name, &answers, NULL) == DNS_RCODE_OK) {
-		for (i = 0; i < VectorLength(answers); i++) {
-			if ((entry = VectorGet(answers, i)) == NULL)
-				continue;
-
-			if (entry->address != NULL && memcmp(sess->client.ipv6, entry->address, sizeof (sess->client.ipv6)) == 0) {
-				CLIENT_CLEAR(sess, CLIENT_IS_FORGED);
-				break;
-			}
-		}
-
-		VectorDestroy(answers);
-	}
-
-#ifdef FILTER_GREY
-{
-	mcc_row row;
-
-	/* Check the cache to see if this client has previously passed grey-listing.
-	 * and set a flag if true. This flag can then be used to disable certain
-	 * tests and controls such as smtp-greet-pause or smtp-slow-reply.
-	 */
-	sess->msg.spf_mail = SPF_NONE;
-	row.key_size = greyMakeKey(sess, optGreyKey.value & ~(GREY_TUPLE_HELO|GREY_TUPLE_MAIL|GREY_TUPLE_RCPT), NULL, row.key_data, sizeof (row.key_data));
-	if (mccGetRow(mcc, &row) == MCC_OK) {
-		row.value_data[row.value_size] = '\0';
-		if (verb_cache.option.value)
-			syslog(LOG_DEBUG, log_cache_get, LOG_ARGS(sess), row.key_data, row.value_data, FILE_LINENO);
-		if (row.value_data[0] == SMTPF_CONTINUE+'0')
-			CLIENT_SET(sess, CLIENT_PASSED_GREY);
-	}
-}
-#endif
-}
-
-#endif /* ENABLE_PDQ */
 
 #ifdef UPDATE
 char this_ip[IPV6_STRING_LENGTH];
@@ -1202,7 +986,7 @@ sessionProcess(Session *sess)
 	}
 #else
 	serverNumbers(sess->session->server, numbers);
-	if (optRunOpenFileLimit.value <= numbers[0] * FD_PER_THREAD + FD_OVERHEAD) {
+	if (optRunOpenFileLimit.value <= numbers[1] * FD_PER_THREAD + FD_OVERHEAD) {
 		errno = EMFILE;
 		replyResourcesError(sess, FILE_LINENO);
 	}
@@ -1224,7 +1008,7 @@ sessionProcess(Session *sess)
 #ifdef OLD_SERVER_MODEL
 			server.threads, server.connections,
 #else
-			numbers[0]+numbers[1], numbers[0],
+			numbers[0], numbers[1],
 #endif
 			connections_per_second
 		);
@@ -1242,23 +1026,6 @@ the session "end" log line only.
 			syslog(LOG_DEBUG, LOG_MSG(638) "before welcome time-elapsed=" TIMER_FORMAT, LOG_ARGS(sess), TIMER_FORMAT_ARG(diff_banner));
 	}
 
-#ifdef OLD_WELCOME
- 	switch (filterRun(sess, filter_connect_table)) {
-	case SMTPF_TEMPFAIL:
-		(void) replySend(sess);
-		break;
-
- 	case SMTPF_REJECT:
- 	case SMTPF_DROP:
-		(void) replySend(sess);
-		goto error0;
-
-	default:
-		if (welcome(sess))
-			goto error0;
-		break;
- 	}
-#else
  	switch (filterRun(sess, filter_connect_table)) {
 	default:
 		(void) welcome(sess);
@@ -1274,7 +1041,6 @@ the session "end" log line only.
 	}
 
 	(void) replySend(sess);
-#endif
 
 	/* Black listed clients get less priority. */
 	if (CLIENT_ANY_SET(sess, CLIENT_IS_BLACK))

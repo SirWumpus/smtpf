@@ -147,6 +147,7 @@ extern void freeThreadData(void);
 #undef HAVE_PTHREAD_YIELD
 #undef DISABLE_NAGLE
 #define USE_PTHREAD_CANCEL
+#define DOT_TRANSPARENCY
 
 #ifdef __unix__
 # define cliFdCloseOnExec(fd, close_on_exec)	(void) fileSetCloseOnExec(fd, 1)
@@ -695,15 +696,10 @@ extern int getRFC2821DateTime(struct tm *local, char *buffer, size_t size);
 extern ParsePath *rcptFindFirstValid(Session *sess);
 extern int welcome(Session *sess);
 
-/***********************************************************************
- ***
- ***********************************************************************/
+extern long smtpDataToDaemon(FILE *fp, Socket2 *daemon, long max_out, Vector headers, size_t eoh, unsigned char *tmpbuf, size_t tmpsiz);
 
-#ifdef NDEBUG
-# define MEMSET(p, b, s)
-#else
-# define MEMSET(p, b, s)	memset((p),(b),(s))
-#endif
+extern Vector reject_msg;
+extern Vector welcome_msg;
 
 #ifdef NOT_COMPLETE
 /***********************************************************************
