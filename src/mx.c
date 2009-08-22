@@ -265,7 +265,7 @@ See <a href="summary.html#opt_call_back">call-back</a> option.
 
 	/* Find preference weight of connected client. */
 	preference = 65535;
-	if ((rr = pdqListFindAddress(list, PDQ_CLASS_IN, PDQ_TYPE_ANY, sess->client.ipv6)) != NULL
+	if ((rr = pdqListFindAddress(list, PDQ_CLASS_IN, PDQ_TYPE_ANY, sess->client.addr)) != NULL
 	&&  (mx = pdqListFindHost(list, PDQ_CLASS_IN, PDQ_TYPE_MX, rr->name.string.value)) != NULL)
 		preference = ((PDQ_MX *) mx)->preference;
 
