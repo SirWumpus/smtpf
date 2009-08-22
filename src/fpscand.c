@@ -166,7 +166,7 @@ fpscandDot(Session *sess, va_list ignore)
 	if (verb_fpscand.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(371) "fpscand >> %s", LOG_ARGS(sess), buffer);
 
-	if (socketWrite(socket, buffer, (long) length) != length) {
+	if (socketWrite(socket, (unsigned char *) buffer, (long) length) != length) {
 		rc = replyPushFmt(sess, SMTPF_REJECT, "451 4.4.0 fpscand write error: %s (%d)" ID_MSG(372) "\r\n", strerror(errno), errno, ID_ARG(sess));
 /*{NEXT}*/
 		goto error2;

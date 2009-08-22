@@ -153,7 +153,7 @@ avastdDot(Session *sess, va_list ignore)
 	}
 	if (verb_avastd.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(155) "avastd >> %s", LOG_ARGS(sess), buffer);
-	if (socketWrite(socket, buffer, (long) length) != length) {
+	if (socketWrite(socket, (unsigned char *) buffer, (long) length) != length) {
 		rc = replyPushFmt(sess, SMTPF_REJECT, "451 4.4.0 avastd write error: %s (%d)" ID_MSG(156) "\r\n", strerror(errno), errno, ID_ARG(sess));
 /*{NEXT}*/
 		goto error2;
@@ -224,7 +224,7 @@ See <a href="summary.html#opt_avastd_policy">avastd-policy</a>.
 	/* End avastd session. */
 	if (verb_avastd.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(164) "avastd >> QUIT", LOG_ARGS(sess));
-	(void) socketWrite(socket, "QUIT\r\n", sizeof ("QUIT\r\n")-1);
+	(void) socketWrite(socket, (unsigned char *) "QUIT\r\n", sizeof ("QUIT\r\n")-1);
 error2:
 	socketClose(socket);
 error1:

@@ -279,7 +279,7 @@ we force the client to down grade to the older HELO command per RFC 2821.
 		reply = REPLY_APPEND_CONST(reply, "250-PIPELINING\r\n");
 	if (optRFC16528bitmime.value)
 		reply = REPLY_APPEND_CONST(reply, "250-8BITMIME\r\n");
-	if (CLIENT_ANY_SET(sess, CLIENT_IS_LOCALHOST))
+	if (optSmtpXclientEnable.value && CLIENT_ANY_SET(sess, CLIENT_USUAL_SUSPECTS))
 		reply = REPLY_APPEND_CONST(reply, "250-XCLIENT ADDR HELO NAME PROTO\r\n");
 #ifdef ENABLE_STARTTLS
 	reply = REPLY_APPEND_CONST(reply, "250-STARTTLS\r\n");
@@ -1564,7 +1564,11 @@ hosts have implemented any filtering that rejects at DATA, like
 		/* Leave room to add a CRLF to the last chunk if necessary.
 		 * See cmdData().
 		 */
+#ifdef DOT_TRANSPARENCY
+		sess->msg.chunk1_length = (unsigned long) saveFileRead(fp, sess->msg.chunk1, sizeof (sess->msg.chunk1)-2);
+#else
 		sess->msg.chunk1_length = (unsigned long) fread(sess->msg.chunk1, 1, sizeof (sess->msg.chunk1)-2, fp);
+#endif
 		if (ferror(fp)) {
 			syslog(LOG_ERR, LOG_MSG(313) "read error \"%s\": %s (%d)", LOG_ARGS(sess), name, strerror(errno), errno);
 /*{LOG
@@ -2159,7 +2163,7 @@ cmdConnections(Session *sess)
 	reply = replyFmt(SMTPF_CONTINUE, "214-2.0.0 th=%lu cn=%lu cs=%lu\r\n", server.threads, server.connections, connections_per_second);
 #else
 {
-	unsigned numbers[3];
+	unsigned numbers[2];
 	serverNumbers(sess->session->server, numbers);
 	reply = replyFmt(SMTPF_CONTINUE, "214-2.0.0 th=%lu cn=%lu cs=%lu\r\n", numbers[0], numbers[1], connections_per_second);
 }
@@ -2186,11 +2190,15 @@ cmdConnections(Session *sess)
 	}
 #else
 	if (!mutex_lock(SESSION_ID_ZERO, FILE_LINENO, &server.workers.mutex)) {
+		ServerWorker *worker;
 		ServerListNode *node;
 
 		for (node = server.workers.head; node != NULL; node = node->next) {
-			conn = ((ServerWorker *) node->data)->session->data;
+			worker = node->data;
+			if (worker->session == NULL)
+				continue;
 
+			conn = worker->session->data;
 			state = conn->state;
 			if (state == NULL)
 				continue;
@@ -2215,7 +2223,6 @@ cmdKill(Session *sess)
 {
 	int rc;
 	char *arg;
-	Session *conn;
 
 	if (CLIENT_NOT_SET(sess, CLIENT_IS_LOCALHOST))
 		return cmdOutOfSequence(sess);
@@ -2232,6 +2239,8 @@ cmdKill(Session *sess)
 	rc = SMTPF_UNKNOWN;
 #ifdef OLD_SERVER_MODEL
 	if (!mutex_lock(SESSION_ID_ZERO, FILE_LINENO, &server.connections_mutex)) {
+		Session *conn;
+
 		for (conn = server.head; conn != NULL; conn = conn->next) {
 			if (strcmp(conn->long_id, arg) == 0) {
 				rc = replySetFmt(sess, SMTPF_CONTINUE, "214 2.0.0 killing session %s" ID_MSG(324) "\r\n", arg, ID_ARG(sess));
@@ -2259,7 +2268,7 @@ cmdKill(Session *sess)
 		}
 		(void) mutex_unlock(SESSION_ID_ZERO, FILE_LINENO, &server.connections_mutex);
 	}
-#else
+#else /* OLD_SERVER_MODEL */
 	if (!mutex_lock(SESSION_ID_ZERO, FILE_LINENO, &server.workers.mutex)) {
 		ServerListNode *node;
 		ServerWorker *worker;
@@ -2267,11 +2276,11 @@ cmdKill(Session *sess)
 		for (node = server.workers.head; node != NULL; node = node->next) {
 			worker = node->data;
 
-			if (strcmp(worker->session->id_log, arg) == 0) {
+			if (worker->session != NULL && strcmp(worker->session->id_log, arg) == 0) {
 				rc = replySetFmt(sess, SMTPF_CONTINUE, "214 2.0.0 killing session %s" ID_MSG(324) "\r\n", arg, ID_ARG(sess));
 /*{REPLY
 }*/
-				(void) replySetFmt(conn, SMTPF_DROP, "550 5.0.0 session %s killed" ID_MSG(325) "\r\n", arg, ID_ARG(sess));
+				(void) replySetFmt(worker->session->data, SMTPF_DROP, "550 5.0.0 session %s killed" ID_MSG(325) "\r\n", arg, ID_ARG(sess));
 /*{REPLY
 }*/
 				(void) socketSetLinger(worker->session->client, 0);
@@ -2293,7 +2302,7 @@ cmdKill(Session *sess)
 		}
 		(void) mutex_unlock(SESSION_ID_ZERO, FILE_LINENO, &server.workers.mutex);
 	}
-#endif
+#endif /* OLD_SERVER_MODEL */
 
 	if (rc == SMTPF_UNKNOWN)
 		rc = replySetFmt(sess, SMTPF_REJECT, "504 5.5.4 session %s not found" ID_MSG(326) "\r\n", arg, ID_ARG(sess));
@@ -2314,7 +2323,7 @@ cmdXclient(Session *sess)
 	extern void checkClientIP(Session *);
 	const char **list, *value, *name = NULL;
 
-	if (CLIENT_NOT_SET(sess, CLIENT_USUAL_SUSPECTS))
+	if (!optSmtpXclientEnable.value || CLIENT_NOT_SET(sess, CLIENT_USUAL_SUSPECTS))
 		return cmdOutOfSequence(sess);
 
 	statsCount(&stat_admin_commands);
@@ -2324,6 +2333,7 @@ cmdXclient(Session *sess)
 
 	sess->state = state0;
 	CLIENT_CLEAR_ALL(sess);
+	CLIENT_SET(sess, CLIENT_NO_PTR);
 	sess->client.name[0] = '\0';
 	sess->client.helo[0] = '\0';
 

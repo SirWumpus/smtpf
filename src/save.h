@@ -29,6 +29,9 @@ extern int saveClose(Session *sess, va_list ignore);
 
 extern int save_data_internal;
 extern const char * saveGetName(Session *sess);
+extern size_t saveFileWrite(FILE *fp, unsigned char *buffer, size_t size);
+extern ssize_t saveFileRead(FILE *fp, unsigned char *buffer, size_t size);
+extern size_t saveBufferSend(Socket2 *daemon, unsigned char *buffer, size_t size);
 
 /***********************************************************************
  ***

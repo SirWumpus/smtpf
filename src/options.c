@@ -324,6 +324,12 @@ Option optSmtpDsnReplyTo	= { "smtp-dsn-reply-to",	"",		usage_smtp_dsn_reply_to }
 Option optSmtpWelcomeFile	= { "smtp-welcome-file",	"",		USAGE_WELCOME_BANNER_FILE };
 Option optSmtpStrictRelay	= { "smtp-strict-relay",	"-",		usage_smtp_strict_relay };
 
+static const char usage_smtp_xclient_enable[] =
+  "When set enable SMTP XCLIENT support when EHLO command is given.\n"
+"#"
+;
+Option optSmtpXclientEnable	= { "smtp-xclient-enable",	"+",		usage_smtp_xclient_enable };
+
 Option optTestLickey		= { "test-lickey",		"-",		usage_test_lickey };
 Option optTestMode		= { "test-mode",		"-",		usage_test_mode };
 #ifdef ENABLE_TEST_ON_COMMAND
@@ -540,6 +546,7 @@ optionsRegister0(Session *sess, va_list ignore)
 	optionsRegister(&optSmtpStrictRelay,		0);
 	optionsRegister(&optSmtpSlowReply,		0);
 	optionsRegister(&optSmtpWelcomeFile, 		1);
+	optionsRegister(&optSmtpXclientEnable,		0);
 	optionsRegister(&tldOptLevelOne,		1);
 	optionsRegister(&tldOptLevelTwo,		1);
 

@@ -101,6 +101,7 @@ extern Option optSmtpServerQueue;
 extern Option optSmtpSlowReply;
 extern Option optSmtpStrictRelay;
 extern Option optSmtpWelcomeFile;
+extern Option optSmtpXclientEnable;
 extern Option optSyntax;
 extern Option optTestCase;
 extern Option optTestLickey;

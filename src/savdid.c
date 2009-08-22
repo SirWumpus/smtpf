@@ -148,7 +148,7 @@ savdidDot(Session *sess, va_list ignore)
 
 	/* Send version. */
 	length = snprintf(buffer, sizeof (buffer), "SSSP/1.0\n");
-	if (socketWrite(socket, buffer, (long) length) != length) {
+	if (socketWrite(socket, (unsigned char *) buffer, (long) length) != length) {
 		rc = replyPushFmt(sess, SMTPF_REJECT, "451 4.4.0 savdid write error: %s (%d)" ID_MSG(837) "\r\n", strerror(errno), errno, ID_ARG(sess));
 /*{NEXT}*/
 		goto error2;
@@ -189,7 +189,7 @@ See <a href="summary.html#opt_savdid_socket">savdid-socket</a> and <a href="summ
 	if (verb_savdid.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(843) "savdid >> %s", LOG_ARGS(sess), buffer);
 
-	if (socketWrite(socket, buffer, (long) length) != length) {
+	if (socketWrite(socket, (unsigned char *) buffer, (long) length) != length) {
 		rc = replyPushFmt(sess, SMTPF_REJECT, "451 4.4.0 savdid write error: %s (%d)" ID_MSG(844) "\r\n", strerror(errno), errno, ID_ARG(sess));
 /*{NEXT}*/
 		goto error2;
@@ -239,7 +239,7 @@ See <a href="summary.html#opt_savdid_policy">savdid-policy</a>.
 		syslog(LOG_DEBUG, LOG_MSG(848) "savdid << %s", LOG_ARGS(sess), buffer);
 
 	length = snprintf(buffer, sizeof (buffer), "BYE\n");
-	(void) socketWrite(socket, buffer, (long) length);
+	(void) socketWrite(socket, (unsigned char *) buffer, (long) length);
 	if (verb_savdid.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(849) "savdid >> %s", LOG_ARGS(sess), buffer);
 

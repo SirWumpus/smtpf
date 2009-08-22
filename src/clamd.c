@@ -153,7 +153,7 @@ clamd_open_scan(Session *sess, Clamd *clamd)
 
 	if (verb_clamd.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(182) "clamd >> %s", LOG_ARGS(sess), buffer);
-	if (socketWrite(clamd->socket, buffer, (long) length) != length) {
+	if (socketWrite(clamd->socket, (unsigned char *) buffer, (long) length) != length) {
 		rc = replyPushFmt(sess, SMTPF_REJECT, "451 4.4.0 clamd write error: %s (%d)" ID_MSG(183) "\r\n", strerror(errno), errno, ID_ARG(sess));
 /*{NEXT}*/
 		socketClose(clamd->socket);
@@ -327,6 +327,7 @@ clamdContent(Session *sess, va_list args)
 	long length;
 	Clamd *clamd;
 	uint32_t size;
+	size_t out_length;
 	unsigned char *chunk;
 
 	clamd = filterGetContext(sess, clamd_context);
@@ -343,10 +344,21 @@ clamdContent(Session *sess, va_list args)
 	if (optClamdMaxSize.value <= sess->msg.length)
 		return SMTPF_CONTINUE;
 
-	size = htonl(length);
+#ifdef DOT_TRANSPARENCY
+	/* Compute the (shorter or equal) length after stripping dot transparency. */
+	out_length = saveBufferSend(NULL, chunk, length);
+	size = htonl(out_length);
+#else
+	out_length = length;
+	size = htonl(out_length);
+#endif
 
 	if (socketWrite(clamd->socket, (unsigned char *) &size, sizeof (size)) != sizeof (size)
-	||  socketWrite(clamd->socket, chunk, length) != length) {
+#ifdef DOT_TRANSPARENCY
+	||  saveBufferSend(clamd->socket, chunk, length) != out_length) {
+#else
+	||  socketWrite(clamd->socket, chunk, length) != out_length) {
+#endif
 		clamdError(sess, clamd, "451 4.4.0 clamd session write error after %lu bytes" ID_MSG(199), sess->msg.length, ID_ARG(sess));
 /*{NEXT}*/
 		return SMTPF_CONTINUE;
