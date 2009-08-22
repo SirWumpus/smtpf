@@ -20,6 +20,10 @@
 var/db/@PACKAGE_NAME@/
 @owner root
 @mode 2770
+var/run/@PACKAGE_NAME@/
+@owner @PACKAGE_NAME@
+@group @PACKAGE_NAME@
+@mode 770
 @extra etc/@PACKAGE_NAME@/access.sq3
 @extra etc/@PACKAGE_NAME@/access.cf.bak
 @extra etc/@PACKAGE_NAME@/route.sq3

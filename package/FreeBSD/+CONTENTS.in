@@ -12,6 +12,7 @@
 @exec pw useradd -n @PACKAGE_NAME@ -g @PACKAGE_NAME@ -c 'Barricade MX daemon' -d /var/empty -s /usr/sbin/nologin
 @comment OpenBSD does this better.
 @exec mkdir /var/db/@PACKAGE_NAME@ ; chmod 6770 /var/db/@PACKAGE_NAME@ ; chown @PACKAGE_NAME@:@PACKAGE_NAME@ /var/db/@PACKAGE_NAME@
+@exec mkdir /var/run/@PACKAGE_NAME@ ; chmod 770 /var/run/@PACKAGE_NAME@ ; chown @PACKAGE_NAME@:@PACKAGE_NAME@ /var/run/@PACKAGE_NAME@
 @comment OpenBSD does this better. BTW frak FreeBSD /usr/local/etc.
 @exec mkdir /etc/@PACKAGE_NAME@ ; chmod 2770 /etc/@PACKAGE_NAME@ ; chown root:@PACKAGE_NAME@ /etc/@PACKAGE_NAME@
 @exec mkdir /etc/@PACKAGE_NAME@/access ; chmod 2770 /etc/@PACKAGE_NAME@/access ; chown root:@PACKAGE_NAME@ /etc/@PACKAGE_NAME@/access

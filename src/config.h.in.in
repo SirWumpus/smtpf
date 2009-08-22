@@ -109,7 +109,7 @@ extern "C" {
 # if defined(__WIN32__)
 #  define PID_FILE			CF_DIR "/" _NAME ".pid"
 # else
-#  define PID_FILE			"/var/run/" _NAME ".pid"
+#  define PID_FILE			"/var/run/" _NAME "/" _NAME ".pid"
 # endif
 #endif
 
