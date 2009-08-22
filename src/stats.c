@@ -900,13 +900,20 @@ statsSave(void)
 		statsHttpPost();
 
 		/* Lock mutex and make in memory working copies. */
-		statsLock();
+		(void) mutex_lock(SESS_ID_ZERO, FILE_LINENO, &stats_mutex);
+#ifdef HAVE_PTHREAD_CLEANUP_PUSH
+		pthread_cleanup_push((void (*)(void *)) pthread_mutex_unlock, &stats_mutex);
+#endif
 		hourly = statsHourlyCopy();
 		routes = statsRouteCopy();
 		statsHourlyReset();
 
 		/* Release mutex and use working copies to update database. */
-		statsUnlock();
+#ifdef HAVE_PTHREAD_CLEANUP_PUSH
+		pthread_cleanup_pop(1);
+#else
+		(void) pthread_mutex_unlock(&stats_mutex);
+#endif
 		statsNameSave();
 		statsRouteSave(routes);
 		statsHourlySave(hourly, VectorLength(stats));
@@ -1223,13 +1230,20 @@ statsFini(void)
 		stats_map->close(stats_map);
 		stats_map = NULL;
 	}
-	statsLock();
+	(void) mutex_lock(SESS_ID_ZERO, FILE_LINENO, &stats_mutex);
+#ifdef HAVE_PTHREAD_CLEANUP_PUSH
+	pthread_cleanup_push((void (*)(void *)) pthread_mutex_unlock, &stats_mutex);
+#endif
 	statsRouteFini();
-	statsUnlock();
+#ifdef HAVE_PTHREAD_CLEANUP_PUSH
+	pthread_cleanup_pop(1);
+#else
+	(void) pthread_mutex_unlock(&stats_mutex);
+#endif
 	(void) pthread_mutex_destroy(&stats_mutex);
 
 	timerCancel(stats_timer);
-	pthread_join(stats_timer->thread, NULL);
+	timerFree(stats_timer);
 }
 
 int
@@ -1350,6 +1364,7 @@ stats_get_value(unsigned long *valuep)
 	return count;
 }
 
+#ifdef OFF
 void
 statsLock(void)
 {
@@ -1361,6 +1376,7 @@ statsUnlock(void)
 {
 	(void) mutex_unlock(SESS_ID_ZERO, FILE_LINENO, &stats_mutex);
 }
+#endif
 
 void
 statsGet(Stats *stat, Stats *out)
@@ -1432,7 +1448,10 @@ statsCount(Stats *stat)
 void
 statsSetHighWater(Stats *stat, unsigned long value, int log)
 {
-	statsLock();
+	(void) mutex_lock(SESS_ID_ZERO, FILE_LINENO, &stats_mutex);
+#ifdef HAVE_PTHREAD_CLEANUP_PUSH
+	pthread_cleanup_push((void (*)(void *)) pthread_mutex_unlock, &stats_mutex);
+#endif
 	if (stat->hourly < value) {
 		if (log)
 			syslog(LOG_INFO, LOG_NUM(715) "hourly %s was=%lu now=%lu", stat->name, (unsigned long) stat->hourly, value);
@@ -1450,14 +1469,21 @@ See <a hrfe="runtime.html#runtime_config">STAT</a> command.
 	}
 	if (stats_get_max_window(stat) < value)
 		stats_set_window(stat, value);
-	statsUnlock();
+#ifdef HAVE_PTHREAD_CLEANUP_PUSH
+	pthread_cleanup_pop(1);
+#else
+	(void) pthread_mutex_unlock(&stats_mutex);
+#endif
 }
 
 #ifdef NOT_USED_YET
 void
 statsSetLowWater(Stats *stat, unsigned long value, int log)
 {
-	statsLock();
+	(void) mutex_lock(SESS_ID_ZERO, FILE_LINENO, &stats_mutex);
+#ifdef HAVE_PTHREAD_CLEANUP_PUSH
+	pthread_cleanup_push((void (*)(void *)) pthread_mutex_unlock, &stats_mutex);
+#endif
 	if (value < stat->hourly) {
 		if (log)
 			syslog(LOG_INFO, LOG_NUM(880) "hourly %s was=%lu now=%lu", stat->name, (unsigned long) stat->hourly, value);
@@ -1474,7 +1500,11 @@ Not used at this time.
 	}
 	if (value < stats_get_max_window(stat))
 		stats_set_window(stat, value);
-	statsUnlock();
+#ifdef HAVE_PTHREAD_CLEANUP_PUSH
+	pthread_cleanup_pop(1);
+#else
+	(void) pthread_mutex_unlock(&stats_mutex);
+#endif
 }
 #endif
 
