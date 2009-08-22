@@ -49,6 +49,7 @@ extern const char msg_ok[];
 extern const char msg_end[];
 extern const char msg_proceed[];
 
+extern const char msg_421_unavailable[];
 extern const char msg_421_internal[];
 extern const char msg_451_internal[];
 extern const char msg_resources[];
@@ -64,6 +65,7 @@ extern const Reply reply_closing;
 extern const Reply reply_proceed;
 extern const Reply reply_no_reply;
 
+extern const Reply reply_unavailable;
 extern const Reply reply_internal;
 extern const Reply reply_resources;
 extern const Reply reply_try_again;

@@ -251,8 +251,19 @@ rateConnect(Session *sess, va_list ignore)
 		return SMTPF_CONTINUE;
 
 	/* Find the client specific connection rate limit. */
-	if (accessClient(sess, ACCESS_TAG, sess->client.name, sess->client.addr, NULL, &value, 1) == SMDB_ACCESS_NOT_FOUND)
+	switch (accessClient(sess, ACCESS_TAG, sess->client.name, sess->client.addr, NULL, &value, 1)) {
+	case SMDB_ACCESS_NOT_FOUND:
 		return SMTPF_CONTINUE;
+
+	case SMDB_ACCESS_TEMPFAIL:
+		return replyPushFmt(sess, SMTPF_DROP, msg_421_unavailable, ID_ARG(sess));
+/*{REPLY
+The access-map lookups are failing possible because of incorrect local databased
+file permissions; or in the case of a socketmap, the socketmap daemon has stopped.
+Connections are temporarily turned away.
+}*/
+	}
+
 	client_limit = strtol(value, NULL, 10);
 	free(value);
 

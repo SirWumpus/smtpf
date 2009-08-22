@@ -65,27 +65,30 @@ const char log_cache_delete_error[] = /* LOG_ERR */ LOG_MSG(546) "cache delete e
 A generic error where a module failed to delete a cache record for unspecified reasons.
 }*/
 
-const char msg_ok[] 		= "250 2.0.0 OK" ID_MSG(547) "\r\n";
+const char msg_ok[] 		= "250 2.0.0 OK" ID_MSG(547) CRLF;
 /*{REPLY
 Generic response that indicates the command was accepted.
 }*/
-const char msg_end[]		= "214 2.0.0 end" ID_MSG(548) "\r\n";
+const char msg_end[]		= "214 2.0.0 end" ID_MSG(548) CRLF;
 /*{REPLY
 Generic end of a multiline response.
 }*/
-const char msg_proceed[] 	= "250 2.0.0 proceed" ID_NUM(507) "\r\n";
+const char msg_proceed[] 	= "250 2.0.0 proceed" ID_NUM(507) CRLF;
 /*{REPLY
 There is is a delayed rejection/drop response that will be reported
 when the RCPT TO: is sent. See <a href="summary.html#opt_smtp_delay_checks">smtp-delay-checks</a>.
 }*/
 
-const char msg_421_internal[]	= "421 4.3.0 internal server error" ID_MSG(549) "\r\n";
+const char msg_421_unavailable[]= "421 4.3.2 service temporarily unavailable" ID_MSG(000) CRLF;
 /*{REPLY
 }*/
-const char msg_451_internal[]	= "451 4.3.0 internal server error" ID_MSG(550) "\r\n";
+const char msg_421_internal[]	= "421 4.3.0 internal server error" ID_MSG(549) CRLF;
 /*{REPLY
 }*/
-const char msg_resources[]	= "421 4.3.2 system resources exceeded" ID_MSG(551) "\r\n";
+const char msg_451_internal[]	= "451 4.3.0 internal server error" ID_MSG(550) CRLF;
+/*{REPLY
+}*/
+const char msg_resources[]	= "421 4.3.2 system resources exceeded" ID_MSG(551) CRLF;
 /*{REPLY
 Some serious condition such as out-of-memory, no more disk space, or similar resource
 related issue has occured. The connected client will be dropped as it is not possible
@@ -128,24 +131,24 @@ to proceed until the condition has been resolved by the destination postmaster.
  *
  * Evan
  */
-const char msg_451_try_again[]	= "451 4.7.0 try again later" ID_MSG(552) "\r\n";
+const char msg_451_try_again[]	= "451 4.7.0 try again later" ID_MSG(552) CRLF;
 /*{REPLY
 This is a generic response, typicall issued by grey-listing during the
 <a href="summary.html#opt_grey_temp_fail_period">grey-temp-fail-period</a>,
 however other tests such as SIQ support may also issue this response.
 }*/
-const char msg_450_try_again[]	= "450 4.4.5 try again later" ID_MSG(553) "\r\n";
+const char msg_450_try_again[]	= "450 4.4.5 try again later" ID_MSG(553) CRLF;
 /*{REPLY
 This is an alternate response issued by <a href="summary.html#opt_grey_content">grey-content</a>
 after the <a href="summary.html#opt_grey_temp_fail_period">grey-temp-fail-period</a> when
 the hashed message content does not match previously saved message hash.
 }*/
 
-const char msg_250_accepted[]	= "250 2.0.0 message %s accepted" ID_MSG(554) "\r\n";
+const char msg_250_accepted[]	= "250 2.0.0 message %s accepted" ID_MSG(554) CRLF;
 /*{REPLY
 The message transaction has reached the final dot to end the message and was accepted for delivery.
 }*/
-const char msg_550_rejected[]	= "550 5.7.1 message %s rejected" ID_MSG(555) "\r\n";
+const char msg_550_rejected[]	= "550 5.7.1 message %s rejected" ID_MSG(555) CRLF;
 /*{REPLY
 The message transaction has reached the final dot to end the message and was NOT accepted for delivery.
 }*/
@@ -162,6 +165,7 @@ const Reply reply_proceed	= { replyNoFree, SMTPF_CONTINUE, 0, sizeof (msg_procee
 
 const Reply reply_no_reply	= { replyNoFree, SMTPF_CONTINUE, 0, 0, "" };
 
+const Reply reply_unavailable 	= { replyNoFree, SMTPF_TEMPFAIL, 0, sizeof (msg_421_unavailable)-1, (char *) msg_421_unavailable };
 const Reply reply_internal 	= { replyNoFree, SMTPF_TEMPFAIL, 0, sizeof (msg_421_internal)-1, (char *) msg_421_internal };
 const Reply reply_resources 	= { replyNoFree, SMTPF_TEMPFAIL, 0, sizeof (msg_resources)-1, (char *) msg_resources };
 const Reply reply_try_again 	= { replyNoFree, SMTPF_TEMPFAIL, 0, sizeof (msg_451_try_again)-1, (char *) msg_451_try_again };
