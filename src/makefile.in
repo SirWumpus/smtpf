@@ -60,6 +60,7 @@ LIB_RT		= @HAVE_LIB_RT@
 .MAIN : build
 
 build : title ${TARNAME}$E
+	@-chown -f 0:0 .gdbinit >/dev/null
 	@echo
 	@echo '***************************************************************'
 	@echo "Build ${TARNAME} ${MAJOR}.${MINOR}.${BUILD} DONE"
