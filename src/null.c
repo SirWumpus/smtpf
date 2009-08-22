@@ -191,7 +191,7 @@ nullRcpt(Session *sess, va_list args)
 	}
 
 	/* Find a hash table entry for this client. */
-	hash = djb_hash_index(key, strlen(key), HASH_TABLE_SIZE);
+	hash = djb_hash_index((unsigned char *) key, strlen(key), HASH_TABLE_SIZE);
 	oldest = &rcpts[hash];
 
 	for (i = 0; i < MAX_LINEAR_PROBE; i++) {

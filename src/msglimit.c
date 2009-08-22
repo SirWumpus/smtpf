@@ -142,8 +142,8 @@ msgLimitCacheUpdate(Session *sess, MsgLimit *limit, const char *key)
 	now = time(NULL);
 	limit->count = -1;
 	MEMSET(&row, 0, sizeof (row));
-	row.key_size = snprintf(row.key_data, sizeof (row.key_data), MSG_LIMIT_CACHE_TAG "%s", key);
-	TextLower(row.key_data, -1);
+	row.key_size = snprintf((char *) row.key_data, sizeof (row.key_data), MSG_LIMIT_CACHE_TAG "%s", key);
+	TextLower((char *) row.key_data, -1);
 
 	switch (mccGetRow(mcc, &row)) {
 	case MCC_OK:
@@ -152,7 +152,7 @@ msgLimitCacheUpdate(Session *sess, MsgLimit *limit, const char *key)
 		if (verb_cache.option.value)
 			syslog(LOG_DEBUG, log_cache_get, LOG_ARGS(sess), row.key_data, row.value_data, FILE_LINENO);
 		row.value_data[row.value_size] = '\0';
-		value = strtol(row.value_data, NULL, 10);
+		value = strtol((char *) row.value_data, NULL, 10);
 		break;
 	case MCC_ERROR:
 		syslog(LOG_ERR, log_cache_get_error, LOG_ARGS(sess), row.key_data, FILE_LINENO);
@@ -171,7 +171,7 @@ msgLimitCacheUpdate(Session *sess, MsgLimit *limit, const char *key)
 	}
 
 	limit->count = ++value;
-	row.value_size = (unsigned char ) snprintf(row.value_data, sizeof (row.value_data), "%ld", value);
+	row.value_size = (unsigned char ) snprintf((char *) row.value_data, sizeof (row.value_data), "%ld", value);
 
 	if (verb_cache.option.value)
 		syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), row.key_data, row.value_data, FILE_LINENO);

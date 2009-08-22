@@ -157,8 +157,8 @@ siqData(Session *sess, va_list ignore)
 		return SMTPF_CONTINUE;
 
 	MEMSET(&cached, 0, sizeof (cached));
-	cached.key_size = (unsigned short) snprintf(cached.key_data, sizeof (cached.key_data), SIQ_CACHE_TAG "%s,%s", sess->client.addr, sess->msg.mail->domain.string);
-	TextLower(cached.key_data, -1);
+	cached.key_size = (unsigned short) snprintf((char *) cached.key_data, sizeof (cached.key_data), SIQ_CACHE_TAG "%s,%s", sess->client.addr, sess->msg.mail->domain.string);
+	TextLower((char *) cached.key_data, -1);
 
 	/* Look for a locally cached copy. */
 	if (mccGetRow(mcc, &cached) != MCC_OK) {

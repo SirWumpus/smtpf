@@ -142,7 +142,7 @@ A forward host has rejected a message and a DSN has been sent,
 	(void) smtp2Print(smtp, CRLF, 2);
 
 	sess->msg.chunk0[sess->msg.eoh] = '\0';
-	(void) smtp2Print(smtp, sess->msg.chunk0, sess->msg.eoh);
+	(void) smtp2Print(smtp, (char *) sess->msg.chunk0, sess->msg.eoh);
 
 	(void) smtp2Print(smtp, CRLF, 2);
 	(void) smtp2Printf(smtp, "----=_%s--" CRLF, sess->msg.id);

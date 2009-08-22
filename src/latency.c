@@ -77,7 +77,7 @@ latencySend(mcc_context *mcc)
 		row.hits = 0;
 		row.created = row.touched = time(NULL);
 		row.expires = row.created + optCacheGcInterval.value;
-		row.key_size = TextCopy(row.key_data, sizeof (row.key_data), latency_host);
+		row.key_size = TextCopy((char *) row.key_data, sizeof (row.key_data), latency_host);
 
 		row.value_size = sizeof (CLOCK);
 		CLOCK_GET((CLOCK *) row.value_data);

@@ -133,7 +133,7 @@ savData(Session *sess, va_list ignore)
 
 	/* Does the sender's domain blindly accept all recipients? */
 	MEMSET(&domain, 0, sizeof (domain));
-	domain.key_size = (unsigned short) snprintf(domain.key_data, sizeof (domain.key_data), SAV_CACHE_TAG "%s", sess->msg.mail->domain.string);
+	domain.key_size = (unsigned short) snprintf((char *) domain.key_data, sizeof (domain.key_data), SAV_CACHE_TAG "%s", sess->msg.mail->domain.string);
 
 	if ((domain_cached = mccGetRow(mcc, &domain)) == MCC_OK) {
 		domain.key_data[domain.key_size] = '\0';
@@ -161,8 +161,8 @@ savData(Session *sess, va_list ignore)
 	}
 
 	/* Have we previously seen this sender? */
-	sender.key_size = (unsigned short) snprintf(sender.key_data, sizeof (sender.key_data), SAV_CACHE_TAG "%s", sess->msg.mail->address.string);
-	TextLower(sender.key_data, -1);
+	sender.key_size = (unsigned short) snprintf((char *) sender.key_data, sizeof (sender.key_data), SAV_CACHE_TAG "%s", sess->msg.mail->address.string);
+	TextLower((char *) sender.key_data, -1);
 
 	if (mccGetRow(mcc, &sender) == MCC_OK) {
 		sender.value_data[sender.value_size] = '\0';
@@ -332,7 +332,7 @@ skip_false_rcpt:
 			domain.created = time(NULL);
 			sender.expires = domain.created + cacheGetTTL(sess->smtp_code / 100);
 
-			domain.key_size = (unsigned short) snprintf(domain.key_data, sizeof (domain.key_data), SAV_CACHE_TAG "%s", sess->msg.mail->domain.string);
+			domain.key_size = (unsigned short) snprintf((char *) domain.key_data, sizeof (domain.key_data), SAV_CACHE_TAG "%s", sess->msg.mail->domain.string);
 
 			if (verb_cache.option.value)
 				syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), domain.key_data, domain.value_data, FILE_LINENO);

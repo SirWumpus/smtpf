@@ -191,7 +191,7 @@ licenseControl(void *data)
 		goto error0;
 
 	MEMSET(&row, 0, sizeof (row));
-	row.key_size = snprintf(row.key_data, sizeof (row.key_data), "rcpt:%s", PHONE_HOME_MAIL);
+	row.key_size = snprintf((char *) row.key_data, sizeof (row.key_data), "rcpt:%s", PHONE_HOME_MAIL);
 
 	if (mccGetRow(mcc, &row) == MCC_OK)
 		goto error0;
@@ -260,8 +260,8 @@ error1:
 	row.hits = 0;
 	row.created = time(NULL);
 	row.expires = row.created + days * 86400;
-	row.key_size = snprintf(row.key_data, sizeof (row.key_data), "rcpt:%s", PHONE_HOME_MAIL);
-	row.value_size = (unsigned char) snprintf(row.value_data, sizeof (row.value_data), "%d", SMTPF_ACCEPT);
+	row.key_size = snprintf((char *) row.key_data, sizeof (row.key_data), "rcpt:%s", PHONE_HOME_MAIL);
+	row.value_size = (unsigned char) snprintf((char *) row.value_data, sizeof (row.value_data), "%d", SMTPF_ACCEPT);
 	(void) mccPutRowLocal(mcc, &row, 0);
 error0:
 	return NULL;
@@ -400,7 +400,7 @@ cache_loadavg_process(mcc_context *mcc, mcc_key_hook *hook, const char *ip, mcc_
 	char buffer[128], *uptime, *clients, *arv, *of, *cap;
 
 	row->value_data[row->value_size] = '\0';
-	uptime = strchr(row->value_data, ' ');
+	uptime = strchr((char *) row->value_data, ' ');
 	*uptime++ = '\0';
 	clients = strchr(uptime, ' ');
 	*clients++ = '\0';
@@ -542,9 +542,9 @@ See <a href="summary.html#opt_cache_unicast_domain">cache-unicast-domain</a> or 
 void
 cacheFini(void)
 {
-	mccDestroy(mcc);
 	if (gc_thread_created)
 		pthread_cancel(gc_thread);
+	mccDestroy(mcc);
 }
 
 int

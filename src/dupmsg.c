@@ -122,10 +122,10 @@ dupmsgRset(Session *sess, va_list ignore)
 		row.created = time(NULL);
 		row.expires = row.created + optDupMsgTTL.value;
 		row.key_size = snprintf(
-			row.key_data, sizeof (row.key_data), DUPMSG_CACHE_TAG "%s%s",
+			(char *) row.key_data, sizeof (row.key_data), DUPMSG_CACHE_TAG "%s%s",
 			ctx->original_msg_id, first_rcpt->address.string
 		);
-		row.value_size = snprintf(row.value_data, sizeof (row.value_data), "%d %s", smtpf_code, sess->long_id);
+		row.value_size = snprintf((char *) row.value_data, sizeof (row.value_data), "%d %s", smtpf_code, sess->long_id);
 
 		if (verb_cache.option.value)
 			syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), row.key_data, row.value_data, FILE_LINENO);
@@ -182,7 +182,7 @@ dupmsgHeaders(Session *sess, va_list args)
 
 	rc = SMTPF_CONTINUE;
 	row.key_size = snprintf(
-		row.key_data, sizeof (row.key_data), DUPMSG_CACHE_TAG "%s%s",
+		(char *) row.key_data, sizeof (row.key_data), DUPMSG_CACHE_TAG "%s%s",
 		ctx->original_msg_id, first_rcpt->address.string
 	);
 

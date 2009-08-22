@@ -515,11 +515,11 @@ See <a href="summary.html#opt_spamd_socket">spamd-socket</a> option.
 
 	/* Create X-Spam-Report: header and log. */
 	if (*optSpamdCommand.string != 'C' && *optSpamdReportHeader.string != '\0') {
-		size = snprintf(sess->msg.chunk1, sizeof (sess->msg.chunk1), "%s: score=%.2f required=%.2f" X_SPAM_REPORT_NL, optSpamdReportHeader.string, spamd->score, spamd->threshold);
-		for ( ; 0 <= (length = socketReadLine(spamd->socket, sess->msg.chunk1+size, sizeof (sess->msg.chunk1)-size)); size += length) {
+		size = snprintf((char *) sess->msg.chunk1, sizeof (sess->msg.chunk1), "%s: score=%.2f required=%.2f" X_SPAM_REPORT_NL, optSpamdReportHeader.string, spamd->score, spamd->threshold);
+		for ( ; 0 <= (length = socketReadLine(spamd->socket, (char *) (sess->msg.chunk1+size), sizeof (sess->msg.chunk1)-size)); size += length) {
 			if (verb_spamd.option.value)
 				syslog(LOG_DEBUG, LOG_MSG(691) "spamd << %s", LOG_ARGS(sess), sess->msg.chunk1+size);
-			length += TextCopy(sess->msg.chunk1+size+length, sizeof (sess->msg.chunk1)-size-length, X_SPAM_REPORT_NL);
+			length += TextCopy((char *) (sess->msg.chunk1+size+length), sizeof (sess->msg.chunk1)-size-length, X_SPAM_REPORT_NL);
 		}
 
 		/* Terminate the X-Spam-Report: header removing our trailing
@@ -527,7 +527,7 @@ See <a href="summary.html#opt_spamd_socket">spamd-socket</a> option.
 		 */
 		sess->msg.chunk1[size - 4] = '\0';
 
-		if ((hdr = strdup(sess->msg.chunk1)) != NULL && VectorAdd(sess->msg.headers, hdr))
+		if ((hdr = strdup((char *) sess->msg.chunk1)) != NULL && VectorAdd(sess->msg.headers, hdr))
 			free(hdr);
 	}
 

@@ -332,6 +332,7 @@ lickeySendWarning(void)
 		return;
 	}
 
+	MEMSET(&row, 0, sizeof (row));
 	row.key_size = snprintf((char *) row.key_data, sizeof (row.key_data), "lickey:%s", mail);
 
 	/* Check if the most recent warning has been sent. */

@@ -951,11 +951,11 @@ emewContent(Session *sess, va_list args)
 	 */
 
 	/* DSN or MDN must have the original Message-Id header. */
-	offset = TextFind(chunk, "*\nMessage-Id: *", size, 1);
+	offset = TextFind((char *) chunk, "*\nMessage-Id: *", size, 1);
 	if (0 <= offset) {
 		if (verb_emew.option.value)
 			syslog(LOG_DEBUG, LOG_MSG(354) "EMEW chunk offset=%ld", LOG_ARGS(sess), offset+1);
-		emew->result = emewIsValid(sess, chunk+offset+1);
+		emew->result = emewIsValid(sess, (char *) (chunk+offset+1));
 	} else {
 		emew->result = EMEW_FAIL;
 	}

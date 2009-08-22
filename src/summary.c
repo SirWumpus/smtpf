@@ -141,7 +141,7 @@ summarySender(Session *sess, const char *sender)
 {
 	long length;
 
-	length = TextCopy(sess->msg.chunk1, sizeof (sess->msg.chunk1), replyGetReply(sess)->string);
+	length = TextCopy((char *) sess->msg.chunk1, sizeof (sess->msg.chunk1), replyGetReply(sess)->string);
 	sess->msg.chunk1[length-2] = '\0';
 
 	syslog(
@@ -165,7 +165,7 @@ summaryRecipient(Session *sess, const char *recipient)
 {
 	long length;
 
-	length = TextCopy(sess->msg.chunk1, sizeof (sess->msg.chunk1), replyGetReply(sess)->string);
+	length = TextCopy((char *) sess->msg.chunk1, sizeof (sess->msg.chunk1), replyGetReply(sess)->string);
 	sess->msg.chunk1[length-2] = '\0';
 
 	syslog(
@@ -325,7 +325,7 @@ summaryMessage(Session *sess)
 	 * Currently I'm told there is no case law that address this issue.
 	 */
 	if (verb_subject.option.value)
-		(void) snprintf(sess->msg.chunk0, sizeof (sess->msg.chunk0), "s=\"%.60s\" ", sess->msg.subject);
+		(void) snprintf((char *) sess->msg.chunk0, sizeof (sess->msg.chunk0), "s=\"%.60s\" ", sess->msg.subject);
 	else
 		*sess->msg.chunk0 = '\0';
 
