@@ -1183,7 +1183,7 @@ statsInit(void)
 {
 	int length;
 	const char *file;
-	CLOCK period = { 60 };
+	CLOCK period = { 60, 0 };
 
 	(void) pthread_mutex_init(&stats_mutex, NULL);
 	(void) pthread_mutex_init(&routes_mutex, NULL);
@@ -1242,7 +1242,6 @@ statsFini(void)
 #endif
 	(void) pthread_mutex_destroy(&stats_mutex);
 
-	timerCancel(stats_timer);
 	timerFree(stats_timer);
 }
 

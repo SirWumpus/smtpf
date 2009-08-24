@@ -139,19 +139,10 @@ Option optCacheUnicastHosts	= { "cache-unicast-hosts",	"",			usage_cache_unicast
 Option optCacheUnicastPort	= { "cache-unicast-port",	QUOTE(CACHE_UNICAST_PORT),	"The listener port for unicast cache updates." };
 
 mcc_handle *mcc;
-pthread_t gc_thread;
-static int gc_thread_created;
-static int cache_is_gc_running;
 
 /***********************************************************************
  ***
  ***********************************************************************/
-
-int
-cacheIsGcRunning(void)
-{
-	return cache_is_gc_running;
-}
 
 long
 cacheGetTTL(int code)
@@ -268,6 +259,17 @@ error0:
 }
 #endif
 
+#ifdef OLD_GC_THREAD
+pthread_t gc_thread;
+static int gc_thread_created;
+static int cache_is_gc_running;
+
+int
+cacheIsGcRunning(void)
+{
+	return cache_is_gc_running;
+}
+
 /*
  * This is an independent timer thread used to garbadge collect
  * expired cache records and periodically save statistic counters.
@@ -348,6 +350,142 @@ cache_gc_thread(void *data)
 
 	return NULL;
 }
+
+void
+cacheGcStart(void)
+{
+	int rc;
+	pthread_attr_t *pthread_attr_ptr = NULL;
+
+#if defined(HAVE_PTHREAD_ATTR_INIT)
+{
+	pthread_attr_t pthread_attr;
+
+	if (pthread_attr_init(&pthread_attr)) {
+		syslog(LOG_ERR, log_init, FILE_LINENO, "", strerror(errno), errno);
+		exit(1);
+	}
+
+# if defined(HAVE_PTHREAD_ATTR_SETSCOPE)
+	(void) pthread_attr_setscope(&pthread_attr, PTHREAD_SCOPE_SYSTEM);
+# endif
+# if defined(HAVE_PTHREAD_ATTR_SETSTACKSIZE)
+	(void) pthread_attr_setstacksize(&pthread_attr, THREAD_STACK_SIZE);
+# endif
+	pthread_attr_ptr = &pthread_attr;
+}
+#endif
+	rc = pthread_create(&gc_thread, pthread_attr_ptr, cache_gc_thread, (void *) mcc);
+
+#if defined(HAVE_PTHREAD_ATTR_INIT)
+	if (pthread_attr_ptr != NULL)
+		(void) pthread_attr_destroy(pthread_attr_ptr);
+#endif
+	if (rc != 0) {
+		syslog(LOG_ERR, log_init, FILE_LINENO, "gc thread start", strerror(errno), errno);
+		exit(1);
+	}
+
+	pthread_detach(gc_thread);
+	gc_thread_created = 1;
+}
+
+void
+cacheFini(void)
+{
+	if (gc_thread_created)
+		pthread_cancel(gc_thread);
+	mccDestroy(mcc);
+}
+
+#else
+Timer *gc_timer;
+
+static void
+cacheGcThread(Timer *timer)
+{
+	time_t now;
+	TIMER_DECLARE(section);
+	TIMER_DECLARE(overall);
+
+	if (verb_timers.option.value) {
+		TIMER_START(overall);
+		TIMER_START(section);
+	}
+
+	if (verb_cache.option.value)
+		syslog(LOG_DEBUG, LOG_NUM(165) "garbage collecting cache");
+
+	/* Reset the timer period in case the option was updated. */
+	timer->period.tv_sec = optCacheGcInterval.value;
+
+	(void) time(&now);
+	(void) filterRun(NULL, filter_cache_gc_table, mcc, &now);
+
+	if (verb_timers.option.value) {
+		TIMER_DIFF(section);
+		if (TIMER_GE_CONST(diff_section, 1, 0) || 1 < verb_timers.option.value)
+			syslog(LOG_DEBUG, LOG_NUM(166) "cache gc time-elapsed=" TIMER_FORMAT, TIMER_FORMAT_ARG(diff_section));
+		TIMER_START(section);
+	}
+
+	if (verb_cache.option.value)
+		syslog(LOG_DEBUG, LOG_NUM(167) "updating stats");
+
+	statsGetLoadAvg();
+	statsSave();
+
+	if (verb_timers.option.value) {
+		TIMER_DIFF(section);
+		if (TIMER_GE_CONST(diff_section, 1, 0) || 1 < verb_timers.option.value)
+			syslog(LOG_DEBUG, LOG_NUM(168) "statsSave time-elapsed=" TIMER_FORMAT, TIMER_FORMAT_ARG(diff_section));
+		TIMER_START(section);
+	}
+#ifdef PHONE_HOME
+	/*** REMOVAL OF THIS CODE IS IN VIOLATION
+	 *** OF THE TERMS OF THE SOFTWARE LICENSE.
+	 ***/
+	(void) licenseControl(mcc);
+#endif
+	lickeyHasExpired();
+	lickeySendWarning();
+
+	if (verb_timers.option.value) {
+		TIMER_DIFF(section);
+		if (TIMER_GE_CONST(diff_section, 1, 0) || 1 < verb_timers.option.value)
+			syslog(LOG_DEBUG, LOG_NUM(170) "lickey expire time-elapsed=" TIMER_FORMAT, TIMER_FORMAT_ARG(diff_section));
+
+		TIMER_DIFF(overall);
+		if (TIMER_GE_CONST(diff_overall, 1, 0) || 1 < verb_timers.option.value)
+			syslog(LOG_DEBUG, LOG_NUM(171) "gc time-elapsed=" TIMER_FORMAT, TIMER_FORMAT_ARG(diff_overall));
+	}
+
+	if (verb_cache.option.value)
+		syslog(LOG_DEBUG, LOG_NUM(169) "gc run done");
+}
+
+void
+cacheGcStart(void)
+{
+	CLOCK period = { 0, 0 };
+
+	period.tv_sec = optCacheGcInterval.value;
+
+	if ((gc_timer = timerCreate(cacheGcThread, NULL, &period, 32 * 1024)) == NULL) {
+		syslog(LOG_ERR, log_init, FILE_LINENO, "", strerror(errno), errno);
+		exit(1);
+	}
+}
+
+void
+cacheFini(void)
+{
+	timerFree(gc_timer);
+	mccDestroy(mcc);
+}
+
+#endif
+
 
 #if defined(FILTER_CLI) && defined(HAVE_PTHREAD_ATFORK)
 void
@@ -539,14 +677,6 @@ See <a href="summary.html#opt_cache_unicast_domain">cache-unicast-domain</a> or 
 	}
 }
 
-void
-cacheFini(void)
-{
-	if (gc_thread_created)
-		pthread_cancel(gc_thread);
-	mccDestroy(mcc);
-}
-
 int
 cacheGc(Session *null, va_list args)
 {
@@ -561,45 +691,6 @@ cacheGc(Session *null, va_list args)
 	(void) mccExpireRows(mcc, now);
 
 	return SMTPF_CONTINUE;
-}
-
-void
-cacheGcStart(void)
-{
-	int rc;
-	pthread_attr_t *pthread_attr_ptr = NULL;
-
-#if defined(HAVE_PTHREAD_ATTR_INIT)
-{
-	pthread_attr_t pthread_attr;
-
-	if (pthread_attr_init(&pthread_attr)) {
-		syslog(LOG_ERR, log_init, FILE_LINENO, "", strerror(errno), errno);
-		exit(1);
-	}
-
-# if defined(HAVE_PTHREAD_ATTR_SETSCOPE)
-	(void) pthread_attr_setscope(&pthread_attr, PTHREAD_SCOPE_SYSTEM);
-# endif
-# if defined(HAVE_PTHREAD_ATTR_SETSTACKSIZE)
-	(void) pthread_attr_setstacksize(&pthread_attr, THREAD_STACK_SIZE);
-# endif
-	pthread_attr_ptr = &pthread_attr;
-}
-#endif
-	rc = pthread_create(&gc_thread, pthread_attr_ptr, cache_gc_thread, (void *) mcc);
-
-#if defined(HAVE_PTHREAD_ATTR_INIT)
-	if (pthread_attr_ptr != NULL)
-		(void) pthread_attr_destroy(pthread_attr_ptr);
-#endif
-	if (rc != 0) {
-		syslog(LOG_ERR, log_init, FILE_LINENO, "gc thread start", strerror(errno), errno);
-		exit(1);
-	}
-
-	pthread_detach(gc_thread);
-	gc_thread_created = 1;
 }
 
 int

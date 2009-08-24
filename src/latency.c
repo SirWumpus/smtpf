@@ -52,8 +52,8 @@ static mcc_key_hook latency_client_hook = {
 static void
 latencyReply(mcc_context *mcc, mcc_key_hook *hook, const char *ip, mcc_row *row)
 {
-	CLOCK now;
 	char buffer[32];
+	CLOCK now = { 0, 0 };
 
 	CLOCK_GET(&now);
 	CLOCK_SUB(&now, (CLOCK *) row->value_data);
