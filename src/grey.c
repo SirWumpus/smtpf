@@ -405,9 +405,9 @@ greyMimeHeader(Mime *m)
 {
 	Grey *grey = m->mime_data;
 
-	if (TextMatch(m->source.buffer, "Content-Type:*text/html*", m->source.length, 1))
+	if (TextMatch((char *) m->source.buffer, "Content-Type:*text/html*", m->source.length, 1))
 		grey->state = STATE_CONTENT;
-	else if (TextMatch(m->source.buffer, "Content-Type:*application/ms-tnef*", m->source.length, 1))
+	else if (TextMatch((char *) m->source.buffer, "Content-Type:*application/ms-tnef*", m->source.length, 1))
 		grey->skip_mime_part = 1;
 }
 
@@ -567,7 +567,7 @@ greyCacheUpdate(Session *sess, Grey *grey, char *key, long *delay, int at_dot)
 	rc = SMTPF_CONTINUE;
 	MEMSET(&row, 0, sizeof (row));
 	row.value_data[0] = rc + '0';
-	key_size = (unsigned short) TextCopy(row.key_data, sizeof row.key_data, key);
+	key_size = (unsigned short) TextCopy((char *) row.key_data, sizeof row.key_data, key);
 
 	if (mutex_lock(SESS_ID, FILE_LINENO, &grey_mutex))
 		goto error0;
@@ -692,11 +692,11 @@ greyCacheUpdate(Session *sess, Grey *grey, char *key, long *delay, int at_dot)
 
 		/* First message hash. */
 		row.value_data[1] = ' ';
-		(void) TextCopy(row.value_data+2, sizeof (row.value_data)-2, grey->digest);
+		(void) TextCopy((char *) row.value_data+2, sizeof (row.value_data)-2, grey->digest);
 
 		/* Last message hash. */
 		row.value_data[34] = ' ';
-		(void) TextCopy(row.value_data+35, sizeof (row.value_data)-35, grey->digest);
+		(void) TextCopy((char *) row.value_data+35, sizeof (row.value_data)-35, grey->digest);
 	}
 
 	/* Is the tuple still being temporarily blocked? */
@@ -720,8 +720,8 @@ greyCacheUpdate(Session *sess, Grey *grey, char *key, long *delay, int at_dot)
 			/* Check if this is the first or last message seen. */
 			if (at_dot
 			&& row.value_size == 67
-			&& strncmp(row.value_data+2, grey->digest, 32) != 0
-			&& strncmp(row.value_data+35, grey->digest, 32) != 0
+			&& strncmp((char *) row.value_data+2, grey->digest, 32) != 0
+			&& strncmp((char *) row.value_data+35, grey->digest, 32) != 0
 			) {
 				/* Keep returning temp.fail until we see a
 				 * previously hashed message come back.
@@ -735,7 +735,7 @@ greyCacheUpdate(Session *sess, Grey *grey, char *key, long *delay, int at_dot)
 				/* Replace the last message seen hash with
 				 * the hash for this message.
 				 */
-				(void) TextCopy(row.value_data+35, sizeof (row.value_data)-35, grey->digest);
+				(void) TextCopy((char *) row.value_data+35, sizeof (row.value_data)-35, grey->digest);
 				break;
 			}
 
@@ -762,7 +762,7 @@ greyCacheUpdate(Session *sess, Grey *grey, char *key, long *delay, int at_dot)
 			row.expires = now + optCacheAcceptTTL.value;
 
 			/* Add the grey age and hits to the record value. */
-			row.value_size = snprintf(row.value_data, sizeof (row.value_data), "%c %lu %u", SMTPF_CONTINUE + '0', (unsigned long)(now - row.created), row.hits);
+			row.value_size = snprintf((char *) row.value_data, sizeof (row.value_data), "%c %lu %u", SMTPF_CONTINUE + '0', (unsigned long)(now - row.created), row.hits);
 			if (sizeof (row.value_data) <= row.value_size) {
 				row.value_data[1] = '\0';
 				row.value_size = 1;
@@ -960,7 +960,7 @@ greyRcpt(Session *sess, va_list args)
 
 	else if (!mutex_lock(SESS_ID, FILE_LINENO, &grey_mutex)) {
 		rcpt = va_arg(args, ParsePath *);
-		row.key_size = greyMakeKey(sess, optGreyKey.value, rcpt, row.key_data, sizeof (row.key_data));
+		row.key_size = greyMakeKey(sess, optGreyKey.value, rcpt, (char *) row.key_data, sizeof (row.key_data));
 
 		/* Does the temp. fail key exist? */
 		if (mccGetRow(mcc, &row) == MCC_OK && row.value_data[0] - '0' == SMTPF_TEMPFAIL) {
@@ -1220,7 +1220,7 @@ greyDot(Session *sess, va_list ignore)
 			if (optGreyKey.value & GREY_TUPLE_RCPT) {
 				for (fwd = sess->msg.fwds; fwd != NULL; fwd = fwd->next) {
 					for (rcpt = fwd->rcpts; rcpt != NULL; rcpt = rcpt->next) {
-						row.key_size = greyMakeKey(sess, optGreyKey.value, rcpt->rcpt, row.key_data, sizeof (row.key_data));
+						row.key_size = greyMakeKey(sess, optGreyKey.value, rcpt->rcpt, (char *) row.key_data, sizeof (row.key_data));
 
 						/* Does the temp. fail key exist? */
 						if (mccGetRow(mcc, &row) == MCC_OK && row.value_data[0] - '0' == SMTPF_TEMPFAIL) {
@@ -1235,7 +1235,7 @@ greyDot(Session *sess, va_list ignore)
 					}
 				}
 			} else {
-				row.key_size = greyMakeKey(sess, optGreyKey.value, NULL, row.key_data, sizeof (row.key_data));
+				row.key_size = greyMakeKey(sess, optGreyKey.value, NULL, (char *) row.key_data, sizeof (row.key_data));
 
 				/* Does the temp. fail key exist? */
 				if (mccGetRow(mcc, &row) == MCC_OK && row.value_data[0] - '0' == SMTPF_TEMPFAIL) {

@@ -172,7 +172,7 @@ clickMail(Session *sess, va_list args)
 	if (*optClickUrl.string == '\0' || mail->address.length <= 0)
 		return SMTPF_CONTINUE;
 
-	row.key_size = clickMakeKey(sess, mail, row.key_data, sizeof (row.key_data));
+	row.key_size = clickMakeKey(sess, mail, (char *) row.key_data, sizeof (row.key_data));
 
 	if (mccGetRow(mcc, &row) == MCC_OK) {
 		row.value_data[row.value_size] = '\0';
@@ -229,8 +229,8 @@ clickRcpt(Session *sess, va_list args)
 
 	/* Build the cache key and local-part hash. */
 	MEMSET(&row, 0, sizeof (row));
-	row.key_size = clickMakeKey(sess, sess->msg.mail, row.key_data, sizeof (row.key_data));
-	(void) clickMakeHash(sess, when, row.key_data, row.key_size, buffer, sizeof (buffer));
+	row.key_size = clickMakeKey(sess, sess->msg.mail, (char *) row.key_data, sizeof (row.key_data));
+	(void) clickMakeHash(sess, when, (char *) row.key_data, row.key_size, buffer, sizeof (buffer));
 
 	/* Validate the hash. Note that we check against address.string
 	 * which has maintained the case of the original address, while
@@ -294,8 +294,8 @@ clickReplyLog(Session *sess, va_list args)
 
 	/* Generate the hash used for the local-part. */
 	now = time(NULL);
-	row.key_size = clickMakeKey(sess, sess->msg.mail, row.key_data, sizeof (row.key_data));
-	(void) clickMakeHash(sess, now, row.key_data, row.key_size, sess->reply, sizeof (sess->reply));
+	row.key_size = clickMakeKey(sess, sess->msg.mail, (char *) row.key_data, sizeof (row.key_data));
+	(void) clickMakeHash(sess, now, (char *) row.key_data, row.key_size, sess->reply, sizeof (sess->reply));
 
 	/*** We're assuming the rejection message is a single
 	 *** line terminated by CRLF.

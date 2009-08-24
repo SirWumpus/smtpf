@@ -1328,9 +1328,16 @@ void
 serverNumbers(Server *server, unsigned numbers[2])
 {
 	(void) pthread_mutex_lock(&server->workers.mutex);
+#ifdef PTHREAD_CLEANUP_PUSH
+	pthread_cleanup_push((void (*)(void *)) pthread_mutex_unlock, &server->workers.mutex);
+#endif
 	numbers[0] = server->workers.length;
 	numbers[1] = server->workers_active;
+#ifdef PTHREAD_CLEANUP_PUSH
+	pthread_cleanup_pop(1);
+#else
 	(void) pthread_mutex_unlock(&server->workers.mutex);
+#endif
 }
 
 int

@@ -2189,10 +2189,13 @@ cmdConnections(Session *sess)
 		(void) mutex_unlock(SESSION_ID_ZERO, FILE_LINENO, &server.connections_mutex);
 	}
 #else
-	if (!mutex_lock(SESSION_ID_ZERO, FILE_LINENO, &server.workers.mutex)) {
+	if (!pthread_mutex_lock(&server.workers.mutex)) {
 		ServerWorker *worker;
 		ServerListNode *node;
 
+#ifdef PTHREAD_CLEANUP_PUSH
+		pthread_cleanup_push((void (*)(void *)) pthread_mutex_unlock, &server.workers.mutex);
+#endif
 		for (node = server.workers.head; node != NULL; node = node->next) {
 			worker = node->data;
 			if (worker->session == NULL)
@@ -2210,7 +2213,11 @@ cmdConnections(Session *sess)
 				conn->client.octets
 			);
 		}
-		(void) mutex_unlock(SESSION_ID_ZERO, FILE_LINENO, &server.workers.mutex);
+#ifdef PTHREAD_CLEANUP_PUSH
+		pthread_cleanup_pop(1);
+#else
+		(void) pthread_mutex_unlock(&server.workers.mutex);
+#endif
 	}
 #endif
 	reply = replyAppendFmt(reply, msg_end, ID_ARG(sess));
@@ -2269,10 +2276,13 @@ cmdKill(Session *sess)
 		(void) mutex_unlock(SESSION_ID_ZERO, FILE_LINENO, &server.connections_mutex);
 	}
 #else /* OLD_SERVER_MODEL */
-	if (!mutex_lock(SESSION_ID_ZERO, FILE_LINENO, &server.workers.mutex)) {
+	if (!pthread_mutex_lock(&server.workers.mutex)) {
 		ServerListNode *node;
 		ServerWorker *worker;
 
+#ifdef PTHREAD_CLEANUP_PUSH
+		pthread_cleanup_push((void (*)(void *)) pthread_mutex_unlock, &server.workers.mutex);
+#endif
 		for (node = server.workers.head; node != NULL; node = node->next) {
 			worker = node->data;
 
@@ -2300,7 +2310,11 @@ cmdKill(Session *sess)
 				break;
 			}
 		}
-		(void) mutex_unlock(SESSION_ID_ZERO, FILE_LINENO, &server.workers.mutex);
+#ifdef PTHREAD_CLEANUP_PUSH
+		pthread_cleanup_pop(1);
+#else
+		(void) pthread_mutex_unlock(&server.workers.mutex);
+#endif
 	}
 #endif /* OLD_SERVER_MODEL */
 
