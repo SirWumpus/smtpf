@@ -1,7 +1,7 @@
 /*
  * click.c
  *
- * Copyright 2008 by Anthony Howe. All rights reserved.
+ * Copyright 2008, 2009 by Anthony Howe. All rights reserved.
  */
 
 
@@ -179,14 +179,24 @@ clickMail(Session *sess, va_list args)
 		if (verb_cache.option.value)
 			syslog(LOG_DEBUG, log_cache_get, LOG_ARGS(sess), row.key_data, row.value_data, FILE_LINENO);
 
-		if (verb_info.option.value)
-			syslog(LOG_INFO, LOG_MSG(242) "host " CLIENT_FORMAT " sender <%s> white listed", LOG_ARGS(sess), CLIENT_INFO(sess), sess->msg.mail->address.string);
-
-		statsCount(&stat_click_accept);
-		row.value_data[row.value_size] = '\0';
 		rc = row.value_data[0] - '0';
-		sess->msg.bw_state = rc;
 		row.expires = time(NULL) + cacheGetTTL(rc);
+		sess->msg.bw_state = rc;
+
+		if (rc == SMTPF_ACCEPT) {
+			if (verb_info.option.value)
+				syslog(LOG_INFO, LOG_MSG(242) "host " CLIENT_FORMAT " sender <%s> white listed", LOG_ARGS(sess), CLIENT_INFO(sess), sess->msg.mail->address.string);
+
+			statsCount(&stat_click_accept);
+			MSG_SET(sess, MAIL_IS_WHITE);
+
+			/* Clear any previously delayed rejection. When
+			 * there are two or more RCPTs, then subsequent
+			 * RCPTs would see the delayed rejection via
+			 * accessRcpt, unless the rejection is dismissed.
+			 */
+			replyDelayFree(sess);
+		}
 
 		if (verb_cache.option.value)
 			syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), row.key_data, row.value_data, FILE_LINENO);

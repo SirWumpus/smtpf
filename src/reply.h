@@ -79,12 +79,14 @@ extern const Reply reply_try_again;
 #define replyGetCode(r)			((r)->code & ~(SMTPF_DELAY|SMTPF_SESSION))
 #define replySetCode(r, c)		if ((r) != NULL) (r)->code = c;
 #define replyIsDelayed(r)		((r)->code & SMTPF_DELAY)
-#define replyIsSession(r)		((r)->code & SMTPF_SESSION)
+#define replyIsSession(r)		((r) != NULL && ((r)->code & SMTPF_SESSION))
 #define replyDefined(s)			((s)->response.immediate != NULL || (s)->response.delayed != NULL)
 
 #ifndef replySetCode
 extern void replySetCode(Reply *reply, int code);
 #endif
+
+extern void replyDelayFree(Session *sess);
 
 /*
  * Create a reply with a constant message string.
@@ -174,7 +176,6 @@ extern int replyContent(Session *sess, va_list args);
 extern int replyDot(Session *sess, va_list ignore);
 extern int replyRset(Session *sess, va_list ignore);
 extern int replyClose(Session *sess, va_list ignore);
-
 
 /***********************************************************************
  ***

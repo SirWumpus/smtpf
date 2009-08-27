@@ -119,6 +119,7 @@ cmdQuit(Session *sess)
 		statsCount(&stat_quit_after_helo);
 
 	sess->state = NULL;
+	replyDelayFree(sess);
 	statsCount(&stat_clean_quit);
 	CLIENT_SET(sess, CLIENT_HAS_QUIT);
 

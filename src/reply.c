@@ -316,6 +316,15 @@ replyAppendFmt(Reply *reply, const char *fmt, ...)
 	return reply;
 }
 
+void
+replyDelayFree(Session *sess)
+{
+	if (sess->response.delayed != NULL) {
+		(*sess->response.delayed->free)(sess->response.delayed);
+		sess->response.delayed = NULL;
+	}
+}
+
 /***********************************************************************
  ***
  ***********************************************************************/
@@ -752,12 +761,9 @@ replyAccept(Session *sess, va_list ignore)
 int
 replyData(Session *sess, va_list ignore)
 {
-	if (sess->response.delayed != NULL
-	&& !replyIsSession(sess->response.delayed)
-	&& (MSG_NOT_SET(sess, MSG_TAG) || sess->response.delayed->code == (SMTPF_DELAY|SMTPF_CONTINUE))) {
-		(*sess->response.delayed->free)(sess->response.delayed);
-		sess->response.delayed = NULL;
-	}
+	if (!replyIsSession(sess->response.delayed)
+	&& (MSG_NOT_SET(sess, MSG_TAG) || sess->response.delayed->code == (SMTPF_DELAY|SMTPF_CONTINUE)))
+		replyDelayFree(sess);
 
 	return SMTPF_CONTINUE;
 }
@@ -807,11 +813,8 @@ replyRset(Session *sess, va_list ignore)
 	replySendLintReport(sess, "postmaster");
 	replyListFreeMsg(sess);
 #endif
-	if (sess->response.delayed != NULL
-	&& (!replyIsSession(sess->response.delayed) || (optMailRetestClient.value && 0 < sess->client.forward_count))) {
-		(*sess->response.delayed->free)(sess->response.delayed);
-		sess->response.delayed = NULL;
-	}
+	if (!replyIsSession(sess->response.delayed) || (optMailRetestClient.value && 0 < sess->client.forward_count))
+		replyDelayFree(sess);
 
 	return SMTPF_CONTINUE;
 }
@@ -821,8 +824,7 @@ replyClose(Session *sess, va_list ignore)
 {
 	if (sess->response.immediate != NULL)
 		(*sess->response.immediate->free)(sess->response.immediate);
-	if (sess->response.delayed != NULL)
-		(*sess->response.delayed->free)(sess->response.delayed);
+	replyDelayFree(sess);
 
 #ifdef ENABLE_LINT
 	replyListFreeAll(sess);
