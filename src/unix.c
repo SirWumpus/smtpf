@@ -361,7 +361,6 @@ See <a href="summary.html#opt_run_pid_file">run-pid-file</a> option.
 }*/
 	}
 
-	syslog(LOG_INFO, LOG_NUM(732) "terminated");
 	_atExitCleanUp();
 }
 
