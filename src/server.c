@@ -1130,7 +1130,7 @@ _atExitCleanUp(void)
 	syslog(LOG_INFO, LOG_NUM(732) "terminated");
 	/* Must come after last syslog call, since on Linux it will
 	 * free the duplicated environment created by ProcTitleInit.
-	 * syslog tries to time zone information from the environment.
+	 * syslog tries to get time zone information from the environment.
 	 */
 	ProcTitleFini();
 	closelog();

@@ -181,7 +181,6 @@ extern void freeThreadData(void);
 #endif
 
 #define SESS_ID_ZERO		"0"
-#define SESS_ID			sess->long_id
 
 #define FILE_LINENO		__FILE__, (unsigned long) __LINE__
 
@@ -192,8 +191,10 @@ extern void freeThreadData(void);
 
 #ifdef OLD_SERVER_MODEL
 #define LOG_ARGS(s)		(s)->long_id
+#define SESS_ID			sess->long_id
 #else
 #define LOG_ARGS(s)		(s)->session->id_log
+#define SESS_ID			sess->session->id_log
 #endif
 
 #define LOG_TRACE0(n, f)	if (verb_trace.option.value) syslog(LOG_DEBUG, LOG_NUM(n) #f)
