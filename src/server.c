@@ -1122,12 +1122,17 @@ _atExitCleanUp(void)
 	filterFini();
 	statsFini();
 	cacheFini();
-	ProcTitleFini();
 	(void) pthreadMutexDestroy(&title_mutex);
 
 	VectorDestroy(reject_msg);
 	VectorDestroy(welcome_msg);
 
+	syslog(LOG_INFO, LOG_NUM(732) "terminated");
+	/* Must come after last syslog call, since on Linux it will
+	 * free the duplicated environment created by ProcTitleInit.
+	 * syslog tries to time zone information from the environment.
+	 */
+	ProcTitleFini();
 	closelog();
 }
 
