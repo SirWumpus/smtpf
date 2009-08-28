@@ -1354,16 +1354,22 @@ session_process(ServerSession *session)
 	serverNumbers(session->server, numbers);
 	statsSetHighWater(&stat_high_connections, numbers[1], verb_info.option.value);
 
-	(void) mutex_lock(SESSION_ID_ZERO, FILE_LINENO, &title_mutex);
+	(void) pthread_mutex_lock(&title_mutex);
+#ifdef PTHREAD_CLEANUP_PUSH
+	pthread_cleanup_push((void (*)(void *)) pthread_mutex_unlock, &title_mutex);
+#endif
 	ProcTitleSet(
 #if !defined(__OpenBSD__) && !defined(__FreeBSD__)
 		_NAME " "
 #endif
 		"th=%u cn=%u cs=%lu",
-		numbers[0]+numbers[1], numbers[0], connections_per_second
+		numbers[0], numbers[1], connections_per_second
 	);
-	(void) mutex_unlock(SESSION_ID_ZERO, FILE_LINENO, &title_mutex);
-
+#ifdef PTHREAD_CLEANUP_PUSH
+	pthread_cleanup_pop(1);
+#else
+	(void) pthread_mutex_unlock(&title_mutex);
+#endif
 	/* Server model transition code... */
 	sess->client.socket = session->client;
 
@@ -1413,7 +1419,10 @@ session_process(ServerSession *session)
 	VectorDestroy(sess->msg.headers);
 
 	serverNumbers(session->server, numbers);
-	(void)  mutex_lock(SESSION_ID_ZERO, FILE_LINENO, &title_mutex);
+	(void) pthread_mutex_lock(&title_mutex);
+#ifdef PTHREAD_CLEANUP_PUSH
+	pthread_cleanup_push((void (*)(void *)) pthread_mutex_unlock, &title_mutex);
+#endif
 	ProcTitleSet(
 #if !defined(__OpenBSD__) && !defined(__FreeBSD__)
 		_NAME " "
@@ -1421,8 +1430,11 @@ session_process(ServerSession *session)
 		"th=%u cn=%u cs=%lu",
 		numbers[0], numbers[1], connections_per_second
 	);
-	(void) mutex_unlock(SESSION_ID_ZERO, FILE_LINENO, &title_mutex);
-
+#ifdef PTHREAD_CLEANUP_PUSH
+	pthread_cleanup_pop(1);
+#else
+	(void) pthread_mutex_unlock(&title_mutex);
+#endif
 	if (1 < session->server->debug.valgrind) {
 		VALGRIND_PRINTF("session finish\n");
 		VALGRIND_DO_LEAK_CHECK;
@@ -1481,6 +1493,15 @@ serverMain(void)
 
 	rc = EXIT_FAILURE;
 
+	syslog(LOG_INFO, LOG_NUM(604) "" _NAME " " _VERSION " " _COPYRIGHT);
+	syslog(LOG_INFO, LOG_NUM(605) "LibSnert %s %s", LIBSNERT_VERSION, LIBSNERT_COPYRIGHT);
+	syslog(LOG_INFO, LOG_NUM(606) "SQLite %s Public Domain by D. Richard Hipp", sqlite3_libversion());
+#ifdef _BUILT
+	syslog(LOG_INFO, LOG_NUM(904) "Built on " _BUILT);
+#endif
+/*{LOG
+Version and copyright notices.
+}*/
 	if (serverInit(&server, optInterfaces.string, SMTP_PORT))
 		goto error0;
 
