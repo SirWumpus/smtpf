@@ -271,6 +271,52 @@ is no set schedule for releases.
    +	ideally "dns-gl < SPF fail < CONTENT", but currently the precedence
    	is actually "SPF fail < dns-gl = CONTENT".
 
+
+--2.2.29--
+
+   *	Requires Libsnert 1.72.7
+
+  !!	cmdKill: fixed use of incorrect variable that caused a seg.
+   	fault as a result of Server API changes.
+
+   !	cmdConnections: fixed incorrect reporting of total worker
+   	threads and active connections as a result of Server API
+   	changes.
+
+  !!	worker_free: fix double free of data in the event worker_create
+  	reports an error after having already freed the application
+  	data. Result of Server API changes.
+
+   !	access.c: Allow IREJECT to have a error message; this was just a
+   	case of strcmp vs TextSensitiveStartsWith change.
+
+   +	Add smtp-xclient-enable option to control general XCLIENT
+   	availablity.
+
+   !	save.c/h, clamd.c, spamd2.c: Fixed dot-transparency stripping and
+   	restoring.
+
+   !	Fixed numerous compiler warnings about issues with signedness.
+
+  !!	stats.c: Fixed potential deadlock caused when a pthread_cancel
+	is issued while a thread is blocked waiting (pthread_cond_wait)
+	on a conditional variable with a mutex locked. Added
+	pthread_cleanup_push / pop wrappers to release a locked mutex
+	after a cancellation point.
+
+   !	Moved default smtpf.pid file location from /var/run to
+   	/var/run/smtpf/ with owner smtpf:smtpf.
+
+   !	clickMail: When the sender is click white listed and there are
+   	multiple RCPTs, the first would be white listed, while the other
+   	RCPT would be rejected if there was a delayed rejection. Dismiss
+   	any delayed rejection for click white listing.
+
+   !	_atExitCleanUp: ProcTitleFini must come after last syslog call,
+   	since on Linux it will free the duplicated environment created
+   	by ProcTitleInit. syslog tries to get time zone information from
+   	the environment.
+
 --2.2.28--
 
    *	Requires Libsnert 1.72.6
