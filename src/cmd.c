@@ -26,6 +26,7 @@
 #endif
 
 #include "smtpf.h"
+#include <assert.h>
 
 #ifdef HAVE_FCNTL_H
 # include <fcntl.h>
@@ -401,7 +402,7 @@ During AUTH LOGIN, the login user name given exceeds the size of the decoding bu
 	*sess->input = '\0';
 	sess->input_length = 1;
 
-	if (b64DecodeBuffer(&b64, buffer, buffer_length, sess->input, sizeof (sess->input), (size_t *) &sess->input_length)) {
+	if (b64DecodeBuffer(&b64, buffer, buffer_length, (unsigned char *) sess->input, sizeof (sess->input), (size_t *) &sess->input_length)) {
 		syslog(LOG_ERR, LOG_MSG(261) "login base64 decode error", LOG_ARGS(sess));
 /*{LOG
 During AUTH LOGIN, the login user name could not be decoded according to Base64 rules.
@@ -444,7 +445,7 @@ During AUTH LOGIN, there was a client read error while waiting for password.
 
 	b64Reset(&b64);
 
-	if (b64DecodeBuffer(&b64, buffer, buffer_length, sess->input, sizeof (sess->input), (size_t *) &sess->input_length)) {
+	if (b64DecodeBuffer(&b64, buffer, buffer_length, (unsigned char *) sess->input, sizeof (sess->input), (size_t *) &sess->input_length)) {
 		syslog(LOG_ERR, LOG_MSG(265) "password base64 decode error", LOG_ARGS(sess));
 /*{LOG
 During AUTH LOGIN, the password could not be decoded according to Base64 rules.
@@ -456,7 +457,7 @@ During AUTH LOGIN, the password could not be decoded according to Base64 rules.
 	auth_length = TextCopy(sess->client.auth, sizeof (sess->client.auth), "AUTH PLAIN ");
 
 	b64Reset(&b64);
-	b64EncodeBuffer(&b64, sess->input, sess->input_length, sess->client.auth, sizeof (sess->client.auth), &auth_length);
+	b64EncodeBuffer(&b64, (unsigned char *) sess->input, sess->input_length, sess->client.auth, sizeof (sess->client.auth), &auth_length);
 	b64EncodeFinish(&b64, sess->client.auth, sizeof (sess->client.auth), &auth_length, 0);
 
 	if (verb_auth.option.value)
@@ -531,7 +532,7 @@ During AUTH PLAIN, the Base64 argument given exceeds the size of the decoding bu
 	sess->input_length = 0;
 	auth_length -= sizeof ("AUTH PLAIN ")-1;
 
-	if (b64DecodeBuffer(&b64, sess->client.auth+sizeof ("AUTH PLAIN ")-1, auth_length, sess->input, sizeof (sess->input), (size_t *) &sess->input_length)) {
+	if (b64DecodeBuffer(&b64, sess->client.auth+sizeof ("AUTH PLAIN ")-1, auth_length, (unsigned char *) sess->input, sizeof (sess->input), (size_t *) &sess->input_length)) {
 		syslog(LOG_ERR, LOG_MSG(270) "AUTH base64 decode error", LOG_ARGS(sess));
 /*{LOG
 The AUTH PLAIN argument could not be decoded according to Base64 rules.
@@ -589,7 +590,7 @@ The AUTH PLAIN argument could not be decoded according to Base64 rules.
 		auth_length = TextCopy(sess->reply, sizeof (sess->reply), "AUTH PLAIN ");
 
 		b64Reset(&b64);
-		b64EncodeBuffer(&b64, sess->input, sess->input_length , sess->reply, sizeof (sess->reply), &auth_length);
+		b64EncodeBuffer(&b64, (unsigned char *) sess->input, sess->input_length , sess->reply, sizeof (sess->reply), &auth_length);
 		b64EncodeFinish(&b64, sess->reply, sizeof (sess->reply), &auth_length, 0);
 
 		/* If the attempt fails and we are a relay, then accept the
@@ -1189,9 +1190,9 @@ error4:
 #else
 	if (fwd->smtp_code != SMTP_ERROR_IO) {
 #endif
-		(void) TextCopy(sess->msg.chunk0, sizeof (sess->msg.chunk0), sess->reply);
+		(void) TextCopy((char *) sess->msg.chunk0, sizeof (sess->msg.chunk0), sess->reply);
 		(void) mxCommand(sess, fwd, "QUIT\r\n", 221);
-		(void) TextCopy(sess->reply, sizeof (sess->reply), sess->msg.chunk0);
+		(void) TextCopy(sess->reply, sizeof (sess->reply), (char *) sess->msg.chunk0);
 	}
 	connectionClose(fwd);
 error3:
@@ -1326,6 +1327,43 @@ headerReceived(Session *sess)
 	}
 }
 
+static size_t
+chunkBufferForward(Socket2 *daemon, unsigned char *buffer, size_t size)
+{
+	unsigned char *line;
+	size_t length, line_length;
+
+	assert(size < SMTP_MINIMUM_MESSAGE_LENGTH);
+
+	/* Set a sentinel. */
+	buffer[size] = '\n';
+
+	length = 0;
+	for (line = buffer; line - buffer < size; line += line_length) {
+		if (*line == '.') {
+			/* Apply SMTP dot transparency. RFC 5321 section 4.5.2. */
+			if (daemon != NULL && socketWrite(daemon, (unsigned char *) ".", 1) != 1)
+				break;
+			length++;
+		}
+
+		/* Find the end of line (or sentinel). */
+		for (line_length = 0; line[line_length] != '\n'; line_length++)
+			;
+
+		/* Don't count sentinel newline. */
+		line_length += (line-buffer < size);
+
+		/* Forward the line. */
+		if (daemon != NULL && socketWrite(daemon, line, line_length) != line_length)
+			break;
+
+		length += line_length;
+	}
+
+	return length;
+}
+
 /*
  * Forward data chunk to each connected SMTP server.
  */
@@ -1338,11 +1376,11 @@ forwardChunk(Session *sess, unsigned char *chunk, long size)
 	sent = count = 0;
 
 	for (fwd = sess->msg.fwds; fwd != NULL; fwd = fwd->next, count++) {
-#ifdef OLD_SMTP_ERROR_CODES
-		if (!(fwd->smtp_error & SMTP_ERROR_IO_MASK) && socketWrite(fwd->mx, chunk, size) != size) {
-#else
-		if (fwd->smtp_code != SMTP_ERROR_IO && socketWrite(fwd->mx, chunk, size) != size) {
-#endif
+# ifdef OLD_SMTP_ERROR_CODES
+		if (!(fwd->smtp_error & SMTP_ERROR_IO_MASK) && chunkBufferForward(fwd->mx, chunk, size) < size) {
+# else
+		if (fwd->smtp_code != SMTP_ERROR_IO && chunkBufferForward(fwd->mx, chunk, size) < size) {
+# endif
 			syslog(LOG_ERR, LOG_MSG(301) "chunk write error: %s (%d)", LOG_ARGS(sess), strerror(errno), errno);
 /*{LOG
 There was an I/O write error while trying to relay a DATA chunk to a forward host.
@@ -1502,8 +1540,8 @@ int
 forwardDataAtDot(Session *sess, va_list ignore)
 {
 	FILE *fp;
-	char *hdr;
 	const char *name;
+	unsigned char *hdr;
 	int i, rc, sent, count;
 
 	LOG_TRACE(sess, 308, forwardDataAtDot);
@@ -1558,18 +1596,14 @@ hosts have implemented any filtering that rejects at DATA, like
 
 	for (i = 0; i < VectorLength(sess->msg.headers); i++) {
 		if ((hdr = VectorGet(sess->msg.headers, i)) != NULL)
-			forwardChunk(sess, hdr, strlen(hdr));
+			forwardChunk(sess, hdr, strlen((char *) hdr));
 	}
 
 	while (!feof(fp)) {
 		/* Leave room to add a CRLF to the last chunk if necessary.
 		 * See cmdData().
 		 */
-#ifdef DOT_TRANSPARENCY
-		sess->msg.chunk1_length = (unsigned long) saveFileRead(fp, sess->msg.chunk1, sizeof (sess->msg.chunk1)-2);
-#else
 		sess->msg.chunk1_length = (unsigned long) fread(sess->msg.chunk1, 1, sizeof (sess->msg.chunk1)-2, fp);
-#endif
 		if (ferror(fp)) {
 			syslog(LOG_ERR, LOG_MSG(313) "read error \"%s\": %s (%d)", LOG_ARGS(sess), name, strerror(errno), errno);
 /*{LOG
@@ -1590,7 +1624,7 @@ error0:
 #endif
 
 static int
-readClientData(Session *sess, unsigned char *chunk, long *size)
+readClientData(Session *sess, unsigned char *chunk, unsigned long *size)
 {
 	long length, offset;
 	int rc, last_line_was_dot_lf;
@@ -1609,12 +1643,26 @@ readClientData(Session *sess, unsigned char *chunk, long *size)
 	/* Read a chunk of data lines. Make sure there is always
 	 * enough room left for the largest possible line.
 	 */
-	for (offset = 0; offset+SMTP_TEXT_LINE_LENGTH < sizeof (sess->msg.chunk1); offset += length) {
-		length = socketReadLine2(sess->client.socket, (char *) chunk+offset, sizeof (sess->msg.chunk1)-offset, 1);
+	for (offset = 0; offset+SMTP_TEXT_LINE_LENGTH < sizeof (sess->msg.chunk1)-1; offset += length) {
+		if (!socketHasInput(sess->client.socket, optSmtpDataLineTimeout.value))
+			goto read_error;
+
+		/* Check for dot transparency at start of new line. */
+		if ((length = socketPeek(sess->client.socket, chunk+offset, 2)) < 0)
+			goto read_error;
+
+		if (length == 2 && chunk[offset] == '.' && chunk[offset+1] != '\r' && chunk[offset+1] != '\n') {
+			/* Strip SMTP dot transparency. RFC 5321 section 4.5.2. */
+			(void) socketRead(sess->client.socket, chunk+offset, 1);
+		}
+
+		/* Get remainder of line. */
+		length = socketReadLine2(sess->client.socket, (char *) chunk+offset, sizeof (sess->msg.chunk1)-1-offset, 1);
 		if (verb_smtp_data.option.value)
 			syslog(LOG_DEBUG, LOG_MSG(318) "line %ld:%.40s", LOG_ARGS(sess), length, chunk+offset);
 
 		if (length < 0) {
+read_error:
 			if (errno != 0)
 				statsCount((errno == ETIMEDOUT) ? &stat_client_timeout : &stat_client_io_error);
 
@@ -1717,6 +1765,7 @@ See <a href="summary.html#opt_rfc2821_line_length">rfc2821-line-length</a>.
 	}
 
 	(void) time(&sess->last_mark);
+	chunk[offset] = '\0';
 	*size = offset;
 
 	if (chunk == sess->msg.chunk0) {
@@ -1853,7 +1902,7 @@ if (MSG_NOT_SET(sess, MSG_TAG) && *optSpamdSocket.string == '\0') {
 		/* Forward our updated message headers. */
 		for (i = 0; i < VectorLength(sess->msg.headers); i++) {
 			if ((hdr = VectorGet(sess->msg.headers, i)) != NULL)
-				forwardChunk(sess, hdr, strlen(hdr));
+				forwardChunk(sess, (unsigned char *) hdr, strlen(hdr));
 		}
 
 		/* Forward end of headers and start of message. */
@@ -1958,7 +2007,7 @@ if (MSG_NOT_SET(sess, MSG_TAG) && *optSpamdSocket.string == '\0')
 	 * we deal with them.
 	 */
 	if (!(2 < chunk_length && chunk[chunk_length-2] == '\r' && chunk[chunk_length-1] == '\n'))
-		forwardChunk(sess, "\r\n", sizeof ("\r\n")-1);
+		forwardChunk(sess, (unsigned char *) "\r\n", sizeof ("\r\n")-1);
 
 	/* Send final dot, read the relays' responses. */
 	if ((rc = forwardCommand(sess, ".\r\n", 250, optSmtpDotTimeout.value, &count, &sent)) != SMTPF_CONTINUE)

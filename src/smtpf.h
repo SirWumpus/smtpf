@@ -147,7 +147,6 @@ extern void freeThreadData(void);
 #undef HAVE_PTHREAD_YIELD
 #undef DISABLE_NAGLE
 #define USE_PTHREAD_CANCEL
-#define DOT_TRANSPARENCY
 
 #ifdef __unix__
 # define cliFdCloseOnExec(fd, close_on_exec)	(void) fileSetCloseOnExec(fd, 1)

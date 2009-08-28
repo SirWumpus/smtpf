@@ -344,21 +344,11 @@ clamdContent(Session *sess, va_list args)
 	if (optClamdMaxSize.value <= sess->msg.length)
 		return SMTPF_CONTINUE;
 
-#ifdef DOT_TRANSPARENCY
-	/* Compute the (shorter or equal) length after stripping dot transparency. */
-	out_length = saveBufferSend(NULL, chunk, length);
-	size = htonl(out_length);
-#else
 	out_length = length;
 	size = htonl(out_length);
-#endif
 
 	if (socketWrite(clamd->socket, (unsigned char *) &size, sizeof (size)) != sizeof (size)
-#ifdef DOT_TRANSPARENCY
-	||  saveBufferSend(clamd->socket, chunk, length) != out_length) {
-#else
 	||  socketWrite(clamd->socket, chunk, length) != out_length) {
-#endif
 		clamdError(sess, clamd, "451 4.4.0 clamd session write error after %lu bytes" ID_MSG(199), sess->msg.length, ID_ARG(sess));
 /*{NEXT}*/
 		return SMTPF_CONTINUE;

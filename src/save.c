@@ -58,80 +58,6 @@ static FilterContext save_context;
  ***
  ***********************************************************************/
 
-#ifdef DOT_TRANSPARENCY
-size_t
-saveFileWrite(FILE *fp, unsigned char *buffer, size_t size)
-{
-	int span;
-	unsigned char *line;
-
-	for (line = buffer; line - buffer < size; line += span) {
-		/* Strip SMTP dot transparency. RFC 5321 section 4.5.2. */
-		if (line[0] == '.' && line[1] != '\r' && line[1] != '\n' && line[1] != '\0')
-			line++;
-
-		/* Find end of line or end of NUL terminated buffer. */
-		span = strcspn((char *) line, "\n");
-		span += line[span] == '\n';
-
-		(void) fwrite(line, 1, span, fp);
-	}
-
-	return line - buffer;
-}
-
-ssize_t
-saveFileRead(FILE *fp, unsigned char *buffer, size_t size)
-{
-	int ch;
-	long length;
-	ssize_t offset;
-
-	/* Assume file pointer is at start of file or start of line. */
-	for (offset = 0; offset+SMTP_TEXT_LINE_LENGTH < size; offset += length) {
-		/* Get first byte of the line. */
-		if ((ch = fgetc(fp)) == EOF)
-			break;
-
-		/* Apply SMTP dot transparency as required. RFC 5321 section 4.5.2. */
-		if (ch == '.')
-			buffer[offset++] = ch;
-		buffer[offset++] = ch;
-
-		/* Get remainder of the line. */
-		length = TextInputLine2(fp, (char *) (buffer+offset), SMTP_TEXT_LINE_LENGTH-1, 1);
-		if (length < 0)
-			break;
-	}
-
-	return offset;
-}
-
-size_t
-saveBufferSend(Socket2 *daemon, unsigned char *buffer, size_t size)
-{
-	int span;
-	size_t length;
-	unsigned char *line;
-
-	length = 0;
-	for (line = buffer; line - buffer < size; line += span) {
-		/* Strip SMTP dot transparency. RFC 5321 section 4.5.2. */
-		if (line[0] == '.' && line[1] != '\r' && line[1] != '\n' && line[1] != '\0')
-			line++;
-
-		span = strcspn((char *) line, "\n");
-		span += line[span] == '\n';
-		length += span;
-
-		if (daemon != NULL && socketWrite(daemon, line, span) != span)
-			break;
-	}
-
-	return length;
-}
-#endif
-
 const char *
 saveGetName(Session *sess)
 {
@@ -266,11 +192,7 @@ saveContent(Session *sess, va_list args)
 		syslog(LOG_DEBUG, LOG_MSG(582) "saveContent(%lx, chunk=%lx, size=%ld)", LOG_ARGS(sess), (long) sess, (long) chunk, size);
 
 	if (save->fp != NULL)
-#ifdef DOT_TRANSPARENCY
-		(void) saveFileWrite(save->fp, chunk, size);
-#else
 		(void) fwrite(chunk, 1, size, save->fp);
-#endif
 
 	return SMTPF_CONTINUE;
 }
