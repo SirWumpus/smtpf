@@ -1658,7 +1658,11 @@ statsCommand(Session *sess)
 #ifdef OLD_SERVER_MODEL
 	reply = replyAppendFmt(reply, "214-2.0.0 active-connections=%lu" CRLF, server.connections);
 #else
-	reply = replyAppendFmt(reply, "214-2.0.0 active-connections=%lu" CRLF, serverListLength(&sess->session->server->workers));
+{
+	unsigned numbers[2];
+	serverNumbers(sess->session->server, numbers);
+	reply = replyAppendFmt(reply, "214-2.0.0 active-connections=%lu" CRLF, numbers[1]);
+}
 #endif
 
 	mem_use = sqlite3_memory_used();
