@@ -761,7 +761,8 @@ replyAccept(Session *sess, va_list ignore)
 int
 replyData(Session *sess, va_list ignore)
 {
-	if (!replyIsSession(sess->response.delayed)
+	if (sess->response.delayed != NULL
+	&& !replyIsSession(sess->response.delayed)
 	&& (MSG_NOT_SET(sess, MSG_TAG) || sess->response.delayed->code == (SMTPF_DELAY|SMTPF_CONTINUE)))
 		replyDelayFree(sess);
 
@@ -813,7 +814,8 @@ replyRset(Session *sess, va_list ignore)
 	replySendLintReport(sess, "postmaster");
 	replyListFreeMsg(sess);
 #endif
-	if (!replyIsSession(sess->response.delayed) || (optMailRetestClient.value && 0 < sess->client.forward_count))
+	if (sess->response.delayed != NULL
+	&& (!replyIsSession(sess->response.delayed) || (optMailRetestClient.value && 0 < sess->client.forward_count)))
 		replyDelayFree(sess);
 
 	return SMTPF_CONTINUE;
