@@ -16,6 +16,7 @@ extern "C" {
  ***********************************************************************/
 
 #define FILTER_CTASD_CONTENT_SHORTCUT
+#define CTASD_REQUEST_BUFFER_SIZE	512
 
 extern Option optCtasdPolicy;
 extern Option optCtasdSocket;

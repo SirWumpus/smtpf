@@ -74,9 +74,11 @@ typedef struct {
 static FilterContext ctasd_context;
 static Verbose verb_ctasd = { { "ctasd", "-", "" } };
 
-Stats stat_ctasd_spam	= { STATS_TABLE_MSG, "ctasd-spam" };
-Stats stat_ctasd_virus	= { STATS_TABLE_MSG, "ctasd-virus" };
-Stats stat_ctasd_tag	= { STATS_TABLE_MSG, "ctasd-tag" };
+Stats stat_ctasd_spam_reject	= { STATS_TABLE_MSG, "ctasd-spam-reject" };
+Stats stat_ctasd_spam_suspect	= { STATS_TABLE_MSG, "ctasd-spam-suspect" };
+Stats stat_ctasd_spam_tag	= { STATS_TABLE_MSG, "ctasd-spam-tag" };
+Stats stat_ctasd_vod_reject	= { STATS_TABLE_MSG, "ctasd-vod-reject" };
+Stats stat_ctasd_vod_tempfail	= { STATS_TABLE_MSG, "ctasd-vod-tempfail" };
 
 /***********************************************************************
  ***
@@ -120,9 +122,11 @@ ctasdRegister(Session *null, va_list ignore)
 	optionsRegister(&optCtasdSubjectTag,	0);
 	optionsRegister(&optCtasdTimeout, 	0);
 
-	(void) statsRegister(&stat_ctasd_spam);
-	(void) statsRegister(&stat_ctasd_virus);
-	(void) statsRegister(&stat_ctasd_tag);
+	(void) statsRegister(&stat_ctasd_spam_reject);
+	(void) statsRegister(&stat_ctasd_spam_suspect);
+	(void) statsRegister(&stat_ctasd_spam_tag);
+	(void) statsRegister(&stat_ctasd_vod_reject);
+	(void) statsRegister(&stat_ctasd_vod_tempfail);
 
 	ctasd_context = filterRegisterContext(sizeof (Ctasd));
 
@@ -168,8 +172,8 @@ ctasdHeaders(Session *sess, va_list args)
 {
 	Ctasd *ctx;
 	Vector headers;
-	char buffer[512];
 	HttpRequest request;
+	char buffer[CTASD_REQUEST_BUFFER_SIZE];
 
 	LOG_TRACE(sess, 000, ctasdHeaders);
 
@@ -182,13 +186,15 @@ ctasdHeaders(Session *sess, va_list args)
 
 	memset(&request, 0, sizeof (request));
 
-	if ((request.url = uriParse(optCtasdSocket.string, -1)) == NULL)
+	(void) snprintf(buffer, sizeof (buffer), "http://%s/ctasd/ClassifyMessage_Inline", optCtasdSocket.string);
+	if ((request.url = uriParse(buffer, -1)) == NULL)
 		return SMTPF_CONTINUE;
 
+	request.debug = verb_ctasd.option.value;
 	request.method = "POST";
 	request.timeout = optCtasdTimeout.value;
 	request.if_modified_since = 0;
-	request.post_buffer = buffer;
+	request.post_buffer = (unsigned char *) buffer;
 	request.content_length = 0;
 	request.post_size = snprintf(
 		buffer, sizeof (buffer),
@@ -200,7 +206,10 @@ ctasdHeaders(Session *sess, va_list args)
 		sess->client.addr
 	);
 
-	ctx->socket = httpSend(&request);
+	if (verb_ctasd.option.value)
+		syslog(LOG_DEBUG, LOG_MSG(000) "ctasd request=%lu:%s", LOG_ARGS(sess), (unsigned long) request.post_size, buffer);
+
+	ctx->socket = httpSend(&request, SESS_ID);
 	free(request.url);
 
 	if (ctx->socket == NULL)
@@ -262,7 +271,8 @@ ctasdDot(Session *sess, va_list ignore)
 	Ctasd *ctx;
 	HttpCode result;
 	HttpResponse response;
-	char *hdr, *x_ctch_refid, *x_ctch_spam, *x_ctch_vod, *is_virus, *is_spam, buffer[512];
+	char buffer[CTASD_REQUEST_BUFFER_SIZE];
+	char *hdr, *x_ctch_refid, *x_ctch_spam, *x_ctch_vod, *is_bogus;
 
 	LOG_TRACE(sess, 000, ctasdDot);
 
@@ -270,17 +280,21 @@ ctasdDot(Session *sess, va_list ignore)
 
 	rc = SMTPF_CONTINUE;
 
-	if (!optCtasdStream.value) {
+	if (optCtasdStream.value) {
+		socketShutdown(ctx->socket, SHUT_WR);
+	} else {
 		HttpRequest request;
 
 		memset(&request, 0, sizeof (request));
 
-		if ((request.url = uriParse(optCtasdSocket.string, -1)) == NULL)
+		(void) snprintf(buffer, sizeof (buffer), "http://%s/ctasd/ClassifyMessage_File", optCtasdSocket.string);
+		if ((request.url = uriParse(buffer, -1)) == NULL)
 			goto error0;
 
+		request.debug = verb_ctasd.option.value;
 		request.method = "POST";
 		request.timeout = optCtasdTimeout.value;
-		request.post_buffer = buffer;
+		request.post_buffer = (unsigned char *) buffer;
 
 		request.post_size = snprintf(
 			buffer, sizeof (buffer),
@@ -293,7 +307,10 @@ ctasdDot(Session *sess, va_list ignore)
 			saveGetName(sess)
 		);
 		request.content_length = request.post_size;
-		ctx->socket = httpSend(&request);
+		if (verb_ctasd.option.value)
+			syslog(LOG_DEBUG, LOG_MSG(000) "ctasd request=%lu:%s", LOG_ARGS(sess), (unsigned long) request.post_size, buffer);
+
+		ctx->socket = httpSend(&request, SESS_ID);
 		free(request.url);
 	}
 
@@ -301,7 +318,8 @@ ctasdDot(Session *sess, va_list ignore)
 		goto error0;
 
 	httpResponseInit(&response);
-	result = httpRead(ctx->socket, &response);
+	response.debug = verb_ctasd.option.value;
+	result = httpRead(ctx->socket, &response, SESS_ID);
 	if (result < 200 || 299 < result)
 		goto error1;
 
@@ -318,17 +336,16 @@ ctasdDot(Session *sess, va_list ignore)
 			free(hdr);
 	}
 
-	is_virus = (strcmp(x_ctch_vod, "Virus") == 0 || strcmp(x_ctch_vod, "High") == 0) ? "INFECTED" : NULL;
-	is_spam = (strcmp(x_ctch_spam, "Confirmed") == 0 || strcmp(x_ctch_spam, "Bulk") == 0) ? "spam" : NULL;
+	is_bogus = (strcmp(x_ctch_vod, "Virus") == 0 || strcmp(x_ctch_vod, "High") == 0) ? "INFECTED" : (strcmp(x_ctch_spam, "Confirmed") == 0 ? "spam" : NULL);
 
-	if (is_virus || is_spam) {
+	if (is_bogus) {
 		MSG_SET(sess, MSG_POLICY);
-		(void) snprintf(sess->input, sizeof (sess->input), "message %s is %s", sess->msg.id, is_virus != NULL ? is_virus : is_spam);
+		(void) snprintf(sess->input, sizeof (sess->input), "message %s is %s", sess->msg.id, is_bogus);
 
-		if (is_virus == NULL) {
-			statsCount(&stat_ctasd_spam);
+		if (*is_bogus == 's') {
+			statsCount(&stat_ctasd_spam_reject);
 		} else {
-			statsCount(&stat_ctasd_virus);
+			statsCount(&stat_ctasd_vod_reject);
 			statsCount(&stat_virus_infected);
 		}
 
@@ -345,15 +362,21 @@ See <a href="summary.html#opt_ctasd_policy">ctasd-policy</a>.
 			break;
 		case 'r':
 			rc = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 %s" ID_MSG(000) CRLF, sess->input, ID_ARG(sess));
+/*{NEXT}*/
+		}
+	} else if (strcmp(x_ctch_vod, "Medium") == 0) {
+		statsCount(&stat_ctasd_vod_tempfail);
+		rc = replyPushFmt(sess, SMTPF_REJECT, "451 4.7.1 message %s cannot be delivered at this time" ID_MSG(000) CRLF, sess->msg.id, ID_ARG(sess));
 /*{REPLY
 The ctasd daemon found a virus or suspicious content in the message.
 See <a href="summary.html#opt_ctasd_policy">ctasd-policy</a>.
 }*/
-		}
-	} else if (strcmp(x_ctch_spam, "Suspected") == 0 || strcmp(x_ctch_vod, "Medium") == 0) {
-		statsCount(&stat_ctasd_tag);
+	} else if (strcmp(x_ctch_spam, "Bulk") == 0) {
+		statsCount(&stat_ctasd_spam_tag);
 		headerAddPrefix(sess, "Subject", optCtasdSubjectTag.string);
 		headerReplace(sess->msg.headers, "Precedence", strdup("Precedence: bulk" CRLF));
+	} else if (strcmp(x_ctch_spam, "Suspected") == 0) {
+		statsCount(&stat_ctasd_spam_suspect);
 	}
 
 	free(x_ctch_refid);
@@ -361,7 +384,6 @@ See <a href="summary.html#opt_ctasd_policy">ctasd-policy</a>.
 	free(x_ctch_vod);
 error1:
 	httpResponseFree(&response);
-	socketClose(ctx->socket);
 	ctx->socket = NULL;
 error0:
 	return rc;

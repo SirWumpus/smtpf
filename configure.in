@@ -66,7 +66,7 @@ AC_ARG_ENABLE(clamd, [AC_HELP_STRING([--disable-clamd],[disable Clam AV support]
 AC_ARG_ENABLE(cli, [AC_HELP_STRING([--enable-cli],[enable command line interface support])])
 AC_ARG_ENABLE(click, [AC_HELP_STRING([--disable-click],[enable rejection click support])])
 AC_ARG_ENABLE(concurrent, [AC_HELP_STRING([--disable-concurrent],[disable concurrent connection tests])])
-AC_ARG_ENABLE(ctasd, [AC_HELP_STRING([--disable-ctadd],[disable CommTouch Advanced Security daemon support])])
+AC_ARG_ENABLE(ctasd, [AC_HELP_STRING([--disable-ctasd],[disable CommTouch Advanced Security daemon support])])
 AC_ARG_ENABLE(dnslists, [AC_HELP_STRING([--disable-dnslists],[disable DNS B/W list support])])
 AC_ARG_ENABLE(digest, [AC_HELP_STRING([--disable-digest],[disable digest black lists])])
 AC_ARG_ENABLE(dupmsg, [AC_HELP_STRING([--disable-dupmsg],[disable duplicate message tracking])])
