@@ -1330,12 +1330,14 @@ headerReceived(Session *sess)
 static size_t
 chunkBufferForward(Socket2 *daemon, unsigned char *buffer, size_t size)
 {
+	int ch;
 	unsigned char *line;
 	size_t length, line_length;
 
 	assert(size < SMTP_MINIMUM_MESSAGE_LENGTH);
 
 	/* Set a sentinel. */
+	ch = buffer[size];
 	buffer[size] = '\n';
 
 	length = 0;
@@ -1360,6 +1362,8 @@ chunkBufferForward(Socket2 *daemon, unsigned char *buffer, size_t size)
 
 		length += line_length;
 	}
+
+	buffer[size] = ch;
 
 	return length;
 }
@@ -2006,8 +2010,11 @@ if (MSG_NOT_SET(sess, MSG_TAG) && *optSpamdSocket.string == '\0')
 	 * to LF by a MUA or MLM, then things are already broken before
 	 * we deal with them.
 	 */
-	if (!(2 < chunk_length && chunk[chunk_length-2] == '\r' && chunk[chunk_length-1] == '\n'))
-		forwardChunk(sess, (unsigned char *) "\r\n", sizeof ("\r\n")-1);
+	if (!(2 < chunk_length && chunk[chunk_length-2] == '\r' && chunk[chunk_length-1] == '\n')) {
+		/* Send CRLF as a dynamic string in the chunk buffer. */
+		chunk[0] = '\r'; chunk[1] = '\n'; chunk[2] = '\0';
+		forwardChunk(sess, chunk, 2);
+	}
 
 	/* Send final dot, read the relays' responses. */
 	if ((rc = forwardCommand(sess, ".\r\n", 250, optSmtpDotTimeout.value, &count, &sent)) != SMTPF_CONTINUE)
