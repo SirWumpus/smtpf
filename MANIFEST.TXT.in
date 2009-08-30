@@ -84,6 +84,8 @@ com/snert/src/@PACKAGE_NAME@/src/savdid.c
 com/snert/src/@PACKAGE_NAME@/src/savdid.h
 com/snert/src/@PACKAGE_NAME@/src/cli.c
 com/snert/src/@PACKAGE_NAME@/src/cli.h
+com/snert/src/@PACKAGE_NAME@/src/ctasd.c
+com/snert/src/@PACKAGE_NAME@/src/ctasd.h
 com/snert/src/@PACKAGE_NAME@/src/cmd.c
 com/snert/src/@PACKAGE_NAME@/src/concurrent.c
 com/snert/src/@PACKAGE_NAME@/src/concurrent.h

@@ -32,20 +32,21 @@
  ***
  ***********************************************************************/
 
+static const char usage_avastd_socket[] =
+  "The unix domain socket or Internet host[:port] of the avastd\n"
+"# server. Specify the empty string to disable avastd scan. The\n"
+"# default avastd port is " QUOTE(AVASTD_PORT) ".\n"
+"#"
+;
+Option optAvastdSocket	= { "avastd-socket",	"",		usage_avastd_socket };
+
+Option optAvastdTimeout	= { "avastd-timeout",	"120",		"The avastd I/O timeout in seconds." };
+
 static const char usage_avastd_policy[] =
   "Policy to apply if message is infected. Specify either none,\n"
 "# reject, or discard.\n"
 "#"
 ;
-static const char usage_avastd_socket[] =
-  "The unix domain socket or Internet host[:port] of the avastd\n"	\
-"# server. Specify the empty string to disable avastd scan. The\n"	\
-"# default avastd port is 5037.\n"					\
-"#"
-;
-
-Option optAvastdSocket	= { "avastd-socket",	"",		usage_avastd_socket };
-Option optAvastdTimeout	= { "avastd-timeout",	"120",		"The avastd I/O timeout in seconds." };
 Option optAvastdPolicy	= { "avastd-policy",	"reject",	usage_avastd_policy };
 
 static Verbose verb_avastd = { { "avastd", "-", "" } };

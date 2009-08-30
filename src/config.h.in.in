@@ -199,6 +199,7 @@ extern "C" {
 #undef FILTER_CLI
 #undef FILTER_CLICK
 #undef FILTER_CONCURRENT
+#undef FILTER_CTASD
 #undef FILTER_DIGEST
 #undef FILTER_DUPMSG
 #undef FILTER_EMEW

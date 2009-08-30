@@ -272,6 +272,12 @@ is no set schedule for releases.
    	is actually "SPF fail < dns-gl = CONTENT".
 
 
+--2.2.30--
+
+   *	Requires Libsnert 1.72.8
+
+   !	Added support for CommTouch Advance Secuirty Daemon.
+
 --2.2.29--
 
    *	Requires Libsnert 1.72.7

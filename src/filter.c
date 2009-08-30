@@ -1,7 +1,7 @@
 /*
- * filter2.c
+ * filter.c
  *
- * Copyright 2006, 2007 by Anthony Howe. All rights reserved.
+ * Copyright 2006, 2009 by Anthony Howe. All rights reserved.
  */
 
 /***********************************************************************
@@ -106,6 +106,9 @@ FilterHandler filter_register_table	[] = {
 #ifdef FILTER_CONCURRENT
 	FILTER_HANDLER(concurrentRegister),
 #endif
+#ifdef FILTER_CTASD
+	FILTER_HANDLER(ctasdRegister),
+#endif
 #ifdef FILTER_DIGEST
 	FILTER_HANDLER(digestRegister),
 #endif
@@ -206,6 +209,9 @@ FilterHandler filter_init_table	[] = {
 #endif
 #ifdef FILTER_CLAMD
 	FILTER_HANDLER(clamdInit),
+#endif
+#ifdef FILTER_CTASD
+	FILTER_HANDLER(ctasdInit),
 #endif
 #ifdef FILTER_FPSCAND
 	FILTER_HANDLER(fpscandInit),
@@ -379,6 +385,9 @@ FilterHandler filter_optn_table	[] = {
 #endif
 #ifdef FILTER_CLAMD
 	FILTER_HANDLER(clamdOptn),
+#endif
+#ifdef FILTER_CTASD
+	FILTER_HANDLER(ctasdOptn),
 #endif
 #ifdef FILTER_FPSCAND
 	FILTER_HANDLER(fpscandOptn),
@@ -576,6 +585,9 @@ FilterHandler filter_connect_table	[] = {
 #ifdef FILTER_CLAMD
 	FILTER_HANDLER(clamdConnect),
 #endif
+#ifdef FILTER_CTASD
+	FILTER_HANDLER(ctasdConnect),
+#endif
 #ifdef FILTER_CLI
 	FILTER_HANDLER(cliConnect),
 #endif
@@ -697,6 +709,9 @@ FilterHandler filter_rset_table	[] = {
 	FILTER_HANDLER(replyRset),
 #ifdef FILTER_CLAMD
 	FILTER_HANDLER(clamdRset),
+#endif
+#ifdef FILTER_CTASD
+	FILTER_HANDLER(ctasdRset),
 #endif
 #ifdef FILTER_CLI
 	FILTER_HANDLER(cliRset),
@@ -980,6 +995,9 @@ FilterHandler filter_headers_table	[] = {
 #ifdef FILTER_CLAMD
 	FILTER_HANDLER(clamdHeaders),
 #endif
+#ifdef FILTER_CTASD
+	FILTER_HANDLER(ctasdHeaders),
+#endif
 #ifdef FILTER_EMEW
 	FILTER_HANDLER(emewHeaders),
 #endif
@@ -1054,6 +1072,9 @@ FilterHandler filter_content_table	[] = {
 #endif
 #ifdef FILTER_CLAMD
 	FILTER_HANDLER(clamdContent),
+#endif
+#ifdef FILTER_CTASD
+	FILTER_HANDLER(ctasdContent),
 #endif
 #ifdef FILTER_EMEW
 	FILTER_HANDLER(emewContent),
@@ -1148,6 +1169,9 @@ FilterHandler filter_dot_table	[] = {
 #endif
 #if defined(FILTER_GREY) && !defined(FILTER_GREY_CONTENT_SHORTCUT)
 	FILTER_HANDLER(greyDot),
+#endif
+#if defined(FILTER_CTASD)
+	FILTER_HANDLER(ctasdDot),
 #endif
 #ifdef FILTER_CLI
 	FILTER_HANDLER(cliDot),

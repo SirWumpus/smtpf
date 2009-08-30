@@ -534,6 +534,9 @@ extern void filterClearAllContexts(Session *sess);
 #ifdef FILTER_CONCURRENT
 # include "concurrent.h"
 #endif
+#ifdef FILTER_CTASD
+# include "ctasd.h"
+#endif
 #ifdef FILTER_DIGEST
 # include "digest.h"
 #endif
