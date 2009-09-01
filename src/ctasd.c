@@ -23,6 +23,9 @@
 #ifdef HAVE_FCNTL_H
 # include <fcntl.h>
 #endif
+#ifdef HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
 
 #include <com/snert/lib/net/network.h>
 #include <com/snert/lib/net/http.h>
@@ -102,7 +105,7 @@ ctasdOptn(Session *null, va_list ignore)
 {
 	optCtasdTimeout.value = strtol(optCtasdTimeout.string, NULL, 10) * 1000;
 
-	if (!optCtasdStream.value) {
+	if (optCtasdStream.value != 1) {
 		optSaveData.value |= 2;
 		if (*optSaveDir.string == '\0')
 			optionSet(&optSaveDir, "/tmp");
@@ -177,7 +180,7 @@ ctasdHeaders(Session *sess, va_list args)
 
 	LOG_TRACE(sess, 000, ctasdHeaders);
 
-	if (!optCtasdStream.value)
+	if (optCtasdStream.value != 1)
 		return SMTPF_CONTINUE;
 
 	ctx = filterGetContext(sess, ctasd_context);
@@ -265,13 +268,103 @@ ctasdContent(Session *sess, va_list args)
 }
 
 int
+ctasdSendFile(Session *sess, Ctasd *ctx)
+{
+	HttpRequest request;
+	char buffer[CTASD_REQUEST_BUFFER_SIZE];
+
+	memset(&request, 0, sizeof (request));
+
+	(void) snprintf(buffer, sizeof (buffer), "http://%s/ctasd/ClassifyMessage_File", optCtasdSocket.string);
+	if ((request.url = uriParse(buffer, -1)) == NULL)
+		return -1;
+
+	request.debug = verb_ctasd.option.value;
+	request.method = "POST";
+	request.timeout = optCtasdTimeout.value;
+	request.post_buffer = (unsigned char *) buffer;
+
+	request.post_size = snprintf(
+		buffer, sizeof (buffer),
+		"X-CTCH-PVer: 0000001" CRLF
+		"X-CTCH-MailFrom: %s" CRLF
+		"X-CTCH-SenderIP: %s" CRLF
+		"X-CTCH-Filename: %s" CRLF,
+		sess->msg.mail->address.string,
+		sess->client.addr,
+		saveGetName(sess)
+	);
+	request.content_length = request.post_size;
+	if (verb_ctasd.option.value)
+		syslog(LOG_DEBUG, LOG_MSG(000) "ctasd request=%lu:%s", LOG_ARGS(sess), (unsigned long) request.post_size, buffer);
+
+	ctx->socket = httpSend(&request, SESS_ID);
+	free(request.url);
+
+	return 0;
+}
+
+int
+ctasdSendInline(Session *sess, Ctasd *ctx)
+{
+	int rc;
+	FILE *fp;
+	long length;
+	struct stat sb;
+	HttpRequest request;
+	char buffer[CTASD_REQUEST_BUFFER_SIZE];
+
+	rc = -1;
+
+	if (stat(saveGetName(sess), &sb))
+		goto error0;
+
+	if ((fp = fopen(saveGetName(sess), "rb")) == NULL)
+		goto error0;
+
+	memset(&request, 0, sizeof (request));
+
+	(void) snprintf(buffer, sizeof (buffer), "http://%s/ctasd/ClassifyMessage_Inline", optCtasdSocket.string);
+	if ((request.url = uriParse(buffer, -1)) == NULL)
+		goto error1;
+
+	request.debug = verb_ctasd.option.value;
+	request.method = "POST";
+	request.timeout = optCtasdTimeout.value;
+	request.post_buffer = (unsigned char *) buffer;
+
+	request.post_size = snprintf(
+		buffer, sizeof (buffer),
+		"X-CTCH-PVer: 0000001" CRLF
+		"X-CTCH-MailFrom: %s" CRLF
+		"X-CTCH-SenderIP: %s" CRLF
+		CRLF,
+		sess->msg.mail->address.string,
+		sess->client.addr
+	);
+	request.content_length = request.post_size + sb.st_size;
+	if (verb_ctasd.option.value)
+		syslog(LOG_DEBUG, LOG_MSG(000) "ctasd request=%lu:%s", LOG_ARGS(sess), (unsigned long) request.post_size, buffer);
+
+	ctx->socket = httpSend(&request, SESS_ID);
+	free(request.url);
+
+	while (0 < (length = fread(buffer, 1, sizeof (buffer), fp)))
+		(void) socketWrite(ctx->socket, (unsigned char *) buffer, length);
+	rc = 0;
+error1:
+	(void) fclose(fp);
+error0:
+	return rc;
+}
+
+int
 ctasdDot(Session *sess, va_list ignore)
 {
 	int rc;
 	Ctasd *ctx;
 	HttpCode result;
 	HttpResponse response;
-	char buffer[CTASD_REQUEST_BUFFER_SIZE];
 	char *hdr, *x_ctch_refid, *x_ctch_spam, *x_ctch_vod, *is_bogus;
 
 	LOG_TRACE(sess, 000, ctasdDot);
@@ -280,38 +373,26 @@ ctasdDot(Session *sess, va_list ignore)
 
 	rc = SMTPF_CONTINUE;
 
-	if (optCtasdStream.value) {
-		socketShutdown(ctx->socket, SHUT_WR);
-	} else {
-		HttpRequest request;
-
-		memset(&request, 0, sizeof (request));
-
-		(void) snprintf(buffer, sizeof (buffer), "http://%s/ctasd/ClassifyMessage_File", optCtasdSocket.string);
-		if ((request.url = uriParse(buffer, -1)) == NULL)
+	switch (optCtasdStream.value) {
+	case 0:
+		/* Supply temporary file name */
+		if (ctasdSendFile(sess, ctx))
 			goto error0;
+		break;
+	case 1:
+		/* True streaming. Currently doesn't work, because
+		 * CommTouch wankers want a Content-Length supplied
+		 * with the request, instead of detecting EOF or
+		 * using HTTP/1.1 chunked data format. Wankers.
+		 */
+		socketShutdown(ctx->socket, SHUT_WR);
+		break;
 
-		request.debug = verb_ctasd.option.value;
-		request.method = "POST";
-		request.timeout = optCtasdTimeout.value;
-		request.post_buffer = (unsigned char *) buffer;
-
-		request.post_size = snprintf(
-			buffer, sizeof (buffer),
-			"X-CTCH-PVer: 0000001" CRLF
-			"X-CTCH-MailFrom: %s" CRLF
-			"X-CTCH-SenderIP: %s" CRLF
-			"X-CTCH-Filename: %s" CRLF,
-			sess->msg.mail->address.string,
-			sess->client.addr,
-			saveGetName(sess)
-		);
-		request.content_length = request.post_size;
-		if (verb_ctasd.option.value)
-			syslog(LOG_DEBUG, LOG_MSG(000) "ctasd request=%lu:%s", LOG_ARGS(sess), (unsigned long) request.post_size, buffer);
-
-		ctx->socket = httpSend(&request, SESS_ID);
-		free(request.url);
+	case 2:
+		/* Stream temporary file. */
+		if (ctasdSendInline(sess, ctx))
+			goto error0;
+		break;
 	}
 
 	if (ctx->socket == NULL)
