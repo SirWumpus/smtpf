@@ -271,6 +271,16 @@ is no set schedule for releases.
    +	ideally "dns-gl < SPF fail < CONTENT", but currently the precedence
    	is actually "SPF fail < dns-gl = CONTENT".
 
+--2.2.31--
+
+   !	Fixed bug concerning double tagging the subject line. In
+   	particular, skip spamd if the subject has already been
+   	tagged. Add an option spamd-skip-tagged.
+
+   !	Fixed bug where ctasd failed to tag unless spamd was also
+   	being used.
+
+   +	Add transaction-id to sender and recipient log lines.
 
 --2.2.30--
 
