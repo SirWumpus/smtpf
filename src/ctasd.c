@@ -53,6 +53,10 @@ static const char usage_ctasd_policy[] =
 "# reject, or discard.\n"
 "#"
 ;
+/* confirmed-reject, confirmed-discard, confirmed-tag
+ * bulk-reject, bulk-discard, bulk-tag, bulk-ignore
+ * suspect-reject, suspect-discard, suspect-tag, suspect-ignore
+ */
 Option optCtasdPolicy	= { "ctasd-policy",	"reject",	usage_ctasd_policy };
 
 static const char usage_ctasd_stream[] =
@@ -453,6 +457,7 @@ The ctasd daemon found a virus or suspicious content in the message.
 See <a href="summary.html#opt_ctasd_policy">ctasd-policy</a>.
 }*/
 	} else if (strcmp(x_ctch_spam, "Bulk") == 0) {
+		MSG_SET(sess, MSG_TAGGED);
 		statsCount(&stat_ctasd_spam_tag);
 		headerAddPrefix(sess, "Subject", optCtasdSubjectTag.string);
 		headerReplace(sess->msg.headers, "Precedence", strdup("Precedence: bulk" CRLF));

@@ -343,8 +343,9 @@ typedef struct {
 #define MSG_DISCARD			0x00000020
 #define MSG_POLICY			0x00000040
 #define MSG_TAG				0x00000080
-#define MSG_QUEUE			0x00000100
-#define MSG_SAVE			0x00000200
+#define MSG_TAGGED			0x00000100
+#define MSG_QUEUE			0x00000200
+#define MSG_SAVE			0x00000400
 #define MSG_TRAP			(MSG_SAVE|MSG_DISCARD)
 
 #define MSG_END_BIT			MSG_SAVE

@@ -57,6 +57,20 @@ static const char usage_spamd_score_reject[] =
 "#"
 ;
 
+
+Option optSpamdCommand		= { "spamd-command",		"CHECK",	usage_spamd_command };
+Option optSpamdMaxSize		= { "spamd-max-size",		"0",		"Max. number of kilobytes to pass to spamd, 0 for unlimited." };
+Option optSpamdSocket		= { "spamd-socket",		"",		usage_spamd_socket };
+Option optSpamdTimeout		= { "spamd-timeout",		"120",		"The spamd I/O timeout in seconds." };
+Option optSpamdScoreReject	= { "spamd-score-reject",	"10",		usage_spamd_score_reject };
+
+static const char usage_spamd_skip_tagged[] =
+  "If the message has already been subject tagged by a previous test, then\n"
+"# skip the spamd scan, which may reject the message or add an aditional tag.\n"
+"#"
+;
+Option optSpamdSkipTagged	= { "spamd-skip-tagged",	"-",		usage_spamd_skip_tagged };
+
 static const char usage_spamd_subject_tag[] =
   "When the score is greater than or equal to SpamAssassin's required_hits\n"
 "# and less than spamd-score-reject (when not disabled), then the Subject\n"
@@ -64,6 +78,7 @@ static const char usage_spamd_subject_tag[] =
 "# the empty string to disable the subject tag.\n"
 "#"
 ;
+Option optSpamdSubjectTag	= { "spamd-subject-tag",	"[SPAM]",	usage_spamd_subject_tag };
 
 static const char usage_spamd_reject_sender_marked_spam[] =
   "When an X-Spam-Status header is supplied by the sender, then check their\n"
@@ -73,13 +88,6 @@ static const char usage_spamd_reject_sender_marked_spam[] =
 "# it? Otherwise the message will be scanned and scored as per usual.\n"
 "#"
 ;
-
-Option optSpamdCommand		= { "spamd-command",		"CHECK",	usage_spamd_command };
-Option optSpamdMaxSize		= { "spamd-max-size",		"0",		"Max. number of kilobytes to pass to spamd, 0 for unlimited." };
-Option optSpamdSocket		= { "spamd-socket",		"",		usage_spamd_socket };
-Option optSpamdTimeout		= { "spamd-timeout",		"120",		"The spamd I/O timeout in seconds." };
-Option optSpamdScoreReject	= { "spamd-score-reject",	"10",		usage_spamd_score_reject };
-Option optSpamdSubjectTag	= { "spamd-subject-tag",	"[SPAM]",	usage_spamd_subject_tag };
 Option optSpamdRejectSenderMarkedSpam	= { "spamd-reject-sender-marked-spam",	"+",	usage_spamd_reject_sender_marked_spam };
 
 Option optSpamdFlagHeader	= { "spamd-flag-header", "X-Spam-Flag",  "The name of the flag header. Empty string to disable."};
@@ -265,6 +273,7 @@ spamdRegister(Session *sess, va_list ignore)
 	optionsRegister(&optSpamdTimeout, 0);
 	optionsRegister(&optSpamdRejectSenderMarkedSpam, 0);
 	optionsRegister(&optSpamdScoreReject, 0);
+	optionsRegister(&optSpamdSkipTagged, 0);
 	optionsRegister(&optSpamdSubjectTag, 0);
 
 	optionsRegister(&optSpamdFlagHeader, 0);
@@ -382,7 +391,8 @@ spamdDot(Session *sess, va_list ignore)
 
 	rc = SMTPF_CONTINUE;
 
-	if (*optSpamdSocket.string == '\0')
+	if (*optSpamdSocket.string == '\0'
+	|| (optSpamdSkipTagged.value && MSG_ANY_SET(sess, MSG_TAGGED)))
 		goto error0;
 
 	spamd = filterGetContext(sess, spamd_context);
@@ -545,6 +555,7 @@ A summary of the spamd score for a message.
 See <a href="summary.html#opt_spamd_score_reject">spamd-score-reject</a> option.
 }*/
 	} else if (spamd->threshold <= spamd->score) {
+		MSG_SET(sess, MSG_TAGGED);
 		statsCount(&stat_spamd_tag);
 		headerAddPrefix(sess, "Subject", optSpamdSubjectTag.string);
 		headerReplace(sess->msg.headers, "Precedence", strdup("Precedence: bulk\r\n"));

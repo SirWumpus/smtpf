@@ -1892,7 +1892,7 @@ cmdData(Session *sess)
 	case SMTPF_ACCEPT:
 	case SMTPF_CONTINUE:
 #if !defined(FILTER_SPAMD) && defined(FILTER_SPAMD2)
-if (MSG_NOT_SET(sess, MSG_TAG) && *optSpamdSocket.string == '\0') {
+if (MSG_NOT_SET(sess, MSG_TAG) && !(optSaveData.value & 2)) {
 #endif
 		/* Send DATA command to relays. */
 		if ((rc = forwardCommand(sess, "DATA\r\n", 354, optSmtpCommandTimeout.value, &count, &sent)) != SMTPF_CONTINUE)
@@ -1944,6 +1944,7 @@ if (MSG_NOT_SET(sess, MSG_TAG) && *optSpamdSocket.string == '\0')
 	&& (sess->response.delayed != NULL || sess->response.immediate != NULL)) {
 		statsCount(&stat_tagged);
 
+		MSG_SET(sess, MSG_TAGGED);
 		headerAddPrefix(sess, "Subject", optSpamdSubjectTag.string);
 
 		(void) snprintf(sess->input, sizeof (sess->input), "X-Spam-Flag: YES\r\n");
@@ -1965,7 +1966,7 @@ if (MSG_NOT_SET(sess, MSG_TAG) && *optSpamdSocket.string == '\0')
 	switch (rc) {
 #if !defined(FILTER_SPAMD) && defined(FILTER_SPAMD2)
 	default:
-		if (MSG_ANY_SET(sess, MSG_TAG) || *optSpamdSocket.string != '\0') {
+		if (MSG_ANY_SET(sess, MSG_TAG) || (optSaveData.value & 2)) {
 			if ((rc = forwardDataAtDot(sess, NULL)) != SMTPF_CONTINUE)
 				goto reject0;
 

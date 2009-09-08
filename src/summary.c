@@ -48,6 +48,7 @@ static const char *message_flags[] = {
 	"discard,",
 	"policy,",
 	"tag,",
+	"tagged,",
 	"queued,",
 	"save,",
 	NULL
@@ -145,9 +146,9 @@ summarySender(Session *sess, const char *sender)
 	sess->msg.chunk1[length-2] = '\0';
 
 	syslog(
-		LOG_INFO, LOG_MSG(717) "sender %s f=\"%s\" spf-mail=%s spf-helo=%s x=\"%s\"", LOG_ARGS(sess),
+		LOG_INFO, LOG_MSG(717) "sender %s tid=%s f=\"%s\" spf-mail=%s spf-helo=%s x=\"%s\"", LOG_ARGS(sess),
 		/* In the event parsePath fails, we need to still log the sender arg. */
-		/* sess->msg.mail->address.string */ sender, mailFlags(sess),
+		/* sess->msg.mail->address.string */ sender, sess->msg.id, mailFlags(sess),
 		spfResultString[sess->msg.spf_mail],
 		spfResultString[sess->client.spf_helo],
 		sess->msg.chunk1
@@ -169,9 +170,9 @@ summaryRecipient(Session *sess, const char *recipient)
 	sess->msg.chunk1[length-2] = '\0';
 
 	syslog(
-		LOG_INFO, LOG_MSG(718) "recipient %s f=\"%s\" x=\"%s\"", LOG_ARGS(sess),
+		LOG_INFO, LOG_MSG(718) "recipient %s tid=%s f=\"%s\" x=\"%s\"", LOG_ARGS(sess),
 		/* In the event parsePath fails, we need to still log the recipient arg. */
-		/* rcpt->address.string*/ recipient, rcptFlags(sess), sess->msg.chunk1
+		/* rcpt->address.string*/ recipient, sess->msg.id, rcptFlags(sess), sess->msg.chunk1
 	);
 /*{LOG
 This line gives a summary of recipient highlights.
@@ -188,7 +189,7 @@ summaryData(Session *sess)
 	length = TextCopy(sess->input, sizeof (sess->input), replyGetReply(sess)->string);
 	sess->input[length-2] = '\0';
 
-	syslog(LOG_INFO, LOG_MSG(719) "data f=\"%s\" x=\"%s\"", LOG_ARGS(sess), messageFlags(sess), sess->input);
+	syslog(LOG_INFO, LOG_MSG(719) "data tid=%s f=\"%s\" x=\"%s\"", LOG_ARGS(sess), sess->msg.id, messageFlags(sess), sess->input);
 /*{LOG
 The start of message content.
 It cannot be suppressed.
@@ -244,8 +245,8 @@ summaryHeaders(Session *sess, va_list args)
 		rcpt = strdup(rcptFlags(sess));
 
 		length = snprintf(
-			sess->input, sizeof (sess->input), "%s: sid=%s; client=%s; mail=%s; rcpt=%s; nrcpt=%u:%u; fails=%d\r\n",
-			optSmtpReportHeader.string, sess->long_id,
+			sess->input, sizeof (sess->input), "%s: sid=%s; tid=%s; client=%s; mail=%s; rcpt=%s; nrcpt=%u:%u; fails=%d\r\n",
+			optSmtpReportHeader.string, sess->long_id, sess->msg.id,
 			TextEmpty(client), TextEmpty(mail), TextEmpty(rcpt),
 			sess->msg.rcpt_count, sess->msg.bad_rcpt_count,
 			sess->client.reject_count
@@ -330,7 +331,7 @@ summaryMessage(Session *sess)
 		*sess->msg.chunk0 = '\0';
 
 	syslog(
-		LOG_INFO, LOG_MSG(720) "message <%s> f=\"%s\" b=%lu r=%u m=%s R=%d %sx=\"%s\"", LOG_ARGS(sess),
+		LOG_INFO, LOG_MSG(720) "message tid=%s f=\"%s\" b=%lu r=%u m=%s R=%d %sx=\"%s\"", LOG_ARGS(sess),
 		sess->msg.id, messageFlags(sess), sess->msg.length, sess->msg.rcpt_count,
 		sess->msg.msg_id, sess->client.reject_count, sess->msg.chunk0, sess->input
 	);

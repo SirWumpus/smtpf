@@ -277,6 +277,7 @@ siqHeaders(Session *sess, va_list args)
 		pass = wordYes;
 	} else {
 		pass = wordNo;
+		MSG_SET(sess, MSG_TAGGED);
 		statsCount(&stat_siq_score_tag);
 		headerAddPrefix(sess, "Subject", optSiqSubjectTag.string);
 	}
