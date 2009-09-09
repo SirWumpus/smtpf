@@ -26,6 +26,10 @@ extern Stats statDenyContentName;
 
 extern int attachmentRegister(Session *null, va_list ignore);
 extern int attachmentRset(Session *sess, va_list ignore);
+extern int attachmentConnect(Session *sess, va_list ignore);
+extern int attachmentMail(Session *sess, va_list args);
+extern int attachmentRcpt(Session *sess, va_list args);
+extern int attachmentData(Session *sess, va_list ignore);
 extern int attachmentHeaders(Session *sess, va_list args);
 extern int attachmentContent(Session *sess, va_list args);
 extern int attachmentDot(Session *sess, va_list ignore);

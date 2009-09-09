@@ -1839,6 +1839,33 @@ AccessMapping accessTagWordsMap[] =
 	{ 	ACCESS_EMEW_TAG,
 		    ".*"
 	},
+	{ 	ACCESS_FILENAME_CONN_TAG,
+		    ".*"
+	},
+	{ 	ACCESS_FILENAME_MAIL_TAG,
+		    ".*"
+	},
+	{ 	ACCESS_FILENAME_RCPT_TAG,
+		    ".*"
+	},
+	{ 	ACCESS_MIMETYPE_CONN_TAG,
+		    ".*"
+	},
+	{ 	ACCESS_MIMETYPE_MAIL_TAG,
+		    ".*"
+	},
+	{ 	ACCESS_MIMETYPE_RCPT_TAG,
+		    ".*"
+	},
+	{ 	ACCESS_ARCHNAME_CONN_TAG,
+		    ".*"
+	},
+	{ 	ACCESS_ARCHNAME_MAIL_TAG,
+		    ".*"
+	},
+	{ 	ACCESS_ARCHNAME_RCPT_TAG,
+		    ".*"
+	},
 	{	NULL, NULL }
 };
 
@@ -1967,6 +1994,15 @@ AccessMapping accessWordTagsMap[] =
 	{
 		".*",
 		    ACCESS_EMEW_TAG
+		"|" ACCESS_FILENAME_CONN_TAG
+		"|" ACCESS_FILENAME_MAIL_TAG
+		"|" ACCESS_FILENAME_RCPT_TAG
+		"|" ACCESS_MIMETYPE_CONN_TAG
+		"|" ACCESS_MIMETYPE_MAIL_TAG
+		"|" ACCESS_MIMETYPE_RCPT_TAG
+		"|" ACCESS_ARCHNAME_CONN_TAG
+		"|" ACCESS_ARCHNAME_MAIL_TAG
+		"|" ACCESS_ARCHNAME_RCPT_TAG
 	},
 	{ 	NULL, NULL }
 };

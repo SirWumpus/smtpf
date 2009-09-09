@@ -579,6 +579,9 @@ FilterHandler filter_connect_table	[] = {
 	 * with a drop and jump straight to filterClose() since
 	 * they have to close files or release memory.
 	 */
+#ifdef FILTER_ATTACHMENT
+	FILTER_HANDLER(attachmentConnect),
+#endif
 #ifdef FILTER_SIZE
 	FILTER_HANDLER(sizeConnect),
 #endif
@@ -773,6 +776,9 @@ FilterHandler filter_rset_table	[] = {
  */
 FilterHandler filter_mail_table	[] = {
 	FILTER_TABLE_BEGIN(mail),
+#ifdef FILTER_ATTACHMENT
+	FILTER_HANDLER(attachmentMail),
+#endif
 #ifdef FILTER_EMEW
 	FILTER_HANDLER(emewMailRcpt),
 #endif
@@ -835,6 +841,9 @@ FilterHandler filter_mail_table	[] = {
  */
 FilterHandler filter_rcpt_table	[] = {
 	FILTER_TABLE_BEGIN(rcpt),
+#ifdef FILTER_ATTACHMENT
+	FILTER_HANDLER(attachmentRcpt),
+#endif
 #ifdef FILTER_TIMELIMIT
 	FILTER_HANDLER(timeLimitRcpt),
 #endif
@@ -898,6 +907,9 @@ FilterHandler filter_rcpt_table	[] = {
 FilterHandler filter_data_table	[] = {
 	FILTER_TABLE_BEGIN(data),
 	FILTER_HANDLER(replyData),
+#ifdef FILTER_ATTACHMENT
+	FILTER_HANDLER(attachmentData),
+#endif
 	FILTER_HANDLER(accessData),
 #ifdef FILTER_SAV
 	/* NOTE that savData can return SMTPF_SKIP_NEXT to by-pass

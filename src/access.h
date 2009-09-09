@@ -62,106 +62,136 @@ extern int accessClose(Session *sess, va_list ignore);
 /*
  * Key Tags
  */
-#define ACCESS_BODY_TAG		"body:"
-#define ACCESS_CONN_TAG		"connect:"
-#define ACCESS_CONCURRENT_TAG	"concurrent-connect:"
-#define ACCESS_HELO_TAG		"helo:"
-#define ACCESS_MAIL_TAG		"from:"
-#define ACCESS_RCPT_TAG		"to:"
-#define ACCESS_EMEW_TAG		"emew:"
-#define ACCESS_GREY_CONN_TAG	"grey-connect:"
-#define ACCESS_GREY_RCPT_TAG	"grey-to:"
-#define ACCESS_SIZE_CONN_TAG	"length-connect:"
-#define ACCESS_SIZE_MAIL_TAG	"length-from:"
-#define ACCESS_SIZE_RCPT_TAG	"length-to:"
-#define ACCESS_MSGS_CONN_TAG	"msg-limit-connect:"
-#define ACCESS_MSGS_MAIL_TAG	"msg-limit-from:"
-#define ACCESS_MSGS_RCPT_TAG	"msg-limit-to:"
-#define ACCESS_NULL_TAG		"null-rate-to:"
-#define ACCESS_RATE_TAG		"rate-connect:"
-#define ACCESS_SPAM_TAG		"spamd:"
+#define ACCESS_BODY_TAG			"body:"
+#define ACCESS_CONN_TAG			"connect:"
+#define ACCESS_CONCURRENT_TAG		"concurrent-connect:"
+#define ACCESS_HELO_TAG			"helo:"
+#define ACCESS_MAIL_TAG			"from:"
+#define ACCESS_RCPT_TAG			"to:"
+#define ACCESS_EMEW_TAG			"emew:"
+#define ACCESS_GREY_CONN_TAG		"grey-connect:"
+#define ACCESS_GREY_RCPT_TAG		"grey-to:"
+#define ACCESS_SIZE_CONN_TAG		"length-connect:"
+#define ACCESS_SIZE_MAIL_TAG		"length-from:"
+#define ACCESS_SIZE_RCPT_TAG		"length-to:"
+#define ACCESS_MSGS_CONN_TAG		"msg-limit-connect:"
+#define ACCESS_MSGS_MAIL_TAG		"msg-limit-from:"
+#define ACCESS_MSGS_RCPT_TAG		"msg-limit-to:"
+#define ACCESS_NULL_TAG			"null-rate-to:"
+#define ACCESS_RATE_TAG			"rate-connect:"
+#define ACCESS_SPAM_TAG			"spamd:"
 
-#define ACCESS_CONN_MAIL_TAG	ACCESS_CONN_TAG ACCESS_MAIL_TAG
-#define ACCESS_CONN_RCPT_TAG	ACCESS_CONN_TAG ACCESS_RCPT_TAG
-#define ACCESS_MAIL_RCPT_TAG	ACCESS_MAIL_TAG ACCESS_RCPT_TAG
+#define ACCESS_CONN_MAIL_TAG		ACCESS_CONN_TAG ACCESS_MAIL_TAG
+#define ACCESS_CONN_RCPT_TAG		ACCESS_CONN_TAG ACCESS_RCPT_TAG
+#define ACCESS_MAIL_RCPT_TAG		ACCESS_MAIL_TAG ACCESS_RCPT_TAG
+
+#define ACCESS_FILENAME_CONN_TAG	"filename-connect:"
+#define ACCESS_FILENAME_MAIL_TAG	"filename-from:"
+#define ACCESS_FILENAME_RCPT_TAG	"filename-to:"
+#define ACCESS_MIMETYPE_CONN_TAG	"mimetype-connect:"
+#define ACCESS_MIMETYPE_MAIL_TAG	"mimetype-from:"
+#define ACCESS_MIMETYPE_RCPT_TAG	"mimetype-to:"
+#define ACCESS_ARCHNAME_CONN_TAG	"archname-connect:"
+#define ACCESS_ARCHNAME_MAIL_TAG	"archname-from:"
+#define ACCESS_ARCHNAME_RCPT_TAG	"archname-to:"
 
 /*
  * Key Regex
  */
-#define ACCESS_BODY_RE		ACCESS_BODY_TAG	".*"
-#define ACCESS_CONN_RE		ACCESS_CONN_TAG	".*"
-#define ACCESS_CONN_MAIL_RE	ACCESS_CONN_TAG ".+:" ACCESS_MAIL_TAG ".+"
-#define ACCESS_CONN_RCPT_RE	ACCESS_CONN_TAG ".+:" ACCESS_RCPT_TAG ".+"
-#define ACCESS_CONCURRENT_RE	ACCESS_CONCURRENT_TAG ".*"
-#define ACCESS_MAIL_RE		ACCESS_MAIL_TAG	".*"
-#define ACCESS_MAIL_RCPT_RE	ACCESS_MAIL_TAG ".+:" ACCESS_RCPT_TAG ".+"
-#define ACCESS_RCPT_RE		ACCESS_RCPT_TAG	".*"
-#define ACCESS_EMEW_RE		ACCESS_EMEW_TAG	".*"
-#define ACCESS_GREY_CONN_RE	ACCESS_GREY_CONN_TAG ".*"
-#define ACCESS_GREY_RCPT_RE	ACCESS_GREY_RCPT_TAG ".*"
-#define ACCESS_SIZE_CONN_RE	ACCESS_SIZE_CONN_TAG ".*"
-#define ACCESS_SIZE_MAIL_RE	ACCESS_SIZE_MAIL_TAG ".*"
-#define ACCESS_SIZE_RCPT_RE	ACCESS_SIZE_RCPT_TAG ".*"
-#define ACCESS_MSGS_CONN_RE	ACCESS_MSGS_CONN_TAG ".*"
-#define ACCESS_MSGS_MAIL_RE	ACCESS_MSGS_MAIL_TAG ".*"
-#define ACCESS_MSGS_RCPT_RE	ACCESS_MSGS_RCPT_TAG ".*"
-#define ACCESS_NULL_RE		ACCESS_NULL_TAG	".*"
-#define ACCESS_RATE_RE		ACCESS_RATE_TAG	".*"
-#define ACCESS_SPAM_RE		ACCESS_SPAM_TAG	".*"
+#define ACCESS_BODY_RE			ACCESS_BODY_TAG	".*"
+#define ACCESS_CONN_RE			ACCESS_CONN_TAG	".*"
+#define ACCESS_CONN_MAIL_RE		ACCESS_CONN_TAG ".+:" ACCESS_MAIL_TAG ".+"
+#define ACCESS_CONN_RCPT_RE		ACCESS_CONN_TAG ".+:" ACCESS_RCPT_TAG ".+"
+#define ACCESS_CONCURRENT_RE		ACCESS_CONCURRENT_TAG ".*"
+#define ACCESS_MAIL_RE			ACCESS_MAIL_TAG	".*"
+#define ACCESS_MAIL_RCPT_RE		ACCESS_MAIL_TAG ".+:" ACCESS_RCPT_TAG ".+"
+#define ACCESS_RCPT_RE			ACCESS_RCPT_TAG	".*"
+#define ACCESS_EMEW_RE			ACCESS_EMEW_TAG	".*"
+#define ACCESS_GREY_CONN_RE		ACCESS_GREY_CONN_TAG ".*"
+#define ACCESS_GREY_RCPT_RE		ACCESS_GREY_RCPT_TAG ".*"
+#define ACCESS_SIZE_CONN_RE		ACCESS_SIZE_CONN_TAG ".*"
+#define ACCESS_SIZE_MAIL_RE		ACCESS_SIZE_MAIL_TAG ".*"
+#define ACCESS_SIZE_RCPT_RE		ACCESS_SIZE_RCPT_TAG ".*"
+#define ACCESS_MSGS_CONN_RE		ACCESS_MSGS_CONN_TAG ".*"
+#define ACCESS_MSGS_MAIL_RE		ACCESS_MSGS_MAIL_TAG ".*"
+#define ACCESS_MSGS_RCPT_RE		ACCESS_MSGS_RCPT_TAG ".*"
+#define ACCESS_NULL_RE			ACCESS_NULL_TAG	".*"
+#define ACCESS_RATE_RE			ACCESS_RATE_TAG	".*"
+#define ACCESS_SPAM_RE			ACCESS_SPAM_TAG	".*"
+
+#define ACCESS_FILENAME_CONN_RE		ACCESS_FILENAME_CONN_TAG ".*"
+#define ACCESS_FILENAME_MAIL_RE		ACCESS_FILENAME_MAIL_TAG ".*"
+#define ACCESS_FILENAME_RCPT_RE		ACCESS_FILENAME_RCPT_TAG ".*"
+#define ACCESS_MIMETYPE_CONN_RE		ACCESS_MIMETYPE_CONN_TAG ".*"
+#define ACCESS_MIMETYPE_MAIL_RE		ACCESS_MIMETYPE_MAIL_TAG ".*"
+#define ACCESS_MIMETYPE_RCPT_RE		ACCESS_MIMETYPE_RCPT_TAG ".*"
+#define ACCESS_ARCHNAME_CONN_RE		ACCESS_ARCHNAME_CONN_TAG ".*"
+#define ACCESS_ARCHNAME_MAIL_RE		ACCESS_ARCHNAME_MAIL_TAG ".*"
+#define ACCESS_ARCHNAME_RCPT_RE		ACCESS_ARCHNAME_RCPT_TAG ".*"
 
 /*
  * Key printf formats
  */
-#define ACCESS_BODY_KEY		ACCESS_BODY_TAG	"%s"		/* IP | domain | mail */
-#define ACCESS_CONN_KEY		ACCESS_CONN_TAG	"%s"		/* IP | domain */
-#define ACCESS_CONN_MAIL_KEY	ACCESS_CONN_TAG "%s:" ACCESS_MAIL_TAG "%s"	/* IP | domain, mail */
-#define ACCESS_CONN_RCPT_KEY	ACCESS_CONN_TAG "%s:" ACCESS_RCPT_TAG "%s"	/* IP | domain, mail */
-#define ACCESS_CONCURRENT_KEY	ACCESS_CONCURRENT_TAG "%s"			/* IP | domain */
-#define ACCESS_HELO_KEY		ACCESS_HELO_TAG	"%s"		/* IP | domain */
-#define ACCESS_MAIL_KEY		ACCESS_MAIL_TAG	"%s"		/* mail */
-#define ACCESS_MAIL_RCPT_KEY	ACCESS_MAIL_TAG "%s:" ACCESS_RCPT_TAG "%s"	/* mail, mail */
-#define ACCESS_RCPT_KEY		ACCESS_RCPT_TAG	"%s"		/* mail */
-#define ACCESS_EMEW_KEY		ACCESS_EMEW_TAG	"%s"		/* mail */
-#define ACCESS_GREY_CONN_KEY	ACCESS_GREY_CONN_TAG "%s"	/* IP | domain */
-#define ACCESS_GREY_RCPT_KEY	ACCESS_GREY_RCPT_TAG "%s"		/* mail */
-#define ACCESS_SIZE_CONN_KEY	ACCESS_SIZE_CONN_TAG "%s"	/* IP | domain */
-#define ACCESS_SIZE_MAIL_KEY	ACCESS_SIZE_MAIL_TAG "%s"	/* mail */
-#define ACCESS_SIZE_RCPT_KEY	ACCESS_SIZE_RCPT_TAG "%s"		/* mail */
-#define ACCESS_MSGS_CONN_KEY	ACCESS_MSGS_CONN_TAG "%s"	/* IP | domain */
-#define ACCESS_MSGS_MAIL_KEY	ACCESS_MSGS_MAIL_TAG "%s"	/* mail */
-#define ACCESS_MSGS_RCPT_KEY	ACCESS_MSGS_RCPT_TAG "%s"		/* mail */
-#define ACCESS_NULL_KEY		ACCESS_NULL_TAG	"%s"		/* mail */
-#define ACCESS_RATE_KEY		ACCESS_RATE_TAG	"%s"		/* IP | domain */
-#define ACCESS_SPAM_KEY		ACCESS_SPAM_TAG	"%s"		/* domain | mail */
+#define ACCESS_BODY_KEY			ACCESS_BODY_TAG	"%s"		/* IP | domain | mail */
+#define ACCESS_CONN_KEY			ACCESS_CONN_TAG	"%s"		/* IP | domain */
+#define ACCESS_CONN_MAIL_KEY		ACCESS_CONN_TAG "%s:" ACCESS_MAIL_TAG "%s"	/* IP | domain, mail */
+#define ACCESS_CONN_RCPT_KEY		ACCESS_CONN_TAG "%s:" ACCESS_RCPT_TAG "%s"	/* IP | domain, mail */
+#define ACCESS_CONCURRENT_KEY		ACCESS_CONCURRENT_TAG "%s"			/* IP | domain */
+#define ACCESS_HELO_KEY			ACCESS_HELO_TAG	"%s"		/* IP | domain */
+#define ACCESS_MAIL_KEY			ACCESS_MAIL_TAG	"%s"		/* mail */
+#define ACCESS_MAIL_RCPT_KEY		ACCESS_MAIL_TAG "%s:" ACCESS_RCPT_TAG "%s"	/* mail, mail */
+#define ACCESS_RCPT_KEY			ACCESS_RCPT_TAG	"%s"		/* mail */
+#define ACCESS_EMEW_KEY			ACCESS_EMEW_TAG	"%s"		/* mail */
+#define ACCESS_GREY_CONN_KEY		ACCESS_GREY_CONN_TAG "%s"	/* IP | domain */
+#define ACCESS_GREY_RCPT_KEY		ACCESS_GREY_RCPT_TAG "%s"	/* mail */
+#define ACCESS_SIZE_CONN_KEY		ACCESS_SIZE_CONN_TAG "%s"	/* IP | domain */
+#define ACCESS_SIZE_MAIL_KEY		ACCESS_SIZE_MAIL_TAG "%s"	/* mail */
+#define ACCESS_SIZE_RCPT_KEY		ACCESS_SIZE_RCPT_TAG "%s"	/* mail */
+#define ACCESS_MSGS_CONN_KEY		ACCESS_MSGS_CONN_TAG "%s"	/* IP | domain */
+#define ACCESS_MSGS_MAIL_KEY		ACCESS_MSGS_MAIL_TAG "%s"	/* mail */
+#define ACCESS_MSGS_RCPT_KEY		ACCESS_MSGS_RCPT_TAG "%s"	/* mail */
+#define ACCESS_NULL_KEY			ACCESS_NULL_TAG	"%s"		/* mail */
+#define ACCESS_RATE_KEY			ACCESS_RATE_TAG	"%s"		/* IP | domain */
+#define ACCESS_SPAM_KEY			ACCESS_SPAM_TAG	"%s"		/* domain | mail */
+
+#define ACCESS_FILENAME_CONN_KEY	ACCESS_FILENAME_CONN_TAG "%s"	/* IP | domain */
+#define ACCESS_FILENAME_MAIL_KEY	ACCESS_FILENAME_MAIL_TAG "%s"	/* mail */
+#define ACCESS_FILENAME_RCPT_KEY	ACCESS_FILENAME_RCPT_TAG "%s"	/* mail */
+#define ACCESS_MIMETYPE_CONN_KEY	ACCESS_MIMETYPE_CONN_TAG "%s"	/* IP | domain */
+#define ACCESS_MIMETYPE_MAIL_KEY	ACCESS_MIMETYPE_MAIL_TAG "%s"	/* mail */
+#define ACCESS_MIMETYPE_RCPT_KEY	ACCESS_MIMETYPE_RCPT_TAG "%s"	/* mail */
+#define ACCESS_ARCHNAME_CONN_KEY	ACCESS_ARCHNAME_CONN_TAG "%s"	/* IP | domain */
+#define ACCESS_ARCHNAME_MAIL_KEY	ACCESS_ARCHNAME_MAIL_TAG "%s"	/* mail */
+#define ACCESS_ARCHNAME_RCPT_KEY	ACCESS_ARCHNAME_RCPT_TAG "%s"	/* mail */
 
 /*
  * Action Values
  */
-#define ACCESS_OK_WORD		"OK"				/* all */
-#define ACCESS_CONTENT_WORD	"CONTENT"			/* Connect */
-#define ACCESS_DISCARD_WORD	"DISCARD"			/* all */
-#define ACCESS_IREJECT_WORD	"IREJECT"			/* Connect, Connect:From, From */
-#define ACCESS_NEXT_WORD	"NEXT"				/* all */
-#define ACCESS_REJECT_WORD	"REJECT"			/* all */
-#define ACCESS_SAVE_WORD	"SAVE"				/* Connect, From, To */
-#define ACCESS_SKIP_WORD	"SKIP"				/* all */
-#define ACCESS_SPF_PASS_WORD	"SPF-PASS"			/* Connect:From, From */
-#define ACCESS_TAG_WORD		"TAG"				/* all */
-#define ACCESS_TEMPFAIL_WORD	"TEMPFAIL"			/* all */
-#define ACCESS_TRAP_WORD	"TRAP"				/* Connect, From, To */
+#define ACCESS_OK_WORD			"OK"				/* all */
+#define ACCESS_CONTENT_WORD		"CONTENT"			/* Connect */
+#define ACCESS_DISCARD_WORD		"DISCARD"			/* all */
+#define ACCESS_IREJECT_WORD		"IREJECT"			/* Connect, Connect:From, From */
+#define ACCESS_NEXT_WORD		"NEXT"				/* all */
+#define ACCESS_REJECT_WORD		"REJECT"			/* all */
+#define ACCESS_SAVE_WORD		"SAVE"				/* Connect, From, To */
+#define ACCESS_SKIP_WORD		"SKIP"				/* all */
+#define ACCESS_SPF_PASS_WORD		"SPF-PASS"			/* Connect:From, From */
+#define ACCESS_TAG_WORD			"TAG"				/* all */
+#define ACCESS_TEMPFAIL_WORD		"TEMPFAIL"			/* all */
+#define ACCESS_TRAP_WORD		"TRAP"				/* Connect, From, To */
 
-#define ACCESS_OK_RE		ACCESS_OK_WORD "(:\"[^\"]*\")?"
-#define ACCESS_CONTENT_RE	ACCESS_CONTENT_WORD
-#define ACCESS_DISCARD_RE	ACCESS_DISCARD_WORD
-#define ACCESS_IREJECT_RE	ACCESS_IREJECT_WORD "(:\"[^\"]*\")?"
-#define ACCESS_NEXT_RE		ACCESS_NEXT_WORD
-#define ACCESS_REJECT_RE	ACCESS_REJECT_WORD "(:\"[^\"]*\")?"
-#define ACCESS_SAVE_RE		ACCESS_SAVE_WORD
-#define ACCESS_SKIP_RE		ACCESS_SKIP_WORD
-#define ACCESS_SPF_PASS_RE	ACCESS_SPF_PASS_WORD
-#define ACCESS_TAG_RE		ACCESS_TAG_WORD
-#define ACCESS_TEMPFAIL_RE	ACCESS_TEMPFAIL_WORD "(:\"[^\"]*\")?"
-#define ACCESS_TRAP_RE		ACCESS_TRAP_WORD
+#define ACCESS_OK_RE			ACCESS_OK_WORD "(:\"[^\"]*\")?"
+#define ACCESS_CONTENT_RE		ACCESS_CONTENT_WORD
+#define ACCESS_DISCARD_RE		ACCESS_DISCARD_WORD
+#define ACCESS_IREJECT_RE		ACCESS_IREJECT_WORD "(:\"[^\"]*\")?"
+#define ACCESS_NEXT_RE			ACCESS_NEXT_WORD
+#define ACCESS_REJECT_RE		ACCESS_REJECT_WORD "(:\"[^\"]*\")?"
+#define ACCESS_SAVE_RE			ACCESS_SAVE_WORD
+#define ACCESS_SKIP_RE			ACCESS_SKIP_WORD
+#define ACCESS_SPF_PASS_RE		ACCESS_SPF_PASS_WORD
+#define ACCESS_TAG_RE			ACCESS_TAG_WORD
+#define ACCESS_TEMPFAIL_RE		ACCESS_TEMPFAIL_WORD "(:\"[^\"]*\")?"
+#define ACCESS_TRAP_RE			ACCESS_TRAP_WORD
 
 #define ACCESS_PATTERN_LIST_RE	"(([/![].+[]!/])?[A-Z-]+(:\".*\")?([ \t]+)?)+([ \t]+[A-Z-]+)?"
 

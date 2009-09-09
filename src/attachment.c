@@ -310,6 +310,9 @@ typedef union {
 typedef struct {
 	Mime *mime;
 	Session *session;
+	char *filename;
+	char *mimetype;
+	char *archname;
 	Vector compressed_names;
 	Vector content_types;
 	Vector content_names;
@@ -369,6 +372,14 @@ attachmentRset(Session *sess, va_list ignore)
 	LOG_TRACE(sess, 819, attachmentRset);
 
 	ctx = filterGetContext(sess, attachment_context);
+
+	if (ctx->filename != optDenyContentName.string)
+		free(ctx->filename);
+	if (ctx->mimetype != optDenyContentType.string)
+		free(ctx->mimetype);
+	if (ctx->archname != optDenyZipName.string)
+		free(ctx->archname);
+
 	VectorDestroy(ctx->content_names);
 	VectorDestroy(ctx->content_types);
 	VectorDestroy(ctx->compressed_names);
@@ -377,6 +388,94 @@ attachmentRset(Session *sess, va_list ignore)
 	ctx->compressed_names = NULL;
 	mimeFree(ctx->mime);
 	ctx->mime = NULL;
+
+	return SMTPF_CONTINUE;
+}
+
+int
+attachmentConnect(Session *sess, va_list ignore)
+{
+	Attachment *ctx;
+
+	ctx = filterGetContext(sess, attachment_context);
+
+	ctx->filename = ctx->mimetype = ctx->archname = NULL;
+	(void) accessClient(sess, ACCESS_FILENAME_CONN_TAG, sess->client.name, sess->client.addr, NULL, &ctx->filename, 1);
+	(void) accessClient(sess, ACCESS_MIMETYPE_CONN_TAG, sess->client.name, sess->client.addr, NULL, &ctx->mimetype, 1);
+	(void) accessClient(sess, ACCESS_ARCHNAME_CONN_TAG, sess->client.name, sess->client.addr, NULL, &ctx->archname, 1);
+
+	return SMTPF_CONTINUE;
+}
+
+int
+attachmentMail(Session *sess, va_list args)
+{
+	char *value;
+	ParsePath *mail;
+	Attachment *ctx;
+
+	mail = va_arg(args, ParsePath *);
+	ctx = filterGetContext(sess, attachment_context);
+
+	if (0 < mail->address.length) {
+		if (accessEmail(sess, ACCESS_FILENAME_RCPT_TAG, mail->address.string, NULL, &value) != SMDB_ACCESS_NOT_FOUND) {
+			free(ctx->filename);
+			ctx->filename = value;
+		}
+		if (accessEmail(sess, ACCESS_MIMETYPE_RCPT_TAG, mail->address.string, NULL, &value) != SMDB_ACCESS_NOT_FOUND) {
+			free(ctx->mimetype);
+			ctx->mimetype = value;
+		}
+		if (accessEmail(sess, ACCESS_ARCHNAME_RCPT_TAG, mail->address.string, NULL, &value) != SMDB_ACCESS_NOT_FOUND) {
+			free(ctx->archname);
+			ctx->archname = value;
+		}
+	}
+
+	return SMTPF_CONTINUE;
+}
+
+int
+attachmentRcpt(Session *sess, va_list args)
+{
+	char *value;
+	ParsePath *rcpt;
+	Attachment *ctx;
+
+	rcpt = va_arg(args, ParsePath *);
+	ctx = filterGetContext(sess, attachment_context);
+
+	if (0 < rcpt->address.length) {
+		if (accessEmail(sess, ACCESS_FILENAME_RCPT_TAG, rcpt->address.string, NULL, &value) != SMDB_ACCESS_NOT_FOUND) {
+			free(ctx->filename);
+			ctx->filename = value;
+		}
+		if (accessEmail(sess, ACCESS_MIMETYPE_RCPT_TAG, rcpt->address.string, NULL, &value) != SMDB_ACCESS_NOT_FOUND) {
+			free(ctx->mimetype);
+			ctx->mimetype = value;
+		}
+		if (accessEmail(sess, ACCESS_ARCHNAME_RCPT_TAG, rcpt->address.string, NULL, &value) != SMDB_ACCESS_NOT_FOUND) {
+			free(ctx->archname);
+			ctx->archname = value;
+		}
+	}
+
+	return SMTPF_CONTINUE;
+}
+
+int
+attachmentData(Session *sess, va_list ignore)
+{
+	Attachment *ctx;
+
+	ctx = filterGetContext(sess, attachment_context);
+
+	if (ctx->filename == NULL)
+		ctx->filename = optDenyContentName.string;
+	if (ctx->mimetype == NULL)
+		ctx->mimetype = optDenyContentType.string;
+	if (ctx->archname == NULL)
+		ctx->archname = optDenyZipName.string;
 
 	return SMTPF_CONTINUE;
 }
@@ -412,28 +511,28 @@ attachmentMimeHeader(Mime *m)
 		syslog(LOG_DEBUG, LOG_MSG(822) "MIME header buffer=\"%s\"", LOG_ARGS(ctx->session), m->source.buffer);
 
 	/* RFC 2045, 2046 MIME part 1 & 2 Content-Type */
-	if (0 <= (offset = TextFind(m->source.buffer, "Content-Type:*", m->source.length, 1))) {
+	if (0 <= (offset = TextFind((char *) m->source.buffer, "Content-Type:*", m->source.length, 1))) {
 		/* New Content-Type header, disable the decoded octet handler. */
 		m->mime_decoded_octet = NULL;
 
 		offset += sizeof ("Content-Type:")-1;
-		offset += strspn(m->source.buffer+offset, " \t");
+		offset += strspn((char *) m->source.buffer+offset, " \t");
 
-		span = strcspn(m->source.buffer+offset, "; \t\r\n");
+		span = strcspn((char *) m->source.buffer+offset, "; \t\r\n");
 
 		ch = m->source.buffer[offset+span];
 		m->source.buffer[offset+span] = '\0';
 
-		if (attachmentMimeCheck(ctx, m->source.buffer+offset, ctx->content_types))
+		if (attachmentMimeCheck(ctx, (char *) m->source.buffer+offset, ctx->content_types))
 			statsCount(&statDenyContentType);
 
 		/* application/x-zip-compressed application/zip */
-		else if (0 <= TextFind(m->source.buffer+offset, "*application/*zip*", m->source.length-offset, 1)) {
+		else if (0 <= TextFind((char *) m->source.buffer+offset, "*application/*zip*", m->source.length-offset, 1)) {
 			/* Decoded .zip attachments on the fly. */
 			m->mime_body_start = attachmentZipMimePartStart;
 		}
 
-		else if (0 <= TextFind(m->source.buffer+offset, "*application/x-rar*", m->source.length-offset, 1)) {
+		else if (0 <= TextFind((char *) m->source.buffer+offset, "*application/x-rar*", m->source.length-offset, 1)) {
 			/* Decoded .rar attachments on the fly. */
 			m->mime_body_start = attachmentRarMimePartStart;
 		}
@@ -441,48 +540,48 @@ attachmentMimeHeader(Mime *m)
 		m->source.buffer[offset+span] = ch;
 		offset += span;
 
-		if (0 <= TextFind(m->source.buffer+offset, "*name=*.zip*", m->source.length-offset, 1)) {
+		if (0 <= TextFind((char *) m->source.buffer+offset, "*name=*.zip*", m->source.length-offset, 1)) {
 			/* Decoded .zip attachments on the fly. */
 			m->mime_body_start = attachmentZipMimePartStart;
-		} else if (0 <= TextFind(m->source.buffer+offset, "*name=*.rar*", m->source.length-offset, 1)) {
+		} else if (0 <= TextFind((char *) m->source.buffer+offset, "*name=*.rar*", m->source.length-offset, 1)) {
 			/* Decoded .rar attachments on the fly. */
 			m->mime_body_start = attachmentRarMimePartStart;
 		}
 
-		if (0 <= (span = TextFind(m->source.buffer+offset, "*name=*", m->source.length-offset, 1))) {
+		if (0 <= (span = TextFind((char *) m->source.buffer+offset, "*name=*", m->source.length-offset, 1))) {
 			offset += span + sizeof ("name=")-1;
 			has_quote = m->source.buffer[offset] == '"';
 
 			if (has_quote) {
 				offset++;
-				span = strcspn(m->source.buffer+offset, "\"");
+				span = strcspn((char *) m->source.buffer+offset, "\"");
 			} else {
-				span = strcspn(m->source.buffer+offset, "; \t\r\n");
+				span = strcspn((char *) m->source.buffer+offset, "; \t\r\n");
 			}
 
 			ch = m->source.buffer[offset+span];
 			m->source.buffer[offset+span] = '\0';
-			if (attachmentMimeCheck(ctx, m->source.buffer+offset, ctx->content_names))
+			if (attachmentMimeCheck(ctx, (char *) m->source.buffer+offset, ctx->content_names))
 				statsCount(&statDenyContentName);
 			m->source.buffer[offset+span] = ch;
 		}
 	}
 
 	/* RFC 2183 Content-Disposition */
-	if (0 <= (offset = TextFind(m->source.buffer, "Content-Disposition:*filename=*", m->source.length, 1))) {
-		offset += TextFind(m->source.buffer+offset, "*filename=*", m->source.length-offset, 1) + sizeof ("filename=")-1;
+	if (0 <= (offset = TextFind((char *) m->source.buffer, "Content-Disposition:*filename=*", m->source.length, 1))) {
+		offset += TextFind((char *) m->source.buffer+offset, "*filename=*", m->source.length-offset, 1) + sizeof ("filename=")-1;
 		has_quote = m->source.buffer[offset] == '"';
 
 		if (has_quote) {
 			offset++;
-			span = strcspn(m->source.buffer+offset, "\"");
+			span = strcspn((char *) m->source.buffer+offset, "\"");
 		} else {
-			span = strcspn(m->source.buffer+offset, "; \t\r\n");
+			span = strcspn((char *) m->source.buffer+offset, "; \t\r\n");
 		}
 
 		ch = m->source.buffer[offset+span];
 		m->source.buffer[offset+span] = '\0';
-		if (attachmentMimeCheck(ctx, m->source.buffer+offset, ctx->content_names))
+		if (attachmentMimeCheck(ctx, (char *) m->source.buffer+offset, ctx->content_names))
 			statsCount(&statDenyContentName);
 		m->source.buffer[offset+span] = ch;
 	}
@@ -503,17 +602,17 @@ attachmentHeaders(Session *sess, va_list args)
 	if ((ctx->mime = mimeCreate(ctx)) == NULL)
 		goto error0;
 
-	if ((ctx->content_types = TextSplit(optDenyContentType.string, OPTION_LIST_DELIMS, 0)) == NULL)
+	if ((ctx->compressed_names = TextSplit(ctx->archname, OPTION_LIST_DELIMS, 0)) == NULL)
 		goto error0;
 
-	if ((ctx->content_names = TextSplit(optDenyContentName.string, OPTION_LIST_DELIMS, 0)) == NULL)
+	if ((ctx->content_names = TextSplit(ctx->filename, OPTION_LIST_DELIMS, 0)) == NULL)
+		goto error0;
+
+	if ((ctx->content_types = TextSplit(ctx->mimetype, OPTION_LIST_DELIMS, 0)) == NULL)
 		goto error0;
 
 	/* Are BOTH lists empty? */
 	if (VectorLength(ctx->content_types) == 0 && VectorLength(ctx->content_names))
-		goto error0;
-
-	if ((ctx->compressed_names = TextSplit(optDenyZipName.string, OPTION_LIST_DELIMS, 0)) == NULL)
 		goto error0;
 
 	ctx->mime->mime_header = attachmentMimeHeader;
@@ -686,7 +785,7 @@ attachmentZipMimeDecodedOctet(Mime *m, int octet)
 
 		if (ctx->hdr.zip.file.filename_length == 0) {
 			ctx->hdr.zip.base[ctx->hdr_length++] = '\0';
-			if (attachmentMimeCheck(ctx, ctx->hdr.zip.base + sizeof (ZipLocalFileHeader), ctx->compressed_names))
+			if (attachmentMimeCheck(ctx, (char *) ctx->hdr.zip.base + sizeof (ZipLocalFileHeader), ctx->compressed_names))
 				statsCount(&statDenyZipName);
 		}
 
@@ -829,7 +928,7 @@ attachmentRarMimeDecodedOctet(Mime *m, int octet)
 
 		if (ctx->hdr.rar.file.name_size == 0) {
 			ctx->hdr.rar.base[ctx->hdr_length++] = '\0';
-			if (attachmentMimeCheck(ctx, ctx->hdr.rar.base + sizeof (RarFileHeader), ctx->compressed_names))
+			if (attachmentMimeCheck(ctx, (char *) ctx->hdr.rar.base + sizeof (RarFileHeader), ctx->compressed_names))
 				statsCount(&statDenyZipName);
 
 			if (verb_attachment.option.value) {
