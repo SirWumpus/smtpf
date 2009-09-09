@@ -1255,6 +1255,7 @@ session_create(ServerSession *session)
 	sess->client.octets = 0;
 	sess->client.name[0] = '\0';
 	sess->client.helo[0] = '\0';
+	sess->client.sender_domain[0] = '\0';
 	sess->client.command_pause = 0;
 	sess->client.auth_count = 0;
 	sess->client.mail_count = 0;

@@ -485,6 +485,7 @@ typedef struct {
 	char name[SMTP_DOMAIN_LENGTH+1];
 	char auth[SMTP_TEXT_LINE_LENGTH+1];
 	char helo[SMTP_COMMAND_LINE_LENGTH+1];
+	char sender_domain[SMTP_DOMAIN_LENGTH+1];
 	unsigned char ipv6[IPV6_BYTE_LENGTH];
 } Client;
 

@@ -103,10 +103,19 @@ Option optHeloIpMismatch		= { "helo-ip-mismatch",		"-",	usage_helo_ip_mismatch }
 Option optHeloIsPtr			= { "helo-is-ptr",		"-",	usage_helo_is_ptr };
 Option optIdleRetestTimer		= { "idle-retest-timer",	"300",	usage_idle_retest_timer };
 Option optOneRcptPerNull		= { "one-rcpt-per-null",	"+",	usage_one_rcpt_per_null };
+
+static const char usage_one_domain_per_session[] =
+  "If set, only permit mail from one sender domain per session. Mail\n"
+"# from other domains will be temporarily rejected.\n"
+"#"
+;
+Option optOneDomainPerSession		= { "one-domain-per-session",	"-",	usage_one_domain_per_session };
+
 #ifndef ENABLE_PDQ
 Option optMailIpInNs			= { "_mail-ip-in-ns",		"-",	"Reject if a sender's NS contains IP-in-name." };
 Option optMailNsNxDomain		= { "_mail-ns-nxdomain",		"-",	"Reject if a sender's NS is in a non-existant domain." };
 #endif
+
 Option optMailRequireMx			= { "mail-require-mx",		"+",	"Reject if the sender's domain has no MX record." };
 Option optMailRetestClient		= { "mail-retest-client",	"-",	usage_mail_retest_client };
 Option optRFC2821StrictHelo		= { "rfc2821-strict-helo", 	"+", 	usage_rfc2821_strict_helo };
@@ -159,7 +168,9 @@ Stats stat_mail_ns_nxdomain		= { STATS_TABLE_MAIL, "_mail-ns-nxdomain" };
 #endif
 Stats stat_mail_require_mx		= { STATS_TABLE_MAIL, "mail-require-mx" };
 Stats stat_mail_require_mx_error	= { STATS_TABLE_MAIL, "mail-require-mx-error" };
+Stats stat_one_domain_per_session	= { STATS_TABLE_MAIL, "one-domain-per-session" };
 Stats stat_one_rcpt_per_null		= { STATS_TABLE_RCPT, "one-rcpt-per-null" };
+
 Stats stat_smtp_command_pause		= { STATS_TABLE_CONNECT, "smtp-command-pause" };
 Stats stat_smtp_greet_pause		= { STATS_TABLE_CONNECT, "smtp-greet-pause" };
 Stats stat_rfc2821_strict_helo		= { STATS_TABLE_CONNECT, "rfc2821-strict-helo" };
@@ -1233,6 +1244,7 @@ miscRegister(Session *sess, va_list ignore)
 	optionsRegister(&optMailRequireMx, 0);
 	optionsRegister(&optMailRetestClient, 0);
 	optionsRegister(&optOneRcptPerNull, 0);
+	optionsRegister(&optOneDomainPerSession, 0);
 	optionsRegister(&optRFC28227bitHeaders, 0);
 	optionsRegister(&optRFC2822MinHeaders, 0);
 	optionsRegister(&optRFC2822MissingEOH, 0);
@@ -1252,6 +1264,7 @@ miscRegister(Session *sess, va_list ignore)
 #endif
 	(void) statsRegister(&stat_mail_require_mx);
 	(void) statsRegister(&stat_mail_require_mx_error);
+	(void) statsRegister(&stat_one_domain_per_session);
 	(void) statsRegister(&stat_one_rcpt_per_null);
 	(void) statsRegister(&stat_rfc2821_strict_helo);
 	(void) statsRegister(&stat_rfc2822_7bit_headers);

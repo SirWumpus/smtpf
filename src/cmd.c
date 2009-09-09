@@ -778,6 +778,14 @@ See
 		goto error1;
 	}
 
+	if (*sess->client.sender_domain == '\0') {
+		(void) TextCopy(sess->client.sender_domain, sizeof (sess->client.sender_domain), sess->msg.mail->domain.string);
+	} else if (optOneDomainPerSession.value && strcmp(sess->client.sender_domain, sess->msg.mail->domain.string) != 0) {
+		rc = replySetFmt(sess, SMTPF_REJECT, "450 4.7.1 more than one sender <%s> domain per session; domain=%s" ID_MSG(000) CRLF, sess->msg.mail->address.string, sess->client.sender_domain, ID_ARG(sess));
+		statsCount(&stat_one_domain_per_session);
+		goto error1;
+	}
+
 	getMsgId(sess, sess->msg.id);
 
 	if (span != sizeof ("MAIL FROM:")-1) {
