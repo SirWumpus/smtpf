@@ -271,6 +271,32 @@ is no set schedule for releases.
    +	ideally "dns-gl < SPF fail < CONTENT", but currently the precedence
    	is actually "SPF fail < dns-gl = CONTENT".
 
+--2.2.32--
+
+   +	attachment.c/h, access.c/h: added support for filename-*,
+   	mimetype-*, and archname-* access tags.
+
+   !	grey-content hack for Exchange:
+
+   	Exchange is a piece of crap. The MD5 of first message body
+	does not match the MD5 of the second and and subsequent
+	message retries. Exchange appears to change the MIME
+	boundary, possible QP, and spacing, and might add also
+	message disclaimers, essentially fucking with any attempt
+	to hash the first message body.
+
+	The only constant is that the message-id is the same: so
+	we cache the message-id of the first attempt. On the second
+	attempt of the message with the same message-id, we replace
+	the first MD5 hash with the value of the second message
+	attempt, discard the message-id from the cache, and temp.
+	fail one more time. The third retry the message should thus
+	subsequently pass grey-content.
+
+	Suggested fix by Steve Freegard.
+
+   +	Added one-domain-per-session option.
+
 --2.2.31--
 
    !	Fixed bug concerning double tagging the subject line. In
