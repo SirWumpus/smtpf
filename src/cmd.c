@@ -1382,6 +1382,7 @@ chunkBufferForward(Socket2 *daemon, unsigned char *buffer, size_t size)
 static void
 forwardChunk(Session *sess, unsigned char *chunk, long size)
 {
+	size_t written;
 	int sent, count;
 	Connection *fwd;
 
@@ -1389,11 +1390,11 @@ forwardChunk(Session *sess, unsigned char *chunk, long size)
 
 	for (fwd = sess->msg.fwds; fwd != NULL; fwd = fwd->next, count++) {
 # ifdef OLD_SMTP_ERROR_CODES
-		if (!(fwd->smtp_error & SMTP_ERROR_IO_MASK) && chunkBufferForward(fwd->mx, chunk, size) < size) {
+		if (!(fwd->smtp_error & SMTP_ERROR_IO_MASK) && (written = chunkBufferForward(fwd->mx, chunk, size)) < size) {
 # else
-		if (fwd->smtp_code != SMTP_ERROR_IO && chunkBufferForward(fwd->mx, chunk, size) < size) {
+		if (fwd->smtp_code != SMTP_ERROR_IO && (written = chunkBufferForward(fwd->mx, chunk, size)) < size) {
 # endif
-			syslog(LOG_ERR, LOG_MSG(301) "chunk write error: %s (%d)", LOG_ARGS(sess), strerror(errno), errno);
+			syslog(LOG_ERR, LOG_MSG(301) "chunk write error size=%ld written=%lu: %s (%d)", LOG_ARGS(sess), size, (unsigned long) written, strerror(errno), errno);
 /*{LOG
 There was an I/O write error while trying to relay a DATA chunk to a forward host.
 }*/
@@ -1404,7 +1405,7 @@ There was an I/O write error while trying to relay a DATA chunk to a forward hos
 #endif
 		} else {
 			sent++;
-			fwd->length += size;
+			fwd->length += written;
 #ifdef HAVE_PTHREAD_YIELD
 			pthread_yield();
 #endif
@@ -1937,7 +1938,7 @@ if (MSG_NOT_SET(sess, MSG_TAG) && !(optSaveData.value & 2)) {
 		case SMTPF_ACCEPT:
 		case SMTPF_CONTINUE:
 #if !defined(FILTER_SPAMD) && defined(FILTER_SPAMD2)
-if (MSG_NOT_SET(sess, MSG_TAG) && *optSpamdSocket.string == '\0')
+if (MSG_NOT_SET(sess, MSG_TAG) && !(optSaveData.value & 2))
 #endif
 			forwardChunk(sess, sess->msg.chunk1, sess->msg.chunk1_length);
 		}
