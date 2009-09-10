@@ -64,7 +64,7 @@ static const char usage_ctasd_stream[] =
 "# the message is passed by temporary file reference.\n"
 "#"
 ;
-Option optCtasdStream	= { "ctasd-stream",	"-",		usage_ctasd_stream };
+Option optCtasdStream	= { "ctasd-stream",	"0",		usage_ctasd_stream };
 
 static const char usage_ctasd_subject_tag[] =
   "When the ctasd server reports the message as suspicious then the Subject\n"
