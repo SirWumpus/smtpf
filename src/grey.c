@@ -674,31 +674,33 @@ greyCacheUpdate(Session *sess, Grey *grey, char *key, long *delay, int at_dot)
 		row.value_data[34] = ' ';
 		(void) TextCopy((char *) row.value_data+35, sizeof (row.value_data)-35, grey->digest);
 
-		/* Exchange is a piece of crap. The MD5 of first message body
-		 * does not match the MD5 of the second and and subsequent
-		 * message retries. Exchange appears to change the MIME
-		 * boundary, possible QP, and spacing, and might add also
-		 * message disclaimers, essentially fucking with any attempt
-		 * to hash the first message body.
-		 *
-		 * The only constant is that the message-id is the same: so
-		 * we cache the message-id of the first attempt. On the second
-		 * attempt of the message with the same message-id, we replace
-		 * the first MD5 hash with the value of the second message
-		 * attempt, discard the message-id from the cache, and temp.
-		 * fail one more time. The third retry the message should thus
-		 * subsequently pass grey-content.
-		 */
-		MEMSET(&id_row, 0, sizeof (id_row));
-		id_row.created = now;
-		id_row.expires = row.expires;
-		id_row.key_size = (unsigned short) snprintf((char *) id_row.key_data, sizeof (id_row.key_data), "grey-msgid:%s", sess->msg.msg_id);
-		while (isspace(id_row.key_data[id_row.key_size-1]))
-			id_row.key_size--;
-		id_row.value_data[0] = row.value_data[0];
-		id_row.value_size = 1;
+		if (sess->msg.msg_id != NULL) {
+			/* Exchange is a piece of crap. The MD5 of first message body
+			 * does not match the MD5 of the second and and subsequent
+			 * message retries. Exchange appears to change the MIME
+			 * boundary, possible QP, and spacing, and might add also
+			 * message disclaimers, essentially fucking with any attempt
+			 * to hash the first message body.
+			 *
+			 * The only constant is that the message-id is the same: so
+			 * we cache the message-id of the first attempt. On the second
+			 * attempt of the message with the same message-id, we replace
+			 * the first MD5 hash with the value of the second message
+			 * attempt, discard the message-id from the cache, and temp.
+			 * fail one more time. The third retry the message should thus
+			 * subsequently pass grey-content.
+			 */
+			MEMSET(&id_row, 0, sizeof (id_row));
+			id_row.created = now;
+			row.expires = now + cacheGetTTL(rc);
+			id_row.key_size = (unsigned short) snprintf((char *) id_row.key_data, sizeof (id_row.key_data), "grey-msgid:%s", sess->msg.msg_id);
+			while (isspace(id_row.key_data[id_row.key_size-1]))
+				id_row.key_size--;
+			id_row.value_data[0] = row.value_data[0];
+			id_row.value_size = 1;
 
-		(void) mccPutRow(mcc, &id_row);
+			(void) mccPutRow(mcc, &id_row);
+		}
 	}
 
 	/* Is the tuple still being temporarily blocked? */
@@ -726,26 +728,30 @@ greyCacheUpdate(Session *sess, Grey *grey, char *key, long *delay, int at_dot)
 			&& strncmp((char *) row.value_data+35, grey->digest, 32) != 0
 			) {
 				/* Exchange is a piece of crap. See note above. */
-				MEMSET(&id_row, 0, sizeof (id_row));
-				id_row.key_size = (unsigned short) snprintf((char *) id_row.key_data, sizeof (id_row.key_data), "grey-msgid:%s", sess->msg.msg_id);
-				while (isspace(id_row.key_data[id_row.key_size-1]))
-					id_row.key_size--;
+				if (sess->msg.msg_id != NULL) {
+					MEMSET(&id_row, 0, sizeof (id_row));
+					id_row.key_size = (unsigned short) snprintf((char *) id_row.key_data, sizeof (id_row.key_data), "grey-msgid:%s", sess->msg.msg_id);
+					while (isspace(id_row.key_data[id_row.key_size-1]))
+						id_row.key_size--;
 
-				if (mccGetRow(mcc, &id_row) == MCC_OK) {
-					/* Remove cached grey-msgid: row. */
-					(void) mccDeleteRow(mcc, &id_row);
+					if (mccGetRow(mcc, &id_row) == MCC_OK) {
+						/* Remove cached grey-msgid: row. */
+						(void) mccDeleteRow(mcc, &id_row);
 
-					if (verb_grey.option.value)
-						syslog(LOG_DEBUG, LOG_MSG(000) "grey content hash replaced msg-id=%s key={%s} value={%s} hash=%s", LOG_ARGS(sess), sess->msg.msg_id, key, row.value_data, grey->digest);
+						if (verb_info.option.value)
+							syslog(LOG_INFO, LOG_MSG(000) "grey content hash replaced msg-id=%s key={%s} value={%s} hash=%s", LOG_ARGS(sess), sess->msg.msg_id, key, row.value_data, grey->digest);
 
-					/* Replace the first seen message hash. */
-					row.value_data[1] = ' ';
-					row.expires = now + optGreyTempFailTTL.value;
-					(void) TextCopy((char *) row.value_data+2, sizeof (row.value_data)-2, grey->digest);
+						/* Replace the first seen message hash. */
+						row.value_data[1] = ' ';
+						row.created = now;
+						row.expires = now + optGreyTempFailTTL.value;
+						(void) TextCopy((char *) row.value_data+2, sizeof (row.value_data)-2, grey->digest);
 
-					statsCount(&stat_grey_hash_replaced);
-
-					goto error2;
+						statsCount(&stat_grey_hash_replaced);
+						if (delay != NULL)
+							*delay = row.created + grey->period  - now;
+						break;
+					}
 				}
 
 				/* Keep returning temp.fail until we see a
@@ -807,7 +813,7 @@ greyCacheUpdate(Session *sess, Grey *grey, char *key, long *delay, int at_dot)
 		row.expires = now + cacheGetTTL(rc);
 		break;
 	}
-error2:
+
 	if (verb_cache.option.value)
 		syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), row.key_data, row.value_data, FILE_LINENO);
 	if (mccPutRow(mcc, &row) == MCC_ERROR) {
