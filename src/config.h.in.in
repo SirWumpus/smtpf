@@ -68,7 +68,7 @@ extern "C" {
 #endif
 
 #ifndef THREAD_STACK_SIZE
-# define THREAD_STACK_SIZE		(64 * 1024)
+# define THREAD_STACK_SIZE		(48 * 1024)
 #endif
 #if THREAD_STACK_SIZE < PTHREAD_STACK_MIN
 # undef THREAD_STACK_SIZE
