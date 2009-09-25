@@ -62,6 +62,8 @@ A forward host has rejected a message and a DSN has been sent,
 	if (sess->msg.mail->address.length == 0)
 		return;
 
+	/*** TODO add support for Errors-To: header ***/
+
 	if ((smtp = smtp2OpenMx(sess->msg.mail->domain.string, optSmtpConnectTimeout.value, optSmtpCommandTimeout.value, 1)) == NULL)
 		return;
 
