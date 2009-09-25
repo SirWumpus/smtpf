@@ -8,11 +8,11 @@
  * Must be a power of two.
  */
 #ifndef HASH_TABLE_SIZE
-#define HASH_TABLE_SIZE		(4 * 1024)
+#define HASH_TABLE_SIZE		(16 * 1024)
 #endif
 
 #ifndef MAX_LINEAR_PROBE
-#define MAX_LINEAR_PROBE	16
+#define MAX_LINEAR_PROBE	24
 #endif
 
 /***********************************************************************

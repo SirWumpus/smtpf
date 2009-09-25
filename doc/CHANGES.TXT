@@ -289,6 +289,11 @@ is no set schedule for releases.
 	seconds to wait before continuing after sending the QUIT signal
 	to the old running process.
 
+   !	rate.c, concurrent.c: increase each HASH_TABLE_SIZE from 4KB to
+	16KB and MAX_LINEAR_PROBE 16 to 24. Most mail systems will have
+	plenty of memory such that 32KB for rate and concurrent hash
+	tables is no big deal vs thepotential performance gains.
+
 --2.2.32--
 
    +	attachment.c/h, access.c/h: added support for filename-*,
