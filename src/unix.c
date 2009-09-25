@@ -453,6 +453,7 @@ restart_main:
 		LogOpen("(standard error)");
 
 	if (optRestart.string != NULL || optRestartIf.string != NULL) {
+		long seconds = strtol(optRestart.string, NULL, 10);
 		if (pidKill(optRunPidFile.string, SIGTERM) && optRestartIf.string != NULL) {
 			syslog(LOG_ERR, LOG_NUM(733) "no previous instance running: %s (%d)", strerror(errno), errno);
 /*{LOG
@@ -462,7 +463,7 @@ not start.
 }*/
 			exit(1);
 		}
-		sleep(2);
+		sleep(seconds < 1 ? 1 : seconds);
 	}
 
 	/* The default is to always start as a daemon or Windows service.
