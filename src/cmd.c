@@ -136,8 +136,9 @@ cmdUnknown(Session *sess)
 	int rc;
 
 	if (optSmtpDropUnknown.value
-	/* Stupid Cisco PIX obfuscates ESMTP EHLO and some other extensions.
-	 * Also ignore extended SMTP commands like Postfix's XCLIENT
+	/* Stupid Cisco PIX obfuscates ESMTP EHLO ie. XXXX and some other
+	 * extensions. Also ignore extended SMTP commands like Postfix's
+	 * XCLIENT
 	 */
  	&& (sess->input[0] != 'X' || sess->helo_state == stateHelo)
 	&& CLIENT_NOT_SET(sess, CLIENT_HOLY_TRINITY)) {
@@ -1640,7 +1641,7 @@ static int
 readClientData(Session *sess, unsigned char *chunk, unsigned long *size)
 {
 	long length, offset;
-	int rc, last_line_was_dot_lf;
+	int rc, last_line_was_dot_lf, leading_dot_removed;
 
 	if (verb_trace.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(317) "enter readClientData()", LOG_ARGS(sess));
@@ -1661,19 +1662,24 @@ readClientData(Session *sess, unsigned char *chunk, unsigned long *size)
 			goto read_error;
 
 		/* Check for dot transparency at start of new line. */
+		leading_dot_removed = 0;
 		if ((length = socketPeek(sess->client.socket, chunk+offset, 2)) < 0)
 			goto read_error;
 
 		if (length == 2 && chunk[offset] == '.' && chunk[offset+1] != '\r' && chunk[offset+1] != '\n') {
 			/* Strip SMTP dot transparency. RFC 5321 section 4.5.2. */
 			(void) socketRead(sess->client.socket, chunk+offset, 1);
+			leading_dot_removed = 1;
 		}
 
 		/* Get remainder of line. */
 		length = socketReadLine2(sess->client.socket, (char *) chunk+offset, sizeof (sess->msg.chunk1)-1-offset, 1);
-		if (verb_smtp_data.option.value)
-			syslog(LOG_DEBUG, LOG_MSG(318) "line %ld:%.40s", LOG_ARGS(sess), length, chunk+offset);
-
+		if (verb_smtp_data.option.value) {
+			if (leading_dot_removed)
+				syslog(LOG_DEBUG, LOG_MSG(318) "line %ld:.%.75s", LOG_ARGS(sess), length+1, chunk+offset);
+			else
+				syslog(LOG_DEBUG, LOG_MSG(318) "line %ld:%.75s", LOG_ARGS(sess), length, chunk+offset);
+		}
 		if (length < 0) {
 read_error:
 			if (errno != 0)
@@ -1716,7 +1722,7 @@ See <a href="summary.html#opt_rfc2821_line_length">rfc2821-line-length</a>.
 		last_line_was_dot_lf = 0;
 
 		/* Look for RFC 2821 compliant CRLF-DOT-CRLF sequence. */
-		if (chunk[offset] == '.') {
+		if (!leading_dot_removed && chunk[offset] == '.') {
 			/* RFC 2821 section 4.1.1.4 DATA paragraph 2 & 3 states
 			 * that only CRLF-DOT-CRLF can terminate the message and
 			 * that LF-DOT-LF, LF-DOT-CRLF, and CRLF-DOT-LF are NOT
@@ -2401,8 +2407,8 @@ cmdXclient(Session *sess)
 	int rc;
 	long length;
 	Vector args;
+	const char **list, *value;
 	extern void checkClientIP(Session *);
-	const char **list, *value, *name = NULL;
 
 	if (!optSmtpXclientEnable.value || CLIENT_NOT_SET(sess, CLIENT_USUAL_SUSPECTS))
 		return cmdOutOfSequence(sess);
@@ -2422,15 +2428,15 @@ cmdXclient(Session *sess)
 	for (list = (const char **) VectorBase(args);  *list != NULL; list++) {
 		if (0 <= TextInsensitiveStartsWith(*list, "NAME=")) {
 			value = *list + sizeof ("NAME=")-1;
-			if (TextInsensitiveCompare(name, "[UNAVAILABLE]") == 0) {
+			if (TextInsensitiveCompare(value, "[UNAVAILABLE]") == 0) {
 				CLIENT_SET(sess, CLIENT_NO_PTR);
 				statsCount(&stat_client_ptr_required);
-			} else if (TextInsensitiveCompare(name, "[TEMPUNAVAIL]") == 0) {
+			} else if (TextInsensitiveCompare(value, "[TEMPUNAVAIL]") == 0) {
 				CLIENT_SET(sess, CLIENT_NO_PTR|CLIENT_NO_PTR_ERROR);
 				statsCount(&stat_client_ptr_required_error);
 				statsCount(&stat_client_ptr_required);
 			} else {
-				length = TextCopy(sess->client.name, sizeof (sess->client.name), name);
+				length = TextCopy(sess->client.name, sizeof (sess->client.name), value);
 				if (0 < length && sess->client.name[length-1] == '.')
 					sess->client.name[length-1] = '\0';
 				TextLower(sess->client.name, length);
