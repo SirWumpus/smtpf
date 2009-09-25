@@ -271,6 +271,24 @@ is no set schedule for releases.
    +	ideally "dns-gl < SPF fail < CONTENT", but currently the precedence
    	is actually "SPF fail < dns-gl = CONTENT".
 
+--2.2.33--
+
+   !	greyCacheUpdate: minor fix to skip the grey-content hack for
+	Exchange when there is no Message-ID available.
+
+   !	THREAD_STACK_SIZE reduce from 64 to 48 KB in an effort to reduce
+	wasted memory overhead.
+
+   !	readClientData: fix another issue related to the dot
+	transparency fix.
+
+   !	cmdXclient: fixed seg.fault caused when NAME= specified due to
+	wrong variable being referenced.
+
+   !	Enhanced restart command option to take a numeric value of
+	seconds to wait before continuing after sending the QUIT signal
+	to the old running process.
+
 --2.2.32--
 
    +	attachment.c/h, access.c/h: added support for filename-*,
@@ -296,6 +314,13 @@ is no set schedule for releases.
 	Suggested fix by Steve Freegard.
 
    +	Added one-domain-per-session option.
+
+   !	Change ctasd-stream from boolean to value: 0 = message file,
+	1 = proxy streaming, 2 = stream message file. ctasd-stream=1 does
+	not work yet without changes to ctasd to detect EOF or do chunked
+	data instead of depending on Content-Length: header.
+
+   !	cmdData: Fix bug related to previous transparency fix.
 
 --2.2.31--
 
