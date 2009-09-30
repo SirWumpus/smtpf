@@ -384,8 +384,17 @@ summarySession(Session *sess, time_t elapsed)
 /*{LOG
 The end of a connected client's session. This line gives a summary of client information.
 It cannot be suppressed.
-The fields are: i= connected client IP, p= client PTR name, f= session flags,
-h= HELO argument, m= MAIL FROM: count, b= bytes sent during the session, t= session time in seconds,
-and p0f= p0f information.
+The fields are:
+i= connected client IP,
+p= client PTR name,
+f= session flags,
+h= HELO argument,
+m= total foward / message count,
+b= total bytes sent,
+R= total reject count,
+t= session time in seconds,
+l= last reject or temp. fail reply sent to client,
+and
+p0f= p0f information if available.
 }*/
 }
