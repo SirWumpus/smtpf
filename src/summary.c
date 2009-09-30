@@ -350,7 +350,7 @@ p0fSummary(Session *sess)
 	int length;
 	P0F *data = filterGetContext(sess, p0f_context);
 
-	length = snprintf(sess->input, sizeof (sess->input), "p0f=\"");
+	length = snprintf(sess->input, sizeof (sess->input), " p0f=\"");
 
 	if (data->p_response.magic != QUERY_MAGIC
 	|| data->p_response.type != RESP_OK
@@ -374,10 +374,11 @@ void
 summarySession(Session *sess, time_t elapsed)
 {
 	syslog(
-		LOG_INFO, LOG_MSG(721) "end i=%s p=\"%s\" f=\"%s\" h=\"%s\" m=%u/%u b=%lu R=%d t=%lu %s", LOG_ARGS(sess),
+		LOG_INFO, LOG_MSG(721) "end i=%s p=\"%s\" f=\"%s\" h=\"%s\" m=%u/%u b=%lu R=%d t=%lu l=\"%s\"%s", LOG_ARGS(sess),
 		sess->client.addr, sess->client.name, clientFlags(sess),
 		sess->client.helo, sess->client.forward_count, sess->client.mail_count,
 		sess->client.octets, sess->client.reject_count, (unsigned long) elapsed,
+		TextEmpty(sess->last_reply),
 		p0fSummary(sess)
 	);
 /*{LOG

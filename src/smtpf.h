@@ -536,6 +536,7 @@ struct smtpf {
 #ifdef ENABLE_LINT
 	Reply *lint_replies;
 #endif
+	char *last_reply;
 	smdb *route_map;	/* OLD_SERVER_MODEL */
 	smdb *access_map;	/* OLD_SERVER_MODEL */
 	Message msg;

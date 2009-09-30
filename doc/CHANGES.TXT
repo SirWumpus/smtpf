@@ -271,6 +271,12 @@ is no set schedule for releases.
    +	ideally "dns-gl < SPF fail < CONTENT", but currently the precedence
    	is actually "SPF fail < dns-gl = CONTENT".
 
+--2.2.35--
+
+   !	Record the first line of the last reject or temporary failure
+	reply sent to the client for reporting in the "end" log line.
+	Requested by Steve Freegard for the BMX+ interface.
+
 --2.2.34--
 
    !	readClientData: add pthread_testcancel points to the top and

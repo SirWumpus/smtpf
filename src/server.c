@@ -1234,7 +1234,11 @@ The SMTP service is ready to accept connections.
 int
 session_free(ServerSession *session)
 {
+	Session *sess;
+
 	if (session != NULL) {
+		sess = session->data;
+		free(sess->last_reply);
 		free(session->data);
 	}
 
@@ -1251,6 +1255,7 @@ session_create(ServerSession *session)
 
 	session->data = sess;
 	sess->session = session;
+	sess->last_reply = NULL;
 
 	sess->client.octets = 0;
 	sess->client.name[0] = '\0';

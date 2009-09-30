@@ -1190,6 +1190,7 @@ Stats stat_smtp_reject_delay	= { STATS_TABLE_CONNECT, "smtp-reject-delay" };
 int
 smtpReplyLog(Session *sess, va_list args)
 {
+	int span;
 	const char **reply;
 	size_t *reply_length;
 
@@ -1199,6 +1200,14 @@ smtpReplyLog(Session *sess, va_list args)
 	reply_length = va_arg(args, size_t *);
 
 	if ((SMTP_ISS_TEMP(*reply) || SMTP_ISS_PERM(*reply))) {
+		/* Remember first line of last reply for "end" log line.
+		 * Requested by	Steve Freegard for BMX+ interface.
+		 */
+		free(sess->last_reply);
+		span = strcspn(*reply, CRLF);
+		if ((sess->last_reply = malloc(span+1)) != NULL)
+			(void) TextCopy(sess->last_reply, span+1, *reply);
+
 		/* Note that CLIENT_PASSED_GREY should NOT be applied here.
 		 * If a client slips past grey listing and is excluded from
 		 * this control, then we'd be open to dictionary attacks
