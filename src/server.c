@@ -1526,8 +1526,6 @@ Version and copyright notices.
 
 	syslog(LOG_INFO, LOG_NUM(599) "ready");
 	signal = serverSignalsLoop(&signals);
-
-	syslog(LOG_INFO, "signal %d, terminating process", signal);
 	serverStop(&server, signal == SIGQUIT);
 	rc = EXIT_SUCCESS;
 error2:
