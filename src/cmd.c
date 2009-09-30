@@ -1661,6 +1661,8 @@ readClientData(Session *sess, unsigned char *chunk, unsigned long *size)
 		if (!socketHasInput(sess->client.socket, optSmtpDataLineTimeout.value))
 			goto read_error;
 
+		pthread_testcancel();
+
 		/* Check for dot transparency at start of new line. */
 		leading_dot_removed = 0;
 		if ((length = socketPeek(sess->client.socket, chunk+offset, 2)) < 0)
@@ -1781,6 +1783,8 @@ See <a href="summary.html#opt_rfc2821_line_length">rfc2821-line-length</a>.
 					free(hdr);
 			}
 		}
+
+		pthread_testcancel();
 	}
 
 	(void) time(&sess->last_mark);
