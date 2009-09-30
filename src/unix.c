@@ -453,7 +453,10 @@ restart_main:
 		LogOpen("(standard error)");
 
 	if (optRestart.string != NULL || optRestartIf.string != NULL) {
-		long seconds = strtol(optRestart.string, NULL, 10);
+		int count;
+		pid_t old_pid = pidLoad(optRunPidFile.string);
+		long seconds = strtol(optRestart.string != NULL ? optRestart.string : optRestartIf.string, NULL, 10);
+
 		if (pidKill(optRunPidFile.string, SIGTERM) && optRestartIf.string != NULL) {
 			syslog(LOG_ERR, LOG_NUM(733) "no previous instance running: %s (%d)", strerror(errno), errno);
 /*{LOG
@@ -463,7 +466,30 @@ not start.
 }*/
 			exit(1);
 		}
-		sleep(seconds < 1 ? 1 : seconds);
+
+		seconds = seconds < RESTART_DELAY ? RESTART_DELAY : seconds;
+
+		for (count = 0; count < 10; count++) {
+			errno = 0;
+			(void) sleep(seconds);
+
+			/*** Note that the pid that has been killed could be
+			 *** quickly recycled by the time we get here resulting
+			 *** in a different process being killed below.
+			 ***/
+			(void) kill(old_pid, 0);
+
+			if (errno == ESRCH)
+				break;
+			syslog(LOG_ERR, LOG_NUM(000) "waiting for pid=%d", old_pid);
+		}
+
+		if (10 <= count) {
+			syslog(LOG_ERR, LOG_NUM(000) "force kill of pid=%d", old_pid);
+			kill(old_pid, SIGKILL);
+		}
+
+		syslog(LOG_ERR, LOG_NUM(000) "previous instance pid=%d", old_pid);
 	}
 
 	/* The default is to always start as a daemon or Windows service.

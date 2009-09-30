@@ -43,6 +43,10 @@ extern "C" {
 #define LINE_WRAP			72
 #endif
 
+#ifndef RESTART_DELAY
+#define RESTART_DELAY			5
+#endif
+
 #ifndef SERVER_ACCEPT_TIMEOUT
 #define SERVER_ACCEPT_TIMEOUT		5000
 #endif
