@@ -271,6 +271,18 @@ is no set schedule for releases.
    +	ideally "dns-gl < SPF fail < CONTENT", but currently the precedence
    	is actually "SPF fail < dns-gl = CONTENT".
 
+--2.2.34--
+
+   !	readClientData: add pthread_testcancel points to the top and
+	bottom of the read loop.
+
+  !!	main: fixed restart-if seg.fault as a result of change made for
+  	restart=SECONDS.
+
+  !!	main: changed restart code to try and wait until the previous
+   	instance completes before proceeding in an effort to resolve
+   	shutdown/startup race condition.
+
 --2.2.33--
 
    !	greyCacheUpdate: minor fix to skip the grey-content hack for
@@ -289,10 +301,10 @@ is no set schedule for releases.
 	seconds to wait before continuing after sending the QUIT signal
 	to the old running process.
 
-   !	rate.c, concurrent.c: increase each HASH_TABLE_SIZE from 4KB to
+   !	rate.c, concurrent.c: increased each HASH_TABLE_SIZE from 4KB to
 	16KB and MAX_LINEAR_PROBE 16 to 24. Most mail systems will have
 	plenty of memory such that 32KB for rate and concurrent hash
-	tables is no big deal vs thepotential performance gains.
+	tables is no big deal vs the potential performance gains.
 
 --2.2.32--
 
