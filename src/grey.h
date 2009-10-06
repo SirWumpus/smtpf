@@ -20,12 +20,13 @@ extern "C" {
 #define GREY_CACHE_TAG		"grey:"
 
 #define GREY_TUPLE_IP		1	/* complete IP address */
-#define GREY_TUPLE_PTR		2	/* IP or trimmed PTR */
+#define GREY_TUPLE_PTR		2	/* IP or PTR shortened */
 #define GREY_TUPLE_PTRN		4	/* IP or numerics in PTR compressed to # */
-#define GREY_TUPLE_P0F		8	/* reserved */
-#define GREY_TUPLE_HELO		16	/* HELO/EHLO argument */
-#define GREY_TUPLE_MAIL		32	/* MAIL argument */
-#define GREY_TUPLE_RCPT		64	/* RCPT argument */
+#define GREY_TUPLE_HELO		8	/* HELO/EHLO argument */
+#define GREY_TUPLE_HELOS	16	/* HELO/EHLO argument shortened */
+#define GREY_TUPLE_P0F		32	/* reserved */
+#define GREY_TUPLE_MAIL		64	/* MAIL argument */
+#define GREY_TUPLE_RCPT		128	/* RCPT argument */
 
 
 #ifdef FUTURE
@@ -86,7 +87,8 @@ extern int greyDot(Session *sess, va_list ignore);
 extern int greyClose(Session *sess, va_list ignore);
 
 extern int greyExpireRows(time_t *when);
-extern long greyPtrSuffix(Session *sess, char *buffer, long size);
+extern long greyPtrSuffix(Session *sess, char *buffer, long size); /* deprecated */
+extern long greyDomainSuffix(const char *name, char *buffer, long size);
 extern long greyMakeKey(Session *sess, long grey_key, ParsePath *rcpt, char *buffer, size_t size);
 
 extern void greySqlite3KeyToHost(sqlite3_context *context, int argc, sqlite3_value **argv);
