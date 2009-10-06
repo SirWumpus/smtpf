@@ -271,6 +271,14 @@ is no set schedule for releases.
    +	ideally "dns-gl < SPF fail < CONTENT", but currently the precedence
    	is actually "SPF fail < dns-gl = CONTENT".
 
+--2.2.36--
+
+   +	grey.c/h: added a new grey-key element "helos" which is similar
+	to the ptr element in behaviour and is retained when a grey-key is
+	converted to a grey-host record. The idea is that a host or mail
+	cluster sharing a common queue, like gmail, should consistently
+	HELO with the same argument.
+
 --2.2.35--
 
    !	Record the first line of the last reject or temporary failure
