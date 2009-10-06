@@ -12,8 +12,6 @@
 ### WARNING!!! WARNING!!! WARNING!!! WARNING!!! WARNING!!! WARNING!!!
 #######################################################################
 
-greetpause:				10000
-commandpause:				1000
 #length-connect:			25M
 rate-connect:				5
 concurrent-connect:			5
@@ -21,6 +19,8 @@ concurrent-connect:			5
 grey-connect:netflix.com		0
 grey-connect:scd.yahoo.com		0
 grey-connect:ticketmaster.com		0
+
+#helo:arpa				REJECT
 
 #######################################################################
 # Free Mail Providers with known good or problematic mail servers.
