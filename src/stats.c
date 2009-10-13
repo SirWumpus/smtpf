@@ -1183,14 +1183,17 @@ statsInit(void)
 {
 	int length;
 	const char *file;
-	CLOCK period = { 60, 0 };
 
 	(void) pthread_mutex_init(&stats_mutex, NULL);
 	(void) pthread_mutex_init(&routes_mutex, NULL);
 	(void) time(&start_time);
 
+#ifdef HAVE_GETLOADAVG
+{
+	CLOCK period = { 60, 0 };
 	stats_timer = timerCreate(statsTimerTask, NULL, &period, 0);
-
+}
+#endif
 #if defined(FILTER_CLI) && defined(HAVE_PTHREAD_ATFORK)
 	if (pthread_atfork(statsAtForkPrepare, statsAtForkParent, statsAtForkChild)) {
 		syslog(LOG_ERR, log_init, FILE_LINENO, "", strerror(errno), errno);
@@ -1507,6 +1510,7 @@ Not used at this time.
 }
 #endif
 
+#ifdef HAVE_GETLOADAVG
 void
 statsNotify(unsigned long one, unsigned long five, unsigned long fifteen)
 {
@@ -1581,6 +1585,7 @@ statsTimerTask(Timer *ignore)
 		statsNotify(int_avg[0], int_avg[1], int_avg[2]);
 	}
 }
+#endif /* HAVE_GETLOADAVG */
 
 void
 statsGetLoadAvg(void)

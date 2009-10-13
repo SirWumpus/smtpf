@@ -347,7 +347,9 @@ cache_gc_thread(void *data)
 	}
 
 	freeThreadData();
-
+#ifdef __WIN32__
+	pthread_exit(NULL);
+#endif
 	return NULL;
 }
 

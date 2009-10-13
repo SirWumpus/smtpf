@@ -1508,6 +1508,9 @@ serverMain(void)
 /*{LOG
 Version and copyright notices.
 }*/
+	if (pthreadInit())
+		goto error0;
+
 	if (serverInit(&server, optInterfaces.string, SMTP_PORT))
 		goto error0;
 
@@ -1537,6 +1540,7 @@ error2:
 	serverSignalsFini(&signals);
 error1:
 	serverFini(&server);
+	pthreadFini();
 error0:
 	return rc;
 }

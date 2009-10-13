@@ -1048,9 +1048,11 @@ the session "end" log line only.
 
 	if (SIGSETJMP(sess->on_error, 1) == 0) {
 		while (sess->state != NULL) {
+#ifdef OLD_SERVER_MODEL
 #ifdef __WIN32__
 			if (WaitForSingleObject(sess->kill_event, 0) == WAIT_OBJECT_0)
 				break;
+#endif
 #endif
 #ifdef ENABLE_CRLF_CHECKING
 			sess->input_length = socketReadLine2(sess->client.socket, sess->input, sizeof (sess->input), 1);

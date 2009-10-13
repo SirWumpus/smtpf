@@ -132,7 +132,6 @@ extern pthread_cond_t slow_quit_cv;
 #endif
 
 #ifdef __WIN32__
-# undef ENABLE_OPTION_QUIT
 extern unsigned int sleep(unsigned int);
 extern void freeThreadData(void);
 #else
@@ -668,6 +667,7 @@ extern void blFree(void *list);
 
 extern int pid_fd;
 extern Server server;
+extern ServerSignals signals;
 extern int internal_restart;
 extern void serverPrintVersion(void);
 extern void serverPrintInfo(void);

@@ -271,6 +271,10 @@ is no set schedule for releases.
    +	ideally "dns-gl < SPF fail < CONTENT", but currently the precedence
    	is actually "SPF fail < dns-gl = CONTENT".
 
+--2.2.37--
+
+  !!	Many assorted changed related to updating the Windows port.
+
 --2.2.36--
 
    +	grey.c/h: added a new grey-key element "helos" which is similar

@@ -287,6 +287,9 @@ error1:
 	mailClose(mail);
 error0:
 	freeThreadData();
+#ifdef __WIN32__
+	pthread_exit(NULL);
+#endif
 	return NULL;
 }
 
@@ -700,7 +703,7 @@ void
 lickeyInit(Vector interfaces)
 {
 	long i;
-	BoundIp *interface;
+	BoundIp *bind_if;
 	char ip[IPV6_STRING_LENGTH];
 
 	if (interfaces == NULL) {
@@ -719,7 +722,7 @@ lickeyInit(Vector interfaces)
 	 * find one that matches.
 	 */
 	for (i = 0; i < VectorLength(interfaces); i++) {
-		if ((interface = VectorGet(interfaces, i)) == NULL)
+		if ((bind_if = VectorGet(interfaces, i)) == NULL)
 			continue;
 
 #if defined(HAVE_GETADDRINFO)
@@ -729,7 +732,7 @@ lickeyInit(Vector interfaces)
 		memset(&hints, 0, sizeof (hints));
 		hints.ai_protocol = IPPROTO_TCP;
 
-		if (getaddrinfo(interface->name, NULL, &hints, &answers)) {
+		if (getaddrinfo(bind_if->name, NULL, &hints, &answers)) {
 			syslog(LOG_ERR, log_init, FILE_LINENO, "", strerror(errno), errno);
 			continue;
 		}
@@ -750,7 +753,7 @@ lickeyInit(Vector interfaces)
 		char **addr;
 		struct hostent *hosts;
 
-		if ((hosts = gethostbyname2(interface->name, interface->socket->address.sa.sa_family)) == NULL)
+		if ((hosts = gethostbyname2(bind_if->name, bind_if->socket->address.sa.sa_family)) == NULL)
 			continue;
 
 		for (addr = hosts->h_addr_list; *addr != NULL; addr++) {
@@ -765,7 +768,7 @@ lickeyInit(Vector interfaces)
 		char **addr;
 		struct hostent *hosts;
 
-		if ((hosts = gethostbyname(interface->name)) == NULL)
+		if ((hosts = gethostbyname(bind_if->name)) == NULL)
 			continue;
 
 		for (addr = hosts->h_addr_list; *addr != NULL; addr++) {
@@ -1215,7 +1218,9 @@ error1:
 	}
 
 	freeThreadData();
-
+#ifdef __WIN32__
+	pthread_exit(NULL);
+#endif
 	return NULL;
 }
 #endif
