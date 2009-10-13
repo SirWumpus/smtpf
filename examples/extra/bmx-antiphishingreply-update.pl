@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# 
+#
 # BarricadeMX
 # Copyright 2008, Fort Systems Ltd.
 #
@@ -14,7 +14,7 @@ flock SELF, LOCK_EX | LOCK_NB or exit;
 my($cfg_dir) = '/etc/smtpf';
 my($make) = '/usr/bin/make';
 my($wget) = '/usr/bin/wget';
-my($phishing_url) = "http://anti-phishing-email-reply.googlecode.com/svn/trunk/phishing_reply_addresses";
+my($phishing_url) = "https://aper.svn.sourceforge.net/svnroot/aper/phishing_reply_addresses";
 my($phishing_file) = "$cfg_dir/phishing_reply_addresses";
 my($phishing_output) = "$cfg_dir/access/anti-phishing-email-reply.cf";
 my($debug) = 0;
@@ -48,7 +48,7 @@ if(-d "$cfg_dir/access") {
     print OUT "To:".$split[0]."\t\tREJECT:\"Phishing address rejected\"\n";
     print OUT "Body:".$split[0]."\t\tREJECT:\"Phishing address rejected\"\n\n";
    }
-   
+
   }
   close(IN) or die $!;
   close(OUT) or die $!;
