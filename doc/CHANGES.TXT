@@ -271,9 +271,17 @@ is no set schedule for releases.
    +	ideally "dns-gl < SPF fail < CONTENT", but currently the precedence
    	is actually "SPF fail < dns-gl = CONTENT".
 
---2.2.37--
 
-  !!	Many assorted changed related to updating the Windows port.
+   +	Request from Quentin:
+
+	TRAP:"/var/spool/smtpf/trap/phishing"
+
+	This could also be extend to SAVE
+
+
+--2.3.0-- AKA 2.2.37
+
+  !!	Many assorted changes related to updating the Windows port.
 
 --2.2.36--
 

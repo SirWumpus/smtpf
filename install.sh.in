@@ -239,6 +239,8 @@ echo 'Installing...' $sbindir/$TARNAME
 $INSTALL -m 550 $INSTALL_WHEEL src/$TARNAME $sbindir
 
 $INSTALL -m 755 $INSTALL_WHEEL -d $bindir
+echo 'Installing...' $bindir/pdq
+$INSTALL -m 555 $INSTALL_WHEEL ../lib/net/pdq $bindir
 echo 'Installing...' $bindir/show
 $INSTALL -m 555 $INSTALL_WHEEL ../tools/show $bindir
 echo 'Installing...' $bindir/spf
@@ -259,6 +261,19 @@ if test $UNAME = 'CYGWIN' ; then
 
 	echo 'Creating.....' $localstatedir/tmp
 	$INSTALL -m 770 $INSTALL_USER -d $localstatedir/tmp
+
+	echo 'Creating.....' $examples
+	$INSTALL -m 755 -d $examples
+
+	echo 'Installing...' $examples
+	$INSTALL -m 755 $INSTALL_WHEEL -d $examples/extra
+	$INSTALL -m 755 $INSTALL_WHEEL -d $examples/spamassassin
+	$INSTALL -m 444 $INSTALL_WHEEL examples/Makefile $examples
+	$INSTALL -m 444 $INSTALL_WHEEL examples/*.cf $examples
+	$INSTALL -m 444 $INSTALL_WHEEL examples/*.mk $examples
+	$INSTALL -m 444 $INSTALL_GROUP examples/*.txt $examples
+	$INSTALL -m 444 $INSTALL_WHEEL examples/extra/* $examples/extra
+	$INSTALL -m 444 $INSTALL_WHEEL examples/spamassassin/* $examples/spamassassin
 else
 	if test -d /var/cache ; then
 		echo 'Creating.....' $localstatedir/cache/$TARNAME
@@ -277,8 +292,10 @@ else
 	echo 'Installing...' $mandir/cat1/smtpf.0
 	$INSTALL -m 444 doc/smtpf.0 $mandir/cat1
 
-	echo 'Installing...' $examples
+	echo 'Creating.....' $examples
 	$INSTALL -m 755 -d $examples
+
+	echo 'Installing...' $examples
 	$INSTALL -m 755 $INSTALL_WHEEL -d $examples/extra
 	$INSTALL -m 755 $INSTALL_WHEEL -d $examples/spamassassin
 	$INSTALL -m 444 $INSTALL_WHEEL examples/Makefile $examples
@@ -286,7 +303,7 @@ else
 	$INSTALL -m 444 $INSTALL_WHEEL examples/*.mc $examples
 	$INSTALL -m 444 $INSTALL_WHEEL examples/*.mk $examples
 	$INSTALL -m 444 $INSTALL_WHEEL examples/*.sh $examples
-	#$INSTALL -m 444 $INSTALL_GROUP examples/*.txt $examples
+	$INSTALL -m 444 $INSTALL_GROUP examples/*.txt $examples
 	$INSTALL -m 444 $INSTALL_WHEEL examples/extra/* $examples/extra
 	$INSTALL -m 444 $INSTALL_WHEEL examples/spamassassin/* $examples/spamassassin
 fi

@@ -1,5 +1,5 @@
 #
-# Copyright 2008 by SnertSoft. All rights reserved.
+# Copyright 2008, 2009 by SnertSoft. All rights reserved.
 #
 # 	$ DESTDIR=d:/stage/ make install
 #
@@ -153,6 +153,8 @@ section
 	IfFileExists "$INSTDIR\route.cf" +2
 		File route.cf
 
+	CreateDirectory "$INSTDIR\access"
+
 	; Merge existing options with new .cf file.
 	nsExec::Exec '"$INSTDIR\@PACKAGE_NAME@.exe" help="$INSTDIR/@PACKAGE_NAME@.cf" file="$INSTDIR/@PACKAGE_NAME@.cf"'
 	Pop $0
@@ -174,10 +176,11 @@ section "Command Line Tools"
 	File kvmc.exe
 	File kvmd.exe
 	File mcc.exe
-	File uri.exe
+	File pdq.exe
 	File spf.exe
 	File show.exe
 	File sqlite3.exe
+	File uri.exe
 sectionEnd
 
 section "Documentation"
@@ -208,6 +211,8 @@ sectionEnd
 
 section "Supplimental"
 	SetOutPath "$INSTDIR\examples"
+	CreateDirectory "$INSTDIR\examples"
+
 	File examples\welcome.txt
 #	File examples\access.cf
 #	File examples\access-defaults.cf
@@ -218,8 +223,7 @@ section "Supplimental"
 
 	SetOutPath "$INSTDIR\examples\spamassassin"
 	File examples\spamassassin\barricademx.cf
-	File examples\spamassassin\smf.cf
-	File examples\spamassassin\smf.pm
+	File examples\spamassassin\barricademx.pm
 sectionEnd
 
 section "-License Key"

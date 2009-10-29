@@ -1,7 +1,0 @@
-loadplugin Mail::SpamAssassin::Plugin::SMF /etc/mail/spamassassin/smf.pm
-
-header LONG_LINES eval:check_line_length()
-score LONG_LINES 3.5
-
-header MIME_MA_HTML_FIRST eval:check_ma_html_first()
-score MIME_MA_HTML_FIRST 3.5

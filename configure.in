@@ -2,7 +2,7 @@
 #	Thus it begins...
 #######################################################################
 
-AC_INIT(smtpf, 2.2, [Anthony Howe <achowe@snert.com>])
+AC_INIT(smtpf, 2.3, [Anthony Howe <achowe@snert.com>])
 
 dnl The autoconf version I learned to deal with.
 AC_PREREQ(2.59)

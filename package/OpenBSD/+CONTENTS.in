@@ -62,8 +62,7 @@ share/examples/@PACKAGE_NAME@/sendmail-hub.mc
 share/examples/@PACKAGE_NAME@/startup.sh
 share/examples/@PACKAGE_NAME@/Makefile
 share/examples/@PACKAGE_NAME@/spamassassin/barricademx.cf
-share/examples/@PACKAGE_NAME@/spamassassin/smf.cf
-share/examples/@PACKAGE_NAME@/spamassassin/smf.pm
+share/examples/@PACKAGE_NAME@/spamassassin/barricademx.pm
 share/examples/@PACKAGE_NAME@/extra/bmx-antiphishingreply-update.pl
 share/examples/@PACKAGE_NAME@/extra/bmx-uribl-update.pl
 @sample /etc/@PACKAGE_NAME@/Makefile
@@ -83,6 +82,7 @@ bin/sqlite3t
 bin/show
 bin/spf
 bin/uri
+bin/pdq
 sbin/kvmap
 sbin/kvmd
 sbin/kvmc
