@@ -283,6 +283,14 @@ is no set schedule for releases.
 
   !!	Many assorted changes related to updating the Windows port.
 
+  !!	serverMain: moved serverSignalsInit ahead of serverInit and
+  	server_init. The smtpf server_init spawns multicast / unicast
+  	threads and the misplaced serverSignalsInit, meant that the
+  	blocked signal set failed to be correctly applied.
+
+   !	attachmentMail: Fixed broken Filename-From, MimeType-From, and
+   	Archname-From tag lookups.
+
 --2.2.36--
 
    +	grey.c/h: added a new grey-key element "helos" which is similar
