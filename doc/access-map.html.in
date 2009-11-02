@@ -251,6 +251,20 @@ The following list outlines the available tags and their supported key lookups:
 
 <dl>
 
+<a name="tag_archname"></a>
+<dt><span class="tag">Archname-Connect:</span>ip</dt>
+<dt><span class="tag">Archname-Connect:</span>domain</dt>
+<dt><span class="tag">Archname-From:</span>mail</dt>
+<dt><span class="tag">Archname-To:</span>mail</dt>
+<dd>
+The right hand side value is a semi-colon separated list of unacceptable file patterns to reject
+when found RAR or ZIP attachments.
+
+This overrides the global option
+<a href="summary.html#opt_deny_compressed_name">deny-compressed-name</a>
+when defined for a specific host, sender, or recipient.
+</dd>
+
 <a name="tag_body"></a>
 <dt><span class="tag">Body:</span>ip</dt>
 <dt><span class="tag">Body:</span>domain</dt>
@@ -329,6 +343,20 @@ Note that the lookup variants with blank IP, domain, or mail are not supported.
 <dd>
 Used to specify an alternative <a href="summary.html#opt_emew_secret">EMEW secret</a>
 for the sender or sender's domain.
+</dd>
+
+<a name="tag_filename"></a>
+<dt><span class="tag">Filename-Connect:</span>ip</dt>
+<dt><span class="tag">Filename-Connect:</span>domain</dt>
+<dt><span class="tag">Filename-From:</span>mail</dt>
+<dt><span class="tag">Filename-To:</span>mail</dt>
+<dd>
+The right hand side value is a semi-colon separated list of unacceptable file patterns to reject
+when found as MIME attachments.
+
+This overrides the global option
+<a href="summary.html#opt_deny_content_name">deny-content-name</a>
+when defined for a specific host, sender, or recipient.
 </dd>
 
 <a name="tag_from"></a>
@@ -418,6 +446,19 @@ specified will be used.
 <li><span class="tag">Length-From:</span></li>
 <li><span class="tag">Length-Connect:</span></li>
 </ol>
+</dd>
+
+<a name="tag_mimetype"></a>
+<dt><span class="tag">Mimetype-Connect:</span>ip</dt>
+<dt><span class="tag">Mimetype-Connect:</span>domain</dt>
+<dt><span class="tag">Mimetype-From:</span>mail</dt>
+<dt><span class="tag">Mimetype-To:</span>mail</dt>
+<dd>
+The right hand side value is a semi-colon separated list of unacceptable MIME types to reject.
+
+This overrides the global option
+<a href="summary.html#opt_deny_content_type">deny-content-type</a>
+when defined for a specific host, sender, or recipient.
 </dd>
 
 <a name="tag_msg_limit"></a>
