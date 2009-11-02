@@ -418,15 +418,15 @@ attachmentMail(Session *sess, va_list args)
 	ctx = filterGetContext(sess, attachment_context);
 
 	if (0 < mail->address.length) {
-		if (accessEmail(sess, ACCESS_FILENAME_RCPT_TAG, mail->address.string, NULL, &value) != SMDB_ACCESS_NOT_FOUND) {
+		if (accessEmail(sess, ACCESS_FILENAME_MAIL_TAG, mail->address.string, NULL, &value) != SMDB_ACCESS_NOT_FOUND) {
 			free(ctx->filename);
 			ctx->filename = value;
 		}
-		if (accessEmail(sess, ACCESS_MIMETYPE_RCPT_TAG, mail->address.string, NULL, &value) != SMDB_ACCESS_NOT_FOUND) {
+		if (accessEmail(sess, ACCESS_MIMETYPE_MAIL_TAG, mail->address.string, NULL, &value) != SMDB_ACCESS_NOT_FOUND) {
 			free(ctx->mimetype);
 			ctx->mimetype = value;
 		}
-		if (accessEmail(sess, ACCESS_ARCHNAME_RCPT_TAG, mail->address.string, NULL, &value) != SMDB_ACCESS_NOT_FOUND) {
+		if (accessEmail(sess, ACCESS_ARCHNAME_MAIL_TAG, mail->address.string, NULL, &value) != SMDB_ACCESS_NOT_FOUND) {
 			free(ctx->archname);
 			ctx->archname = value;
 		}
