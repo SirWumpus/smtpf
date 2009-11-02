@@ -1511,11 +1511,14 @@ Version and copyright notices.
 	if (pthreadInit())
 		goto error0;
 
+	if (serverSignalsInit(&signals, _NAME))
+		goto error1;
+
 	if (serverInit(&server, optInterfaces.string, SMTP_PORT))
-		goto error0;
+		goto error2;
 
 	if (server_init(&server))
-		goto error1;
+		goto error3;
 
 	server.hook.worker_create = worker_create;
 	server.hook.worker_free = worker_free;
@@ -1526,20 +1529,18 @@ Version and copyright notices.
 
 	serverSetStackSize(&server, THREAD_STACK_SIZE);
 
-	if (serverSignalsInit(&signals, _NAME))
-		goto error1;
-
 	if (serverStart(&server))
-		goto error2;
+		goto error3;
 
 	syslog(LOG_INFO, LOG_NUM(599) "ready");
 	signal = serverSignalsLoop(&signals);
 	serverStop(&server, signal == SIGQUIT);
 	rc = EXIT_SUCCESS;
+error3:
+	serverFini(&server);
 error2:
 	serverSignalsFini(&signals);
 error1:
-	serverFini(&server);
 	pthreadFini();
 error0:
 	return rc;
