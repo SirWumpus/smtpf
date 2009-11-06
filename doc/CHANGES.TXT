@@ -291,6 +291,12 @@ is no set schedule for releases.
    !	attachmentMail: Fixed broken Filename-From, MimeType-From, and
    	Archname-From tag lookups.
 
+   !	cmdOutOfSequence: changed the 503 drop to 503 rejection instead
+   	to deal with some clients that don't read the last reply in the
+   	buffer before acting on the drop.
+
+   !	Skip -restart of pid 0 generated when there is no pid file.
+
 --2.2.36--
 
    +	grey.c/h: added a new grey-key element "helos" which is similar
