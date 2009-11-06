@@ -192,7 +192,7 @@ int
 cmdOutOfSequence(Session *sess)
 {
 	sess->input[strcspn(sess->input, " ")] = '\0';
-	return replySetFmt(sess, SMTPF_DROP, "503 5.5.1 %s out of sequence" ID_MSG(251) "\r\n", sess->input, ID_ARG(sess));
+	return replySetFmt(sess, SMTPF_REJECT, "503 5.5.1 %s out of sequence" ID_MSG(251) "\r\n", sess->input, ID_ARG(sess));
 /*{REPLY
 The specified command was sent out of order with respect to other commands expected before this command.
 For example HELO or EHLO must be issued and accepted before the first MAIL FROM:; a successful MAIL FROM:
