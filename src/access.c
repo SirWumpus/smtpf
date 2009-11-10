@@ -760,6 +760,35 @@ accessFini(Session *null, va_list ignore)
 	return SMTPF_CONTINUE;
 }
 
+static int
+accessClientAction(Session *sess, const char *value, const char *msg)
+{
+	int access = SMTPF_CONTINUE;
+
+	if (strcmp(value, "CONTENT") == 0) {
+		access = SMTPF_GREY;
+		statsCount(&stat_connect_gl);
+		CLIENT_SET(sess, CLIENT_IS_GREY);
+		sess->client.bw_state = SMTPF_GREY;
+	}
+
+	else if (0 < TextSensitiveStartsWith(value, "SAVE")) {
+		CLIENT_SET(sess, CLIENT_IS_SAVE);
+		saveSetSaveDir(sess, msg);
+	}
+
+	else if (0 < TextSensitiveStartsWith(value, "TRAP")) {
+		CLIENT_SET(sess, CLIENT_IS_TRAP);
+		saveSetTrapDir(sess, msg);
+	}
+
+	else if (strcmp(value, "TAG") == 0) {
+		CLIENT_SET(sess, CLIENT_IS_TAG);
+	}
+
+	return access;
+}
+
 /**
  * Perform the following access.db lookups concerning IP and/or resolved
  * domain name, stopping on the first entry found:
@@ -904,27 +933,8 @@ See <a href="access-map.html#access_tags">access-map</a>.
 				statsCount(&stat_connect_bl);
 			}
 
-			else if (strcmp(value, "CONTENT") == 0) {
-				access = SMTPF_GREY;
-				statsCount(&stat_connect_gl);
-				CLIENT_SET(sess, CLIENT_IS_GREY);
-				sess->client.bw_state = SMTPF_GREY;
-			}
-
-			else if (strcmp(value, "SAVE") == 0) {
-				access = SMTPF_CONTINUE;
-				CLIENT_SET(sess, CLIENT_IS_SAVE);
-			}
-
-			else if (strcmp(value, "TRAP") == 0) {
-				access = SMTPF_DISCARD;
-				CLIENT_SET(sess, CLIENT_IS_TRAP);
-				sess->client.bw_state = SMTPF_DISCARD;
-			}
-
-			else if (strcmp(value, "TAG") == 0) {
-				access = SMTPF_CONTINUE;
-				CLIENT_SET(sess, CLIENT_IS_TAG);
+			else {
+				access = accessClientAction(sess, value, msg);
 			}
 		}
 
@@ -974,16 +984,18 @@ accessIdle(Session *sess, va_list ignore)
 }
 
 static int
-accessMsgAction(Session *sess, const char *value, int access)
+accessMsgAction(Session *sess, const char *value, const char *msg, int access)
 {
-	if (strcmp(value, "SAVE") == 0) {
+	if (0 < TextSensitiveStartsWith(value, "SAVE")) {
 		access = SMTPF_CONTINUE;
 		MSG_SET(sess, MSG_SAVE);
+		saveSetSaveDir(sess, msg);
 	}
 
-	else if (strcmp(value, "TRAP") == 0) {
-		access = SMTPF_DISCARD;
+	else if (0 < TextSensitiveStartsWith(value, "TRAP")) {
+		access = SMTPF_CONTINUE;
 		MSG_SET(sess, MSG_TRAP);
+		saveSetTrapDir(sess, msg);
 	}
 
 	else if (strcmp(value, "TAG") == 0) {
@@ -1121,7 +1133,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			}
 
 			else {
-				access = accessMsgAction(sess, value, sess->client.bw_state);
+				access = accessMsgAction(sess, value, msg, sess->client.bw_state);
 			}
 		}
 	}
@@ -1196,7 +1208,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			}
 
 			else {
-				access = accessMsgAction(sess, value, sess->client.bw_state);
+				access = accessMsgAction(sess, value, msg, sess->client.bw_state);
 			}
 		}
 	}
@@ -1348,7 +1360,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			break;
 
 		default:
-			access = accessMsgAction(sess, value, sess->msg.bw_state);
+			access = accessMsgAction(sess, value, msg, sess->msg.bw_state);
 		}
 	}
 
@@ -1396,7 +1408,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			break;
 
 		default:
-			access = accessMsgAction(sess, value, sess->msg.bw_state);
+			access = accessMsgAction(sess, value, msg, sess->msg.bw_state);
 		}
 	}
 
@@ -1454,7 +1466,7 @@ See <a href="access-map.html#access_map">access-map</a>.
 			break;
 
 		default:
-			access = accessMsgAction(sess, value, sess->msg.bw_state);
+			access = accessMsgAction(sess, value, msg, sess->msg.bw_state);
 		}
 	}
 
@@ -1559,27 +1571,8 @@ See <a href="access-map.html#access_tags">access-map</a>.
 				statsCount(&stat_helo_bl);
 			}
 
-			else if (strcmp(value, "CONTENT") == 0) {
-				access = SMTPF_GREY;
-				statsCount(&stat_helo_gl);
-				CLIENT_SET(sess, CLIENT_IS_GREY);
-				sess->client.bw_state = SMTPF_GREY;
-			}
-
-			else if (strcmp(value, "SAVE") == 0) {
-				access = SMTPF_CONTINUE;
-				CLIENT_SET(sess, CLIENT_IS_SAVE);
-			}
-
-			else if (strcmp(value, "TRAP") == 0) {
-				access = SMTPF_DISCARD;
-				CLIENT_SET(sess, CLIENT_IS_TRAP);
-				sess->client.bw_state = SMTPF_DISCARD;
-			}
-
-			else if (strcmp(value, "TAG") == 0) {
-				access = SMTPF_CONTINUE;
-				CLIENT_SET(sess, CLIENT_IS_TAG);
+			else {
+				access = accessClientAction(sess, value, msg);
 			}
 		}
 

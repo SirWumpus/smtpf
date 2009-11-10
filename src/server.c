@@ -1393,11 +1393,6 @@ session_process(ServerSession *session)
 	CLIENT_SET(sess, CLIENT_NO_PTR);
 	MSG_CLEAR_ALL(sess);
 
-#ifdef HAVE_STRUCT_SOCKADDR_IN6
-	if (session->client->address.sa.sa_family == AF_INET6) {
-		CLIENT_SET(sess, CLIENT_IS_IPV6);
-	}
-#endif
 	if (isReservedIPv6(session->ipv6, IS_IP_LOCAL)) {
 		CLIENT_SET(sess, CLIENT_IS_LOCALHOST);
 		statsCount(&stat_connect_localhost);

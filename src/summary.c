@@ -83,7 +83,7 @@ static const char *client_flags[] = {
 	"rate_limit,",
 	"concurrency_limit,",
 	"local_black,",
-	"ipv6,",
+	"trap,",
 	"tempfail,",
 	"auth,",
 	"quit,",
@@ -116,7 +116,14 @@ getFlagString(const char **table, unsigned long flags, char *buffer, size_t size
 const char *
 clientFlags(Session *sess)
 {
-	return getFlagString(client_flags, sess->client.flags, sess->reply, sizeof (sess->reply), NULL);
+	long length;
+
+	(void) getFlagString(client_flags, sess->client.flags, sess->reply, sizeof (sess->reply), &length);
+
+	if (sess->client.socket->address.sa.sa_family == AF_INET6)
+		TextCat(sess->reply, sizeof (sess->reply), ",ipv6");
+
+	return sess->reply;
 }
 
 const char *

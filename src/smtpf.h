@@ -118,8 +118,8 @@ extern "C" {
 #include "valgrind/valgrind.h"
 #include "valgrind/memcheck.h"
 
-#if LIBSNERT_MAJOR < 1 || LIBSNERT_MINOR < 72
-# error "LibSnert/1.72 or better is required"
+#if LIBSNERT_MAJOR < 1 || LIBSNERT_MINOR < 73
+# error "LibSnert/1.73 or better is required"
 #endif
 
 /***********************************************************************
@@ -446,14 +446,13 @@ typedef struct {
 #define CLIENT_RATE_LIMIT		0x02000000
 #define CLIENT_CONCURRENCY_LIMIT	0x04000000
 #define CLIENT_IS_LOCAL_BLACK		0x08000000	/* Black listed locally. */
-#define CLIENT_IS_IPV6			0x10000000	/* IPv6 socket family */
+#define CLIENT_IS_TRAP			0x10000000
 #define CLIENT_IS_TEMPFAIL		0x20000000
 #define CLIENT_HAS_AUTH			0x40000000	/* Has sucessfully authenticated. */
 #define CLIENT_HAS_QUIT			0x80000000
 
 #define CLIENT_END_BIT			CLIENT_HAS_QUIT
 
-#define CLIENT_IS_TRAP			(CLIENT_IS_SAVE|CLIENT_IS_DISCARD)
 #define CLIENT_HOLY_TRINITY		(CLIENT_IS_LOCALHOST|CLIENT_IS_LAN|CLIENT_IS_RELAY)
 #define CLIENT_USUAL_SUSPECTS		(CLIENT_HOLY_TRINITY|CLIENT_IS_WHITE)
 

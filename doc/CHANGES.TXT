@@ -278,6 +278,18 @@ is no set schedule for releases.
 
 	This could also be extend to SAVE
 
+--2.3.1--
+
+   !	smtpf.h, cmdData: Changed TRAP behaviour from SAVE/DISCARD to
+   	SAVE/REJECT.
+
+   !	smtpf.h, summary.c: The CLIENT_IS_IPV6 flag has been dropped,
+	since it is not used; the ipv6 summary information still remains
+	though as there is an equally good check and the information is
+	handy.
+
+   +	Added TRAP:"path" and SAVE:"path" support. Requested by Quentin
+   	Campbell
 
 --2.3.0-- AKA 2.2.37
 

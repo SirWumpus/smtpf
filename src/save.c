@@ -49,6 +49,8 @@ Option optTrapDir	= { "trap-dir",		WORK_DIR,	usage_save_dir };
 typedef struct {
 	FILE *fp;
 	char *name;
+	char *save_dir;
+	char *trap_dir;
 } Save;
 
 static Verbose verb_save		= { { "save", "-", "" } };
@@ -64,6 +66,30 @@ saveGetName(Session *sess)
 	Save *save = filterGetContext(sess, save_context);
 
 	return save->name;
+}
+
+void
+saveSetSaveDir(Session *sess, const char *dir)
+{
+	Save *save;
+
+	if (dir != NULL) {
+		save = filterGetContext(sess, save_context);
+		free(save->save_dir);
+		save->save_dir = strdup(dir);
+	}
+}
+
+void
+saveSetTrapDir(Session *sess, const char *dir)
+{
+	Save *save;
+
+	if (dir != NULL) {
+		save = filterGetContext(sess, save_context);
+		free(save->trap_dir);
+		save->trap_dir = strdup(dir);
+	}
 }
 
 int
@@ -100,6 +126,8 @@ saveConnect(Session *sess, va_list ignore)
 	Save *save = filterGetContext(sess, save_context);
 
 	LOG_TRACE(sess, 575, saveConnect);
+	save->save_dir = NULL;
+	save->trap_dir = NULL;
 	save->name = NULL;
 	save->fp = NULL;
 
@@ -129,6 +157,12 @@ saveRset(Session *sess, va_list ignore)
 	free(save->name);
 	save->name = NULL;
 
+	free(save->save_dir);
+	save->save_dir = NULL;
+
+	free(save->trap_dir);
+	save->trap_dir = NULL;
+
 	return SMTPF_CONTINUE;
 }
 
@@ -139,9 +173,14 @@ saveHeaders(Session *sess, va_list args)
 
 	LOG_TRACE(sess, 578, saveHeaders);
 
-	if (*optSaveDir.string != '\0'
+	if (save->save_dir == NULL && *optSaveDir.string != '\0')
+		save->save_dir = strdup(optSaveDir.string);
+	if (save->trap_dir == NULL && *optTrapDir.string != '\0')
+		save->trap_dir = strdup(optTrapDir.string);
+
+	if (save->save_dir != NULL
 	&& (optSaveData.value || MSG_ANY_SET(sess, MSG_SAVE|MSG_TAG))) {
-		(void) snprintf(sess->input, sizeof (sess->input), "%s/%s.tmp", optSaveDir.string, sess->msg.id);
+		(void) snprintf(sess->input, sizeof (sess->input), "%s/%s.tmp", save->save_dir, sess->msg.id);
 		if ((save->name = strdup(sess->input)) == NULL) {
 			syslog(LOG_ERR, LOG_MSG(579) "temp. file name \"%s\": %s (%d)", LOG_ARGS(sess), sess->input, strerror(errno), errno);
 /*{NEXT}*/
@@ -210,12 +249,12 @@ saveDot(Session *sess, va_list ignore)
 
 #ifdef __unix__
 /* No hard links under Windows. */
-		if (MSG_IS_SET(sess, MSG_TRAP, MSG_TRAP)) {
-			(void) snprintf(sess->input, sizeof (sess->input), "%s/%s.trap", optTrapDir.string, sess->msg.id);
+		if (MSG_IS_SET(sess, MSG_TRAP, MSG_TRAP) && save->trap_dir != NULL) {
+			(void) snprintf(sess->input, sizeof (sess->input), "%s/%s.trap", save->trap_dir, sess->msg.id);
 			if (link(save->name, sess->input))
 				syslog(LOG_ERR, LOG_MSG(876) "hard link(%s, %s) failed: %s (%d)", LOG_ARGS(sess), save->name, sess->input, strerror(errno), errno);
-		} else if (MSG_IS_SET(sess, MSG_SAVE, MSG_SAVE)) {
-			(void) snprintf(sess->input, sizeof (sess->input), "%s/%s.msg", optSaveDir.string, sess->msg.id);
+		} else if (MSG_IS_SET(sess, MSG_SAVE, MSG_SAVE) && save->save_dir != NULL) {
+			(void) snprintf(sess->input, sizeof (sess->input), "%s/%s.msg", save->save_dir, sess->msg.id);
 			if (link(save->name, sess->input))
 				syslog(LOG_ERR, LOG_MSG(877) "hard link(%s, %s) failed: %s (%d)", LOG_ARGS(sess), save->name, sess->input, strerror(errno), errno);
 		}
@@ -228,7 +267,8 @@ saveDot(Session *sess, va_list ignore)
 int
 saveClose(Session *sess, va_list ignore)
 {
-	return saveRset(sess, ignore);
+	saveRset(sess, ignore);
+	return SMTPF_CONTINUE;
 }
 
 #endif /* FILTER_SAVE */

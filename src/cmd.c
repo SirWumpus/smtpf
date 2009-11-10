@@ -1956,6 +1956,9 @@ if (MSG_NOT_SET(sess, MSG_TAG) && !(optSaveData.value & 2))
 
 	/* Check final state of message filters BEFORE sending final dot. */
 	rc = filterRun(sess, filter_dot_table);
+	if (MSG_ANY_SET(sess, MSG_TRAP))
+		rc = replySetFmt(sess, SMTPF_REJECT, "550 5.7.0 this message blocked for unspecified reasons" ID_MSG(000) CRLF, ID_ARG(sess));
+
 	if (verb_data.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(866) "filter-table=%s rc=%d", LOG_ARGS(sess), filter_dot_table[0].name, rc);
 
