@@ -1341,7 +1341,7 @@ chunkBufferForward(Socket2 *daemon, unsigned char *buffer, size_t size)
 {
 	int ch;
 	unsigned char *line;
-	size_t length, line_length;
+	size_t chunk_length, line_length;
 
 	assert(size < SMTP_MINIMUM_MESSAGE_LENGTH);
 
@@ -1349,13 +1349,13 @@ chunkBufferForward(Socket2 *daemon, unsigned char *buffer, size_t size)
 	ch = buffer[size];
 	buffer[size] = '\n';
 
-	length = 0;
-	for (line = buffer; line - buffer < size; line += line_length) {
+	line = buffer;
+	for (chunk_length = 0; chunk_length < size; chunk_length += line_length) {
 		if (*line == '.') {
 			/* Apply SMTP dot transparency. RFC 5321 section 4.5.2. */
 			if (daemon != NULL && socketWrite(daemon, (unsigned char *) ".", 1) != 1)
 				break;
-			length++;
+			chunk_length++;
 		}
 
 		/* Find the end of line (or sentinel). */
@@ -1363,18 +1363,18 @@ chunkBufferForward(Socket2 *daemon, unsigned char *buffer, size_t size)
 			;
 
 		/* Don't count sentinel newline. */
-		line_length += (line-buffer < size);
+		line_length += (chunk_length + line_length < size);
 
 		/* Forward the line. */
 		if (daemon != NULL && socketWrite(daemon, line, line_length) != line_length)
 			break;
 
-		length += line_length;
+		line += line_length;
 	}
 
 	buffer[size] = ch;
 
-	return length;
+	return chunk_length;
 }
 
 /*
