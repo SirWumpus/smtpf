@@ -83,7 +83,7 @@ Option optSpamdSubjectTag	= { "spamd-subject-tag",	"[SPAM]",	usage_spamd_subject
 static const char usage_spamd_reject_sender_marked_spam[] =
   "When an X-Spam-Status header is supplied by the sender, then check their\n"
 "# claimed score against spamd-score-reject and reject if they exceed it.\n"
-"# Else if an \"X-Spam-Flag: YES\" header is supplied by the sender, then\n"
+"# Else if a \"X-Spam-Flag: YES\" header is supplied by the sender, then\n"
 "# reject the message. If the sender thought it was spam, why would we want\n"
 "# it? Otherwise the message will be scanned and scored as per usual.\n"
 "#"
