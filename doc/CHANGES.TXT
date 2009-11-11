@@ -278,6 +278,12 @@ is no set schedule for releases.
 
 	This could also be extend to SAVE
 
+--2.3.2--
+
+   !	Corrected definition of MSG_TRAP. The changes in 2.3.1 redefined
+   	CLIENT_IS_TRAP, but neglected to update MSG_TRAP, which resulted
+   	in MSG_SAVE incorrectly behaving like MSG_TRAP.
+
 --2.3.1--
 
    !	smtpf.h, cmdData: Changed TRAP behaviour from SAVE/DISCARD to
@@ -290,6 +296,10 @@ is no set schedule for releases.
 
    +	Added TRAP:"path" and SAVE:"path" support. Requested by Quentin
    	Campbell
+
+   !	chunkBufferForward: LF sentinel detection was incorrect
+	resulting in the sentinel LF being inserted into messsages
+	greater than 64KB.
 
 --2.3.0-- AKA 2.2.37
 

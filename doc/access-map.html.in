@@ -205,7 +205,7 @@ if applicable, then continue with the <a class="glossary" href="glossary.html#te
 at a time from left to right.
 
 <p>
-<table border="0" cellspacing="0" cellpadding="0" width="100%">
+<table border="0" cellspacing="0" cellpadding="0">
 <tr><td><span class="tag">tag:</span>[ipv6:2001:0DB8::1234:5678]</td></tr>
 <tr><td><span class="tag">tag:</span>[192.0.2.9]</td></tr>
 <tr><td><span class="tag">tag:</span>sub.domain.tld</td></tr>
@@ -594,15 +594,15 @@ The action words supported are:
 <tr valign="top"><td width="41%" class="value bdotted tline">OK</td><td width="59%" class="bdotted tline">white list, by-pass one or more tests</td></tr>
 <tr valign="top"><td width="41%" class="value bdotted">CONTENT</td><td width="59%" class="bdotted">white list as far as, but not including, the content filters;<br/>used only with <span class="tag">Connect:</span> or <span class="tag">Helo:</span>.</td></tr>
 <tr valign="top"><td width="41%" class="value bdotted">DISCARD</td><td width="59%" class="bdotted">accept &amp; discard message</td></tr>
+<tr valign="top"><td width="41%" class="value bdotted">IREJECT<span class="value">:"custom-reply"</span></td><td width="59%" class="bdotted">immediate REJECT, ignore <a href="summary.h#opt_smtp_delay_checks">smtp-delay-checks</a>; applies only to <span class="tag">Connect:</span>, <span class="tag">Connect:From:</span>, <span class="tag">From:</span>, and <span class="tag">Helo:</span></td></tr>
 <tr valign="top"><td width="41%" class="value bdotted">NEXT</td><td width="59%" class="bdotted">resume lookup, opposite of SKIP</td></tr>
-<tr valign="top"><td width="41%" class="value bdotted">SAVE</td><td width="59%" class="bdotted">save a copy of message if delivered</td></tr>
+<tr valign="top"><td width="41%" class="value bdotted">REJECT<span class="value">:"custom-reply"</span></td><td width="59%" class="bdotted">black list, either reject or drop</td></tr>
+<tr valign="top"><td width="41%" class="value bdotted">SAVE<span class="value">:"path"</span></td><td width="59%" class="bdotted">save a copy of message if delivered and save message to <a href="summary.html#opt_save_dir">save-dir</a>, unles the optional <span class="value">:"path"</span> is specified</td></tr>
 <tr valign="top"><td width="41%" class="value bdotted">SKIP</td><td width="59%" class="bdotted">stop lookup &amp; return no result</td></tr>
-<tr valign="top"><td width="41%" class="value bdotted">SPF-PASS</td><td width="59%" class="bdotted">white list sender if SPF returns Pass;<br/>used only with <span class="tag">Connect:From:</span> and <span class="tag">From:</span></td></tr>
+<tr valign="top"><td width="41%" class="value bdotted">SPF-PASS</td><td width="59%" class="bdotted">white list sender if SPF returns Pass; used only with <span class="tag">Connect:From:</span> and <span class="tag">From:</span></td></tr>
 <tr valign="top"><td width="41%" class="value bdotted">TAG</td><td width="59%" class="bdotted">if a policy rejection or drop would occur, simply tag the Subject: header and by-pass remaining tests</td></tr>
-<tr valign="top"><td width="41%" class="value bdotted">TEMPFAIL</td><td width="59%" class="bdotted">report a temporary failure condition</td></tr>
-<tr valign="top"><td width="41%" class="value bdotted">TRAP</td><td width="59%" class="bdotted">accept and save message to <a href="summary.html#opt_trap_dir">trap-dir</a>, but do not deliver</td></tr>
-<tr valign="top"><td width="41%" class="value bdotted">REJECT</td><td width="59%" class="bdotted">black list, either reject or drop</td></tr>
-<tr valign="top"><td width="41%" class="value bline">IREJECT</td><td width="59%" class="bline">immediate REJECT, ignore <a href="summary.h#opt_smtp_delay_checks">smtp-delay-checks</a>; applies only to <span class="tag">Connect:</span>, <span class="tag">Connect:From:</span>, and <span class="tag">From:</span></td></tr>
+<tr valign="top"><td width="41%" class="value bdotted">TEMPFAIL<span class="value">:"custom-reply"</span></td><td width="59%" class="bdotted">report a temporary failure condition</td></tr>
+<tr valign="top"><td width="41%" class="value bline">TRAP<span class="value">:"path"</span></td><td width="59%" class="bline">accept and save message, but do not deliver, to <a href="summary.html#opt_trap_dir">trap-dir</a>, unless the optional <span class="value">:"path"</span> is specified</td></tr>
 </table>
 </blockquote>
 
