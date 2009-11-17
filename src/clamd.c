@@ -140,6 +140,9 @@ clamd_open_scan(Session *sess, Clamd *clamd)
 	if (*optClamdSocket.string == '\0' || !clamd_is_local)
 		return SMTPF_CONTINUE;
 
+	if (MSG_ANY_SET(sess, MSG_DISCARD|MSG_TRAP))
+		return SMTPF_CONTINUE;
+
 	length = snprintf(buffer, sizeof (buffer), "nSCAN %s\n", saveGetName(sess));
 	if (sizeof (buffer) <= length) {
 		rc = replyPushFmt(sess, SMTPF_REJECT, "451 4.4.0 clamd buffer overflow" ID_MSG(181) "\r\n");
@@ -278,6 +281,9 @@ clamdHeaders(Session *sess, va_list args)
 	headers = va_arg(args, Vector);
 	*sess->msg.reject = '\0';
 	clamd->io_error = 0;
+
+	if (MSG_ANY_SET(sess, MSG_DISCARD|MSG_TRAP))
+		return SMTPF_CONTINUE;
 
 	if (!optClamdScanAll.value) {
 		if (headerFind(sess->msg.headers, "Content-Type", &hdr) == -1)

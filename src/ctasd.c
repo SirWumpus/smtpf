@@ -184,6 +184,9 @@ ctasdHeaders(Session *sess, va_list args)
 
 	LOG_TRACE(sess, 000, ctasdHeaders);
 
+	if (MSG_ANY_SET(sess, MSG_DISCARD|MSG_TRAP))
+		return SMTPF_CONTINUE;
+
 	if (optCtasdStream.value != 1)
 		return SMTPF_CONTINUE;
 
@@ -374,6 +377,9 @@ ctasdDot(Session *sess, va_list ignore)
 	LOG_TRACE(sess, 000, ctasdDot);
 
 	ctx = filterGetContext(sess, ctasd_context);
+
+	if (MSG_ANY_SET(sess, MSG_DISCARD|MSG_TRAP))
+		return SMTPF_CONTINUE;
 
 	rc = SMTPF_CONTINUE;
 
