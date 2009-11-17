@@ -33,7 +33,7 @@ static const char usage_access_map[] =
 "# following methods are supported:\n"
 "#\n"
 "#   text!/path/map.txt\t\t\tr/o text file, memory hash\n"
-#ifdef HAVE_DB_H
+#if defined(BREAK_LICKEY) && defined(HAVE_DB_H)
 "#   db!/path/map.db\t\t\tBerkeley DB hash format\n"
 "#   db!btree!/path/map.db\t\tBerkeley DB btree format\n"
 #endif
@@ -134,7 +134,7 @@ Option optAccessMap = {
 	"access-map",
 #if defined(HAVE_SQLITE3_H)
 	"sql!" CF_DIR "/access.sq3"
-#elif defined(HAVE_DB_H)
+#elif defined(BREAK_LICKEY) && defined(HAVE_DB_H)
 	"db!" CF_DIR "/access.db"
 #endif
 	, usage_access_map
@@ -780,6 +780,12 @@ accessClientAction(Session *sess, const char *value, const char *msg)
 	else if (0 < TextSensitiveStartsWith(value, "TRAP")) {
 		CLIENT_SET(sess, CLIENT_IS_TRAP);
 		saveSetTrapDir(sess, msg);
+
+		/* Use SMTPF_DISCARD as test by-pass. cmdData will make
+		 * a final evaluation and convert SMTPF_DISCARD when MSG_TRAP
+		 * is set to SMTPF_REJECT.
+		 */
+		access = SMTPF_DISCARD;
 	}
 
 	else if (strcmp(value, "TAG") == 0) {
@@ -993,7 +999,11 @@ accessMsgAction(Session *sess, const char *value, const char *msg, int access)
 	}
 
 	else if (0 < TextSensitiveStartsWith(value, "TRAP")) {
-		access = SMTPF_CONTINUE;
+		/* Use SMTPF_DISCARD as test by-pass. cmdData will make
+		 * a final evaluation and convert SMTPF_DISCARD when MSG_TRAP
+		 * is set to SMTPF_REJECT.
+		 */
+		access = SMTPF_DISCARD;
 		MSG_SET(sess, MSG_TRAP);
 		saveSetTrapDir(sess, msg);
 	}

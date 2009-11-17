@@ -64,7 +64,7 @@ static const char usage_stats_map[] =
 "#\n"
 "#   file!/path/map.txt\t\t\tr/w file, memory hash\n"
 "#   text!/path/map.txt\t\t\tr/o text file, memory hash\n"
-#ifdef HAVE_DB_H
+#if defined(BREAK_LICKEY) && defined(HAVE_DB_H)
 "#   db!/path/map.db\t\t\tBerkeley DB hash format\n"
 "#   db!btree!/path/map.db\t\tBerkeley DB btree format\n"
 #endif
@@ -86,7 +86,7 @@ static const char usage_stats_map[] =
 "#\n"
 #if defined(HAVE_SQLITE3_H)
 "#stats-map=sql!" CACHE_DIR "/stats.sq3"
-#elif defined(HAVE_DB_H)
+#elif defined(BREAK_LICKEY) && defined(HAVE_DB_H)
 "#stats-map=db!" CACHE_DIR "/stats.db"
 #else
 "#stats-map=file!" CACHE_DIR "/stats.txt"

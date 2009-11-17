@@ -41,7 +41,7 @@ static const char usage_route_map[] =
 "# supported:\n"
 "#\n"
 "#   text!/path/map.txt\t\t\tr/o text file, memory hash\n"
-#ifdef HAVE_DB_H
+#if defined(BREAK_LICKEY) && defined(HAVE_DB_H)
 "#   db!/path/map.db\t\t\tBerkeley DB hash format\n"
 "#   db!btree!/path/map.db\t\tBerkeley DB btree format\n"
 #endif
@@ -101,7 +101,7 @@ Option optRouteMap		= {
 	"route-map",
 #if defined(HAVE_SQLITE3_H)
 	"sql!" CF_DIR "/route.sq3"
-#elif defined(HAVE_DB_H)
+#elif defined(BREAK_LICKEY) && defined(HAVE_DB_H)
 	"db!" CF_DIR "/route.db"
 #else
 	"text!" CF_DIR "/route.cf"

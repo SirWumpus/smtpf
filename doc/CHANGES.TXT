@@ -272,11 +272,20 @@ is no set schedule for releases.
    	is actually "SPF fail < dns-gl = CONTENT".
 
 
-   +	Request from Quentin:
+   +	CONN like command for forward host connections.
 
-	TRAP:"/var/spool/smtpf/trap/phishing"
 
-	This could also be extend to SAVE
+--2.3.3--
+
+   !	CLIENT_IS_TRAP and MSG_TRAP should continue to set SMTPF_DISCARD
+   	until cmdData hits the final dot in order to by-pass all the spam
+   	tests.
+
+   !	chunkBufferForward: don't count dot transparency application when
+   	forwarding a chunk, otherwise the output loop could prematurely
+   	terminate, losing output.
+
+   !	Reassert that TRAP messages are excluded from "click" replies.
 
 --2.3.2--
 

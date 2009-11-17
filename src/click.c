@@ -288,7 +288,7 @@ clickReplyLog(Session *sess, va_list args)
 
 	if (*optClickUrl.string == '\0' || sess->msg.mail == NULL
 	|| CLIENT_ANY_SET(sess, CLIENT_IS_LOCAL_BLACK|CLIENT_IS_GREY|CLIENT_IS_WHITE)
-	|| MSG_ANY_SET(sess, MSG_DISCARD|MSG_POLICY)
+	|| MSG_ANY_SET(sess, MSG_DISCARD|MSG_TRAP|MSG_POLICY)
 	|| MAIL_ANY_SET(sess, MAIL_IS_LOCAL_BLACK|MAIL_IS_WHITE)
 	|| RCPT_ANY_SET(sess, RCPT_IS_LOCAL_BLACK|RCPT_IS_WHITE|RCPT_FAILED)
 	)
