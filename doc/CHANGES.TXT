@@ -275,6 +275,13 @@ is no set schedule for releases.
    +	CONN like command for forward host connections.
 
 
+--2.3.4--
+
+  !!	Fixed potential seg.fault by adding missing message "trap" flag
+	to the summary table to match MSG_TRAP.
+
+   !	clamd, ctasd: skip scanning for discard or trap.
+
 --2.3.3--
 
    !	CLIENT_IS_TRAP and MSG_TRAP should continue to set SMTPF_DISCARD
