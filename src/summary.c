@@ -51,6 +51,7 @@ static const char *message_flags[] = {
 	"tagged,",
 	"queued,",
 	"save,",
+	"trap,",
 	NULL
 };
 
