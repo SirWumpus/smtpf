@@ -1,5 +1,5 @@
 package Mail::SpamAssassin::Plugin::BarricadeMX;
-my $VERSION = 0.1;
+my $VERSION = 0.2;
 
 use strict;
 use Mail::SpamAssassin::Plugin;
@@ -23,8 +23,15 @@ sub new {
 sub bmx_get_sid {
  my ($self, $pms) = @_;
 
+ # Get last external IP
+ my $le = $pms->get_tag('LASTEXTERNALIP');
+ if(defined($le) && $le) {
+  dbg("Found last external IP: $le");
+  $pms->set_spamd_result_item( sub { return "last-external=$le"; } );
+ }
+
  my $header = $pms->get("X-smtpf-Report");
- if(defined($header)) {
+ if(defined($header) && $header) {
   dbg("Found header: $header");
   if($header =~ /^sid=(\S+);/) {
    my $sid = $1;
