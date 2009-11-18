@@ -9,7 +9,7 @@ function html_special()
 /ID_(MSG|NUM)/ {
 	sub(/.*reply.*\([^"]+, "/, "")
 	sub(/.*(SENDCLIENT|sendClientReply)\([^,]+, "/, "")
-	sub(/.*(snprintf|clamdError)\([^,]+, [^,]+, "/, "")
+	sub(/.*(snprintf|clamdError|ctasdError)\([^,]+, [^,]+, "/, "")
 	sub(/"?\)( "\\r\\n.*| CRLF.*|, .*\);)$/, "")
 	sub(/" ID_(MSG|NUM)\("?/, " #")
 	sub(/(const char .*=|.*sess,) "/, "")
