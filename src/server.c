@@ -1,7 +1,7 @@
 /*
  * server.c
  *
- * Copyright 2007, 2008 by Anthony Howe. All rights reserved.
+ * Copyright 2007, 2009 by Anthony Howe. All rights reserved.
  */
 
 /***********************************************************************
@@ -947,7 +947,7 @@ serverChild(void *ignore)
 		TIMER_DECLARE(mark);
 
 		if (mutex_lock(SESSION_ID_ZERO, FILE_LINENO, &server.accept_mutex)) {
-			syslog(LOG_ERR, LOG_NUM(000) "accept mutex lock: %s (%d)", strerror(errno), errno);
+			syslog(LOG_ERR, LOG_NUM(967) "accept mutex lock: %s (%d)", strerror(errno), errno);
 			break;
 		}
 

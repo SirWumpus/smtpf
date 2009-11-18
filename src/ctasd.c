@@ -151,7 +151,7 @@ ctasdInit(Session *null, va_list ignore)
 int
 ctasdConnect(Session *sess, va_list ignore)
 {
-	LOG_TRACE(sess, 000, ctasdConnect);
+	LOG_TRACE(sess, 946, ctasdConnect);
 
 	filterClearContext(sess, ctasd_context);
 
@@ -163,7 +163,7 @@ ctasdRset(Session *sess, va_list ignore)
 {
 	Ctasd *ctx;
 
-	LOG_TRACE(sess, 000, ctasdRset);
+	LOG_TRACE(sess, 947, ctasdRset);
 
 	ctx = filterGetContext(sess, ctasd_context);
 
@@ -182,7 +182,7 @@ ctasdHeaders(Session *sess, va_list args)
 	HttpRequest request;
 	char buffer[CTASD_REQUEST_BUFFER_SIZE];
 
-	LOG_TRACE(sess, 000, ctasdHeaders);
+	LOG_TRACE(sess, 948, ctasdHeaders);
 
 	if (MSG_ANY_SET(sess, MSG_DISCARD|MSG_TRAP))
 		return SMTPF_CONTINUE;
@@ -217,7 +217,7 @@ ctasdHeaders(Session *sess, va_list args)
 	);
 
 	if (verb_ctasd.option.value)
-		syslog(LOG_DEBUG, LOG_MSG(000) "ctasd request=%lu:%s", LOG_ARGS(sess), (unsigned long) request.post_size, buffer);
+		syslog(LOG_DEBUG, LOG_MSG(949) "ctasd request=%lu:%s", LOG_ARGS(sess), (unsigned long) request.post_size, buffer);
 
 	ctx->socket = httpSend(&request, SESS_ID);
 	free(request.url);
@@ -226,10 +226,10 @@ ctasdHeaders(Session *sess, va_list args)
 		return SMTPF_CONTINUE;
 
 	if (socketWrite(ctx->socket, sess->msg.chunk0, sess->msg.eoh) != sess->msg.eoh)
-		ctasdError(sess, ctx, "451 4.4.0 ctasd session write error after %lu bytes" ID_MSG(000), sess->msg.length, ID_ARG(sess));
+		ctasdError(sess, ctx, "451 4.4.0 ctasd session write error after %lu bytes" ID_MSG(950), sess->msg.length, ID_ARG(sess));
 
 	if (verb_ctasd.option.value)
-		syslog(LOG_DEBUG, LOG_MSG(000) "ctasd >> (wrote %ld bytes)", LOG_ARGS(sess), sess->msg.eoh);
+		syslog(LOG_DEBUG, LOG_MSG(951) "ctasd >> (wrote %ld bytes)", LOG_ARGS(sess), sess->msg.eoh);
 
 	return SMTPF_CONTINUE;
 }
@@ -246,19 +246,19 @@ ctasdContent(Session *sess, va_list args)
 	length = va_arg(args, long);
 
 	if (verb_trace.option.value)
-		syslog(LOG_DEBUG, LOG_MSG(000) "ctasdContent(%lx, chunk=%lx, size=%ld)", LOG_ARGS(sess), (long) sess, (long) chunk, length);
+		syslog(LOG_DEBUG, LOG_MSG(952) "ctasdContent(%lx, chunk=%lx, size=%ld)", LOG_ARGS(sess), (long) sess, (long) chunk, length);
 
 	if (ctx->socket == NULL)
 		return SMTPF_CONTINUE;
 
 	if (socketWrite(ctx->socket, chunk, length) != length) {
-		ctasdError(sess, ctx, "451 4.4.0 ctasd session write error after %lu bytes" ID_MSG(000), sess->msg.length, ID_ARG(sess));
+		ctasdError(sess, ctx, "451 4.4.0 ctasd session write error after %lu bytes" ID_MSG(953), sess->msg.length, ID_ARG(sess));
 /*{NEXT}*/
 		return SMTPF_CONTINUE;
 	}
 
 	if (verb_ctasd.option.value)
-		syslog(LOG_DEBUG, LOG_MSG(000) "ctasd >> (wrote %ld bytes)", LOG_ARGS(sess), length);
+		syslog(LOG_DEBUG, LOG_MSG(954) "ctasd >> (wrote %ld bytes)", LOG_ARGS(sess), length);
 
 #ifdef FILTER_CTASD_CONTENT_SHORTCUT
 	/* As an optimisation concerning spamd, when we see the
@@ -303,7 +303,7 @@ ctasdSendFile(Session *sess, Ctasd *ctx)
 	);
 	request.content_length = request.post_size;
 	if (verb_ctasd.option.value)
-		syslog(LOG_DEBUG, LOG_MSG(000) "ctasd request=%lu:%s", LOG_ARGS(sess), (unsigned long) request.post_size, buffer);
+		syslog(LOG_DEBUG, LOG_MSG(955) "ctasd request=%lu:%s", LOG_ARGS(sess), (unsigned long) request.post_size, buffer);
 
 	ctx->socket = httpSend(&request, SESS_ID);
 	free(request.url);
@@ -351,7 +351,7 @@ ctasdSendInline(Session *sess, Ctasd *ctx)
 	);
 	request.content_length = request.post_size + sb.st_size;
 	if (verb_ctasd.option.value)
-		syslog(LOG_DEBUG, LOG_MSG(000) "ctasd request=%lu:%s", LOG_ARGS(sess), (unsigned long) request.post_size, buffer);
+		syslog(LOG_DEBUG, LOG_MSG(956) "ctasd request=%lu:%s", LOG_ARGS(sess), (unsigned long) request.post_size, buffer);
 
 	ctx->socket = httpSend(&request, SESS_ID);
 	free(request.url);
@@ -374,7 +374,7 @@ ctasdDot(Session *sess, va_list ignore)
 	HttpResponse response;
 	char *hdr, *x_ctch_refid, *x_ctch_spam, *x_ctch_vod, *is_bogus;
 
-	LOG_TRACE(sess, 000, ctasdDot);
+	LOG_TRACE(sess, 957, ctasdDot);
 
 	ctx = filterGetContext(sess, ctasd_context);
 
@@ -419,7 +419,7 @@ ctasdDot(Session *sess, va_list ignore)
 	x_ctch_refid = httpGetHeader(response.content, "*X-CTCH-RefID:*", sizeof ("X-CTCH-RefID:")-1);
 
 	if (verb_info.option.value)
-		syslog(LOG_INFO, LOG_MSG(000) "ctasd vod=%s spam=%s refid=%s", LOG_ARGS(sess), TextEmpty(x_ctch_vod), TextEmpty(x_ctch_spam), TextEmpty(x_ctch_refid));
+		syslog(LOG_INFO, LOG_MSG(958) "ctasd vod=%s spam=%s refid=%s", LOG_ARGS(sess), TextEmpty(x_ctch_vod), TextEmpty(x_ctch_spam), TextEmpty(x_ctch_refid));
 
 	if (x_ctch_refid != NULL) {
 		(void) snprintf(sess->input, sizeof (sess->input), "X-CTCH-RefID: %s" CRLF, x_ctch_refid);
@@ -445,19 +445,19 @@ ctasdDot(Session *sess, va_list ignore)
 			rc = SMTPF_DISCARD;
 			/*@fallthrough@*/
 		default:
-			syslog(LOG_ERR, LOG_MSG(000) "%s", LOG_ARGS(sess), sess->input);
+			syslog(LOG_ERR, LOG_MSG(959) "%s", LOG_ARGS(sess), sess->input);
 /*{LOG
 The ctasd daemon found a virus or suspicious content in the message.
 See <a href="summary.html#opt_ctasd_policy">ctasd-policy</a>.
 }*/
 			break;
 		case 'r':
-			rc = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 %s" ID_MSG(000) CRLF, sess->input, ID_ARG(sess));
+			rc = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 %s" ID_MSG(960) CRLF, sess->input, ID_ARG(sess));
 /*{NEXT}*/
 		}
 	} else if (strcmp(x_ctch_vod, "Medium") == 0) {
 		statsCount(&stat_ctasd_vod_tempfail);
-		rc = replyPushFmt(sess, SMTPF_REJECT, "451 4.7.1 message %s cannot be delivered at this time" ID_MSG(000) CRLF, sess->msg.id, ID_ARG(sess));
+		rc = replyPushFmt(sess, SMTPF_REJECT, "451 4.7.1 message %s cannot be delivered at this time" ID_MSG(961) CRLF, sess->msg.id, ID_ARG(sess));
 /*{REPLY
 The ctasd daemon found a virus or suspicious content in the message.
 See <a href="summary.html#opt_ctasd_policy">ctasd-policy</a>.
@@ -486,7 +486,7 @@ ctasdClose(Session *sess, va_list ignore)
 {
 	Ctasd *ctx;
 
-	LOG_TRACE(sess, 000, ctasdClose);
+	LOG_TRACE(sess, 962, ctasdClose);
 
 	ctx = filterGetContext(sess, ctasd_context);
 

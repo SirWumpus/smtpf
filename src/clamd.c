@@ -410,7 +410,7 @@ clamdDot(Session *sess, va_list ignore)
 
 	if (!clamd_is_local
 	&& socketWrite(clamd->socket, (unsigned char *) &zero, sizeof (zero)) != sizeof (zero)) {
-		clamdError(sess, clamd, "451 4.4.0 clamd session write error after %lu bytes" ID_MSG(000), sess->msg.length, ID_ARG(sess));
+		clamdError(sess, clamd, "451 4.4.0 clamd session write error after %lu bytes" ID_MSG(943), sess->msg.length, ID_ARG(sess));
 /*{NEXT}*/
 		rc = replyPushFmt(sess, SMTPF_REJECT, "%s\r\n", sess->msg.reject);
 		goto error1;

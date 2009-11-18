@@ -282,6 +282,8 @@ is no set schedule for releases.
 
    !	clamd, ctasd: skip scanning for discard or trap.
 
+   !	Updated new message numbers.
+
 --2.3.3--
 
    !	CLIENT_IS_TRAP and MSG_TRAP should continue to set SMTPF_DISCARD

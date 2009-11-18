@@ -482,15 +482,15 @@ not start.
 
 				if (errno == ESRCH)
 					break;
-				syslog(LOG_ERR, LOG_NUM(000) "waiting for pid=%d", old_pid);
+				syslog(LOG_ERR, LOG_NUM(968) "waiting for pid=%d", old_pid);
 			}
 
 			if (10 <= count) {
-				syslog(LOG_ERR, LOG_NUM(000) "force kill of pid=%d", old_pid);
+				syslog(LOG_ERR, LOG_NUM(969) "force kill of pid=%d", old_pid);
 				kill(old_pid, SIGKILL);
 			}
 
-			syslog(LOG_ERR, LOG_NUM(000) "previous instance pid=%d", old_pid);
+			syslog(LOG_ERR, LOG_NUM(970) "previous instance pid=%d", old_pid);
 		}
 	}
 

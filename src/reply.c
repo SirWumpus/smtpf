@@ -42,7 +42,7 @@ const char log_pipeline[] = /* LOG_INFO */ LOG_MSG(540) "pipeline input=%ld:%s";
 /*{LOG
 Log any premature input from the connected client.
 }*/
-const char log_overflow[] = /* LOG_ERR */ LOG_MSG(000) "buffer overflow %s(%lu) size=%lu length=%lu";
+const char log_overflow[] = /* LOG_ERR */ LOG_MSG(965) "buffer overflow %s(%lu) size=%lu length=%lu";
 /*{LOG
 A buffer overflow check failed reporting file and line number where it occured.
 Not expected to occur outside of code development.
@@ -79,7 +79,7 @@ There is is a delayed rejection/drop response that will be reported
 when the RCPT TO: is sent. See <a href="summary.html#opt_smtp_delay_checks">smtp-delay-checks</a>.
 }*/
 
-const char msg_421_unavailable[]= "421 4.3.2 service temporarily unavailable" ID_MSG(000) CRLF;
+const char msg_421_unavailable[]= "421 4.3.2 service temporarily unavailable" ID_MSG(966) CRLF;
 /*{REPLY
 }*/
 const char msg_421_internal[]	= "421 4.3.0 internal server error" ID_MSG(549) CRLF;

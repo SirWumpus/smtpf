@@ -355,7 +355,7 @@ static Vector mail_domains;
 int
 uriblInit(Session *null, va_list ignore)
 {
-	LOG_TRACE0(000, uriblInit);
+	LOG_TRACE0(971, uriblInit);
 
 	mail_domains = TextSplit(optMailBlDomains.string, ";, ", 0);
 
@@ -370,7 +370,7 @@ uriblInit(Session *null, va_list ignore)
 int
 uriblFini(Session *null, va_list ignore)
 {
-	LOG_TRACE0(000, uriblFini);
+	LOG_TRACE0(972, uriblFini);
 
 	dnsListFree(uri_dns_bl);
 	dnsListFree(mail_bl);
@@ -983,7 +983,7 @@ See <a href="summary.html#opt_uri_max_limit">uri-max-limit</a> option.
 #endif
 				}
 
-				snprintf(sess->msg.reject, sizeof (sess->msg.reject), "URI %s invalid SOA (%d)" ID_NUM(000), uri->host, code);
+				snprintf(sess->msg.reject, sizeof (sess->msg.reject), "URI %s invalid SOA (%d)" ID_NUM(973), uri->host, code);
 				statsCount(&stat_uri_valid_soa);
 				ctx->policy = 'r';
 				rc = SMTPF_REJECT;

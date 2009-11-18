@@ -782,7 +782,7 @@ See
 	if (*sess->client.sender_domain == '\0') {
 		(void) TextCopy(sess->client.sender_domain, sizeof (sess->client.sender_domain), sess->msg.mail->domain.string);
 	} else if (optOneDomainPerSession.value && strcmp(sess->client.sender_domain, sess->msg.mail->domain.string) != 0) {
-		rc = replySetFmt(sess, SMTPF_REJECT, "450 4.7.1 more than one sender <%s> domain per session; domain=%s" ID_MSG(000) CRLF, sess->msg.mail->address.string, sess->client.sender_domain, ID_ARG(sess));
+		rc = replySetFmt(sess, SMTPF_REJECT, "450 4.7.1 more than one sender <%s> domain per session; domain=%s" ID_MSG(944) CRLF, sess->msg.mail->address.string, sess->client.sender_domain, ID_ARG(sess));
 		statsCount(&stat_one_domain_per_session);
 		goto error1;
 	}
@@ -1958,7 +1958,7 @@ if (MSG_NOT_SET(sess, MSG_TAG) && !(optSaveData.value & 2))
 	/* Check final state of message filters BEFORE sending final dot. */
 	rc = filterRun(sess, filter_dot_table);
 	if (MSG_ANY_SET(sess, MSG_TRAP))
-		rc = replySetFmt(sess, SMTPF_REJECT, "550 5.7.0 this message blocked for unspecified reasons" ID_MSG(000) CRLF, ID_ARG(sess));
+		rc = replySetFmt(sess, SMTPF_REJECT, "550 5.7.0 this message blocked for unspecified reasons" ID_MSG(945) CRLF, ID_ARG(sess));
 
 	if (verb_data.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(866) "filter-table=%s rc=%d", LOG_ARGS(sess), filter_dot_table[0].name, rc);

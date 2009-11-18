@@ -329,7 +329,7 @@ greyGcExpire(mcc_context *mcc, void *data)
 {
 	int count;
 
-	LOG_TRACE0(000, greyGcExpire);
+	LOG_TRACE0(963, greyGcExpire);
 
 	if (mccSqlStep(mcc, grey_sql_expire, GREY_SQL_EXPIRE) == SQLITE_ROW) {
 		count = sqlite3_column_int(grey_sql_expire, 0);
@@ -754,7 +754,7 @@ greyCacheUpdate(Session *sess, Grey *grey, char *key, long *delay, int at_dot)
 						(void) mccDeleteRow(mcc, &id_row);
 
 						if (verb_info.option.value)
-							syslog(LOG_INFO, LOG_MSG(000) "grey content hash replaced msg-id=%s key={%s} value={%s} hash=%s", LOG_ARGS(sess), sess->msg.msg_id, key, row.value_data, grey->digest);
+							syslog(LOG_INFO, LOG_MSG(964) "grey content hash replaced msg-id=%s key={%s} value={%s} hash=%s", LOG_ARGS(sess), sess->msg.msg_id, key, row.value_data, grey->digest);
 
 						/* Replace the first seen message hash. */
 						row.value_data[1] = ' ';
