@@ -39,9 +39,9 @@
  ***********************************************************************/
 
 static const char usage_ctasd_socket[] =
-  "The unix domain socket or Internet host[:port] of the ctasd\n"
-"# server. Specify the empty string to disable ctasd scan. The\n"
-"# default ctasd port is " QUOTE(CTASD_PORT) ".\n"
+  "The unix domain socket or Internet host[:port] of the CommTouch\n"
+"# Advanced Security daemon (ctasd). Specify the empty string to disable\n"
+"# ctasd scan. The default ctasd port is " QUOTE(CTASD_PORT) ".\n"
 "#"
 ;
 Option optCtasdSocket	= { "ctasd-socket",	"",		usage_ctasd_socket };
