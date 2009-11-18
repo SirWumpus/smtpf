@@ -690,6 +690,45 @@ zero (0) connections to disable the rate limit.
 </p>
 </dd>
 
+<a name="opt_ctasd_policy"></a>
+<dt><span class="option">ctasd-policy</span>=<span class="value">reject</span></dt>
+<dd>
+Policy to apply if message is infected. Specify either none,
+reject, or discard.
+</dd>
+
+<a name="opt_ctasd_socket"></a>
+<dt><span class="option">ctasd-socket</span>=<span class="value"></span></dt>
+<dd>
+The unix domain socket or Internet host[:port] of the
+<a href="http://www.commtouch.com/">CommTouch</a>
+Advanced Security daemon (ctasd). Specify the empty string to disable
+ctasd scan. The default ctasd port is 8088.
+</dd>
+
+<a name="opt_ctasd_stream"></a>
+<dt>-<span class="option">ctasd-stream</span></dt>
+<dd>
+When set, the message is streamed to the ctasd server, otherwiese
+the message is passed by temporary file reference.
+<span class="note">Currently ctasd does not properly support true
+inline streaming, so this option should remain unset.</a>
+</dd>
+
+<a name="opt_ctasd_subject_tag"></a>
+<dt><span class="option">ctasd-subject-tag</span>=<span class="value">[SUSPECT]</span></dt>
+<dd>
+When the ctasd server reports the message as suspicious then the Subject
+header is prepended with this tag to identify suspect messages. Specify
+the empty string to disable the subject tag.
+</dd>
+
+<a name="opt_ctasd_timeout"></a>
+<dt><span class="option">ctasd-timeout</span>=<span class="value">120</span></dt>
+<dd>
+The ctasd I/O timeout in seconds.
+</dd>
+
 <a name="opt_daemon"></a>
 <dt>+<span class="option">daemon</span></dt>
 <dd>
