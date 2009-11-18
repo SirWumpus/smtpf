@@ -1618,7 +1618,7 @@ accessData(Session *sess, va_list ignore)
 	 * must come before expensive content handlers, such as
 	 * spamd.
 	 */
-	if (/* MSG_NOT_SET(sess, MSG_SAVE) && */ MSG_ANY_SET(sess, MSG_DISCARD)) {
+	if (/* MSG_NOT_SET(sess, MSG_SAVE) && */ MSG_ANY_SET(sess, MSG_DISCARD|MSG_TRAP)) {
 		LOG_TRACE(sess, 857, discard flag set);
 		return SMTPF_DISCARD;
 	}
