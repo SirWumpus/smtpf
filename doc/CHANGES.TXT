@@ -275,6 +275,10 @@ is no set schedule for releases.
    +	CONN like command for forward host connections.
 
 
+--2.3.5--
+
+   !	spamd_open: remove duplicate Received header.
+
 --2.3.4--
 
   !!	Fixed potential seg.fault by adding missing message "trap" flag

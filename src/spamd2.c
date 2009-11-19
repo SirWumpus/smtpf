@@ -221,10 +221,6 @@ spamd_open(Session *sess, Spamd *spamd)
 	if (socketWrite(spamd->socket, (unsigned char *) sess->input, length) != length)
 		goto error2;
 
-	length = getReceivedHeader(sess, sess->input, sizeof (sess->input));
-	if (socketWrite(spamd->socket, (unsigned char *) sess->input, length) != length)
-		goto error2;
-
 	free(user);
 
 	return SMTPF_CONTINUE;

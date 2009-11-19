@@ -121,8 +121,10 @@ clientFlags(Session *sess)
 
 	(void) getFlagString(client_flags, sess->client.flags, sess->reply, sizeof (sess->reply), &length);
 
+#ifdef AF_INET6
 	if (sess->client.socket->address.sa.sa_family == AF_INET6)
 		TextCat(sess->reply, sizeof (sess->reply), ",ipv6");
+#endif
 
 	return sess->reply;
 }
