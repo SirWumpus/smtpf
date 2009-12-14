@@ -1061,7 +1061,7 @@ int
 accessMail(Session *sess, va_list args)
 {
 	int access;
-	char *msg, *value = NULL;
+	char *msg, *action, *value = NULL;
 	ParsePath *path = va_arg(args, ParsePath *);
 
 	LOG_TRACE(sess, 123, accessMail);
@@ -1080,6 +1080,15 @@ accessMail(Session *sess, va_list args)
 
 	if ((access = smdbIpMail(sess->access_map, "connect:", sess->client.addr, SMDB_COMBO_TAG_DELIM "from:", sess->msg.mail->address.string, NULL, &value)) != SMDB_ACCESS_NOT_FOUND
 	|| (*sess->client.name != '\0' && (access = smdbDomainMail(sess->access_map, "connect:", sess->client.name, SMDB_COMBO_TAG_DELIM "from:", sess->msg.mail->address.string, NULL, &value)) != SMDB_ACCESS_NOT_FOUND)) {
+		access = accessPattern(sess, sess->client.addr, value, &action);
+		if (access == SMDB_ACCESS_NOT_FOUND) {
+			access = accessPattern(sess, sess->client.name, value, &action);
+			if (access == SMDB_ACCESS_NOT_FOUND)
+				access = accessPattern(sess, sess->msg.mail->address.string, value, &action);
+		}
+		free(value);
+		value = action;
+
 		if (strcmp(value, "SPF-PASS") == 0 && sess->msg.spf_mail == SPF_PASS)
 			access = SMDB_ACCESS_OK;
 
@@ -1285,7 +1294,7 @@ int
 accessRcpt(Session *sess, va_list args)
 {
 	int access;
-	char *msg, *value = NULL;
+	char *msg, *action, *value = NULL;
 	ParsePath *path = va_arg(args, ParsePath *);
 
 	LOG_TRACE(sess, 130, accessRcpt);
@@ -1324,6 +1333,15 @@ See <a href="summary.html#opt_reject_quoted_at_sign">reject-quoted-at-sign</a>.
 
 	else if ((access = smdbIpMail(sess->access_map, "connect:", sess->client.addr, SMDB_COMBO_TAG_DELIM "to:", path->address.string, NULL, &value)) != SMDB_ACCESS_NOT_FOUND
 	     || (*sess->client.name != '\0' && (access = smdbDomainMail(sess->access_map, "connect:", sess->client.name, SMDB_COMBO_TAG_DELIM "to:", path->address.string, NULL, &value)) != SMDB_ACCESS_NOT_FOUND)) {
+		access = accessPattern(sess, sess->client.addr, value, &action);
+		if (access == SMDB_ACCESS_NOT_FOUND) {
+			access = accessPattern(sess, sess->client.name, value, &action);
+			if (access == SMDB_ACCESS_NOT_FOUND)
+				access = accessPattern(sess, path->address.string, value, &action);
+		}
+		free(value);
+		value = action;
+
 		if ((msg = strchr(value, ':')) != NULL)
 			msg++;
 
@@ -1375,6 +1393,13 @@ See <a href="access-map.html#access_tags">access-map</a>.
 	}
 
 	else if ((access = smdbMailMail(sess->access_map, "from:", sess->msg.mail->address.string, SMDB_COMBO_TAG_DELIM "to:", path->address.string, NULL, &value)) != SMDB_ACCESS_NOT_FOUND) {
+		access = accessPattern(sess, sess->msg.mail->address.string, value, &action);
+		if (access == SMDB_ACCESS_NOT_FOUND) {
+			access = accessPattern(sess, path->address.string, value, &action);
+		}
+		free(value);
+		value = action;
+
 		if ((msg = strchr(value, ':')) != NULL)
 			msg++;
 

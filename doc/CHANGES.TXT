@@ -275,6 +275,17 @@ is no set schedule for releases.
    +	CONN like command for forward host connections.
 
 
+--2.3.6--
+
+   !	accessMail, accessRcpt: Combo tags never supported pattern lists
+	by design; this was due in part to the question of what string
+	should be tested against the pattern list (first, second, first
+	and second joined). After some thought, have enhanced the design
+	of combo tags to allow for pattern lists that check the first
+	tag element followed by the second tag element against the
+	pattern list. Requested by Quentin Campbell.
+
+
 --2.3.5--
 
    !	spamd_open: remove duplicate Received header.
