@@ -888,7 +888,7 @@ accessConnect(Session *sess, va_list args)
 		if ((msg = strchr(value, ':')) != NULL)
 			msg++;
 
-		switch (access = smdbAccessIsOk(access)) {
+		switch (access) {
 		case SMDB_ACCESS_OK:
 			if (verb_info.option.value) {
 				syslog(LOG_INFO, LOG_MSG(119) "host " CLIENT_FORMAT " %s", LOG_ARGS(sess), CLIENT_INFO(sess), msg == NULL ? "white listed" : msg);
@@ -925,9 +925,13 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			CLIENT_SET(sess, CLIENT_IS_TEMPFAIL);
 			break;
 
-		default:
-			access = SMTPF_CONTINUE;
+		case SMDB_ACCESS_DISCARD:
+			if (verb_info.option.value)
+				syslog(LOG_INFO, LOG_MSG(000) "host " CLIENT_FORMAT " %s", LOG_ARGS(sess), CLIENT_INFO(sess), msg == NULL ? "discard" : msg);
+			CLIENT_SET(sess, CLIENT_IS_DISCARD);
+			break;
 
+		default:
 			if (0 < TextSensitiveStartsWith(value, "IREJECT")) {
 				access = replyPushFmt(sess, SMTPF_DROP, "550 5.7.1 host " CLIENT_FORMAT " %s" ID_MSG(854) "\r\n", CLIENT_INFO(sess), msg == NULL ? "black listed" : msg, ID_ARG(sess));
 /*{REPLY
@@ -1013,6 +1017,13 @@ accessMsgAction(Session *sess, const char *value, const char *msg, int access)
 		MSG_SET(sess, MSG_TAG);
 	}
 
+	else if (0 < TextSensitiveStartsWith(value, "DISCARD")) {
+		if (verb_info.option.value)
+			syslog(LOG_INFO, LOG_MSG(000) "message %s", LOG_ARGS(sess), msg == NULL ? "discard" : msg);
+		MSG_SET(sess, MSG_DISCARD);
+		access = SMTPF_DISCARD;
+	}
+
 	return access;
 }
 
@@ -1067,6 +1078,8 @@ accessMail(Session *sess, va_list args)
 	LOG_TRACE(sess, 123, accessMail);
 
 	CLIENT_CLEAR(sess, CLIENT_IS_MX);
+	if (CLIENT_ANY_SET(sess, CLIENT_IS_DISCARD))
+		MSG_SET(sess, MSG_DISCARD);
 	if (CLIENT_ANY_SET(sess, CLIENT_IS_TRAP))
 		MSG_SET(sess, MSG_TRAP);
 	if (CLIENT_ANY_SET(sess, CLIENT_IS_SAVE))
@@ -1095,7 +1108,7 @@ accessMail(Session *sess, va_list args)
 		if ((msg = strchr(value, ':')) != NULL)
 			msg++;
 
-		switch (access = smdbAccessIsOk(access)) {
+		switch (access) {
 		case SMDB_ACCESS_OK:
 			if (verb_info.option.value) {
 				syslog(LOG_INFO, LOG_MSG(124) "host " CLIENT_FORMAT " sender <%s> %s", LOG_ARGS(sess), CLIENT_INFO(sess), sess->msg.mail->address.string, msg == NULL ? "white listed" : msg);
@@ -1174,7 +1187,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 		if ((msg = strchr(value, ':')) != NULL)
 			msg++;
 
-		switch (access = smdbAccessIsOk(access)) {
+		switch (access) {
 		case SMDB_ACCESS_OK:
 			if (verb_info.option.value) {
 				syslog(LOG_INFO, LOG_MSG(126) "sender <%s> %s", LOG_ARGS(sess), path->address.string, msg == NULL ? "white listed" : msg);
@@ -1345,7 +1358,7 @@ See <a href="summary.html#opt_reject_quoted_at_sign">reject-quoted-at-sign</a>.
 		if ((msg = strchr(value, ':')) != NULL)
 			msg++;
 
-		switch (access = smdbAccessIsOk(access)) {
+		switch (access) {
 		case SMDB_ACCESS_OK:
 			if (verb_info.option.value) {
 				syslog(LOG_INFO, LOG_MSG(134) "host " CLIENT_FORMAT " recipient <%s> %s", LOG_ARGS(sess), CLIENT_INFO(sess), path->address.string, msg == NULL ? "white listed" : msg);
@@ -1403,7 +1416,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 		if ((msg = strchr(value, ':')) != NULL)
 			msg++;
 
-		switch (access = smdbAccessIsOk(access)) {
+		switch (access) {
 		case SMDB_ACCESS_OK:
 			if (verb_info.option.value) {
 				syslog(LOG_INFO, LOG_MSG(136) "sender <%s> recipient <%s> %s", LOG_ARGS(sess), sess->msg.mail->address.string, path->address.string, msg == NULL ? "white listed" : msg);
@@ -1461,7 +1474,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 		if ((msg = strchr(value, ':')) != NULL)
 			msg++;
 
-		switch (access = smdbAccessIsOk(access)) {
+		switch (access) {
 		case SMDB_ACCESS_OK:
 			if (verb_info.option.value) {
 				syslog(LOG_INFO, LOG_MSG(138) "recipient <%s> %s", LOG_ARGS(sess), path->address.string, msg == NULL ? "white listed" : msg);
@@ -1555,7 +1568,7 @@ accessHelo(Session *sess, va_list args)
 		if ((msg = strchr(value, ':')) != NULL)
 			msg++;
 
-		switch (access = smdbAccessIsOk(access)) {
+		switch (access) {
 		case SMDB_ACCESS_OK:
 			if (verb_info.option.value) {
 				syslog(LOG_INFO, LOG_MSG(923) "helo %s %s", LOG_ARGS(sess), helo, msg == NULL ? "white listed" : msg);
@@ -1592,9 +1605,13 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			CLIENT_SET(sess, CLIENT_IS_TEMPFAIL);
 			break;
 
-		default:
-			access = SMTPF_CONTINUE;
+		case SMDB_ACCESS_DISCARD:
+			if (verb_info.option.value)
+				syslog(LOG_INFO, LOG_MSG(000) "helo %s %s", LOG_ARGS(sess), helo, msg == NULL ? "discard" : msg);
+			CLIENT_SET(sess, CLIENT_IS_DISCARD);
+			break;
 
+		default:
 			if (0 < TextSensitiveStartsWith(value, "IREJECT")) {
 				access = replyPushFmt(sess, SMTPF_DROP, "550 5.7.1 helo %s %s" ID_MSG(926) "\r\n", helo, msg == NULL ? "black listed" : msg, ID_ARG(sess));
 /*{REPLY

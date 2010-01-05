@@ -158,7 +158,7 @@ summarySender(Session *sess, const char *sender)
 	syslog(
 		LOG_INFO, LOG_MSG(717) "sender %s tid=%s f=\"%s\" spf-mail=%s spf-helo=%s x=\"%s\"", LOG_ARGS(sess),
 		/* In the event parsePath fails, we need to still log the sender arg. */
-		/* sess->msg.mail->address.string */ sender, sess->msg.id, mailFlags(sess),
+		/* sess->msg.mail->address.string */ TextNull(sender), sess->msg.id, mailFlags(sess),
 		spfResultString[sess->msg.spf_mail],
 		spfResultString[sess->client.spf_helo],
 		sess->msg.chunk1
@@ -182,7 +182,7 @@ summaryRecipient(Session *sess, const char *recipient)
 	syslog(
 		LOG_INFO, LOG_MSG(718) "recipient %s tid=%s f=\"%s\" x=\"%s\"", LOG_ARGS(sess),
 		/* In the event parsePath fails, we need to still log the recipient arg. */
-		/* rcpt->address.string*/ recipient, sess->msg.id, rcptFlags(sess), sess->msg.chunk1
+		/* rcpt->address.string*/ TextNull(recipient), sess->msg.id, rcptFlags(sess), sess->msg.chunk1
 	);
 /*{LOG
 This line gives a summary of recipient highlights.

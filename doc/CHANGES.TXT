@@ -275,6 +275,13 @@ is no set schedule for releases.
    +	CONN like command for forward host connections.
 
 
+--2.3.7--
+
+   !	access.c: Removed use of smdbAccessIsOk that folded SMDB_ACCESS_
+	codes into a limited subset. This had the adverse affect of
+	folding DISARD into an OK. This is done for sendmail milters,
+	but in smtpf we don't support all the sendmail action words.
+
 --2.3.6--
 
    !	accessMail, accessRcpt: Combo tags never supported pattern lists
