@@ -695,6 +695,18 @@ cacheGc(Session *null, va_list args)
 	return SMTPF_CONTINUE;
 }
 
+void
+cacheGetTime(uint32_t *seconds, char *buffer, size_t size)
+{
+	struct tm local;
+	time_t timestamp;
+
+	/* Convert 32-bit timestamp to possibly 64-bit time_t. */
+	timestamp = (time_t) *seconds;
+	(void) localtime_r(&timestamp, &local);
+	(void) getRFC2821DateTime(&local, buffer, size);
+}
+
 int
 cacheCommand(Session *sess)
 {
@@ -802,12 +814,9 @@ cacheCommand(Session *sess)
 			/* Create a blank reply. */
 			reply = replyMsg(SMTPF_CONTINUE, "", 0);
 
-			(void) localtime_r((time_t *) &old_row.created, &local);
-			(void) getRFC2821DateTime(&local, cstamp, sizeof (cstamp));
-			(void) localtime_r((time_t *) &old_row.touched, &local);
-			(void) getRFC2821DateTime(&local, tstamp, sizeof (tstamp));
-			(void) localtime_r((time_t *) &old_row.expires, &local);
-			(void) getRFC2821DateTime(&local, estamp, sizeof (estamp));
+			cacheGetTime(&old_row.created, cstamp, sizeof (cstamp));
+			cacheGetTime(&old_row.touched, tstamp, sizeof (tstamp));
+			cacheGetTime(&old_row.expires, estamp, sizeof (estamp));
 
 			/* Append a reply that might be longer than
 			 * SMTP_REPLY_LINE_LENGTH bytes. Not fond of
@@ -856,12 +865,9 @@ cacheCommand(Session *sess)
 			/* Create a blank reply. */
 			reply = replyMsg(SMTPF_CONTINUE, "", 0);
 
-			(void) localtime_r((time_t *) &new_row.created, &local);
-			(void) getRFC2821DateTime(&local, cstamp, sizeof (cstamp));
-			(void) localtime_r((time_t *) &new_row.touched, &local);
-			(void) getRFC2821DateTime(&local, tstamp, sizeof (tstamp));
-			(void) localtime_r((time_t *) &new_row.expires, &local);
-			(void) getRFC2821DateTime(&local, estamp, sizeof (estamp));
+			cacheGetTime(&new_row.created, cstamp, sizeof (cstamp));
+			cacheGetTime(&new_row.touched, tstamp, sizeof (tstamp));
+			cacheGetTime(&new_row.expires, estamp, sizeof (estamp));
 
 			/* Append a reply that might be longer than
 			 * SMTP_REPLY_LINE_LENGTH bytes. Not fond of

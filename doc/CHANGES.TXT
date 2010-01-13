@@ -278,6 +278,14 @@ is no set schedule for releases.
    	file to by-pass when spamd-max-size is being used. Steve F.
 
 
+--2.3.9--
+
+   !	CACHE GET reports strangely formatted timestamp string. Fix type
+	conversion bug related to 64-bit system. The cache stores times
+	as 32-bits, but on a 64-bit system time_t is 64-bits. Added a
+	conversion function that will first convert the unsigned 32-bit
+	value into time_t before formatting the output string.
+
 --2.3.8--
 
    !	attachmentContent: changed FILTER_ATTACHMENT_CONTENT_SHORTCUT

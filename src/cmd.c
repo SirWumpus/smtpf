@@ -1262,6 +1262,8 @@ getRFC2821DateTime(struct tm *local, char *buffer, size_t size)
 {
 	int length;
 
+	if (local == NULL)
+		return 0;
 #ifdef __WIN32__
 	length = strftime(buffer, size, "%a, %d %b %Y %H:%M:%S ", local);
 	length += getTimeZone(buffer+length, size-length);
