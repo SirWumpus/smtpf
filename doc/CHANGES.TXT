@@ -274,6 +274,15 @@ is no set schedule for releases.
 
    +	CONN like command for forward host connections.
 
+   +	Use SIZE= to by-pass SpamAssassin and/or the length of the temp.
+   	file to by-pass when spamd-max-size is being used. Steve F.
+
+
+--2.3.8--
+
+   !	attachmentContent: changed FILTER_ATTACHMENT_CONTENT_SHORTCUT
+   	test, which for long messages (>64 KB) meant that attachmentDot was
+	never called.
 
 --2.3.7--
 

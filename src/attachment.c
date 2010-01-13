@@ -40,6 +40,7 @@ Option optDenyContentType = {
 
 	 "application/*executable"
 	";application/*msdos-program"
+	";application/*msdownload"
 	";message/partial"
 
 	, usage_deny_content_type
@@ -666,7 +667,7 @@ attachmentContent(Session *sess, va_list args)
 	 * message fits in the first chunk, we can avoid connecting
 	 * to spamd entirely, which is last in filter_content_table.
 	 */
-	if (sess->msg.seen_final_dot)
+	if (ctx->attachment_found != NULL)
 		return attachmentDot(sess, NULL);
 #endif
 	return SMTPF_CONTINUE;
