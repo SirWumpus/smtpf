@@ -48,7 +48,7 @@ function time62Decode($time_encoding)
 
 	return mktime(
 		$localtime['tm_hour'], $localtime['tm_min'], $localtime['tm_sec'],
-		$localtime['tm_mon'], $localtime['tm_mday'], $localtime['tm_year']
+		$localtime['tm_mon'], $localtime['tm_mday'], $localtime['tm_year']+1900
 	);
 }
 ?>
