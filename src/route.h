@@ -46,6 +46,7 @@ extern void routeMapClose(Session *);
 
 extern Option optRouteMap;
 extern Option optRouteForwardSelection;
+extern Option optCallAheadAsSender;
 
 extern int routeRegister(Session *null, va_list ignore);
 extern int routeInit(Session *null, va_list ignore);

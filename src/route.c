@@ -120,6 +120,15 @@ static const char usage_route_forward_selection[] =
 
 Option optRouteForwardSelection	= { "route-forward-selection", "ordered", usage_route_forward_selection };
 
+static const char usage_call_ahead_as_sender[] =
+  "When set, perform the call-ahead using the original MAIL FROM:<sender>\n"
+"# instead of the MAIL FROM:<> (null sender). Some down stream mail stores\n"
+"# reject MAIL FROM:<> or reject a sender at RCPT TO:\n"
+"#"
+;
+
+Option optCallAheadAsSender = { "call-ahead-as-sender", "-", usage_call_ahead_as_sender };
+
 #define RCPT_TAG		"rcpt:"
 #define DUMB_TAG		"dumb:"
 
@@ -787,7 +796,10 @@ routeCallAhead(Session *sess, const char *host, ParsePath *rcpt)
 		goto error2;
 	}
 
-	(void) snprintf(sess->input, sizeof (sess->input), "MAIL FROM:<%s>\r\n", sess->msg.mail->address.string);
+	(void) snprintf(
+		sess->input, sizeof (sess->input), "MAIL FROM:<%s>\r\n",
+		optCallAheadAsSender.value ? sess->msg.mail->address.string : ""
+	);
 	if (mxCommand(sess, conn, sess->input, 250)) {
 		/* Avoid caching a failure result regardless of the
 		 * response from the downstream host.
