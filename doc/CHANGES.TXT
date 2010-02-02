@@ -286,6 +286,13 @@ is no set schedule for releases.
 	conversion function that will first convert the unsigned 32-bit
 	value into time_t before formatting the output string.
 
+   +	Added call-ahead-as-sender option.  When set, perform the call-
+	ahead using the original MAIL FROM:<sender> instead of the MAIL
+	FROM:<> (null sender). Some down stream mail stores reject MAIL
+	FROM:<> or reject a sender at RCPT TO:
+
+   !	attachmentRset: fixed potential double-free error
+
 --2.3.8--
 
    !	attachmentContent: changed FILTER_ATTACHMENT_CONTENT_SHORTCUT

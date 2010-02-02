@@ -454,6 +454,14 @@ with optional colon separated port numbers. This option and
 The listener port for unicast cache updates.
 </dd>
 
+<a name="opt_call_ahead_as_sender"></a>
+<dt>-<span class="option">call-ahead-as-sender</span></dt>
+<dd>
+When set, perform the call-ahead using the original MAIL FROM:<sender>
+instead of the MAIL FROM:<> (null sender). Some down stream mail stores
+reject MAIL FROM:<> or reject a sender at RCPT TO:
+</dd>
+
 <a name="opt_call_back"></a>
 <dt>-<span class="option">call-back</span></dt>
 <dd>

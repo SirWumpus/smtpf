@@ -1,7 +1,9 @@
 /*
  * ctasd.c
  *
- * Copyright 2009 by Anthony Howe. All rights reserved.
+ * CommTouch Advanced Security daemon
+ *
+ * Copyright 2009, 2010 by Anthony Howe. All rights reserved.
  */
 
 /***********************************************************************
