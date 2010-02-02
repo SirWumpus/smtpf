@@ -713,7 +713,6 @@ cacheCommand(Session *sess)
 	time_t now;
 	Reply *reply;
 	Vector active;
-	struct tm local;
 	unsigned long ticks;
 	int key_len, value_len;
 	char *cmd, *key, *value;
