@@ -376,10 +376,15 @@ attachmentRset(Session *sess, va_list ignore)
 
 	if (ctx->filename != optDenyContentName.string)
 		free(ctx->filename);
+	ctx->filename = NULL;
+
 	if (ctx->mimetype != optDenyContentType.string)
 		free(ctx->mimetype);
+	ctx->mimetype = NULL;
+
 	if (ctx->archname != optDenyZipName.string)
 		free(ctx->archname);
+	ctx->archname = NULL;
 
 	VectorDestroy(ctx->content_names);
 	VectorDestroy(ctx->content_types);
