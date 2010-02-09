@@ -82,7 +82,7 @@ else
 		pw useradd -n ${USER} -g ${GROUP} -c 'BarricadeMX daemon' -d /var/empty -s /usr/sbin/nologin
 	else
 		groupadd ${GROUP}
-		useradd -g ${GROUP} -c "${TARNAME} daemon process" ${USER} >/dev/null
+		useradd -g ${GROUP} -c "${TARNAME} daemon process" -d /var/empty -s /sbin/nologin ${USER} >/dev/null
 	fi
 
 	INSTALL_WHEEL="${INSTALL_O} root -g 0"
