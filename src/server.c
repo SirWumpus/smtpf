@@ -1076,9 +1076,7 @@ serverMain(void)
 	syslog(LOG_INFO, LOG_NUM(604) "" _NAME " " _VERSION " " _COPYRIGHT);
 	syslog(LOG_INFO, LOG_NUM(605) "LibSnert %s %s", LIBSNERT_VERSION, LIBSNERT_COPYRIGHT);
 	syslog(LOG_INFO, LOG_NUM(606) "SQLite %s Public Domain by D. Richard Hipp", sqlite3_libversion());
-#ifdef _BUILT
-	syslog(LOG_INFO, LOG_NUM(904) "Built on " _BUILT);
-#endif
+	syslog(LOG_INFO, LOG_NUM(904) "Built on %s", smtpf_built);
 /*{LOG
 Version and copyright notices.
 }*/
@@ -1497,9 +1495,7 @@ serverMain(void)
 	syslog(LOG_INFO, LOG_NUM(604) "" _NAME " " _VERSION " " _COPYRIGHT);
 	syslog(LOG_INFO, LOG_NUM(605) "LibSnert %s %s", LIBSNERT_VERSION, LIBSNERT_COPYRIGHT);
 	syslog(LOG_INFO, LOG_NUM(606) "SQLite %s Public Domain by D. Richard Hipp", sqlite3_libversion());
-#ifdef _BUILT
-	syslog(LOG_INFO, LOG_NUM(904) "Built on " _BUILT);
-#endif
+	syslog(LOG_INFO, LOG_NUM(904) "Built on %s", smtpf_built);
 /*{LOG
 Version and copyright notices.
 }*/
@@ -1548,9 +1544,7 @@ serverPrintVersion(void)
 	printf(_NAME " " _VERSION " " _COPYRIGHT "\n");
 	printf(LIBSNERT_STRING " " _COPYRIGHT "\n");
 	printf("SQLite %s Public Domain by D. Richard Hipp\n", sqlite3_libversion());
-#ifdef _BUILT
-	printf("Built on " _BUILT "\n");
-#endif
+	printf("Built on %s\n", smtpf_built);
 }
 
 #ifdef OLD_SERVER_MODEL
@@ -1597,9 +1591,7 @@ serverPrintInfo(void)
 #ifdef _COPYRIGHT
 	printVar(0, "SMTPF_COPYRIGHT", _COPYRIGHT);
 #endif
-#ifdef _BUILT
-	printVar(0, "SMTPF_BUILT", _BUILT);
-#endif
+	printVar(0, "SMTPF_BUILT", smtpf_built);
 #ifdef _CONFIGURE
 	printVar(LINE_WRAP, "SMTPF_CONFIGURE", _CONFIGURE);
 #endif

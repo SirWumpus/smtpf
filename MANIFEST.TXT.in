@@ -70,6 +70,7 @@ com/snert/src/@PACKAGE_NAME@/src/access.h
 com/snert/src/@PACKAGE_NAME@/src/attachment.c
 com/snert/src/@PACKAGE_NAME@/src/attachment.h
 com/snert/src/@PACKAGE_NAME@/src/BUILD_ID.TXT
+com/snert/src/@PACKAGE_NAME@/src/built.c
 com/snert/src/@PACKAGE_NAME@/src/cache.c
 com/snert/src/@PACKAGE_NAME@/src/cache.h
 com/snert/src/@PACKAGE_NAME@/src/clamd.c

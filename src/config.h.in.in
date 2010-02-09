@@ -23,7 +23,6 @@ extern "C" {
 #undef _CFLAGS
 #undef _LDFLAGS
 #undef _LIBS
-#undef _BUILT
 
 #define _DISPLAY			_NAME
 #define _BRIEF				"BarricadeMX - The anti-spam SMTP proxy filter."

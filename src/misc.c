@@ -1336,9 +1336,7 @@ infoCommand(Session *sess)
 #ifdef _COPYRIGHT
 	reply = infoReplyVar(reply, 0, "214-2.0.0", "SMTPF_COPYRIGHT", _COPYRIGHT);
 #endif
-#ifdef _BUILT
-	reply = infoReplyVar(reply, 0, "214-2.0.0", "SMTPF_BUILT", _BUILT);
-#endif
+	reply = infoReplyVar(reply, 0, "214-2.0.0", "SMTPF_BUILT", smtpf_built);
 #ifdef LIBSNERT_VERSION
 	reply = infoReplyVar(reply, 0, "214-2.0.0", "LIBSNERT_VERSION", LIBSNERT_VERSION);
 #endif

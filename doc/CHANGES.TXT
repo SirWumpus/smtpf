@@ -293,6 +293,10 @@ is no set schedule for releases.
 
    !	attachmentRset: fixed potential double-free error
 
+   !	MANEFEST.TXT.in, src/makefile.in, config.h.in.in, smtpf.h,
+	server.c, misc.c, built.c: Changed _BUILT macro from configure
+	time to compile time.
+
 --2.3.8--
 
    !	attachmentContent: changed FILTER_ATTACHMENT_CONTENT_SHORTCUT

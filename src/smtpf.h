@@ -594,9 +594,7 @@ extern int parse_path_flags;
 extern char *route_map_path;
 extern char *access_map_path;
 
-extern const char base62[];
-extern struct bitword verbose_bits[];
-extern volatile unsigned long active_connections;
+extern const char smtpf_built[];
 extern volatile unsigned long connections_per_second;
 
 extern struct command state0[];
