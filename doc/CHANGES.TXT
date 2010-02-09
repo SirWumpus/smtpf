@@ -278,6 +278,12 @@ is no set schedule for releases.
    	file to by-pass when spamd-max-size is being used. Steve F.
 
 
+--2.3.10--
+
+   !	MANEFEST.TXT.in, src/makefile.in, config.h.in.in, smtpf.h,
+	server.c, misc.c, built.c: Changed _BUILT macro from configure
+	time to compile time.
+
 --2.3.9--
 
    !	CACHE GET reports strangely formatted timestamp string. Fix type
@@ -292,10 +298,6 @@ is no set schedule for releases.
 	FROM:<> or reject a sender at RCPT TO:
 
    !	attachmentRset: fixed potential double-free error
-
-   !	MANEFEST.TXT.in, src/makefile.in, config.h.in.in, smtpf.h,
-	server.c, misc.c, built.c: Changed _BUILT macro from configure
-	time to compile time.
 
 --2.3.8--
 
