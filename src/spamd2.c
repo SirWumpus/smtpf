@@ -95,6 +95,14 @@ Option optSpamdLevelHeader	= { "spamd-level-header", "X-Spam-Level", "The name o
 Option optSpamdStatusHeader	= { "spamd-status-header", "X-Spam-Status", "The name of the status header. Empty string to disable." };
 Option optSpamdReportHeader	= { "spamd-report-header", "X-Spam-Report", "The name of the report header. Empty string to disable." };
 
+static const char usage_spamd_level_character[] =
+  "The character used for the X-Spam-Level: header. By default it is\n"
+"# a regular expression neutral character, 'x', though the historical\n"
+"# default is '*'."
+"#"
+;
+Option optSpamdLevelCharacter	= { "spamd-level-character",	"x", usage_spamd_level_character };
+
 Verbose verb_spamd = { { "spamd", "-", "" } };
 
 Stats stat_spamd_connect	= { STATS_TABLE_MSG, "spamd-connect" };
@@ -276,6 +284,7 @@ spamdRegister(Session *sess, va_list ignore)
 	optionsRegister(&optSpamdLevelHeader, 0);
 	optionsRegister(&optSpamdStatusHeader, 0);
 	optionsRegister(&optSpamdReportHeader, 0);
+	optionsRegister(&optSpamdLevelCharacter, 0);
 
 	(void) statsRegister(&stat_spamd_connect);
 	(void) statsRegister(&stat_spamd_connect_error);
@@ -380,6 +389,7 @@ spamdDot(Session *sess, va_list ignore)
 	FILE *fp;
 	char *hdr;
 	Spamd *spamd;
+	char wanker_option;
 	long i, length, size, score;
 
 	if (verb_trace.option.value)
@@ -506,11 +516,14 @@ See <a href="summary.html#opt_spamd_socket">spamd-socket</a> option.
 	}
 
 	/* Create X-Spam-Level: header */
+	wanker_option = (!isspace(*optSpamdLevelCharacter.string) && *optSpamdLevelCharacter.string != '\0')
+		? *optSpamdLevelCharacter.string
+		: 'x';
 	if (*optSpamdLevelHeader.string != '\0') {
 		length = snprintf(sess->input, sizeof (sess->input)-3, "%s: ", optSpamdLevelHeader.string);
 		score = (int) spamd->score;
 		for (i = 0; i < score; i++)
-			sess->input[length++] = 'x';
+			sess->input[length++] = wanker_option;
 		sess->input[length++] = '\r';
 		sess->input[length++] = '\n';
 		sess->input[length  ] = '\0';
