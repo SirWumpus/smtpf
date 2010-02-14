@@ -284,6 +284,8 @@ is no set schedule for releases.
 	server.c, misc.c, built.c: Changed _BUILT macro from configure
 	time to compile time.
 
+   +	Added spamd-level-character option for wankers like Tulsa Connect.
+
 --2.3.9--
 
    !	CACHE GET reports strangely formatted timestamp string. Fix type

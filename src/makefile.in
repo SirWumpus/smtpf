@@ -114,10 +114,10 @@ CORE = built$O server$O smtpf$O cache$O cmd$O dsn$O filter$O latency$O mx$O opti
 
 OBJS = ${CORE} ${MODULE_O}
 
-${TARNAME}: BUILD_ID.TXT ${OBJS} unix$O lickey$O built
+${TARNAME}: BUILD_ID.TXT built ${OBJS} unix$O lickey$O
 	${CC} ${LDFLAGS} ${CC_E}${TARNAME}$E ${OBJS} unix$O lickey$O ${LIBS}
 
-d-${TARNAME}: BUILD_ID.TXT ${OBJS} unix$O lickey$O built
+d-${TARNAME}: BUILD_ID.TXT built ${OBJS} unix$O lickey$O
 	${CC} ${LDFLAGS} ${CC_E}d-${TARNAME}$E ${OBJS} unix$O lickey$O ${LIBS} ../../lib/util/DebugMalloc$O
 
 # Build native Windows app. using gcc under Cygwin, without cygwin1.dll.
@@ -132,7 +132,7 @@ d-${TARNAME}: BUILD_ID.TXT ${OBJS} unix$O lickey$O built
 #
 # NOTE this produces smaller code than Borland C++ 5.5 command line tools.
 #
-${TARNAME}.exe: BUILD_ID.TXT ${OBJS} windows$O lickey$O built
+${TARNAME}.exe: BUILD_ID.TXT built ${OBJS} windows$O lickey$O
 	gcc ${LDFLAGS} -mno-cygwin -Wl,--heap,131072,--stack,32768 ${CC_E}${TARNAME}.exe ${OBJS} windows$O lickey$O ${LIBS}
 
 #-ladvapi32
