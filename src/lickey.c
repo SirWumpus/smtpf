@@ -16,6 +16,8 @@
 #define LICKEY_LAST_WARNING	1
 #endif
 
+#define ONE_DAY			86400
+
 /***********************************************************************
  *** Leave this header alone. Its generated from the configure script.
  ***********************************************************************/
@@ -311,11 +313,11 @@ lickeySendWarning(void)
 	(void) convertDate(lickeyDateExpires.string, &expire, NULL);
 	now = time(NULL);
 
-	if (expire <= now + (LICKEY_LAST_WARNING * 86400))
+	if (expire <= now + (LICKEY_LAST_WARNING * ONE_DAY))
 		days = LICKEY_LAST_WARNING;
-	else if (expire <= now + (LICKEY_2ND_WARNING * 86400))
+	else if (expire <= now + (LICKEY_2ND_WARNING * ONE_DAY))
 		days = LICKEY_2ND_WARNING;
-	else if (expire <= now + (LICKEY_1ST_WARNING * 86400))
+	else if (expire <= now + (LICKEY_1ST_WARNING * ONE_DAY))
 		days = LICKEY_1ST_WARNING;
 	else
 		return;
@@ -364,10 +366,10 @@ lickeySendWarning(void)
 	/* Remember that this message has been sent. */
 	row.hits = 0;
 	row.created = time(NULL);
-	row.expires = row.created + (days+1) * 86400;
+	row.expires = row.created + (days+1) * ONE_DAY;
 	row.key_size = snprintf((char *) row.key_data, sizeof (row.key_data), "lickey:%s", mail);
 	row.value_size = (unsigned char) snprintf((char *) row.value_data, sizeof (row.value_data), "%d", days);
-	(void) mccPutRowLocal(mcc, &row, 1);
+	(void) mccPutRow(mcc, &row);
 }
 
 static const char hex_digit[] = "0123456789ABCDEF";
@@ -1336,7 +1338,7 @@ main(int argc, char **argv)
 				break;
 			case 'e':
 				days = (unsigned long) strtol(optarg, NULL, 10);
-				days *= 86400;
+				days *= ONE_DAY;
 				break;
 			case 'g':
 				generate_mode = 1;
@@ -1373,7 +1375,7 @@ main(int argc, char **argv)
 		if (0 <= (argi = cgiFindFormEntry(_POST, "g")))
 			generate_mode = _POST[argi][1][0] == '1';
 		if (0 <= (argi = cgiFindFormEntry(_POST, "e")))
-			days = (int) strtol(_POST[argi][1], NULL, 10) * 86400;
+			days = (int) strtol(_POST[argi][1], NULL, 10) * ONE_DAY;
 		if (0 <= (argi = cgiFindFormEntry(_POST, "i")))
 			(void) TextCopy(host_ip, sizeof (host_ip), _POST[argi][1]);
 
