@@ -278,6 +278,15 @@ is no set schedule for releases.
    	file to by-pass when spamd-max-size is being used. Steve F.
 
 
+--2.3.11--
+
+   *	Requires Libsnert 1.73.10
+
+   -	Removed ns-sub-domains option; was never implement. dnsListQueryNs
+   	automatically handles subdomains.
+
+   +	Added ns-a-bl option.
+
 --2.3.10--
 
    !	MANEFEST.TXT.in, src/makefile.in, config.h.in.in, smtpf.h,
