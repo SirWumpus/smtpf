@@ -217,14 +217,18 @@ static const char usage_ns_bl[] =
 "# suffix/0x00FFFFFE.\n"
 "#"
 ;
-static const char usage_ns_sub_domains[] =
-  "When querying against name based black lists, first test the registered\n"
-"# domain, then any sub-domains from right-to-left.\n"
+
+static const char usage_ns_a_bl[] =
+  "A comma or semi-colon separated list of IP black list suffixes to consult.\n"
+"# The host or domain name found in a URI is used to find its DNS NS records\n"
+"# and IP address, which are then checked against these IP black lists.\n"
+"# Aggregate lists are supported using suffix/mask. Without a /mask, suffix\n"
+"# is the same as suffix/0x00FFFFFE.\n"
 "#"
 ;
+static Option opt_ns_a_bl	= { "ns-a-bl",	"",			usage_ns_a_bl };
 
 Option optNsBL			= { "ns-bl",		"",			usage_ns_bl };
-Option optNsSubDomains		= { "ns-sub-domains",	"+",			usage_ns_sub_domains };
 
 Stats stat_ns_bl_ptr		= { STATS_TABLE_CONNECT,"ns-bl-ptr" };
 Stats stat_ns_bl_mail		= { STATS_TABLE_MAIL,	"ns-bl-mail" };
@@ -347,6 +351,7 @@ static FilterContext uribl_context;
  ***********************************************************************/
 
 static DnsList *ns_bl;
+static DnsList *ns_a_bl;
 static DnsList *uri_bl;
 static DnsList *mail_bl;
 static DnsList *uri_dns_bl;
@@ -362,6 +367,7 @@ uriblInit(Session *null, va_list ignore)
 	uri_dns_bl = dnsListCreate(optUriDnsBL.string);
 	mail_bl = dnsListCreate(optMailBl.string);
 	uri_bl = dnsListCreate(optUriBL.string);
+	ns_a_bl = dnsListCreate(opt_ns_a_bl.string);
 	ns_bl = dnsListCreate(optNsBL.string);
 
 	return SMTPF_CONTINUE;
@@ -375,6 +381,7 @@ uriblFini(Session *null, va_list ignore)
 	dnsListFree(uri_dns_bl);
 	dnsListFree(mail_bl);
 	dnsListFree(uri_bl);
+	dnsListFree(ns_a_bl);
 	dnsListFree(ns_bl);
 
 	return SMTPF_CONTINUE;
@@ -808,7 +815,7 @@ uriRegister(Session *sess, va_list ignore)
 	optionsRegister(&optMailBlPolicy,		0);
 
 	optionsRegister(&optNsBL, 			1);
-	optionsRegister(&optNsSubDomains, 		0);
+	optionsRegister(&opt_ns_a_bl, 			1);
 
 	(void) statsRegister(&stat_mail_bl_mail);
 	(void) statsRegister(&stat_mail_bl_hdr);
@@ -898,10 +905,10 @@ uriblNs(Session *sess, const char *host, Stats *stat)
 
 	LOG_TRACE(sess, 787, uriblNs);
 
-	if (*optNsBL.string == '\0'|| host == NULL || *host == '\0')
+	if (host == NULL || *host == '\0')
 		return SMTPF_CONTINUE;
 
-	if ((list_name = dnsListQueryNs(ns_bl, sess->pdq, ctx->uri_ns_seen, host)) != NULL) {
+	if ((list_name = dnsListQueryNs(ns_bl, ns_a_bl, sess->pdq, ctx->uri_ns_seen, host)) != NULL) {
 		setRejectMessage(sess, host, list_name, 0, 0, stat);
 		statsCount(stat);
 		return SMTPF_REJECT;

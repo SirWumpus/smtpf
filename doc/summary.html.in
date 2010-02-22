@@ -1259,12 +1259,18 @@ suffix/0x00FFFFFE.
 ns-bl=
 </dd>
 
-<a name="opt_ns_sub_domains"></a>
-<dt>+<span class="option">ns-sub-domains</span></dt>
+<a name="opt_ns_a_bl"></a>
+<dt><span class="option">ns-a-bl</span>=<span class="value"></span></dt>
 <dd>
-When querying against name based black lists, first test the registered
-domain, then any sub-domains from right-to-left.
+A comma or semi-colon separated list of IP black list suffixes to consult.
+The host or domain name found in a URI is used to find its DNS NS records
+and IP address, which are then checked against these IP black lists.
+Aggregate lists are supported using <code class="param">suffix/mask</code>.
+Without a <code class="param">/mask</code>, suffix
+is the same as <code class="param">suffix/0x00FFFFFE</code>.
 </dd>
+
+
 
 <a name="opt_null_sender_rate_control"></a>
 <dt><span class="option">Null Sender Rate Control</span></dt>
