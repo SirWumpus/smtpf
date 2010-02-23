@@ -320,6 +320,7 @@ $INSTALL -m 444 doc/Img/*.gif $doc/Img
 $INSTALL -m 444 doc/Img/*.jpg $doc/Img
 $INSTALL -m 444 doc/Img/*.png $doc/Img
 $INSTALL -m 444 doc/Img/*.bmp $doc/Img
+cd $doc >/dev/null; ln -s manual.shtml index.shtml 2>/dev/null; cd - >/dev/null
 
 echo
 echo '***************************************************************'
