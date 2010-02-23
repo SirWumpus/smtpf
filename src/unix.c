@@ -296,6 +296,9 @@ run @PACKAGE_NAME@ as a foreground application.
 		rlimits();
 	}
 # if defined(RLIMIT_NOFILE)
+{
+	struct rlimit limit;
+
 	if (0 < optServerMaxThreads.value
 	&& optRunOpenFileLimit.value < optServerMaxThreads.value * FD_PER_THREAD) {
 		/* Round up to the nearest K worth of file descriptors. */
@@ -307,9 +310,7 @@ run @PACKAGE_NAME@ as a foreground application.
 	 * open file descriptors the process can have. See server
 	 * accept() loop.
 	 */
-	if (FD_OVERHEAD < optRunOpenFileLimit.value) {
-		struct rlimit limit;
-
+	if (FD_OVERHEAD + FD_PER_THREAD < optRunOpenFileLimit.value) {
 		if (getrlimit(RLIMIT_NOFILE, &limit) == 0) {
 			limit.rlim_cur = (rlim_t) optRunOpenFileLimit.value;
 			if (limit.rlim_max < (rlim_t) optRunOpenFileLimit.value)
@@ -319,10 +320,16 @@ run @PACKAGE_NAME@ as a foreground application.
 		}
 	}
 
+	/* Allow core dumps of unlimited size. */
+	limit.rlim_cur = opt_run_save_core.value ? RLIM_INFINITY : 0;
+	limit.rlim_max = RLIM_INFINITY;
+	(void) setrlimit(RLIMIT_CORE, &limit);
+
 	if (verb_trace.option.value) {
 		syslog(LOG_DEBUG, LOG_NUM(739) "process limits updated");
 		rlimits();
 	}
+}
 # endif
 	return serverMain();
 }

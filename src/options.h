@@ -73,6 +73,7 @@ extern Option optRunGroup;
 extern Option optRunJailed;
 extern Option optRunOpenFileLimit;
 extern Option optRunPidFile;
+extern Option opt_run_save_core;
 extern Option optRunUser;
 extern Option optRunWorkDir;
 extern Option optService;

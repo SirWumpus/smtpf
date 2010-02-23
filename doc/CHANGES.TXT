@@ -280,12 +280,15 @@ is no set schedule for releases.
 
 --2.3.11--
 
-   *	Requires Libsnert 1.73.10
+   *	Requires Libsnert 1.73.11
 
    -	Removed ns-sub-domains option; was never implement. dnsListQueryNs
    	automatically handles subdomains.
 
    +	Added ns-a-bl option.
+
+   +	Added run-save-core option, because I keep forgetting about
+   	ulimit -c unlimited. This option takes care of the details.
 
 --2.3.10--
 

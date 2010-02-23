@@ -296,6 +296,7 @@ Option optRunOpenFileLimit	= { "run-open-file-limit",	QUOTE(RUN_FILE_LIMIT),	"Th
 Option optRunPidFile 		= { "run-pid-file", 		PID_FILE,	"The file path of where to save the process-id." };
 Option optRunUser		= { "run-user",			RUN_AS_USER,	"Run as this Unix user." };
 Option optRunWorkDir 		= { "run-work-dir", 		WORK_DIR, 	"The working directory of the process." };
+Option opt_run_save_core	= { "run-save-core",		"-",		"When true, the process can save core if necessary." };
 
 Option optSmtpAuthEnable	= { "smtp-auth-enable",		"-",		usage_smtp_auth_enable };
 Option optSmtpAuthWhite		= { "smtp-auth-white",		"-",		usage_smtp_auth_white };
@@ -519,6 +520,7 @@ optionsRegister0(Session *sess, va_list ignore)
 	optionsRegister(&optRunJailed, 			1);
 	optionsRegister(&optRunOpenFileLimit, 		1);
 	optionsRegister(&optRunPidFile, 		1);
+	optionsRegister(&opt_run_save_core,		1);
 	optionsRegister(&optRunUser, 			1);
 	optionsRegister(&optRunWorkDir, 		1);
 	optionsRegister(&optServerMaxThreads, 		0);
