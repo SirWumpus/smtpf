@@ -323,7 +323,7 @@ lickeySendWarning(void)
 		return;
 
 	/* As we get close to the end start nagging. */
-	if (days <= LICKEY_2ND_WARNING)
+	if (days <= LICKEY_LAST_WARNING)
 		syslog(LOG_WARN, LOG_NUM(395) "%s-%s license key expires in less than %d day%s", _NAME, _VERSION, days, days <= 1 ? "" : "s");
 
 	if (lickeyClientMail.string != NULL && strchr(lickeyClientMail.string, '@') != NULL)
@@ -341,9 +341,11 @@ lickeySendWarning(void)
 	row.key_size = snprintf((char *) row.key_data, sizeof (row.key_data), "lickey:%s", mail);
 
 	/* Check if the most recent warning has been sent. */
-	if (mccGetRow(mcc, &row) == MCC_OK
-	&& strtol((char *) row.value_data, NULL, 10) <= days)
-		return;
+        if (mccGetRow(mcc, &row) == MCC_OK) {
+                row.value_data[row.value_size] = '\0';
+                if (strtol((char *) row.value_data, NULL, 10) <= days)
+                        return;
+        }
 
 #if defined(HAVE_PTHREAD_ATTR_SETSTACKSIZE)
 	(void) pthread_attr_init(&thread_attr);

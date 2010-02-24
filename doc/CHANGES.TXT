@@ -290,6 +290,10 @@ is no set schedule for releases.
    +	Added run-save-core option, because I keep forgetting about
    	ulimit -c unlimited. This option takes care of the details.
 
+   !	lickeySendWarning: Fix bug that resulted in some cases having the
+   	license expire warning being sent every 5 minutes. This was due
+   	to the lickey: value not always being NUL terminated.
+
 --2.3.10--
 
    !	MANEFEST.TXT.in, src/makefile.in, config.h.in.in, smtpf.h,
