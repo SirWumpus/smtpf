@@ -1310,6 +1310,13 @@ session_accept(ServerSession *session)
 	data->last_mark = data->start;
 	data->last_test = data->start;
 
+	if (session->client == NULL) {
+		syslog(LOG_ERR, log_internal, SESSION_ID_ZERO, FILE_LINENO, "session_accept", strerror(errno), errno);
+		return -1;
+	}
+
+	(void) fileSetCloseOnExec(socketGetFd(session->client), 1);
+	(void) socketSetLinger(session->client, 0);
 	(void) socketSetNonBlocking(session->client, 1);
 	socketSetTimeout(session->client, optSmtpCommandTimeout.value);
 
