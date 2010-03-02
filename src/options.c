@@ -484,10 +484,11 @@ optionsRegister0(Session *sess, va_list ignore)
 	optionsRegister(&optVersion, 			1);
 
 	optionsRegister(&optAuthDelayChecks, 		0);
-#ifdef ENABLE_PDQ
+
 	optionsRegister(&optDnsMaxTimeout, 		0);
 	optionsRegister(&optDnsRoundRobin, 		0);
-#endif
+	optionsRegister(&optDnsSpamHausDbl, 		0);
+
 #ifdef OLD
 	optionsRegister(&optInterfaceIp, 		1);
 	optionsRegister(&optInterfaceName, 		1);

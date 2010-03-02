@@ -121,6 +121,7 @@ body:emode.com				OK
 #body:exacttarget.com			REJECT
 body:excite.com				OK
 body:exct.net				OK
+body:eset.com				OK
 body:f-secure.com			OK
 #body:flowgo.com			REJECT
 body:free.fr				OK
@@ -217,10 +218,12 @@ body:snert.com              		OK
 body:snertsoft.com          		OK
 body:sourceforge.net			OK
 body:spamcop.net			OK
+body:spamhaus.org			OK
 body:speedera.net			OK
 body:sportsline.com			OK
 body:sun.com				OK
 body:suntrust.com			OK
+body:surbl.org				OK
 body:symantec.com			OK
 body:sympatico.ca			OK
 body:t-online.de			OK
@@ -238,6 +241,7 @@ body:tone.co.nz				OK
 body:topica.com				OK
 body:tux.org				OK
 body:uol.com.br				OK
+body:uribl.com				OK
 body:ups.com				OK
 body:verizon.net			OK
 body:vistaprint.com			OK

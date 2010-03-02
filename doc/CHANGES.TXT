@@ -279,13 +279,15 @@ is no set schedule for releases.
 
 --2.3.12--
 
-   *	Requires Libsnert 1.73.14
+   *	Requires Libsnert 1.73.15
 
    !	session_accept: disable SO_LINGER timeout on the client socket
    	in case the connection drops; discard the socket ASAP.
 
    !	Added support for dbl.spamhaus.org. See libsnert pdqGetDnsList
    	and dnsListQueryName.
+
+   +	Added dns-spamhaus-dbl option. See libsnert pdqGetDnsList.
 
 
 --2.3.11--
