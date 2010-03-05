@@ -1465,7 +1465,7 @@ forwardCommand(Session *sess, const char *cmd, int expect, long timeout, int *co
 			socketSetTimeout(fwd->mx, optSmtpCommandTimeout.value);
 
 			if (verb_smtp_dot.option.value && *cmd == '.')
-				syslog(LOG_DEBUG, LOG_MSG(304) "domain=%s << %s", LOG_ARGS(sess), fwd->route.key, sess->reply);
+				syslog(LOG_DEBUG, LOG_MSG(304) "%s << %s", LOG_ARGS(sess), fwd->route.key, *fwd->reply);
 
 			if (fwd->smtp_code == expect)
 				(*sent)++;
