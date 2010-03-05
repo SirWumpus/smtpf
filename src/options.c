@@ -487,7 +487,6 @@ optionsRegister0(Session *sess, va_list ignore)
 
 	optionsRegister(&optDnsMaxTimeout, 		0);
 	optionsRegister(&optDnsRoundRobin, 		0);
-	optionsRegister(&optDnsSpamHausDbl, 		0);
 
 #ifdef OLD
 	optionsRegister(&optInterfaceIp, 		1);
