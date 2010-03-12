@@ -118,8 +118,8 @@ extern "C" {
 #include "valgrind/valgrind.h"
 #include "valgrind/memcheck.h"
 
-#if LIBSNERT_MAJOR < 1 || LIBSNERT_MINOR < 73
-# error "LibSnert/1.73 or better is required"
+#if LIBSNERT_MAJOR < 1 || LIBSNERT_MINOR < 73 || LIBSNERT_BUILD < 16
+# error "LibSnert 1.73.16 or better is required"
 #endif
 
 /***********************************************************************
