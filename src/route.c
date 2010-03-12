@@ -270,8 +270,10 @@ routeGetRouteCount(RouteCount *rcp)
 	VectorSetDestroyEntry(rcp->domain_list, free);
 
 	rc = KVM_ERROR;
-	if ((route_map = smdbOpen(route_map_path, 1)) == NULL)
-		return -1;
+	if ((route_map = smdbOpen(route_map_path, 1)) == NULL) {
+		syslog(LOG_ERR, LOG_NUM(000) "route-map=%s open error: %s (%d)", optRouteMap.string, strerror(errno), errno);
+		goto error1;
+	}
 
 	if (TextMatch(route_map_path, "*socketmap!*", -1 , 1)) {
 		value = smdbGetValue(route_map, ROUTE_TAG "__counts__");
@@ -301,11 +303,10 @@ routeGetRouteCount(RouteCount *rcp)
 			rcp->unique_domains = VectorLength(rcp->domain_list);
 			rc = KVM_OK;
 		}
-
-		VectorDestroy(rcp->domain_list);
-		rcp->domain_list = NULL;
 	}
-
+error1:
+	VectorDestroy(rcp->domain_list);
+	rcp->domain_list = NULL;
 	smdbClose(route_map);
 
 	if (verb_info.option.value) {
