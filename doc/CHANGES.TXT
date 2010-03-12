@@ -278,6 +278,13 @@ is no set schedule for releases.
    	file to by-pass when spamd-max-size is being used. Steve F.
 
 
+--2.3.13--
+
+   *	Requires Libsnert 1.73.17
+
+  !!	forwardCommand: Add NULL guard to prevent occassional seg. fault
+  	when verb +smtp-dot is used.
+
 --2.3.12--
 
    *	Requires Libsnert 1.73.16
