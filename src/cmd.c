@@ -764,7 +764,12 @@ cmdMail(Session *sess)
 #endif
 
 	if ((error = parsePath(sess->input+span, parse_path_flags, 1, &sess->msg.mail)) != NULL) {
-		rc = replySetFmt(sess, SMTPF_REJECT, "553 5.5.2 rejected sender %s %s" ID_MSG(279) "\r\n", sess->input+span, error + 6, ID_ARG(sess));
+		rc = replySetFmt(
+			sess, SMTP_ISS_TEMP(error) ? SMTPF_TEMPFAIL : SMTPF_REJECT,
+			"%d %s, sender %s" ID_MSG(279) "\r\n",
+			SMTP_ISS_TEMP(error) ? 451 : 553, error,
+			sess->input+span, ID_ARG(sess)
+		);
 /*{REPLY
 The SMTP MAIL FROM: address could not be correctly parsed according to the
 strict application of one or more RFC 2821 grammar rules.
@@ -900,7 +905,12 @@ cmdRcpt(Session *sess)
 	sess->input[args] = '\0';
 
 	if ((error = parsePath(sess->input+span, parse_path_flags, 0, &rcpt)) != NULL) {
-		rc = replySetFmt(sess, SMTPF_REJECT, "553 5.5.2 rejected recipient %s %s" ID_MSG(284) "\r\n", sess->input+span, error + 6, ID_ARG(sess));
+		rc = replySetFmt(
+			sess, SMTP_ISS_TEMP(error) ? SMTPF_TEMPFAIL : SMTPF_REJECT,
+			"%d %s, recipient %s" ID_MSG(284) "\r\n",
+			SMTP_ISS_TEMP(error) ? 451 : 553, error,
+			sess->input+span, ID_ARG(sess)
+		);
 /*{REPLY
 The SMTP <code>RCPT TO:</code> address could not be correctly parsed according to the
 strict application of one or more RFC 2821 grammar rules.
@@ -1709,6 +1719,8 @@ The client appears to have disconnected. A read error occured in the DATA collec
 #else
 			sess->smtp_code = SMTP_ERROR_IO;
 #endif
+			VALGRIND_PRINTF("readClientData longjmp: %s (%d)\n", strerror(errno), errno);
+			VALGRIND_DO_LEAK_CHECK;
 			SIGLONGJMP(sess->on_error, SMTPF_DROP);
 		}
 
