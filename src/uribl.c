@@ -211,6 +211,17 @@ Stats stat_mail_bl_mail		= { STATS_TABLE_MAIL,	"mail-bl-mail" };
 Stats stat_mail_bl_hdr		= { STATS_TABLE_MSG,	"mail-bl-hdr" };
 Stats stat_mail_bl_body		= { STATS_TABLE_MSG,	"mail-bl-body" };
 
+static const char usage_domain_bl[] =
+  "A list of domain black list suffixes to consult, like .dbl.spamhaus.org.\n"
+"# The host or domain name found in a URI is checked against these DNS black\n"
+"# lists. These black lists are assumed to use wildcards entries, so only a\n"
+"# single lookup is done. IP-as-domain in a URI are ignored.\n"
+"#"
+;
+Option opt_domain_bl		= { "domain-bl",	"",	usage_domain_bl };
+
+Stats stat_domain_bl_body	= { STATS_TABLE_MSG,	"domain-bl-body" };
+
 static const char usage_ns_bl[] =
   "A list of name based NS BL suffixes to consult. Aggregate lists are\n"
 "# supported using suffix/mask. Without a /mask, suffix is the same as\n"
@@ -350,6 +361,7 @@ static FilterContext uribl_context;
  ***
  ***********************************************************************/
 
+static DnsList *d_bl;
 static DnsList *ns_bl;
 static DnsList *ns_a_bl;
 static DnsList *uri_bl;
@@ -369,6 +381,7 @@ uriblInit(Session *null, va_list ignore)
 	uri_bl = dnsListCreate(optUriBL.string);
 	ns_a_bl = dnsListCreate(opt_ns_a_bl.string);
 	ns_bl = dnsListCreate(optNsBL.string);
+	d_bl = dnsListCreate(opt_domain_bl.string);
 
 	return SMTPF_CONTINUE;
 }
@@ -383,6 +396,7 @@ uriblFini(Session *null, va_list ignore)
 	dnsListFree(uri_bl);
 	dnsListFree(ns_a_bl);
 	dnsListFree(ns_bl);
+	dnsListFree(d_bl);
 
 	return SMTPF_CONTINUE;
 }
@@ -598,9 +612,9 @@ int
 uriblTestURI(Session *sess, URI *uri, int post_data)
 {
 	long i;
-	char *value = NULL;
 	URI *origin = NULL;
-	int origin_is_different, access, rc = SMTPF_REJECT;
+	char *value = NULL, *copy;
+	int access, rc = SMTPF_REJECT;
 	Uribl *ctx = filterGetContext(sess, uribl_context);
 	const char *error, *body_tag, *msg, *host, *list_name;
 
@@ -671,11 +685,28 @@ options.
 	if (post_data && uriCheckIp(sess, uri->host) != SMTPF_CONTINUE)
 		goto error0;
 
-	/* Test and follow redirections so verify that the link returns something valid. */
-	if (post_data && *optUriLinksPolicy.string != 'n' && (error = uriHttpOrigin(uri->uri, &origin)) != NULL) {
-		if (error == uriErrorNotHttp || error == uriErrorPort)
-			goto ignore0;
+	if (*optUriBlPolicy.string != 'n') {
+		if ((list_name = dnsListQueryName(d_bl, sess->pdq, NULL, uri->host)) != NULL) {
+			setRejectMessage(sess, uri->host, list_name, post_data, MSG_IS_URIBL, &stat_domain_bl_body);
+			dnsListSysLog(sess, "domain-bl", uri->host, list_name);
+			goto error1;
+		}
 
+		if ((list_name = dnsListQueryDomain(uri_bl, sess->pdq, ctx->uri_seen, optUriSubDomains.value, uri->host)) != NULL) {
+			setRejectMessage(sess, uri->host, list_name, post_data, MSG_IS_URIBL, &stat_uri_bl);
+			dnsListSysLog(sess, "uri-bl", uri->host, list_name);
+			goto error1;
+		}
+
+		if ((list_name = dnsListQueryIP(uri_dns_bl, sess->pdq, NULL, uri->host)) != NULL) {
+			setRejectMessage(sess, uri->host, list_name, post_data, MSG_IS_URIBL, &stat_uri_dns_bl);
+			dnsListSysLog(sess, "uri-dns-bl", uri->host, list_name);
+			goto error1;
+		}
+	}
+
+	/* Test and follow redirections so verify that the link returns something valid. */
+	if (post_data && *optUriLinksPolicy.string != 'n' && (error = uriHttpOrigin(uri->uri, &origin)) == uriErrorLoop) {
 		snprintf(sess->msg.reject, sizeof (sess->msg.reject), "broken URL \"%s\": %s" ID_NUM(766), uri->uri, error);
 /*{REPLY
 See <a href="summary.html#opt_uri_links_policy">uri-links-policy</a> option.
@@ -686,34 +717,29 @@ See <a href="summary.html#opt_uri_links_policy">uri-links-policy</a> option.
 		goto error0;
 	}
 
-	if (*optUriBlPolicy.string == 'n')
-		goto ignore1;
-
-	origin_is_different = origin != NULL && origin->host != NULL && strcmp(uri->host, origin->host) != 0;
-
-	if ((list_name = dnsListQuery(uri_bl, sess->pdq, ctx->uri_seen, optUriSubDomains.value, uri->host)) != NULL) {
-		setRejectMessage(sess, uri->host, list_name, post_data, MSG_IS_URIBL, &stat_uri_bl);
-		dnsListSysLog(sess, "uri-bl", uri->host, list_name);
-		goto error1;
-	}
-	if (origin_is_different && (list_name = dnsListQuery(uri_bl, sess->pdq, ctx->uri_seen, optUriSubDomains.value, origin->host)) != NULL) {
-		setRejectMessage(sess, origin->host, list_name, post_data, MSG_IS_URIBL, &stat_uri_bl);
-		dnsListSysLog(sess, "uri-bl", origin->host, list_name);
-		goto error1;
-	}
-
-	if ((list_name = dnsListQueryIP(uri_dns_bl, sess->pdq, NULL, uri->host)) != NULL) {
-		setRejectMessage(sess, uri->host, list_name, post_data, MSG_IS_URIBL, &stat_uri_dns_bl);
-		dnsListSysLog(sess, "uri-dns-bl", uri->host, list_name);
-		goto error1;
-	}
-	if (origin_is_different && (list_name = dnsListQueryIP(uri_dns_bl, sess->pdq, NULL, origin->host)) != NULL) {
-		setRejectMessage(sess, origin->host, list_name, post_data, MSG_IS_URIBL, &stat_uri_dns_bl);
-		dnsListSysLog(sess, "uri-dns-bl", origin->host, list_name);
-		goto error1;
+	if (origin != NULL
+	&& origin->host != NULL
+	&& *optUriBlPolicy.string != 'n'
+	&& strcmp(uri->host, origin->host) != 0) {
+		if ((list_name = dnsListQueryName(d_bl, sess->pdq, NULL, origin->host)) != NULL) {
+			setRejectMessage(sess, origin->host, list_name, post_data, MSG_IS_URIBL, &stat_domain_bl_body);
+			dnsListSysLog(sess, "domain-bl", origin->host, list_name);
+			goto error1;
+		}
+		if ((list_name = dnsListQueryDomain(uri_bl, sess->pdq, ctx->uri_seen, optUriSubDomains.value, origin->host)) != NULL) {
+			setRejectMessage(sess, origin->host, list_name, post_data, MSG_IS_URIBL, &stat_uri_bl);
+			dnsListSysLog(sess, "uri-bl", origin->host, list_name);
+			goto error1;
+		}
+		if ((list_name = dnsListQueryIP(uri_dns_bl, sess->pdq, NULL, origin->host)) != NULL) {
+			setRejectMessage(sess, origin->host, list_name, post_data, MSG_IS_URIBL, &stat_uri_dns_bl);
+			dnsListSysLog(sess, "uri-dns-bl", origin->host, list_name);
+			goto error1;
+		}
 	}
 ignore1:
-	(void) VectorAdd(ctx->uri_seen, strdup(uri->host));
+	if (VectorAdd(ctx->uri_seen, copy = strdup(uri->host)))
+		free(copy);
 ignore0:
 	rc = SMTPF_CONTINUE;
 error1:
@@ -782,6 +808,7 @@ uriRegister(Session *sess, va_list ignore)
 	verboseRegister(&verb_uri);
 
 	optionsRegister(&optHttpTimeout, 		0);
+	optionsRegister(&opt_domain_bl,			1);
 	optionsRegister(&optUriBL, 			1);
 	optionsRegister(&optUriBlHelo, 			0);
 	optionsRegister(&optUriBlHeaders,		0);
@@ -816,6 +843,8 @@ uriRegister(Session *sess, va_list ignore)
 
 	optionsRegister(&optNsBL, 			1);
 	optionsRegister(&opt_ns_a_bl, 			1);
+
+	(void) statsRegister(&stat_domain_bl_body);
 
 	(void) statsRegister(&stat_mail_bl_mail);
 	(void) statsRegister(&stat_mail_bl_hdr);
