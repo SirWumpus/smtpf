@@ -138,11 +138,6 @@ extern void freeThreadData(void);
 #define freeThreadData()
 #endif
 
-#if !defined(HAVE_PTHREAD_YIELD) && defined(__linux__)
-#define pthread_yield sched_yield
-#define HAVE_PTHREAD_YIELD 1
-#endif
-
 #undef HAVE_PTHREAD_YIELD
 #undef DISABLE_NAGLE
 #define USE_PTHREAD_CANCEL
