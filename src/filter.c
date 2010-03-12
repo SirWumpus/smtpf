@@ -1290,6 +1290,8 @@ filterGetContext(Session *sess, FilterContext offset)
 {
 	if (offset == 0) {
 		syslog(LOG_ERR, log_internal, LOG_ARGS(sess), FILE_LINENO, "filterGetContext", strerror(EINVAL), EINVAL);
+		VALGRIND_PRINTF_BACKTRACE("filterGetContext longjmp\n");
+		VALGRIND_DO_LEAK_CHECK;
 		SIGLONGJMP(sess->on_error, SMTPF_DROP);
 	}
 

@@ -339,6 +339,8 @@ replyInternalError(Session *sess, const char *file, unsigned long lineno)
 {
 	syslog(LOG_ERR, log_internal, LOG_ARGS(sess), file, lineno, "", strerror(errno), errno);
 	(void) sendClientReply(sess, msg_421_internal, ID_ARG(sess));
+	VALGRIND_PRINTF_BACKTRACE("replyInternalError longjmp\n");
+	VALGRIND_DO_LEAK_CHECK;
 	SIGLONGJMP(sess->on_error, SMTPF_DROP);
 }
 
@@ -352,6 +354,8 @@ Check the process status and ulimit settings.
 Typically the only solution is to restart the process.
 }*/
 	(void) sendClientReply(sess, msg_resources, ID_ARG(sess));
+	VALGRIND_PRINTF_BACKTRACE("replyResourcesError longjmp\n");
+	VALGRIND_DO_LEAK_CHECK;
 	SIGLONGJMP(sess->on_error, SMTPF_DROP);
 }
 
@@ -602,6 +606,8 @@ replySend(Session *sess)
 
 		if (error) {
 			/* Server I/O error while writing to client. */
+			VALGRIND_PRINTF_BACKTRACE("replySend immediate reply, I/O error, longjmp\n");
+			VALGRIND_DO_LEAK_CHECK;
 			SIGLONGJMP(sess->on_error, SMTPF_DROP);
 		}
 	} else if (sess->response.delayed != NULL) {
@@ -647,6 +653,8 @@ replySend(Session *sess)
 		}
 		if (error) {
 			/* Server I/O error while writing to client. */
+			VALGRIND_PRINTF_BACKTRACE("replySend delayed reply, I/O error, longjmp\n");
+			VALGRIND_DO_LEAK_CHECK;
 			SIGLONGJMP(sess->on_error, SMTPF_DROP);
 		}
 	} else {
