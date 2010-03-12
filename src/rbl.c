@@ -110,7 +110,7 @@ rblConnect(Session *sess, va_list ignore)
 	LOG_TRACE(sess, 524, rblConnect);
 
 	if (CLIENT_NOT_SET(sess, CLIENT_USUAL_SUSPECTS|CLIENT_IS_GREY)) {
-		if ((list_name = dnsListQueryName(dns_bl, sess->pdq, NULL, sess->client.addr)) != NULL) {
+		if ((list_name = dnsListQueryIP(dns_bl, sess->pdq, NULL, sess->client.addr)) != NULL) {
 			statsCount(&stat_dns_bl);
 			CLIENT_SET(sess, CLIENT_IS_BLACK);
 			dnsListSysLog(sess, "dns-bl", sess->client.addr, list_name);
@@ -136,7 +136,7 @@ rblCheckString(Session *sess, const char *value)
 			if (verb_rbl.option.value)
 				syslog(LOG_DEBUG, LOG_MSG(872) "rblCheckString value=\"%s\"", LOG_ARGS(sess), ip);
 
-			if ((list_name = dnsListQueryName(dns_bl, sess->pdq, NULL, ip)) != NULL) {
+			if ((list_name = dnsListQueryIP(dns_bl, sess->pdq, NULL, ip)) != NULL) {
 				MSG_SET(sess, MSG_IS_DNSBL);
 				statsCount(&stat_dns_bl_headers);
 				dnsListSysLog(sess, "dns-bl", ip, list_name);
@@ -235,7 +235,7 @@ dnswlConnect(Session *sess, va_list ignore)
 
 	LOG_TRACE(sess, 531, dnswlConnect);
 
-	if ((list_name = dnsListQueryName(dnswl, sess->pdq, NULL, sess->client.addr)) != NULL) {
+	if ((list_name = dnsListQueryIP(dnswl, sess->pdq, NULL, sess->client.addr)) != NULL) {
 		statsCount(&stat_dns_wl);
 		CLIENT_SET(sess, CLIENT_IS_WHITE);
 		dnsListSysLog(sess, "dns-wl", sess->client.addr, list_name);
@@ -283,7 +283,7 @@ dnsglConnect(Session *sess, va_list ignore)
 
 	LOG_TRACE(sess, 534, dnsglConnect);
 
-	if ((list_name = dnsListQueryName(dnsgl, sess->pdq, NULL, sess->client.addr)) != NULL) {
+	if ((list_name = dnsListQueryIP(dnsgl, sess->pdq, NULL, sess->client.addr)) != NULL) {
 		statsCount(&stat_dns_gl);
 		CLIENT_SET(sess, CLIENT_IS_GREY);
 		dnsListSysLog(sess, "dns-gl", sess->client.addr, list_name);
