@@ -128,45 +128,43 @@ spamd_user(Session *sess)
 {
 	Rcpt *rcpt;
 	Connection *fwd;
+	char *user = NULL;
 	ParsePath *first_rcpt;
-	char *value = NULL, *user;
 
 	/* Do we have any open routes? */
 	if (sess->msg.fwds == NULL || sess->msg.rcpt_count == 0)
-		;
+		return NULL;
 
-	first_rcpt = rcptFindFirstValid(sess);
-
-	if (first_rcpt == NULL)
-		goto error0;
+	if ((first_rcpt = rcptFindFirstValid(sess)) == NULL)
+		return NULL;
 
 	/* A single recipient? */
-	else if (sess->msg.rcpt_count == 1)
-		(void) accessEmail(sess, ACCESS_TAG, first_rcpt->address.string, NULL, &value);
+	if (sess->msg.rcpt_count == 1) {
+		(void) accessEmail(sess, ACCESS_TAG, first_rcpt->address.string, NULL, &user);
+		return user;
+	}
 
 	/* Otherwise check that all the recipients are within the
 	 * same domain before looking up by domain name.
 	 */
-	else {
-		for (fwd = sess->msg.fwds; fwd != NULL; fwd = fwd->next) {
-			for (rcpt = fwd->rcpts; rcpt != NULL; rcpt = rcpt->next) {
-				if (TextInsensitiveCompare(rcpt->rcpt->domain.string, first_rcpt->domain.string) != 0)
-					goto mismatched_domains;
+	for (fwd = sess->msg.fwds; fwd != NULL; fwd = fwd->next) {
+		for (rcpt = fwd->rcpts; rcpt != NULL; rcpt = rcpt->next) {
+			if (TextInsensitiveCompare(rcpt->rcpt->domain.string, first_rcpt->domain.string) != 0) {
+				/* Mismatched domains, used global default. */
+				char *value = accessDefault(sess, ACCESS_TAG);
+				(void) accessPattern(sess, first_rcpt->domain.string, value, &user);
+				free(value);
+				return user;
 			}
 		}
-
-		if (fwd == NULL)
-			(void) accessClient(sess, ACCESS_TAG, first_rcpt->domain.string, NULL, NULL, &value, 0);
-mismatched_domains:
-		if (value == NULL) {
-			value = accessDefault(sess, ACCESS_TAG);
-			(void) accessPattern(sess, first_rcpt->domain.string, value, &user);
-			free(value);
-			value = user;
-		}
 	}
-error0:
-	return value;
+
+	if (fwd == NULL) {
+		/* Recipients all in same domain, get domain value. */
+		(void) accessClient(sess, ACCESS_TAG, first_rcpt->domain.string, NULL, NULL, &user, 1);
+	}
+
+	return user;
 }
 
 static int
@@ -178,7 +176,7 @@ spamd_open(Session *sess, Spamd *spamd)
 	if ((user = spamd_user(sess)) != NULL && strcmp(user, "OK") == 0) {
 		if (verb_info.option.value)
 			syslog(LOG_INFO, LOG_MSG(670) "spamd disabled this message", LOG_ARGS(sess));
-		goto error0;
+		goto error1;
 	}
 
 	if (socketOpenClient(optSpamdSocket.string, SPAMD_PORT, optSpamdTimeout.value, NULL, &spamd->socket)) {
@@ -242,7 +240,7 @@ See <a href="summary.html#opt_spamd_socket">spamd-socket</a> option.
 	spamd->socket = NULL;
 error1:
 	free(user);
-error0:
+
 	return SMTPF_CONTINUE;
 }
 
