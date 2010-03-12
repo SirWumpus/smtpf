@@ -15,6 +15,7 @@
  ***********************************************************************/
 
 #include "smtpf.h"
+#include <assert.h>
 
 #if defined(HAVE_REGEX_H) && ! defined(__MINGW32__)
 # include <regex.h>
@@ -216,11 +217,11 @@ accessPattern(Session *sess, const char *hay, char *pins, char **actionp)
 
 	access = SMDB_ACCESS_NOT_FOUND;
 
-	if (actionp != NULL)
-		*actionp = NULL;
-
 	if (hay == NULL || pins == NULL || *pins == '\0')
 		goto error0;
+
+	if (actionp != NULL)
+		*actionp = NULL;
 
 	action = "";
 	is_hay_ip = 0 < parseIPv6(hay, ipv6);
@@ -431,7 +432,7 @@ error0:
 		syslog(
 			LOG_DEBUG, LOG_MSG(114) "accessPattern(%lx, \"%s\", \"%.50s...\", %lx) rc=%d (%c) action='%s'",
 			LOG_ARGS(sess), (long) sess, TextNull(hay), TextNull(pins), (long) actionp, access,
-			(unsigned char) access, actionp == NULL || *actionp == NULL ? "" : *actionp
+			(unsigned char) access, actionp == NULL ? "(NULL)" : TextNull(*actionp)
 		);
 	}
 
@@ -442,6 +443,19 @@ char *
 accessDefault(Session *sess, const char *tag)
 {
 	return smdbGetValue(sess->access_map, tag);
+}
+
+static void
+smdb_free_pair(char **lhs, char **rhs)
+{
+	if (lhs != NULL) {
+		free(*lhs);
+		*lhs = NULL;
+	}
+	if (rhs != NULL) {
+		free(*rhs);
+		*rhs = NULL;
+	}
 }
 
 /**
@@ -534,8 +548,9 @@ accessClient(Session *sess, const char *tag, const char *client_name, const char
 	 *	tag:a.b
 	 *	tag:a
 	 */
-	if ((access = smdbAccessIp(sess->access_map, tag, client_addr, lhs, &value)) != SMDB_ACCESS_NOT_FOUND)
+	if ((access = smdbAccessIp(sess->access_map, tag, client_addr, lhs, &value)) != SMDB_ACCESS_NOT_FOUND) {
 		access = accessPattern(sess, client_addr, value, rhs);
+	}
 
 	/* If the client IP resolved and matched, then the lookup order is:
 	 *
@@ -551,21 +566,22 @@ accessClient(Session *sess, const char *tag, const char *client_name, const char
 	 * 	tag:
 	 */
 	if (access == SMDB_ACCESS_NOT_FOUND) {
+		smdb_free_pair(lhs, &value);
 		access = smdbAccessDomain(sess->access_map, tag, client_name, lhs, &value);
 
-		if (include_default && access == SMDB_ACCESS_NOT_FOUND) {
+		if (access == SMDB_ACCESS_NOT_FOUND) {
+			smdb_free_pair(lhs, &value);
 			value = smdbGetValue(sess->access_map, tag);
 			if (value != NULL && lhs != NULL)
 				*lhs = strdup(tag);
 		}
 
-		access = accessPattern(sess, client_name, value, rhs);
-		if (access == SMDB_ACCESS_NOT_FOUND)
+		if ((access = accessPattern(sess, client_name, value, rhs)) == SMDB_ACCESS_NOT_FOUND)
 			access = accessPattern(sess, client_addr, value, rhs);
-	}
 
-	if (access == SMDB_ACCESS_NOT_FOUND && lhs != NULL)
-		free(*lhs);
+		if (access == SMDB_ACCESS_NOT_FOUND)
+			smdb_free_pair(lhs, &value);
+	}
 
 	free(value);
 
