@@ -16,7 +16,7 @@
 
 #include "smtpf.h"
 
-#include <com/snert/lib/io/Dns.h>
+#include <com/snert/lib/net/dnsList.h>
 
 /***********************************************************************
  ***
@@ -126,11 +126,8 @@ static void
 verboseClear(void)
 {
 	kvmDebug(0);
-#ifdef ENABLE_PDQ
 	pdqSetDebug(0);
-#else
-	DnsSetDebug(0);
-#endif
+	dnsListSetDebug(0);
 	smdbSetDebug(0);
 	smtpSetDebug(0);
 	mccSetDebug(0);
@@ -142,11 +139,9 @@ static void
 verboseReset(void)
 {
 	kvmDebug(verb_kvm.option.value);
-#ifdef ENABLE_PDQ
 	pdqSetDebug(verb_dns.option.value);
-#else
-	DnsSetDebug(verb_dns.option.value);
-#endif
+	dnsListSetDebug(verb_dns.option.value);
+
 	smdbSetDebug(verb_db.option.value);
 	smtpSetDebug(verb_smtp.option.value);
 	mccSetDebug(verb_cache.option.value);
