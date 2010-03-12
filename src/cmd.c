@@ -1474,7 +1474,7 @@ forwardCommand(Session *sess, const char *cmd, int expect, long timeout, int *co
 			(void) mxResponse(sess, fwd);
 			socketSetTimeout(fwd->mx, optSmtpCommandTimeout.value);
 
-			if (verb_smtp_dot.option.value && *cmd == '.')
+			if (verb_smtp_dot.option.value && *cmd == '.' && *fwd->reply != NULL)
 				syslog(LOG_DEBUG, LOG_MSG(304) "%s << %s", LOG_ARGS(sess), fwd->route.key, *fwd->reply);
 
 			if (fwd->smtp_code == expect)
