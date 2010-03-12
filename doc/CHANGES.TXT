@@ -277,18 +277,35 @@ is no set schedule for releases.
    +	Use SIZE= to by-pass SpamAssassin and/or the length of the temp.
    	file to by-pass when spamd-max-size is being used. Steve F.
 
+
 --2.3.12--
 
-   *	Requires Libsnert 1.73.15
+   *	Requires Libsnert 1.73.16
 
-   !	session_accept: disable SO_LINGER timeout on the client socket
+   !	session_accept: Disable SO_LINGER timeout on the client socket
    	in case the connection drops; discard the socket ASAP.
 
-   !	Added support for dbl.spamhaus.org. See libsnert pdqGetDnsList
-   	and dnsListQueryName.
+   +	Added domain-bl option to support dbl.spamhaus.org.
 
-   +	Added dns-spamhaus-dbl option. See libsnert pdqGetDnsList.
+   !	uribl.c: Reordered tests: 1. assorted uri BL tests; 2. uri-
+	links-policy; 3. if origin found, apply uri BL tests to origin.
 
+   !	uribl.c: Weakened uri-links-policy test to only generate a reject
+   	for a redirection loop. Recommended by Papa Steven Freegard.
+
+   !	Fixed output of verb +smtp-dot to display the forwad route.key
+	and first line of the dot response. Was incorrectly showing the
+	session route.key and reply.
+
+  !!	accessClient: Fixed slow memory leak.
+
+   !	spamd_user: simplified lookup logic.
+
+  !!	spamd_open: Fixed small smlow memory leak related to the special
+	exception "spamd:user OK".
+
+  !!	routeGetCouteCount: fix init time memory leak when using a
+	socketmap for the route-map source.
 
 --2.3.11--
 

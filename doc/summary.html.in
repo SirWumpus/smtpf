@@ -874,6 +874,15 @@ Aggregate lists are supported using suffix/mask. Without a /mask, suffix
 is the same as suffix/0x00FFFFFE.
 </dd>
 
+<a name="opt_domain_bl"></a>
+<dt><span class="option">domain-bl=</span><span class="value">.dbl.spamhaus.org</span></dt>
+<dd>
+A list of domain black list suffixes to consult, like .dbl.spamhaus.org.
+The host or domain name found in a URI is checked against these DNS black
+lists. These black lists are assumed to use wildcards entries, so only a
+single lookup is done. IP-as-domain in a URI are ignored.
+</dd>
+
 <a name="opt_dupmsg_track_all"></a>
 <dt>-<span class="option">dupmsg-track-all</span></dt>
 <dd>
@@ -1126,7 +1135,7 @@ Reject if a sender's NS is in a non-existant domain.
 -->
 
 <a name="opt_mail_bl"></a>
-<dt><span class="syntax">mail-bl=</span><span class="param"></span></dt>
+<dt><span class="option">mail-bl=</span><span class="value"></span></dt>
 <dd>
 A list of MD5 based MAIL BL suffixes to consult. Aggregate lists are
 supported using suffix/mask. Without a /mask, suffix is the same as
@@ -1134,32 +1143,32 @@ suffix/0x00FFFFFE.
 </dd>
 
 <a name="opt_mail_bl_domains"></a>
-<dt><span class="syntax">mail-bl-domains</span>=<span class="param">gmail.*</span></dt>
-<dt><span class="syntax">mail-bl-domains</span>+=<span class="param">googlemail.*</span></dt>
-<dt><span class="syntax">mail-bl-domains</span>+=<span class="param">hotmail.*</span></dt>
-<dt><span class="syntax">mail-bl-domains</span>+=<span class="param">yahoo.*</span></dt>
-<dt><span class="syntax">mail-bl-domains</span>+=<span class="param">aol.*</span></dt>
-<dt><span class="syntax">mail-bl-domains</span>+=<span class="param">aim.*</span></dt>
-<dt><span class="syntax">mail-bl-domains</span>+=<span class="param">live.*</span></dt>
-<dt><span class="syntax">mail-bl-domains</span>+=<span class="param">ymail.com</span></dt>
-<dt><span class="syntax">mail-bl-domains</span>+=<span class="param">rocketmail.com</span></dt>
-<dt><span class="syntax">mail-bl-domains</span>+=<span class="param">centrum.cz</span></dt>
-<dt><span class="syntax">mail-bl-domains</span>+=<span class="param">centrum.sk</span></dt>
-<dt><span class="syntax">mail-bl-domains</span>+=<span class="param">inmail24.com</span></dt>
-<dt><span class="syntax">mail-bl-domains</span>+=<span class="param">libero.it</span></dt>
-<dt><span class="syntax">mail-bl-domains</span>+=<span class="param">mail2world.com</span></dt>
-<dt><span class="syntax">mail-bl-domains</span>+=<span class="param">msn.com</span></dt>
-<dt><span class="syntax">mail-bl-domains</span>+=<span class="param">she.com</span></dt>
-<dt><span class="syntax">mail-bl-domains</span>+=<span class="param">shuf.com</span></dt>
-<dt><span class="syntax">mail-bl-domains</span>+=<span class="param">sify.com</span></dt>
-<dt><span class="syntax">mail-bl-domains</span>+=<span class="param">terra.es</span></dt>
-<dt><span class="syntax">mail-bl-domains</span>+=<span class="param">tiscali.it</span></dt>
-<dt><span class="syntax">mail-bl-domains</span>+=<span class="param">ubbi.com</span></dt>
-<dt><span class="syntax">mail-bl-domains</span>+=<span class="param">virgilio.it</span></dt>
-<dt><span class="syntax">mail-bl-domains</span>+=<span class="param">voila.fr</span></dt>
-<dt><span class="syntax">mail-bl-domains</span>+=<span class="param">walla.com</span></dt>
-<dt><span class="syntax">mail-bl-domains</span>+=<span class="param">y7mail.com</span></dt>
-<dt><span class="syntax">mail-bl-domains</span>+=<span class="param">yeah.net</span></dt>
+<dt><span class="option">mail-bl-domains</span>=<span class="value">gmail.*</span></dt>
+<dt><span class="option">mail-bl-domains</span>+=<span class="value">googlemail.*</span></dt>
+<dt><span class="option">mail-bl-domains</span>+=<span class="value">hotmail.*</span></dt>
+<dt><span class="option">mail-bl-domains</span>+=<span class="value">yahoo.*</span></dt>
+<dt><span class="option">mail-bl-domains</span>+=<span class="value">aol.*</span></dt>
+<dt><span class="option">mail-bl-domains</span>+=<span class="value">aim.*</span></dt>
+<dt><span class="option">mail-bl-domains</span>+=<span class="value">live.*</span></dt>
+<dt><span class="option">mail-bl-domains</span>+=<span class="value">ymail.com</span></dt>
+<dt><span class="option">mail-bl-domains</span>+=<span class="value">rocketmail.com</span></dt>
+<dt><span class="option">mail-bl-domains</span>+=<span class="value">centrum.cz</span></dt>
+<dt><span class="option">mail-bl-domains</span>+=<span class="value">centrum.sk</span></dt>
+<dt><span class="option">mail-bl-domains</span>+=<span class="value">inmail24.com</span></dt>
+<dt><span class="option">mail-bl-domains</span>+=<span class="value">libero.it</span></dt>
+<dt><span class="option">mail-bl-domains</span>+=<span class="value">mail2world.com</span></dt>
+<dt><span class="option">mail-bl-domains</span>+=<span class="value">msn.com</span></dt>
+<dt><span class="option">mail-bl-domains</span>+=<span class="value">she.com</span></dt>
+<dt><span class="option">mail-bl-domains</span>+=<span class="value">shuf.com</span></dt>
+<dt><span class="option">mail-bl-domains</span>+=<span class="value">sify.com</span></dt>
+<dt><span class="option">mail-bl-domains</span>+=<span class="value">terra.es</span></dt>
+<dt><span class="option">mail-bl-domains</span>+=<span class="value">tiscali.it</span></dt>
+<dt><span class="option">mail-bl-domains</span>+=<span class="value">ubbi.com</span></dt>
+<dt><span class="option">mail-bl-domains</span>+=<span class="value">virgilio.it</span></dt>
+<dt><span class="option">mail-bl-domains</span>+=<span class="value">voila.fr</span></dt>
+<dt><span class="option">mail-bl-domains</span>+=<span class="value">walla.com</span></dt>
+<dt><span class="option">mail-bl-domains</span>+=<span class="value">y7mail.com</span></dt>
+<dt><span class="option">mail-bl-domains</span>+=<span class="value">yeah.net</span></dt>
 <dd>
 A list of domain glob-like patterns for which to test against mail-bl,
 typically free mail services. This reduces the load on public BLs.
@@ -1167,21 +1176,21 @@ Specify * to test all domains, empty list to disable.
 </dd>
 
 <a name="opt_mail_bl_headers"></a>
-<dt><span class="syntax">mail-bl-headers=</span><span class="param">From;Reply-To</span></dt>
+<dt><span class="option">mail-bl-headers=</span><span class="value">From;Reply-To</span></dt>
 <dd>
 A list of mail headers to parse for mail addresses and check against
 one or more MAIL BL. Specify the empty list to disable.
 </dd>
 
 <a name="opt_mail_bl_max"></a>
-<dt><span class="syntax">mail-bl-max=</span><span class="param">10</span></dt>
+<dt><span class="option">mail-bl-max=</span><span class="value">10</span></dt>
 <dd>
 Maximum number of unique mail addresses to check. Specify zero for
 unlimited.
 </dd>
 
 <a name="opt_mail_bl_policy"></a>
-<dt><span class="syntax">mail-bl-policy=</span><span class="param">reject</span></dt>
+<dt><span class="option">mail-bl-policy=</span><span class="value">reject</span></dt>
 <dd>
 If the message contains a black listed mail address found by mail-bl
 the apply one of the following policies: none, reject, or discard.
@@ -1256,7 +1265,6 @@ and <span class="tag">Msg-Limit-Connect</span>.
 A list of name based NS BL suffixes to consult. Aggregate lists are
 supported using suffix/mask. Without a /mask, suffix is the same as
 suffix/0x00FFFFFE.
-ns-bl=
 </dd>
 
 <a name="opt_ns_a_bl"></a>

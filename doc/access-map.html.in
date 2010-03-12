@@ -572,6 +572,7 @@ for an SMTP AUTH command to be issued.
 </p>
 
 <a name="access_simple_value"></a>
+<h4>Action</h4>
 <p>
 When a key lookup matches, then the value returned is a pattern list, which in
 its simplest and most common form is either an action word like
@@ -613,6 +614,7 @@ The action words supported are:
 </blockquote>
 
 <a name="access_pattern_lists"></a>
+<h4>Pattern Lists</h4>
 <p>
 In most instances, the above forms of key lookup and values are sufficient. However,
 there may be times when finer granularity of control is required, in which case
