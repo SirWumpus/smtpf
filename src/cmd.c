@@ -1404,10 +1404,14 @@ forwardChunk(Session *sess, unsigned char *chunk, long size)
 
 	for (fwd = sess->msg.fwds; fwd != NULL; fwd = fwd->next, count++) {
 # ifdef OLD_SMTP_ERROR_CODES
-		if (!(fwd->smtp_error & SMTP_ERROR_IO_MASK) && (written = chunkBufferForward(fwd->mx, chunk, size)) < size) {
+		if (fwd->smtp_error & SMTP_ERROR_IO_MASK)
 # else
-		if (fwd->smtp_code != SMTP_ERROR_IO && (written = chunkBufferForward(fwd->mx, chunk, size)) < size) {
+		if (fwd->smtp_code == SMTP_ERROR_IO)
 # endif
+			continue;
+
+		if ((written = chunkBufferForward(fwd->mx, chunk, size)) < size) {
+
 			syslog(LOG_ERR, LOG_MSG(301) "chunk write error size=%ld written=%lu: %s (%d)", LOG_ARGS(sess), size, (unsigned long) written, strerror(errno), errno);
 /*{LOG
 There was an I/O write error while trying to relay a DATA chunk to a forward host.
@@ -1420,9 +1424,6 @@ There was an I/O write error while trying to relay a DATA chunk to a forward hos
 		} else {
 			sent++;
 			fwd->length += written;
-#ifdef HAVE_PTHREAD_YIELD
-			pthread_yield();
-#endif
 		}
 	}
 
@@ -1502,9 +1503,6 @@ forwardCommand(Session *sess, const char *cmd, int expect, long timeout, int *co
 	if (verb_smtp.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(305) "overall time-taken=%ld time-left=%ld", LOG_ARGS(sess), time_taken, timeout - time_taken);
 
-#ifdef HAVE_PTHREAD_YIELD
-	pthread_yield();
-#endif
 	/* Things to test for at final dot.
 	 *
 	 * Single forward host:
