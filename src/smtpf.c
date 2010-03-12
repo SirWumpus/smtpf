@@ -421,28 +421,38 @@ connection as a result.
 	return 0;
 }
 
-int
-writeInit(Session *null, va_list ignore)
+static int
+load_file(const char *filename, Vector *lines)
 {
 	FILE *fp;
-	char line[SMTP_REPLY_LINE_LENGTH+1];
+	char line[SMTP_REPLY_LINE_LENGTH+1], *copy;
 
-	if ((fp = fopen(optSmtpRejectFile.string, "r")) == NULL) {
-		reject_msg = NULL;
+	if (lines == NULL)
+		return SMTPF_CONTINUE;
+
+	if ((fp = fopen(filename, "r")) == NULL) {
+		*lines = NULL;
 		return SMTPF_CONTINUE;
 	}
 
-	if ((reject_msg = VectorCreate(5)) != NULL) {
-		VectorSetDestroyEntry(reject_msg, free);
+	if ((*lines = VectorCreate(5)) != NULL) {
+		VectorSetDestroyEntry(*lines, free);
 
 		while (0 <= TextInputLine(fp, line, sizeof (line))) {
-			(void) VectorAdd(reject_msg, strdup(line));
+			if (VectorAdd(*lines, copy = strdup(line)))
+				free(copy);
 		}
 	}
 
 	(void) fclose(fp);
 
 	return SMTPF_CONTINUE;
+}
+
+int
+writeInit(Session *null, va_list ignore)
+{
+	return load_file(optSmtpRejectFile.string, &reject_msg);
 }
 
 int
@@ -631,24 +641,7 @@ isPrintableASCII(const char *s)
 void
 welcomeInit(void)
 {
-	FILE *fp;
-	char line[SMTP_REPLY_LINE_LENGTH];
-
-	if ((fp = fopen(optSmtpWelcomeFile.string, "r")) == NULL) {
-		VectorDestroy(welcome_msg);
-		welcome_msg = NULL;
-		return;
-	}
-
-	if ((welcome_msg = VectorCreate(5)) != NULL) {
-		VectorSetDestroyEntry(welcome_msg, free);
-
-		while (0 <= TextInputLine(fp, line, sizeof (line))) {
-			(void) VectorAdd(welcome_msg, strdup(line));
-		}
-	}
-
-	(void) fclose(fp);
+	(void) load_file(optSmtpWelcomeFile.string, &welcome_msg);
 }
 
 static char *welcome_default[] = {
