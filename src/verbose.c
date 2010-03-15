@@ -143,7 +143,9 @@ verboseReset(void)
 	dnsListSetDebug(verb_dns.option.value);
 
 	smdbSetDebug(verb_db.option.value);
+#ifdef OLD_SMTP_ERROR_CODES
 	smtpSetDebug(verb_smtp.option.value);
+#endif
 	mccSetDebug(verb_cache.option.value);
 	socketSetDebug(verb_socket.option.value);
 #ifdef FILTER_SPF
