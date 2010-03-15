@@ -7,7 +7,7 @@
 #ifndef __smtpf_h__
 #define __smtpf_h__			1
 
-#define OLD_SMTP_ERROR_CODES 1
+#define OLD_SMTP_ERROR_CODES
 
 /***********************************************************************
  *** No configuration below this point.
