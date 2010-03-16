@@ -277,6 +277,11 @@ is no set schedule for releases.
    +	Use SIZE= to by-pass SpamAssassin and/or the length of the temp.
    	file to by-pass when spamd-max-size is being used. Steve F.
 
+--2.3.14--
+
+   *	Requires Libsnert 1.73.18
+
+   !	Add addition information to +info output.
 
 --2.3.13--
 
