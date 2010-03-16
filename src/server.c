@@ -1,7 +1,7 @@
 /*
  * server.c
  *
- * Copyright 2007, 2009 by Anthony Howe. All rights reserved.
+ * Copyright 2007, 2010 by Anthony Howe. All rights reserved.
  */
 
 /***********************************************************************
@@ -1605,10 +1605,15 @@ serverPrintInfo(void)
 #ifdef LIBSNERT_VERSION
 	printVar(0, "LIBSNERT_VERSION", LIBSNERT_VERSION);
 #endif
+#ifdef LIBSNERT_BUILD_HOST
+	printVar(LINE_WRAP, "LIBSNERT_BUILD_HOST", LIBSNERT_BUILD_HOST);
+#endif
 #ifdef LIBSNERT_CONFIGURE
 	printVar(LINE_WRAP, "LIBSNERT_CONFIGURE", LIBSNERT_CONFIGURE);
 #endif
-	printVar(0, "SQLITE3_VERSION", sqlite3_libversion());
+#ifdef SQLITE_VERSION
+	printVar(0, "SQLITE3_VERSION", SQLITE_VERSION);
+#endif
 #ifdef _CFLAGS
 	printVar(LINE_WRAP, "CFLAGS", _CFLAGS);
 #endif
