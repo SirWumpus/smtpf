@@ -182,6 +182,23 @@ static Verbose verb_access	= { { "access", "-", "" } };
  *** Access Database Lookups
  ***********************************************************************/
 
+/*
+ * @return
+ *	Pointer to the next delimiter in string or the end of string.
+ */
+static char *
+find_delim(const char *start, const char *delims)
+{
+	const char *s;
+
+	for (s = start; *(s += strcspn(s, delims)) != '\0'; s++) {
+		if (start < s && s[-1] != '\\')
+			break;
+	}
+
+	return (char *) s;
+}
+
 /**
  * @param sess
  *	A pointer to a Session.
@@ -242,11 +259,8 @@ accessPattern(Session *sess, const char *hay, char *pins, char **actionp)
 			 * An exclamation is permitted in the local-part of
 			 * an email address and so must be backslash escaped.
 			 */
-			for (action = pin; (action = strchr(action+1, '!')) != NULL; ) {
-			 	if (action[-1] != '\\')
-			 		break;
-			}
-			if (action == NULL) {
+			action = find_delim(pin+1, "!");
+			if (*action == '\0') {
 				syslog(LOG_ERR, LOG_MSG(100) "pattern delimiter error: \"%.50s...\"", LOG_ARGS(sess), pin);
 /*{LOG
 Failed to find the end bang (!) delimiter of a <a href="access-map.html#access_simple_pattern">!simple!</a> pattern.
@@ -291,11 +305,8 @@ See <a href="access-map.html">access-map</a> about right-hand-side
 			 * A right-square bracket is permitted for an IP-as-domain
 			 * literal in an email address and so must be backslash escaped.
 			 */
-			for (action = pin; (action = strchr(action+1, ']')) != NULL; ) {
-			 	if (action[-1] != '\\')
-			 		break;
-			}
-			if (action == NULL) {
+			action = find_delim(pin+1, "]");
+			if (*action == '\0') {
 				syslog(LOG_ERR, LOG_MSG(103) "network delimiter error: \"%.50s...\"", LOG_ARGS(sess), pin);
 /*{LOG
 Failed to find the end square-bracket (]) delimiter of a <code>[network/cidr]</code> pattern.
@@ -363,11 +374,8 @@ See <a href="access-map.html">access-map</a> about right-hand-side
 			 * A slash is permitted in the local-part of an email
 			 * address and so must be backslash escaped.
 			 */
-			for (action = pin; (action = strchr(action+1, '/')) != NULL; ) {
-			 	if (action[-1] != '\\')
-			 		break;
-			}
-			if (action == NULL) {
+			action = find_delim(pin+1, "/");
+			if (*action == '\0') {
 				syslog(LOG_ERR, LOG_MSG(108) "regular expression delimiter error: \"%.50s...\"", LOG_ARGS(sess), pin);
 /*{LOG
 Failed to find the end slash (/) delimiter of a <a href="access-map.html#access_regex_pattern">/regex/</a> pattern.
