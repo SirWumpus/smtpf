@@ -191,11 +191,11 @@ connectionIsOpen(Connection *conn)
 void
 connectionOptions(Connection *fwd)
 {
-	cliFdCloseOnExec(socketGetFd(fwd->mx), 1);
+	fileSetCloseOnExec(socketGetFd(fwd->mx), 1);
+	socketFdSetKeepAlive(socketGetFd(fwd->mx), 1, SMTP_COMMAND_TO, 60, 3);
 	socketAddressGetString(&fwd->mx->address, 0, fwd->mx_ip, sizeof (fwd->mx_ip));
 	socketSetTimeout(fwd->mx, optSmtpCommandTimeout.value);
 	(void) socketSetNonBlocking(fwd->mx, 1);
-	(void) socketSetKeepAlive(fwd->mx, 1);
 #ifdef DISABLE_NAGLE
 	(void) socketSetNagle(fwd->mx, 0);
 #endif
@@ -1094,9 +1094,7 @@ routeForward(Session *sess, ParsePath *rcpt, Connection *fwd)
 		if (verb_smtp.option.value)
 			syslog(LOG_DEBUG, LOG_MSG(560) "rcpt=%s connecting forward=%s index=%d ...", LOG_ARGS(sess), rcpt->address.string, host, i);
 
-		if (!socketOpenClient(host, SMTP_PORT, optSmtpConnectTimeout.value, NULL, &fwd->mx)) {
-			connectionOptions(fwd);
-
+		if ((fwd->mx = mxConnect(sess, host, IS_IP_RESERVED)) != NULL) {
 			/* Get welcome message from forward host. */
 			if (mxCommand(sess, fwd, NULL, 220)) {
 				connectionClose(fwd);

@@ -173,7 +173,7 @@ error0:
 }
 
 Socket2 *
-mxConnect(Session *sess, const char *domain)
+mxConnect(Session *sess, const char *domain, is_ip_t is_ip_mask)
 {
 	Socket2 *socket;
 	unsigned preference;
@@ -236,7 +236,7 @@ See <a href="summary.html#opt_call_back">call-back</a> option.
 	}
 
 	/* Remove impossible to reach MX and A/AAAA records. */
-	list = pdqListPrune(list, IS_IP_RESTRICTED|IS_IP_LAN);
+	list = pdqListPrune(list, is_ip_mask);
 
 	/* Is the MX/A/AAAA list empty?  */
 	if (list == NULL) {
@@ -301,9 +301,10 @@ See <a href="summary.html#opt_call_back">call-back</a> option.
 			)
 				syslog(LOG_DEBUG, LOG_MSG(495) "%s connected to MX %d %s", LOG_ARGS(sess), domain, ((PDQ_MX *) rr)->preference, ((PDQ_MX *) rr)->host.string.value);
 
+			fileSetCloseOnExec(socketGetFd(socket), 1);
+			socketFdSetKeepAlive(socketGetFd(socket), 1, SMTP_COMMAND_TO, 60, 3);
 			socketSetTimeout(socket, optSmtpCommandTimeout.value);
 			(void) socketSetNonBlocking(socket, 1);
-			(void) socketSetKeepAlive(socket, 1);
 #ifdef DISABLE_NAGLE
 			(void) socketSetNagle(socket, 0);
 #endif

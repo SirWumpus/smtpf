@@ -188,7 +188,7 @@ savData(Session *sess, va_list ignore)
 	callback->route.key = strdup(sess->msg.mail->domain.string);
 
 	/* Open connection for call-back. */
-	if ((callback->mx = mxConnect(sess, sess->msg.mail->domain.string)) == NULL) {
+	if ((callback->mx = mxConnect(sess, sess->msg.mail->domain.string, IS_IP_RESTRICTED|IS_IP_LAN)) == NULL) {
 		(void) TextCopy(sess->reply, sizeof (sess->reply), "connection error");
 		rc = sess->smtp_code / 100;
 		goto error3;
