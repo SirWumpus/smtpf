@@ -33,11 +33,7 @@
 
 #include <ctype.h>
 #include <limits.h>
-#ifdef ENABLE_PDQ
 #include <com/snert/lib/net/pdq.h>
-#else
-#include <com/snert/lib/io/Dns.h>
-#endif
 #include <com/snert/lib/mail/smdb.h>
 #include <com/snert/lib/mail/tlds.h>
 #include <com/snert/lib/sys/pthread.h>
@@ -78,53 +74,6 @@ Vector welcome_msg;
 /***********************************************************************
  *** Routines
  ***********************************************************************/
-
-#ifdef ENABLE_PDQ
-void
-blFree(void *_bl)
-{
-	BL *bl = _bl;
-
-	if (bl != NULL) {
-		if (bl->mask != 0 && bl->suffix != NULL)
-			free(bl->suffix);
-		free(bl);
-	}
-}
-
-Vector
-blCreate(const char *string)
-{
-	int i;
-	BL *bl;
-	char *slash;
-	Vector list;
-
-	if ((list = TextSplit(string, OPTION_LIST_DELIMS, 0)) == NULL)
-		return NULL;
-
-	VectorSetDestroyEntry(list, blFree);
-
-	for (i = 0; i < VectorLength(list); i++) {
-		if ((bl = malloc(sizeof (*bl))) == NULL) {
-			VectorDestroy(list);
-			return NULL;
-		}
-
-		if ((bl->suffix = VectorReplace(list, i, bl)) == NULL)
-			continue;
-
-		if ((slash = strchr(bl->suffix, '/')) == NULL) {
-			bl->mask = (unsigned long) ~0L;
-		} else {
-			bl->mask = strtol(slash+1, NULL, 0);
-			*slash = '\0';
-		}
-	}
-
-	return list;
-}
-#endif
 
 ParsePath *
 rcptFindFirstValid(Session *sess)
@@ -1118,22 +1067,6 @@ SMTP commands and their arguments can only consist of printable ASCII characters
 				}
 			}
 
-#if defined(HAS_BEEN_MOVED)
-/* See writeClient. */
-			/* Save a rejection message if pipelining seen
-			 * during pre-greeting traffic, following a HELO
-			 * where it cannot be assumed, or following EHLO
-			 * with the PIPELINING indicator disabled.
-			 */
-			if (CLIENT_IS_SET(sess, CLIENT_PIPELINING|CLIENT_PIPELINING_OK, CLIENT_PIPELINING)
-			&& (sess->helo_state != stateEhlo || !optRFC2920Pipelining.value)) {
-				(void) replyPushFmt(sess, SMTPF_DELAY|SMTPF_SESSION|SMTPF_DROP, "550 5.3.3 pipelining not allowed" ID_MSG(643) "\r\n", ID_ARG(sess));
-/*{REPLY
-See the <a href="access-map.html#access_tags">access-map</a> concerning the
-<a href="access-map.html#tag_connect"><span class="tag">Connect:</span></a> tag.
-}*/
-			}
-#endif
 			/* Check for already saved immediate replies, ie
 			 * pipelining having been set in writeClient.
 			 */

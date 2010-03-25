@@ -1315,7 +1315,7 @@ getReceivedHeader(Session *sess, char *buffer, size_t size)
 		"; %s\r\n",
 		sess->client.helo, CLIENT_INFO(sess),
 		sess->iface->name, sess->iface->name,
-		sess->if_addr, sess->msg.mail->address.string,
+		sess->session->if_addr, sess->msg.mail->address.string,
 		with, sess->msg.id,
 #ifdef FILTER_EMEW
 		emew_code_strings[emew->result],

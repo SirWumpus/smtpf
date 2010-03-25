@@ -233,7 +233,7 @@ p0fConnect(Session *sess, va_list ignore)
 	if (verb_p0f.option.value) {
 		syslog(
 			LOG_DEBUG, LOG_MSG(509) "> src %s port %d dst %s port %d", LOG_ARGS(sess),
-			sess->client.addr, data->p_query.src_port, sess->if_addr, data->p_query.dst_port
+			sess->client.addr, data->p_query.src_port, sess->session->if_addr, data->p_query.dst_port
 		);
 	}
 
@@ -314,7 +314,7 @@ p0fHeaders(Session *sess, va_list args)
 
 		(void) time(&now);
 		(void) TimeStamp((time_t *) &now, timestamp, sizeof (timestamp));
-		(void) snprintf(sess->input+length, sizeof (sess->input)-length, "\r\n    by [%s]; %s\r\n", sess->if_addr, timestamp);
+		(void) snprintf(sess->input+length, sizeof (sess->input)-length, "\r\n    by [%s]; %s\r\n", sess->session->if_addr, timestamp);
 
 		if ((hdr = strdup(sess->input)) != NULL && VectorAdd(sess->msg.headers, hdr))
 			free(hdr);

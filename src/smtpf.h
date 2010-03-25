@@ -99,9 +99,7 @@ extern "C" {
 #include <com/snert/lib/mail/parsePath.h>
 #include <com/snert/lib/net/network.h>
 #include <com/snert/lib/net/pdq.h>
-#ifndef OLD_SERVER_MODEL
 #include <com/snert/lib/net/server.h>
-#endif
 #include <com/snert/lib/sys/pthread.h>
 #include <com/snert/lib/type/kvm.h>
 #include <com/snert/lib/type/mcc.h>
@@ -182,13 +180,8 @@ extern void freeThreadData(void);
 #define LOG_NUM(n)		"#" #n " "
 #define LOG_MSG(n)		LOG_FMT LOG_NUM(n)
 
-#ifdef OLD_SERVER_MODEL
-#define LOG_ARGS(s)		(s)->long_id
-#define SESS_ID			sess->long_id
-#else
 #define LOG_ARGS(s)		(s)->session->id_log
 #define SESS_ID			sess->session->id_log
-#endif
 
 #define LOG_TRACE0(n, f)	if (verb_trace.option.value) syslog(LOG_DEBUG, LOG_NUM(n) #f)
 #define LOG_TRACE(s, n, f)	if (verb_trace.option.value) syslog(LOG_DEBUG, LOG_MSG(n) #f, LOG_ARGS(s))
@@ -199,12 +192,7 @@ extern void freeThreadData(void);
 #define ID_FMT			" (%s)"
 #define ID_NUM(n)		" #" #n
 #define ID_MSG(n)		ID_NUM(n) ID_FMT
-
-#ifdef OLD_SERVER_MODEL
-#define ID_ARG(s)		(s)->long_id
-#else
 #define ID_ARG(s)		(s)->session->id_log
-#endif
 
 #define NULL_TAG_STRING_LENGTH		47	/* "Null-Tag: <%32s>\r\n\0" */
 #define NULL_TAG_STRING_LENGTH_S	"47"
@@ -226,7 +214,7 @@ typedef enum {
 	SMTPF_UNKNOWN		= 0x000A,
 	SMTPF_SESSION		= 0x4000,
 	SMTPF_DELAY		= 0x8000,
-} smtpf_code;
+} SmtpfCode;
 
 #define SMTPF_FLAGS		(SMTPF_DELAY|SMTPF_SESSION)
 
@@ -255,11 +243,7 @@ extern const char *smtpf_code_names[];
  ***********************************************************************/
 
 typedef struct smtpf Session;
-#ifdef OLD_SERVER_MODEL
-typedef struct boundip BoundIp;
-#else
 #define BoundIp ServerInterface
-#endif
 
 typedef int (*CommandFunction)(Session *);
 
@@ -290,9 +274,6 @@ typedef struct command {
 typedef struct rcpt {
 	struct rcpt *next;
 	ParsePath *rcpt;
-#ifdef OFF
-	int bw_state;
-#endif
 } Rcpt;
 
 typedef struct connection {
@@ -341,6 +322,8 @@ typedef struct {
 #define MSG_QUEUE			0x00000200
 #define MSG_SAVE			0x00000400
 #define MSG_TRAP			0x00000800
+#define MSG_INFECTED			0x00001000
+#define MSG_OK_AV			0x00002000
 
 #define MSG_END_BIT			MSG_TRAP
 
@@ -387,11 +370,11 @@ typedef struct {
 	unsigned long mail_flags;
 	unsigned long rcpt_flags;
 	int count;
-	int bw_state;
 	int spf_mail;
 	int seen_final_dot;
 	int seen_crlf_before_dot;
-	int smtpf_code;
+	SmtpfCode bw_state;
+	SmtpfCode smtpf_code;
 	ParsePath *mail;
 	Vector headers;
 	Connection *fwds;
@@ -461,7 +444,8 @@ typedef struct {
 
 typedef struct {
 	unsigned long flags;
-	int bw_state;
+	SmtpfCode bw_state;
+	int ok_av;
 	int spf_helo;
 	int auth_count;
 	int mail_count;
@@ -469,7 +453,7 @@ typedef struct {
 	int reject_count;
 	long reject_delay;
 	long command_pause;
-	Socket2 *socket;
+	Socket2 *socket;		/* OLD_SERVER_MODEL, copy */
 	unsigned long octets;
 	unsigned long max_size;
 	Connection *fwd_to_queue;
@@ -482,35 +466,20 @@ typedef struct {
 	unsigned char ipv6[IPV6_BYTE_LENGTH];
 } Client;
 
-#ifndef OLD_SERVER_MODEL
 typedef struct {
 	PDQ *pdq;
 	smdb *route_map;
 	smdb *access_map;
 } Worker;
-#endif
 
 typedef char (session_id)[20];
 
 #include "reply.h"
 
 struct smtpf {
-#ifdef OLD_SERVER_MODEL
-	Session *prev;
-	Session *next;
-	BoundIp *iface;
-	pthread_t thread;
-	unsigned short id;
-	session_id long_id;
-#ifdef __WIN32__
-	HANDLE kill_event;
-#endif
-
-#else
 	ServerSession *session;
 # define iface	session->iface
 # define long_id session->id_log
-#endif
 	time_t start;
 	time_t last_mark;
 	time_t last_test;
@@ -525,48 +494,20 @@ struct smtpf {
 #ifdef OLD_SMTP_ERROR_CODES
 	int smtp_error;
 #endif
-	PDQ *pdq;		/* OLD_SERVER_MODEL */
 #ifdef ENABLE_LINT
 	Reply *lint_replies;
 #endif
+	PDQ *pdq;			/* OLD_SERVER_MODEL, copy */
+	smdb *route_map;        	/* OLD_SERVER_MODEL, copy */
+	smdb *access_map;       	/* OLD_SERVER_MODEL, copy */
 	char *last_reply;
-	smdb *route_map;	/* OLD_SERVER_MODEL */
-	smdb *access_map;	/* OLD_SERVER_MODEL */
 	Message msg;
 	Client client;
 	long input_length;
 	long max_concurrent;
-	char if_addr[SOCKET_ADDRESS_STRING_SIZE];		/* OLD_SERVER_MODEL */
 	char input[SMTP_TEXT_LINE_LENGTH+1];
 	char reply[SMTP_TEXT_LINE_LENGTH+1];
 };
-
-#ifdef OLD_SERVER_MODEL
-struct boundip{
-	Socket2 *socket;
-#ifdef FIND_IF_ADDR
-	char addr[IPV6_STRING_LENGTH+8];
-#endif
-	char name[DOMAIN_STRING_LENGTH+1];
-};
-
-typedef struct {
-	Session *head;
-
-	Vector interfaces;
-	SOCKET *interfaces_fd;
-	SOCKET *interfaces_ready;
-
-	volatile int running;
-	pthread_mutex_t accept_mutex;
-	volatile unsigned threads;
-	pthread_mutex_t connections_mutex;
-	volatile unsigned connections;
-} Server;
-
-#else
-
-#endif
 
 #ifdef __unix__
 extern uid_t ruid;
@@ -618,7 +559,7 @@ extern int mxPrint(Session *sess, Connection *relay, const char *line, size_t le
 extern int mxResponse(Session *sess, Connection *relay);
 extern int mxCommand(Session *sess, Connection *relay, const char *line, int expect);
 extern Socket2 *mxOpen(Session *sess, const char *domain, Vector hosts);
-extern Socket2 *mxConnect(Session *sess, const char *domain);
+extern Socket2 *mxConnect(Session *sess, const char *domain, is_ip_t is_ip_mask);
 
 /* Used only for constant strings. The C compiler can compute the string
  * length for us. Nice little performance boost avoiding many strlen()s.
@@ -663,19 +604,7 @@ extern ServerSignals signals;
 extern int internal_restart;
 extern void serverPrintVersion(void);
 extern void serverPrintInfo(void);
-
-#ifdef OLD_SERVER_MODEL
-extern pthread_attr_t thread_attr;
-
-extern int serverMain(void);
-extern void *serverChild(void *);
-
-extern void signalInit(Server *);
-extern void signalFini(Server *);
-extern void *signalThread(void *data);
-#else
 extern void serverNumbers(Server *server, unsigned numbers[2]);
-#endif
 
 extern void welcomeInit(void);
 extern void smtpRejectTextInit(void);
