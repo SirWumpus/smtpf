@@ -1,7 +1,7 @@
 /*
  * access.c
  *
- * Copyright 2004, 2008 by Anthony Howe. All rights reserved.
+ * Copyright 2004, 2010 by Anthony Howe. All rights reserved.
  */
 
 /***********************************************************************
@@ -179,6 +179,74 @@ char *access_map_path;
 static Verbose verb_access	= { { "access", "-", "" } };
 
 /***********************************************************************
+ *** Access Actions
+ ***********************************************************************/
+
+const char access_content[]	= ACCESS_CONTENT_WORD;
+const char access_discard[]	= ACCESS_DISCARD_WORD;
+const char access_ireject[]	= ACCESS_IREJECT_WORD;
+const char access_next[]	= ACCESS_NEXT_WORD;
+const char access_ok[]		= ACCESS_OK_WORD;
+const char access_ok_av[]	= ACCESS_OK_AV_WORD;
+const char access_reject[]	= ACCESS_REJECT_WORD;
+const char access_save[]	= ACCESS_SAVE_WORD;
+const char access_skip[]	= ACCESS_SKIP_WORD;
+const char access_spf_pass[]	= ACCESS_SPF_PASS_WORD;
+const char access_tag[]		= ACCESS_TAG_WORD;
+const char access_tempfail[]	= ACCESS_TEMPFAIL_WORD;
+const char access_trap[]	= ACCESS_TRAP_WORD;
+const char access_unknown[]	= "?";
+
+EnumStringMapping access_action_mapping[] = {
+	{ ACCESS_OK,		access_ok 	},
+	{ ACCESS_REJECT,	access_reject 	},
+	{ ACCESS_IREJECT,	access_ireject 	},
+	{ ACCESS_CONTENT,	access_content 	},
+	{ ACCESS_DISCARD,	access_discard 	},
+	{ ACCESS_NEXT,		access_next 	},
+	{ ACCESS_OK_AV,		access_ok_av	},
+	{ ACCESS_SAVE,		access_save 	},
+	{ ACCESS_SKIP,		access_skip	},
+	{ ACCESS_SPF_PASS,	access_spf_pass	},
+	{ ACCESS_TAG,		access_tag	},
+	{ ACCESS_TEMPFAIL,	access_tempfail	},
+	{ ACCESS_TRAP,		access_trap	},
+	{ ACCESS_UNKNOWN,	NULL		},
+};
+
+AccessCode
+access_word_to_code(const char *name)
+{
+	EnumStringMapping *map;
+
+	if (name == NULL)
+		return ACCESS_NOT_FOUND;
+
+	for (map = access_action_mapping; map->name != NULL; map++) {
+		if (TextSensitiveCompare(name, map->name) == 0)
+			return map->code;
+	}
+
+	return ACCESS_UNKNOWN;
+}
+
+const char *
+access_code_to_word(int code)
+{
+	EnumStringMapping *map;
+
+	if (code == 0)
+		return "(not found)";
+
+	for (map = access_action_mapping; map->name != NULL; map++) {
+		if (code == map->code)
+			return map->name;
+	}
+
+	return "(unknown)";
+}
+
+/***********************************************************************
  *** Access Database Lookups
  ***********************************************************************/
 
@@ -224,7 +292,7 @@ find_delim(const char *start, const char *delims)
  * @return
  *	 A SMDB_ACCESS_* code.
  */
-int
+AccessCode
 accessPattern(Session *sess, const char *hay, char *pins, char **actionp)
 {
 	long cidr, length;
@@ -232,7 +300,7 @@ accessPattern(Session *sess, const char *hay, char *pins, char **actionp)
 	char *action, *pin, *next_pin;
 	unsigned char net[IPV6_BYTE_LENGTH], ipv6[IPV6_BYTE_LENGTH];
 
-	access = SMDB_ACCESS_NOT_FOUND;
+	access = ACCESS_NOT_FOUND;
 
 	if (hay == NULL || pins == NULL || *pins == '\0')
 		goto error0;
@@ -279,7 +347,7 @@ See <a href="access-map.html">access-map</a> about right-hand-side
 			if (match) {
 				if (verb_access.option.value)
 					syslog(LOG_DEBUG, LOG_MSG(102) "\"%s\" matched \"%.50s...\"", LOG_ARGS(sess), hay, pin);
-				access = smdbAccessCode(action);
+				access = access_word_to_code(action);
 				break;
 			}
 		}
@@ -358,7 +426,7 @@ See <a href="access-map.html">access-map</a> about right-hand-side
 			if (networkContainsIp(net, cidr, ipv6)) {
 				if (verb_access.option.value)
 					syslog(LOG_DEBUG, LOG_MSG(107) "\"%s\" matched \"%.50s...\"", LOG_ARGS(sess), hay, pin-1);
-				access = smdbAccessCode(action);
+				access = access_word_to_code(action);
 				break;
 			}
 		}
@@ -422,15 +490,13 @@ that prevents it from being compiled.
 		else {
 			if (verb_access.option.value)
 				syslog(LOG_DEBUG, LOG_MSG(113) "\"%s\" default action \"%.10s...\"", LOG_ARGS(sess), hay, pin);
-			access = smdbAccessCode(pin);
+			access = access_word_to_code(pin);
 			action = pin;
 			break;
 		}
 	}
 
-	if (strcmp(action, "NEXT") == 0)
-		access = SMDB_ACCESS_NOT_FOUND;
-	else if (actionp != NULL && access != SMDB_ACCESS_NOT_FOUND) {
+	if (actionp != NULL && access != ACCESS_NOT_FOUND) {
 		Vector patterns = TextSplit(action, " \t", 0);
 		*actionp = VectorReplace(patterns, 0, NULL);
 		VectorDestroy(patterns);
@@ -438,9 +504,9 @@ that prevents it from being compiled.
 error0:
 	if (verb_access.option.value) {
 		syslog(
-			LOG_DEBUG, LOG_MSG(114) "accessPattern(%lx, \"%s\", \"%.50s...\", %lx) rc=%d (%c) action='%s'",
+			LOG_DEBUG, LOG_MSG(114) "accessPattern(%lx, \"%s\", \"%.50s...\", %lx) rc=%d action='%s'",
 			LOG_ARGS(sess), (long) sess, TextNull(hay), TextNull(pins), (long) actionp, access,
-			(unsigned char) access, actionp == NULL ? "(NULL)" : TextNull(*actionp)
+			actionp == NULL ? "(NULL)" : TextNull(*actionp)
 		);
 	}
 
@@ -504,7 +570,7 @@ smdb_free_pair(char **lhs, char **rhs)
  *
  * When an entry is found, then the right-hand-side value is processed
  * as a pattern list and that result returned. Otherwise if no entry is
- * found, then SMDB_ACCESS_NOT_FOUND will be returned.
+ * found, then ACCESS_NOT_FOUND will be returned.
  *
  * Note this lookup ordering, except the empty tag:, is based on sendmail's
  * lookups. Sendmail syntax limits the netmasks to /32, /24, /16, /8 for IPv4
@@ -540,12 +606,12 @@ smdb_free_pair(char **lhs, char **rhs)
  *	When set test for default (bare) tag.
  *
  * @return
- *	One of SMDB_ACCESS_OK, SMDB_ACCESS_REJECT, or SMDB_ACCESS_UNKNOWN.
+ *	One of ACCESS_OK, ACCESS_REJECT, ACCESS_UNKNOWN, or ACCESS_NOT_FOUND.
  *
  * @see
  *	accessPattern()
  */
-int
+AccessCode
 accessClient(Session *sess, const char *tag, const char *client_name, const char *client_addr, char **lhs, char **rhs, int include_default)
 {
 	int access;
@@ -556,7 +622,7 @@ accessClient(Session *sess, const char *tag, const char *client_name, const char
 	 *	tag:a.b
 	 *	tag:a
 	 */
-	if ((access = smdbAccessIp(sess->access_map, tag, client_addr, lhs, &value)) != SMDB_ACCESS_NOT_FOUND) {
+	if ((access = smdbAccessIp(sess->access_map, tag, client_addr, lhs, &value)) != ACCESS_NOT_FOUND) {
 		access = accessPattern(sess, client_addr, value, rhs);
 	}
 
@@ -573,21 +639,21 @@ accessClient(Session *sess, const char *tag, const char *client_name, const char
 	 *	tag:[ip]
 	 * 	tag:
 	 */
-	if (access == SMDB_ACCESS_NOT_FOUND) {
+	if (access == ACCESS_NOT_FOUND) {
 		smdb_free_pair(lhs, &value);
 		access = smdbAccessDomain(sess->access_map, tag, client_name, lhs, &value);
 
-		if (access == SMDB_ACCESS_NOT_FOUND) {
+		if (access == ACCESS_NOT_FOUND) {
 			smdb_free_pair(lhs, &value);
 			value = smdbGetValue(sess->access_map, tag);
 			if (value != NULL && lhs != NULL)
 				*lhs = strdup(tag);
 		}
 
-		if ((access = accessPattern(sess, client_name, value, rhs)) == SMDB_ACCESS_NOT_FOUND)
+		if ((access = accessPattern(sess, client_name, value, rhs)) == ACCESS_NOT_FOUND)
 			access = accessPattern(sess, client_addr, value, rhs);
 
-		if (access == SMDB_ACCESS_NOT_FOUND)
+		if (access == ACCESS_NOT_FOUND)
 			smdb_free_pair(lhs, &value);
 	}
 
@@ -612,7 +678,7 @@ accessClient(Session *sess, const char *tag, const char *client_name, const char
  * as a pattern list and that result returned. If auth is not NULL, then
  * the string to search will be "auth:mail", else just "mail".
  *
- * Otherwise if no entry is found, then SMDB_ACCESS_NOT_FOUND will be
+ * Otherwise if no entry is found, then ACCESS_NOT_FOUND will be
  * returned.
  *
  * @param work
@@ -637,13 +703,12 @@ accessClient(Session *sess, const char *tag, const char *client_name, const char
  *	caller to release this memory.
  *
  * @return
- *	One of SMDB_ACCESS_OK, SMDB_ACCESS_REJECT, SMDB_ACCESS_UNKNOWN,
- *	SMDB_ACCESS_NOT_FOUND, or SMDB_ACCESS_ERROR.
+ *	One of ACCESS_OK, ACCESS_REJECT, ACCESS_UNKNOWN, or ACCESS_NOT_FOUND.
  *
  * @see
  *	accessPattern()
  */
-int
+AccessCode
 accessEmail(Session *sess, const char *tag, const char *mail, char **lhs, char **rhs)
 {
 	int access;
@@ -651,7 +716,7 @@ accessEmail(Session *sess, const char *tag, const char *mail, char **lhs, char *
 
 	access = smdbAccessMail(sess->access_map, tag, mail, lhs, &value);
 
-	if (access == SMDB_ACCESS_NOT_FOUND) {
+	if (access == ACCESS_NOT_FOUND) {
 		value = smdbGetValue(sess->access_map, tag);
 		if (value != NULL && lhs != NULL)
 			*lhs = strdup(tag);
@@ -699,7 +764,7 @@ accessEmail(Session *sess, const char *tag, const char *mail, char **lhs, char *
 	 * lookup white listed and/or black listed addresses.
 	 */
 	access = accessPattern(sess, mail, value, rhs);
-	if (access == SMDB_ACCESS_NOT_FOUND && lhs != NULL)
+	if (access == ACCESS_NOT_FOUND && lhs != NULL)
 		free(*lhs);
 
 	free(value);
@@ -711,7 +776,7 @@ accessEmail(Session *sess, const char *tag, const char *mail, char **lhs, char *
  *** Filter Handlers
  ***********************************************************************/
 
-int
+SmtpfCode
 accessRegister(Session *null, va_list ignore)
 {
 	verboseRegister(&verb_access);
@@ -740,7 +805,7 @@ accessRegister(Session *null, va_list ignore)
 	return SMTPF_CONTINUE;
 }
 
-int
+SmtpfCode
 accessInit(Session *null, va_list ignore)
 {
 	size_t length;
@@ -777,20 +842,20 @@ not be opened. Check the map type, file path, and file <a href="install.html#uni
 	return SMTPF_CONTINUE;
 }
 
-int
+SmtpfCode
 accessFini(Session *null, va_list ignore)
 {
 	free(access_map_path);
 	return SMTPF_CONTINUE;
 }
 
-static int
+static SmtpfCode
 accessClientAction(Session *sess, const char *value, const char *msg)
 {
-	int access = SMTPF_CONTINUE;
+	SmtpfCode rc = SMTPF_CONTINUE;
 
 	if (strcmp(value, "CONTENT") == 0) {
-		access = SMTPF_GREY;
+		rc = SMTPF_GREY;
 		statsCount(&stat_connect_gl);
 		CLIENT_SET(sess, CLIENT_IS_GREY);
 		sess->client.bw_state = SMTPF_GREY;
@@ -809,14 +874,14 @@ accessClientAction(Session *sess, const char *value, const char *msg)
 		 * a final evaluation and convert SMTPF_DISCARD when MSG_TRAP
 		 * is set to SMTPF_REJECT.
 		 */
-		access = SMTPF_DISCARD;
+		rc = SMTPF_DISCARD;
 	}
 
 	else if (strcmp(value, "TAG") == 0) {
 		CLIENT_SET(sess, CLIENT_IS_TAG);
 	}
 
-	return access;
+	return rc;
 }
 
 /**
@@ -858,7 +923,7 @@ accessClientAction(Session *sess, const char *value, const char *msg)
  * When an entry is found, then the right-hand-side value is processed
  * as a pattern list and that result returned, else on the result of the
  * the right-hand-side is returned. Otherwise if no entry is found, then
- * SMDB_ACCESS_NOT_FOUND will be returned.
+ * SMTPF_CONTINUE will be returned.
  *
  * Note this lookup ordering, except the empty tag:, is based on sendmail's
  * lookups. Sendmail syntax limits the netmasks to /32, /24, /16, /8 for IPv4
@@ -875,11 +940,12 @@ accessClientAction(Session *sess, const char *value, const char *msg)
  * @return
  *	An SMTPF_ return code.
  */
-int
+SmtpfCode
 accessConnect(Session *sess, va_list args)
 {
+	AccessCode access;
 	char *msg, *value = NULL;
-	int access = SMTPF_CONTINUE;
+	SmtpfCode rc = SMTPF_CONTINUE;
 
 	LOG_TRACE(sess, 118, accessConnect);
 
@@ -908,12 +974,16 @@ accessConnect(Session *sess, va_list args)
 	 *	tag:[ip]
 	 *	tag:
 	 */
-	if ((access = accessClient(sess, "connect:", sess->client.name, sess->client.addr, NULL, &value, 1)) != SMDB_ACCESS_NOT_FOUND) {
+	if ((access = accessClient(sess, "connect:", sess->client.name, sess->client.addr, NULL, &value, 1)) != ACCESS_NOT_FOUND) {
 		if ((msg = strchr(value, ':')) != NULL)
 			msg++;
 
 		switch (access) {
-		case SMDB_ACCESS_OK:
+		case ACCESS_OK_AV:
+			sess->client.ok_av = 1;
+			/*@fallthrough@*/
+
+		case ACCESS_OK:
 			if (verb_info.option.value) {
 				syslog(LOG_INFO, LOG_MSG(119) "host " CLIENT_FORMAT " %s", LOG_ARGS(sess), CLIENT_INFO(sess), msg == NULL ? "white listed" : msg);
 /*{LOG
@@ -925,11 +995,11 @@ See <a href="access-map.html#access_map">access-map</a>.
 			if (CLIENT_NOT_SET(sess, CLIENT_HOLY_TRINITY))
 				statsCount(&stat_connect_wl);
 			CLIENT_SET(sess, CLIENT_IS_WHITE);
-			access = SMTPF_ACCEPT;
+			rc = SMTPF_ACCEPT;
 			break;
 
-		case SMDB_ACCESS_REJECT:
-			access = replyPushFmt(sess, SMTPF_DELAY|SMTPF_SESSION|SMTPF_DROP, "550 5.7.1 host " CLIENT_FORMAT " %s" ID_MSG(120) "\r\n", CLIENT_INFO(sess), msg == NULL ? "black listed" : msg, ID_ARG(sess));
+		case ACCESS_REJECT:
+			rc = replyPushFmt(sess, SMTPF_DELAY|SMTPF_SESSION|SMTPF_DROP, "550 5.7.1 host " CLIENT_FORMAT " %s" ID_MSG(120) "\r\n", CLIENT_INFO(sess), msg == NULL ? "black listed" : msg, ID_ARG(sess));
 /*{REPLY
 There is a <a href="access-map.html#tag_connect"><span class="tag">Connect:</span></a> tag entry for either the
 client name or IP address with a right-hand-side value of REJECT.
@@ -939,8 +1009,8 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			statsCount(&stat_connect_bl);
 			break;
 
-		case SMDB_ACCESS_TEMPFAIL:
-			access = replyPushFmt(sess, SMTPF_DELAY|SMTPF_SESSION|SMTPF_TEMPFAIL, "450 4.7.1 host " CLIENT_FORMAT " %s" ID_MSG(853) "\r\n", CLIENT_INFO(sess), msg == NULL ? "temporary failure" : msg, ID_ARG(sess));
+		case ACCESS_TEMPFAIL:
+			rc = replyPushFmt(sess, SMTPF_DELAY|SMTPF_SESSION|SMTPF_TEMPFAIL, "450 4.7.1 host " CLIENT_FORMAT " %s" ID_MSG(853) "\r\n", CLIENT_INFO(sess), msg == NULL ? "temporary failure" : msg, ID_ARG(sess));
 /*{REPLY
 There is a <a href="access-map.html#tag_connect"><span class="tag">Connect:</span></a> tag entry for either the
 client name or IP address with a right-hand-side value of TEMPFAIL.
@@ -949,7 +1019,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			CLIENT_SET(sess, CLIENT_IS_TEMPFAIL);
 			break;
 
-		case SMDB_ACCESS_DISCARD:
+		case ACCESS_DISCARD:
 			if (verb_info.option.value)
 				syslog(LOG_INFO, LOG_MSG(000) "host " CLIENT_FORMAT " %s", LOG_ARGS(sess), CLIENT_INFO(sess), msg == NULL ? "discard" : msg);
 			CLIENT_SET(sess, CLIENT_IS_DISCARD);
@@ -957,7 +1027,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 
 		default:
 			if (0 < TextSensitiveStartsWith(value, "IREJECT")) {
-				access = replyPushFmt(sess, SMTPF_DROP, "550 5.7.1 host " CLIENT_FORMAT " %s" ID_MSG(854) "\r\n", CLIENT_INFO(sess), msg == NULL ? "black listed" : msg, ID_ARG(sess));
+				rc = replyPushFmt(sess, SMTPF_DROP, "550 5.7.1 host " CLIENT_FORMAT " %s" ID_MSG(854) "\r\n", CLIENT_INFO(sess), msg == NULL ? "black listed" : msg, ID_ARG(sess));
 /*{REPLY
 There is a <a href="access-map.html#tag_connect"><span class="tag">Connect:</span></a> tag entry for either the
 client name or IP address with a right-hand-side value of IREJECT.
@@ -968,7 +1038,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			}
 
 			else {
-				access = accessClientAction(sess, value, msg);
+				rc = accessClientAction(sess, value, msg);
 			}
 		}
 
@@ -981,7 +1051,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 	 */
 	else if (optRFC2606SpecialDomains.value
 	&& CLIENT_NOT_SET(sess, CLIENT_IS_LAN|CLIENT_IS_LOCALHOST) && isRFC2606(sess->client.name)) {
-		access = replyPushFmt(sess, SMTPF_DELAY|SMTPF_SESSION|SMTPF_DROP, "550 5.7.1 host " CLIENT_FORMAT " from RFC2606 reserved domain" ID_MSG(121) "\r\n", CLIENT_INFO(sess), ID_ARG(sess));
+		rc = replyPushFmt(sess, SMTPF_DELAY|SMTPF_SESSION|SMTPF_DROP, "550 5.7.1 host " CLIENT_FORMAT " from RFC2606 reserved domain" ID_MSG(121) "\r\n", CLIENT_INFO(sess), ID_ARG(sess));
 /*{REPLY
 See <a href="summary.html#opt_rfc2606_special_domains">rfc2606-special-domains</a>.
 }*/
@@ -994,21 +1064,21 @@ See <a href="summary.html#opt_rfc2606_special_domains">rfc2606-special-domains</
 	else if (optRejectUnknownTLD.value
 	&& CLIENT_NOT_SET(sess, CLIENT_IS_LAN|CLIENT_IS_LOCALHOST)
 	&& *sess->client.name != '\0' && !hasValidTLD(sess->client.name)) {
-		access = replyPushFmt(sess, SMTPF_DELAY|SMTPF_SESSION|SMTPF_DROP, "550 5.7.1 host " CLIENT_FORMAT " from unknown TLD" ID_MSG(122) "\r\n", CLIENT_INFO(sess), ID_ARG(sess));
+		rc = replyPushFmt(sess, SMTPF_DELAY|SMTPF_SESSION|SMTPF_DROP, "550 5.7.1 host " CLIENT_FORMAT " from unknown TLD" ID_MSG(122) "\r\n", CLIENT_INFO(sess), ID_ARG(sess));
 /*{REPLY
 See <a href="summary.html#opt_reject_unknown_tld">reject-unknown-tld</a>.
 }*/
 	}
 
-	sess->client.bw_state = access;
+	sess->client.bw_state = rc;
 
-	return access;
+	return rc;
 }
 
-int
+SmtpfCode
 accessIdle(Session *sess, va_list ignore)
 {
-	int rc;
+	SmtpfCode rc;
 
 	/* See mail-retest-client and idle-retest-timer. */
 	if ((rc = accessConnect(sess, ignore)) != SMTPF_CONTINUE)
@@ -1017,11 +1087,11 @@ accessIdle(Session *sess, va_list ignore)
 	return rc;
 }
 
-static int
-accessMsgAction(Session *sess, const char *value, const char *msg, int access)
+static SmtpfCode
+accessMsgAction(Session *sess, const char *value, const char *msg, SmtpfCode code)
 {
 	if (0 < TextSensitiveStartsWith(value, "SAVE")) {
-		access = SMTPF_CONTINUE;
+		code = SMTPF_CONTINUE;
 		MSG_SET(sess, MSG_SAVE);
 		saveSetSaveDir(sess, msg);
 	}
@@ -1031,13 +1101,13 @@ accessMsgAction(Session *sess, const char *value, const char *msg, int access)
 		 * a final evaluation and convert SMTPF_DISCARD when MSG_TRAP
 		 * is set to SMTPF_REJECT.
 		 */
-		access = SMTPF_DISCARD;
+		code = SMTPF_DISCARD;
 		MSG_SET(sess, MSG_TRAP);
 		saveSetTrapDir(sess, msg);
 	}
 
 	else if (strcmp(value, "TAG") == 0) {
-		access = SMTPF_CONTINUE;
+		code = SMTPF_CONTINUE;
 		MSG_SET(sess, MSG_TAG);
 	}
 
@@ -1045,10 +1115,10 @@ accessMsgAction(Session *sess, const char *value, const char *msg, int access)
 		if (verb_info.option.value)
 			syslog(LOG_INFO, LOG_MSG(000) "message %s", LOG_ARGS(sess), msg == NULL ? "discard" : msg);
 		MSG_SET(sess, MSG_DISCARD);
-		access = SMTPF_DISCARD;
+		code = SMTPF_DISCARD;
 	}
 
-	return access;
+	return code;
 }
 
 /**
@@ -1080,7 +1150,7 @@ accessMsgAction(Session *sess, const char *value, const char *msg, int access)
  * When a tag: entry is found, then the right-hand-side value is processed
  * as a pattern list and that result returned, else on the result of the
  * the right-hand-side is returned. Otherwise if no entry is found, then
- * SMDB_ACCESS_NOT_FOUND will be returned.
+ * SMTPF_CONTINUE will be returned.
  *
  * @param sess
  *	A pointer to a Session.
@@ -1092,10 +1162,11 @@ accessMsgAction(Session *sess, const char *value, const char *msg, int access)
  * @return
  *	An SMTPF_ return code.
  */
-int
+SmtpfCode
 accessMail(Session *sess, va_list args)
 {
-	int access;
+	SmtpfCode rc;
+	AccessCode access;
 	char *msg, *action, *value = NULL;
 	ParsePath *path = va_arg(args, ParsePath *);
 
@@ -1110,30 +1181,36 @@ accessMail(Session *sess, va_list args)
 		MSG_SET(sess, MSG_SAVE);
 	if (CLIENT_ANY_SET(sess, CLIENT_IS_TAG))
 		MSG_SET(sess, MSG_TAG);
+	if (sess->client.ok_av)
+		MSG_SET(sess, MSG_OK_AV);
 
 	/* How to handle the DSN address. */
 	if (path->address.length == 0)
-		access = SMTPF_CONTINUE;
+		rc = SMTPF_CONTINUE;
 
-	if ((access = smdbIpMail(sess->access_map, "connect:", sess->client.addr, SMDB_COMBO_TAG_DELIM "from:", sess->msg.mail->address.string, NULL, &value)) != SMDB_ACCESS_NOT_FOUND
-	|| (*sess->client.name != '\0' && (access = smdbDomainMail(sess->access_map, "connect:", sess->client.name, SMDB_COMBO_TAG_DELIM "from:", sess->msg.mail->address.string, NULL, &value)) != SMDB_ACCESS_NOT_FOUND)) {
+	if ((access = smdbIpMail(sess->access_map, "connect:", sess->client.addr, SMDB_COMBO_TAG_DELIM "from:", sess->msg.mail->address.string, NULL, &value)) != ACCESS_NOT_FOUND
+	|| (*sess->client.name != '\0' && (access = smdbDomainMail(sess->access_map, "connect:", sess->client.name, SMDB_COMBO_TAG_DELIM "from:", sess->msg.mail->address.string, NULL, &value)) != ACCESS_NOT_FOUND)) {
 		access = accessPattern(sess, sess->client.addr, value, &action);
-		if (access == SMDB_ACCESS_NOT_FOUND) {
+		if (access == ACCESS_NOT_FOUND) {
 			access = accessPattern(sess, sess->client.name, value, &action);
-			if (access == SMDB_ACCESS_NOT_FOUND)
+			if (access == ACCESS_NOT_FOUND)
 				access = accessPattern(sess, sess->msg.mail->address.string, value, &action);
 		}
 		free(value);
 		value = action;
 
 		if (strcmp(value, "SPF-PASS") == 0 && sess->msg.spf_mail == SPF_PASS)
-			access = SMDB_ACCESS_OK;
+			access = ACCESS_OK;
 
 		if ((msg = strchr(value, ':')) != NULL)
 			msg++;
 
 		switch (access) {
-		case SMDB_ACCESS_OK:
+		case ACCESS_OK_AV:
+			MSG_SET(sess, MSG_OK_AV);
+			/*@fallthrough@*/
+
+		case ACCESS_OK:
 			if (verb_info.option.value) {
 				syslog(LOG_INFO, LOG_MSG(124) "host " CLIENT_FORMAT " sender <%s> %s", LOG_ARGS(sess), CLIENT_INFO(sess), sess->msg.mail->address.string, msg == NULL ? "white listed" : msg);
 /*{LOG
@@ -1146,11 +1223,11 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			statsCount(&stat_connect_mail_wl);
 			MAIL_SET(sess, MAIL_IS_WHITE);
 			path->isWhiteListed = 1;
-			access = SMTPF_ACCEPT;
+			rc = SMTPF_ACCEPT;
 			break;
 
-		case SMDB_ACCESS_REJECT:
-			access = replyPushFmt(sess, SMTPF_DELAY|SMTPF_REJECT, "550 5.7.1 host " CLIENT_FORMAT " sender <%s> %s" ID_MSG(125) "\r\n", CLIENT_INFO(sess), sess->msg.mail->address.string, msg == NULL ? "black listed" : msg, ID_ARG(sess));
+		case ACCESS_REJECT:
+			rc = replyPushFmt(sess, SMTPF_DELAY|SMTPF_REJECT, "550 5.7.1 host " CLIENT_FORMAT " sender <%s> %s" ID_MSG(125) "\r\n", CLIENT_INFO(sess), sess->msg.mail->address.string, msg == NULL ? "black listed" : msg, ID_ARG(sess));
 /*{REPLY
 There is a <a href="access-map.html#tag_connect_from"><span class="tag">Connect:From:</span></a> combo tag entry for either the
 client name and sender pair or client IP address and sender pair with a
@@ -1162,8 +1239,8 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			path->isWhiteListed = -1;
 			break;
 
-		case SMDB_ACCESS_TEMPFAIL:
-			access = replyPushFmt(sess, SMTPF_DELAY|SMTPF_TEMPFAIL, "450 4.7.1 host " CLIENT_FORMAT " sender <%s> %s" ID_MSG(814) "\r\n", CLIENT_INFO(sess), sess->msg.mail->address.string, msg == NULL ? "temporary failure" : msg, ID_ARG(sess));
+		case ACCESS_TEMPFAIL:
+			rc = replyPushFmt(sess, SMTPF_DELAY|SMTPF_TEMPFAIL, "450 4.7.1 host " CLIENT_FORMAT " sender <%s> %s" ID_MSG(814) "\r\n", CLIENT_INFO(sess), sess->msg.mail->address.string, msg == NULL ? "temporary failure" : msg, ID_ARG(sess));
 /*{REPLY
 There is a <a href="access-map.html#tag_connect_from"><span class="tag">Connect:From:</span></a> combo tag entry for either the
 client name and sender pair or client IP address and sender pair with a
@@ -1176,7 +1253,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 
 		default:
 			if (0 < TextSensitiveStartsWith(value, "IREJECT")) {
-				access = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 host " CLIENT_FORMAT " sender <%s> %s" ID_MSG(855) "\r\n", CLIENT_INFO(sess), sess->msg.mail->address.string, msg == NULL ? "black listed" : msg, ID_ARG(sess));
+				rc = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 host " CLIENT_FORMAT " sender <%s> %s" ID_MSG(855) "\r\n", CLIENT_INFO(sess), sess->msg.mail->address.string, msg == NULL ? "black listed" : msg, ID_ARG(sess));
 /*{REPLY
 There is a <a href="access-map.html#tag_connect_from"><span class="tag">Connect:From:</span></a> combo tag entry for either the
 client name and sender pair or client IP address and sender pair with a
@@ -1189,7 +1266,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			}
 
 			else {
-				access = accessMsgAction(sess, value, msg, sess->client.bw_state);
+				rc = accessMsgAction(sess, value, msg, sess->client.bw_state);
 			}
 		}
 	}
@@ -1204,15 +1281,19 @@ See <a href="access-map.html#access_tags">access-map</a>.
 	 *	tag:account@
 	 *	tag:
 	 */
-	else if ((access = accessEmail(sess, "from:", path->address.string, NULL, &value)) != SMDB_ACCESS_NOT_FOUND) {
+	else if ((access = accessEmail(sess, "from:", path->address.string, NULL, &value)) != ACCESS_NOT_FOUND) {
 		if (strcmp(value, "SPF-PASS") == 0 && sess->msg.spf_mail == SPF_PASS)
-			access = SMDB_ACCESS_OK;
+			access = ACCESS_OK;
 
 		if ((msg = strchr(value, ':')) != NULL)
 			msg++;
 
 		switch (access) {
-		case SMDB_ACCESS_OK:
+		case ACCESS_OK_AV:
+			MSG_SET(sess, MSG_OK_AV);
+			/*@fallthrough@*/
+
+		case ACCESS_OK:
 			if (verb_info.option.value) {
 				syslog(LOG_INFO, LOG_MSG(126) "sender <%s> %s", LOG_ARGS(sess), path->address.string, msg == NULL ? "white listed" : msg);
 /*{LOG
@@ -1224,11 +1305,11 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			statsCount(&stat_mail_wl);
 			MAIL_SET(sess, MAIL_IS_WHITE);
 			path->isWhiteListed = 1;
-			access = SMTPF_ACCEPT;
+			rc = SMTPF_ACCEPT;
 			break;
 
-		case SMDB_ACCESS_REJECT:
-			access = replyPushFmt(sess, SMTPF_DELAY|SMTPF_REJECT, "550 5.7.1 sender <%s> %s" ID_MSG(127) "\r\n", path->address.string, msg == NULL ? "black listed" : msg, ID_ARG(sess));
+		case ACCESS_REJECT:
+			rc = replyPushFmt(sess, SMTPF_DELAY|SMTPF_REJECT, "550 5.7.1 sender <%s> %s" ID_MSG(127) "\r\n", path->address.string, msg == NULL ? "black listed" : msg, ID_ARG(sess));
 /*{REPLY
 There is a <a href="access-map.html#tag_from"><span class="tag">From:</span></a> tag entry for
 the sender address or their domain with a right-hand-side value of REJECT.
@@ -1239,8 +1320,8 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			path->isWhiteListed = -1;
 			break;
 
-		case SMDB_ACCESS_TEMPFAIL:
-			access = replyPushFmt(sess, SMTPF_DELAY|SMTPF_TEMPFAIL, "450 4.7.1 sender <%s> %s" ID_MSG(815) "\r\n", path->address.string, msg == NULL ? "temporary failure" : msg, ID_ARG(sess));
+		case ACCESS_TEMPFAIL:
+			rc = replyPushFmt(sess, SMTPF_DELAY|SMTPF_TEMPFAIL, "450 4.7.1 sender <%s> %s" ID_MSG(815) "\r\n", path->address.string, msg == NULL ? "temporary failure" : msg, ID_ARG(sess));
 /*{REPLY
 There is a <a href="access-map.html#tag_from"><span class="tag">From:</span></a> tag entry for
 the sender address or their domain with a right-hand-side value of TEMPFAIL.
@@ -1252,7 +1333,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 
 		default:
 			if (0 < TextSensitiveStartsWith(value, "IREJECT")) {
-				access = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 sender <%s> %s" ID_MSG(856) "\r\n", path->address.string, msg == NULL ? "black listed" : msg, ID_ARG(sess));
+				rc = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 sender <%s> %s" ID_MSG(856) "\r\n", path->address.string, msg == NULL ? "black listed" : msg, ID_ARG(sess));
 /*{REPLY
 There is a <a href="access-map.html#tag_from"><span class="tag">From:</span></a> tag entry for
 the sender address or their domain with a right-hand-side value of IREJECT.
@@ -1264,7 +1345,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			}
 
 			else {
-				access = accessMsgAction(sess, value, msg, sess->client.bw_state);
+				rc = accessMsgAction(sess, value, msg, sess->client.bw_state);
 			}
 		}
 	}
@@ -1275,7 +1356,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 	 */
 	else if (CLIENT_NOT_SET(sess, CLIENT_USUAL_SUSPECTS|CLIENT_IS_GREY)
 	&& optRFC2606SpecialDomains.value && isRFC2606(path->domain.string)) {
-		access = replyPushFmt(sess, SMTPF_DELAY|SMTPF_REJECT, "550 5.7.1 sender <%s> from RFC2606 reserved domain" ID_MSG(128) "\r\n", path->address.string, ID_ARG(sess));
+		rc = replyPushFmt(sess, SMTPF_DELAY|SMTPF_REJECT, "550 5.7.1 sender <%s> from RFC2606 reserved domain" ID_MSG(128) "\r\n", path->address.string, ID_ARG(sess));
 /*{REPLY
 See <a href="summary.html#opt_rfc2606_special_domains">rfc2606-special-domains</a>.
 }*/
@@ -1283,7 +1364,7 @@ See <a href="summary.html#opt_rfc2606_special_domains">rfc2606-special-domains</
 
 	else if (CLIENT_NOT_SET(sess, CLIENT_USUAL_SUSPECTS|CLIENT_IS_GREY)
 	&& optRejectUnknownTLD.value && 0 < path->domain.length && *path->domain.string != '[' && !hasValidTLD(path->domain.string)) {
-		access = replyPushFmt(sess, SMTPF_DELAY|SMTPF_REJECT, "550 5.7.1 sender <%s> from unknown TLD" ID_MSG(129) "\r\n", path->address.string, ID_ARG(sess));
+		rc = replyPushFmt(sess, SMTPF_DELAY|SMTPF_REJECT, "550 5.7.1 sender <%s> from unknown TLD" ID_MSG(129) "\r\n", path->address.string, ID_ARG(sess));
 /*{REPLY
 See <a href="summary.html#opt_reject_unknown_tld">reject-unknown-tld</a>.
 }*/
@@ -1291,13 +1372,13 @@ See <a href="summary.html#opt_reject_unknown_tld">reject-unknown-tld</a>.
 
 	else {
 		/* Set the B/W transaction state based on the B/W session state. */
-		access = sess->client.bw_state;
+		rc = sess->client.bw_state;
 	}
 
-	sess->msg.bw_state = access;
+	sess->msg.bw_state = rc;
 	free(value);
 
-	return access;
+	return rc;
 }
 
 /**
@@ -1315,7 +1396,7 @@ See <a href="summary.html#opt_reject_unknown_tld">reject-unknown-tld</a>.
  * When a tag: entry is found, then the right-hand-side value is processed
  * as a pattern list and that result returned, else on the result of the
  * the right-hand-side is returned. Otherwise if no entry is found, then
- * SMDB_ACCESS_NOT_FOUND will be returned.
+ * SMTPF_CONTINUE will be returned.
  *
  * @param sess
  *	A pointer to a Session.
@@ -1327,10 +1408,11 @@ See <a href="summary.html#opt_reject_unknown_tld">reject-unknown-tld</a>.
  * @return
  *	An SMTPF_ return code.
  */
-int
+SmtpfCode
 accessRcpt(Session *sess, va_list args)
 {
-	int access;
+	SmtpfCode rc;
+	AccessCode access;
 	char *msg, *action, *value = NULL;
 	ParsePath *path = va_arg(args, ParsePath *);
 
@@ -1346,14 +1428,14 @@ accessRcpt(Session *sess, va_list args)
 	 * test catches these slips.
 	 */
 	if (optRejectPercentRelay.value && strchr(path->address.string, '%') != NULL) {
-		access = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 routed address relaying denied" ID_MSG(131) "\r\n", ID_ARG(sess));
+		rc = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 routed address relaying denied" ID_MSG(131) "\r\n", ID_ARG(sess));
 /*{REPLY
 See <a href="summary.html#opt_reject_percent_relay">reject-percent-relay</a>.
 }*/
 	}
 
 	else if (optRejectUucpRoute.value && strchr(path->address.string, '!') != NULL) {
-		access = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 UUCP addressing denied" ID_MSG(132) "\r\n", ID_ARG(sess));
+		rc = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 UUCP addressing denied" ID_MSG(132) "\r\n", ID_ARG(sess));
 /*{REPLY
 See <a href="summary.html#opt_reject_uucp_route">reject-uucp-route</a>.
 @PACKAGE_NAME@ currently does nothing special with UUCP paths, so disabling
@@ -1362,18 +1444,18 @@ this option will have undefined results.
 	}
 
 	else if (optRejectQuotedAtSign.value && strchr(path->localLeft.string, '@') != NULL) {
-		access = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 special case of at-sign in local-part denied" ID_MSG(133) "\r\n", ID_ARG(sess));
+		rc = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 special case of at-sign in local-part denied" ID_MSG(133) "\r\n", ID_ARG(sess));
 /*{REPLY
 See <a href="summary.html#opt_reject_quoted_at_sign">reject-quoted-at-sign</a>.
 }*/
 	}
 
-	else if ((access = smdbIpMail(sess->access_map, "connect:", sess->client.addr, SMDB_COMBO_TAG_DELIM "to:", path->address.string, NULL, &value)) != SMDB_ACCESS_NOT_FOUND
-	     || (*sess->client.name != '\0' && (access = smdbDomainMail(sess->access_map, "connect:", sess->client.name, SMDB_COMBO_TAG_DELIM "to:", path->address.string, NULL, &value)) != SMDB_ACCESS_NOT_FOUND)) {
+	else if ((access = smdbIpMail(sess->access_map, "connect:", sess->client.addr, SMDB_COMBO_TAG_DELIM "to:", path->address.string, NULL, &value)) != ACCESS_NOT_FOUND
+	     || (*sess->client.name != '\0' && (access = smdbDomainMail(sess->access_map, "connect:", sess->client.name, SMDB_COMBO_TAG_DELIM "to:", path->address.string, NULL, &value)) != ACCESS_NOT_FOUND)) {
 		access = accessPattern(sess, sess->client.addr, value, &action);
-		if (access == SMDB_ACCESS_NOT_FOUND) {
+		if (access == ACCESS_NOT_FOUND) {
 			access = accessPattern(sess, sess->client.name, value, &action);
-			if (access == SMDB_ACCESS_NOT_FOUND)
+			if (access == ACCESS_NOT_FOUND)
 				access = accessPattern(sess, path->address.string, value, &action);
 		}
 		free(value);
@@ -1383,7 +1465,11 @@ See <a href="summary.html#opt_reject_quoted_at_sign">reject-quoted-at-sign</a>.
 			msg++;
 
 		switch (access) {
-		case SMDB_ACCESS_OK:
+		case ACCESS_OK_AV:
+			MSG_SET(sess, MSG_OK_AV);
+			/*@fallthrough@*/
+
+		case ACCESS_OK:
 			if (verb_info.option.value) {
 				syslog(LOG_INFO, LOG_MSG(134) "host " CLIENT_FORMAT " recipient <%s> %s", LOG_ARGS(sess), CLIENT_INFO(sess), path->address.string, msg == NULL ? "white listed" : msg);
 /*{LOG
@@ -1396,11 +1482,11 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			statsCount(&stat_connect_rcpt_wl);
 			RCPT_SET(sess, RCPT_IS_WHITE);
 			path->isWhiteListed = 1;
-			access = SMTPF_ACCEPT;
+			rc = SMTPF_ACCEPT;
 			break;
 
-		case SMDB_ACCESS_REJECT:
-			access = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 host " CLIENT_FORMAT " recipient <%s> %s" ID_MSG(135) "\r\n", CLIENT_INFO(sess), path->address.string, msg == NULL ? "black listed" : msg, ID_ARG(sess));
+		case ACCESS_REJECT:
+			rc = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 host " CLIENT_FORMAT " recipient <%s> %s" ID_MSG(135) "\r\n", CLIENT_INFO(sess), path->address.string, msg == NULL ? "black listed" : msg, ID_ARG(sess));
 /*{REPLY
 There is a <a href="access-map.html#tag_connect_to"><span class="tag">Connect:To:</span></a> combo tag entry for either the
 client name and recipient pair or client IP address and recipient pair with a
@@ -1412,8 +1498,8 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			path->isWhiteListed = -1;
 			break;
 
-		case SMDB_ACCESS_TEMPFAIL:
-			access = replyPushFmt(sess, SMTPF_TEMPFAIL, "450 4.7.1 host " CLIENT_FORMAT " recipient <%s> %s" ID_MSG(816) "\r\n", CLIENT_INFO(sess), path->address.string, msg == NULL ? "temporary failure" : msg, ID_ARG(sess));
+		case ACCESS_TEMPFAIL:
+			rc = replyPushFmt(sess, SMTPF_TEMPFAIL, "450 4.7.1 host " CLIENT_FORMAT " recipient <%s> %s" ID_MSG(816) "\r\n", CLIENT_INFO(sess), path->address.string, msg == NULL ? "temporary failure" : msg, ID_ARG(sess));
 /*{REPLY
 There is a <a href="access-map.html#tag_connect_to"><span class="tag">Connect:To:</span></a> combo tag entry for either the
 client name and recipient pair or client IP address and recipient pair with a
@@ -1425,13 +1511,13 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			break;
 
 		default:
-			access = accessMsgAction(sess, value, msg, sess->msg.bw_state);
+			rc = accessMsgAction(sess, value, msg, sess->msg.bw_state);
 		}
 	}
 
-	else if ((access = smdbMailMail(sess->access_map, "from:", sess->msg.mail->address.string, SMDB_COMBO_TAG_DELIM "to:", path->address.string, NULL, &value)) != SMDB_ACCESS_NOT_FOUND) {
+	else if ((access = smdbMailMail(sess->access_map, "from:", sess->msg.mail->address.string, SMDB_COMBO_TAG_DELIM "to:", path->address.string, NULL, &value)) != ACCESS_NOT_FOUND) {
 		access = accessPattern(sess, sess->msg.mail->address.string, value, &action);
-		if (access == SMDB_ACCESS_NOT_FOUND) {
+		if (access == ACCESS_NOT_FOUND) {
 			access = accessPattern(sess, path->address.string, value, &action);
 		}
 		free(value);
@@ -1441,7 +1527,11 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			msg++;
 
 		switch (access) {
-		case SMDB_ACCESS_OK:
+		case ACCESS_OK_AV:
+			MSG_SET(sess, MSG_OK_AV);
+			/*@fallthrough@*/
+
+		case ACCESS_OK:
 			if (verb_info.option.value) {
 				syslog(LOG_INFO, LOG_MSG(136) "sender <%s> recipient <%s> %s", LOG_ARGS(sess), sess->msg.mail->address.string, path->address.string, msg == NULL ? "white listed" : msg);
 /*{LOG
@@ -1453,11 +1543,11 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			statsCount(&stat_mail_rcpt_wl);
 			RCPT_SET(sess, RCPT_IS_WHITE);
 			path->isWhiteListed = 1;
-			access = SMTPF_ACCEPT;
+			rc = SMTPF_ACCEPT;
 			break;
 
-		case SMDB_ACCESS_REJECT:
-			access = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 sender <%s> recipient <%s> %s" ID_MSG(137) "\r\n", sess->msg.mail->address.string, path->address.string, msg == NULL ? "black listed" : msg, ID_ARG(sess));
+		case ACCESS_REJECT:
+			rc = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 sender <%s> recipient <%s> %s" ID_MSG(137) "\r\n", sess->msg.mail->address.string, path->address.string, msg == NULL ? "black listed" : msg, ID_ARG(sess));
 /*{REPLY
 There is a <a href="access-map.html#tag_from_to"><span class="tag">From:To:</span></a> combo tag entry for a sender
 and recipient pair with a right-hand-side value of REJECT.
@@ -1468,8 +1558,8 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			path->isWhiteListed = -1;
 			break;
 
-		case SMDB_ACCESS_TEMPFAIL:
-			access = replyPushFmt(sess, SMTPF_TEMPFAIL, "450 4.7.1 sender <%s> recipient <%s> %s" ID_MSG(817) "\r\n", sess->msg.mail->address.string, path->address.string, msg == NULL ? "temporary failure" : msg, ID_ARG(sess));
+		case ACCESS_TEMPFAIL:
+			rc = replyPushFmt(sess, SMTPF_TEMPFAIL, "450 4.7.1 sender <%s> recipient <%s> %s" ID_MSG(817) "\r\n", sess->msg.mail->address.string, path->address.string, msg == NULL ? "temporary failure" : msg, ID_ARG(sess));
 /*{REPLY
 There is a <a href="access-map.html#tag_from_to"><span class="tag">From:To:</span></a> combo tag entry for a sender
 and recipient pair with a right-hand-side value of TEMPFAIL.
@@ -1480,7 +1570,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			break;
 
 		default:
-			access = accessMsgAction(sess, value, msg, sess->msg.bw_state);
+			rc = accessMsgAction(sess, value, msg, sess->msg.bw_state);
 		}
 	}
 
@@ -1494,12 +1584,16 @@ See <a href="access-map.html#access_tags">access-map</a>.
 	 *	tag:account@
 	 *	tag:
 	 */
-	else if ((access = accessEmail(sess, "to:", path->address.string, NULL, &value)) != SMDB_ACCESS_NOT_FOUND) {
+	else if ((access = accessEmail(sess, "to:", path->address.string, NULL, &value)) != ACCESS_NOT_FOUND) {
 		if ((msg = strchr(value, ':')) != NULL)
 			msg++;
 
 		switch (access) {
-		case SMDB_ACCESS_OK:
+		case ACCESS_OK_AV:
+			MSG_SET(sess, MSG_OK_AV);
+			/*@fallthrough@*/
+
+		case ACCESS_OK:
 			if (verb_info.option.value) {
 				syslog(LOG_INFO, LOG_MSG(138) "recipient <%s> %s", LOG_ARGS(sess), path->address.string, msg == NULL ? "white listed" : msg);
 /*{LOG
@@ -1511,11 +1605,11 @@ See <a href="access-map.html#access_map">access-map</a>.
 			statsCount(&stat_rcpt_wl);
 			RCPT_SET(sess, RCPT_IS_WHITE);
 			path->isWhiteListed = 1;
-			access = SMTPF_ACCEPT;
+			rc = SMTPF_ACCEPT;
 			break;
 
-		case SMDB_ACCESS_REJECT:
-			access = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 recipient <%s> %s" ID_MSG(139) "\r\n", path->address.string, msg == NULL ? "black listed" : msg, ID_ARG(sess));
+		case ACCESS_REJECT:
+			rc = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 recipient <%s> %s" ID_MSG(139) "\r\n", path->address.string, msg == NULL ? "black listed" : msg, ID_ARG(sess));
 /*{REPLY
 There is a <a href="access-map.html#tag_to"><span class="tag">To:</span></a> tag entry for sender's
 address with a right-hand-side value of REJECT.
@@ -1526,8 +1620,8 @@ See <a href="access-map.html#access_map">access-map</a>.
 			path->isWhiteListed = -1;
 			break;
 
-		case SMDB_ACCESS_TEMPFAIL:
-			access = replyPushFmt(sess, SMTPF_TEMPFAIL, "450 4.7.1 recipient <%s> %s" ID_MSG(818) "\r\n", path->address.string, msg == NULL ? "temporary failure" : msg, ID_ARG(sess));
+		case ACCESS_TEMPFAIL:
+			rc = replyPushFmt(sess, SMTPF_TEMPFAIL, "450 4.7.1 recipient <%s> %s" ID_MSG(818) "\r\n", path->address.string, msg == NULL ? "temporary failure" : msg, ID_ARG(sess));
 /*{REPLY
 There is a <a href="access-map.html#tag_to"><span class="tag">To:</span></a> tag entry for sender's
 address with a right-hand-side value of TEMPFAIL.
@@ -1538,7 +1632,7 @@ See <a href="access-map.html#access_map">access-map</a>.
 			break;
 
 		default:
-			access = accessMsgAction(sess, value, msg, sess->msg.bw_state);
+			rc = accessMsgAction(sess, value, msg, sess->msg.bw_state);
 		}
 	}
 
@@ -1548,7 +1642,7 @@ See <a href="access-map.html#access_map">access-map</a>.
 	 */
 	else if (CLIENT_NOT_SET(sess, CLIENT_USUAL_SUSPECTS|CLIENT_IS_GREY)
 	&& optRFC2606SpecialDomains.value && isRFC2606(path->domain.string)) {
-		access = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 recipient <%s> from RFC2606 reserved domain" ID_MSG(140) "\r\n", path->address.string, ID_ARG(sess));
+		rc = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 recipient <%s> from RFC2606 reserved domain" ID_MSG(140) "\r\n", path->address.string, ID_ARG(sess));
 /*{REPLY
 See <a href="summary.html#opt_rfc2606_special_domains">rfc2606-special-domains</a>.
 }*/
@@ -1559,7 +1653,7 @@ See <a href="summary.html#opt_rfc2606_special_domains">rfc2606-special-domains</
 	&& 0 < path->domain.length && *path->domain.string != '['
 	&& TextInsensitiveCompare(path->localLeft.string, "postmaster") != 0
 	&& !hasValidTLD(path->domain.string)) {
-		access = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 recipient <%s> from unknown TLD" ID_MSG(141) "\r\n", path->address.string, ID_ARG(sess));
+		rc = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 recipient <%s> from unknown TLD" ID_MSG(141) "\r\n", path->address.string, ID_ARG(sess));
 /*{REPLY
 See <a href="summary.html#opt_reject_unknown_tld">reject-unknown-tld</a>.
 }*/
@@ -1567,18 +1661,19 @@ See <a href="summary.html#opt_reject_unknown_tld">reject-unknown-tld</a>.
 		/*** TODO: Ideally "dns-gl < SPF fail < CONTENT", but currently
 		 *** the precedence is actually "SPF fail < dns-gl = CONTENT".
 		 ***/
-		access = sess->msg.bw_state;
+		rc = sess->msg.bw_state;
 	}
 
 	free(value);
 
-	return access;
+	return rc;
 }
 
-int
+SmtpfCode
 accessHelo(Session *sess, va_list args)
 {
-	int access = SMTPF_CONTINUE;
+	AccessCode access;
+	SmtpfCode rc = SMTPF_CONTINUE;
 	char *helo, *msg, *value = NULL;
 
 	LOG_TRACE(sess, 142, accessHelo);
@@ -1588,12 +1683,16 @@ accessHelo(Session *sess, va_list args)
 
 	helo = va_arg(args, char *);
 
-	if ((access = accessClient(sess, "helo:", helo, NULL, NULL, &value, 1)) != SMDB_ACCESS_NOT_FOUND) {
+	if ((access = accessClient(sess, "helo:", helo, NULL, NULL, &value, 1)) != ACCESS_NOT_FOUND) {
 		if ((msg = strchr(value, ':')) != NULL)
 			msg++;
 
 		switch (access) {
-		case SMDB_ACCESS_OK:
+		case ACCESS_OK_AV:
+			sess->client.ok_av = 1;
+			/*@fallthrough@*/
+
+		case ACCESS_OK:
 			if (verb_info.option.value) {
 				syslog(LOG_INFO, LOG_MSG(923) "helo %s %s", LOG_ARGS(sess), helo, msg == NULL ? "white listed" : msg);
 /*{LOG
@@ -1605,11 +1704,11 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			if (CLIENT_NOT_SET(sess, CLIENT_HOLY_TRINITY))
 				statsCount(&stat_helo_wl);
 			CLIENT_SET(sess, CLIENT_IS_WHITE);
-			access = SMTPF_ACCEPT;
+			rc = SMTPF_ACCEPT;
 			break;
 
-		case SMDB_ACCESS_REJECT:
-			access = replyPushFmt(sess, SMTPF_DELAY|SMTPF_SESSION|SMTPF_DROP, "550 5.7.1 helo %s %s" ID_MSG(924) "\r\n", helo, msg == NULL ? "black listed" : msg, ID_ARG(sess));
+		case ACCESS_REJECT:
+			rc = replyPushFmt(sess, SMTPF_DELAY|SMTPF_SESSION|SMTPF_DROP, "550 5.7.1 helo %s %s" ID_MSG(924) "\r\n", helo, msg == NULL ? "black listed" : msg, ID_ARG(sess));
 /*{REPLY
 There is a <a href="access-map.html#tag_helo"><span class="tag">Helo:</span></a>
 tag entry for HELO/EHLO argument a right-hand-side value of REJECT.
@@ -1619,8 +1718,8 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			statsCount(&stat_helo_bl);
 			break;
 
-		case SMDB_ACCESS_TEMPFAIL:
-			access = replyPushFmt(sess, SMTPF_DELAY|SMTPF_SESSION|SMTPF_TEMPFAIL, "450 4.7.1 helo %s %s" ID_MSG(925) "\r\n", helo, msg == NULL ? "temporary failure" : msg, ID_ARG(sess));
+		case ACCESS_TEMPFAIL:
+			rc = replyPushFmt(sess, SMTPF_DELAY|SMTPF_SESSION|SMTPF_TEMPFAIL, "450 4.7.1 helo %s %s" ID_MSG(925) "\r\n", helo, msg == NULL ? "temporary failure" : msg, ID_ARG(sess));
 /*{REPLY
 There is a <a href="access-map.html#tag_helo"><span class="tag">Helo:</span></a>
 tag entry for HELO/EHLO argument a right-hand-side value of TEMPFAIL.
@@ -1629,7 +1728,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			CLIENT_SET(sess, CLIENT_IS_TEMPFAIL);
 			break;
 
-		case SMDB_ACCESS_DISCARD:
+		case ACCESS_DISCARD:
 			if (verb_info.option.value)
 				syslog(LOG_INFO, LOG_MSG(000) "helo %s %s", LOG_ARGS(sess), helo, msg == NULL ? "discard" : msg);
 			CLIENT_SET(sess, CLIENT_IS_DISCARD);
@@ -1637,7 +1736,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 
 		default:
 			if (0 < TextSensitiveStartsWith(value, "IREJECT")) {
-				access = replyPushFmt(sess, SMTPF_DROP, "550 5.7.1 helo %s %s" ID_MSG(926) "\r\n", helo, msg == NULL ? "black listed" : msg, ID_ARG(sess));
+				rc = replyPushFmt(sess, SMTPF_DROP, "550 5.7.1 helo %s %s" ID_MSG(926) "\r\n", helo, msg == NULL ? "black listed" : msg, ID_ARG(sess));
 /*{REPLY
 There is a <a href="access-map.html#tag_helo"><span class="tag">Helo:</span></a>
 tag entry for HELO/EHLO argument a right-hand-side value of IREJECT.
@@ -1648,17 +1747,17 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			}
 
 			else {
-				access = accessClientAction(sess, value, msg);
+				rc = accessClientAction(sess, value, msg);
 			}
 		}
 
 		free(value);
 	}
 
-	return access;
+	return rc;
 }
 
-static int
+static SmtpfCode
 access_rcpt_bw(Session *sess)
 {
 	Rcpt *rcpt;
@@ -1674,7 +1773,7 @@ access_rcpt_bw(Session *sess)
 	return SMTPF_CONTINUE;
 }
 
-int
+SmtpfCode
 accessData(Session *sess, va_list ignore)
 {
 	LOG_TRACE(sess, 143, accessData);
@@ -1704,6 +1803,8 @@ accessData(Session *sess, va_list ignore)
 	case SMTPF_TEMPFAIL:
 		LOG_TRACE(sess, 145, temp. fail recipient);
 		return SMTPF_TEMPFAIL;
+	default:
+		break;
 	}
 
 	switch (sess->msg.bw_state) {
@@ -1720,24 +1821,26 @@ accessData(Session *sess, va_list ignore)
 		/* Discard because of client or sender. */
 		LOG_TRACE(sess, 147, discard due to client or sender);
 		return SMTPF_DISCARD;
+	default:
+		break;
 	}
 
 	return SMTPF_CONTINUE;
 }
 
-int
+SmtpfCode
 accessHeaders(Session *sess, va_list args)
 {
 	return accessData(sess, NULL);
 }
 
-int
+SmtpfCode
 accessContent(Session *sess, va_list args)
 {
 	return accessData(sess, NULL);
 }
 
-int
+SmtpfCode
 accessDot(Session *sess, va_list ignore)
 {
 	return accessData(sess, NULL);
@@ -1760,6 +1863,7 @@ AccessMapping accessTagWordsMap[] =
 {
 	{	 ACCESS_CONN_TAG,
 		    ACCESS_OK_WORD
+		"|" ACCESS_OK_AV_WORD
 		"|" ACCESS_DISCARD_WORD
 		"|" ACCESS_REJECT_WORD
 		"|" ACCESS_IREJECT_WORD
@@ -1773,6 +1877,7 @@ AccessMapping accessTagWordsMap[] =
 	},
 	{	 ACCESS_HELO_TAG,
 		    ACCESS_OK_WORD
+		"|" ACCESS_OK_AV_WORD
 		"|" ACCESS_DISCARD_WORD
 		"|" ACCESS_REJECT_WORD
 		"|" ACCESS_IREJECT_WORD
@@ -1786,6 +1891,7 @@ AccessMapping accessTagWordsMap[] =
 	},
 	{	ACCESS_MAIL_TAG,
 		    ACCESS_OK_WORD
+		"|" ACCESS_OK_AV_WORD
 		"|" ACCESS_DISCARD_WORD
 		"|" ACCESS_REJECT_WORD
 		"|" ACCESS_IREJECT_WORD
@@ -1799,6 +1905,7 @@ AccessMapping accessTagWordsMap[] =
 	},
 	{	ACCESS_CONN_MAIL_TAG,
 		    ACCESS_OK_WORD
+		"|" ACCESS_OK_AV_WORD
 		"|" ACCESS_DISCARD_WORD
 		"|" ACCESS_REJECT_WORD
 		"|" ACCESS_IREJECT_WORD
@@ -1812,6 +1919,7 @@ AccessMapping accessTagWordsMap[] =
 	},
 	{	ACCESS_RCPT_TAG,
 		    ACCESS_OK_WORD
+		"|" ACCESS_OK_AV_WORD
 		"|" ACCESS_DISCARD_WORD
 		"|" ACCESS_REJECT_WORD
 		"|" ACCESS_TEMPFAIL_WORD
@@ -1823,6 +1931,7 @@ AccessMapping accessTagWordsMap[] =
 	},
 	{	ACCESS_CONN_RCPT_TAG,
 		    ACCESS_OK_WORD
+		"|" ACCESS_OK_AV_WORD
 		"|" ACCESS_DISCARD_WORD
 		"|" ACCESS_REJECT_WORD
 		"|" ACCESS_TEMPFAIL_WORD
@@ -1834,6 +1943,7 @@ AccessMapping accessTagWordsMap[] =
 	},
 	{	ACCESS_MAIL_RCPT_TAG,
 		    ACCESS_OK_WORD
+		"|" ACCESS_OK_AV_WORD
 		"|" ACCESS_DISCARD_WORD
 		"|" ACCESS_REJECT_WORD
 		"|" ACCESS_TEMPFAIL_WORD
@@ -1950,6 +2060,16 @@ AccessMapping accessWordTagsMap[] =
 		"|" ACCESS_CONN_RCPT_TAG
 		"|" ACCESS_MAIL_RCPT_TAG
 		"|" ACCESS_BODY_TAG
+	},
+	{
+		ACCESS_OK_AV_WORD,
+		    ACCESS_CONN_TAG
+		"|" ACCESS_HELO_TAG
+		"|" ACCESS_MAIL_TAG
+		"|" ACCESS_RCPT_TAG
+		"|" ACCESS_CONN_MAIL_TAG
+		"|" ACCESS_CONN_RCPT_TAG
+		"|" ACCESS_MAIL_RCPT_TAG
 	},
 	{
 		ACCESS_CONTENT_WORD,
@@ -2075,85 +2195,6 @@ AccessMapping accessWordTagsMap[] =
 	},
 	{ 	NULL, NULL }
 };
-
-#ifdef NOPE
-	{
-		ACCESS_OK_RE,
-		ACCESS_CONN_RE "|" ACCESS_MAIL_RE "|" ACCESS_RCPT_RE "|"
-		ACCESS_CONN_MAIL_RE "|" ACCESS_CONN_RCPT_RE "|" ACCESS_MAIL_RCPT_RE "|"
-		ACCESS_BODY_RE
-	},
-	{
-		ACCESS_CONTENT_RE,
-		ACCESS_CONN_RE
-	},
-	{
-		ACCESS_DISCARD_RE,
-		ACCESS_CONN_RE "|" ACCESS_MAIL_RE "|" ACCESS_RCPT_RE "|"
-		ACCESS_CONN_MAIL_RE "|" ACCESS_CONN_RCPT_RE "|" ACCESS_MAIL_RCPT_RE
-	},
-	{
-		ACCESS_IREJECT_RE,
-		ACCESS_CONN_RE "|" ACCESS_MAIL_RE "|" ACCESS_CONN_MAIL_RE
-	},
-	{
-		ACCESS_NEXT_RE,
-		".+"
-	},
-	{
-		ACCESS_REJECT_RE,
-		ACCESS_CONN_RE "|" ACCESS_MAIL_RE "|" ACCESS_RCPT_RE "|"
-		ACCESS_CONN_MAIL_RE "|" ACCESS_CONN_RCPT_RE "|" ACCESS_MAIL_RCPT_RE "|"
-		ACCESS_BODY_RE
-	},
-	{
-		ACCESS_SAVE_RE,
-		ACCESS_CONN_RE "|" ACCESS_MAIL_RE "|" ACCESS_RCPT_RE "|"
-		ACCESS_CONN_MAIL_RE "|" ACCESS_CONN_RCPT_RE "|" ACCESS_MAIL_RCPT_RE
-	},
-	{
-		ACCESS_SKIP_RE,
-		".+"
-	},
-	{
-		ACCESS_SPF_PASS_RE,
-		ACCESS_MAIL_RE "|" ACCESS_CONN_MAIL_RE
-	},
-	{
-		ACCESS_TAG_RE,
-		ACCESS_CONN_RE "|" ACCESS_MAIL_RE "|" ACCESS_RCPT_RE "|"
-		ACCESS_CONN_MAIL_RE "|" ACCESS_CONN_RCPT_RE "|" ACCESS_MAIL_RCPT_RE
-	},
-	{
-		ACCESS_TEMPFAIL_RE,
-		ACCESS_CONN_RE "|" ACCESS_MAIL_RE "|" ACCESS_RCPT_RE "|"
-		ACCESS_CONN_MAIL_RE "|" ACCESS_CONN_RCPT_RE "|" ACCESS_MAIL_RCPT_RE
-	},
-	{
-		ACCESS_TRAP_RE,
-		ACCESS_CONN_RE "|" ACCESS_MAIL_RE "|" ACCESS_RCPT_RE "|"
-		ACCESS_CONN_MAIL_RE "|" ACCESS_CONN_RCPT_RE "|" ACCESS_MAIL_RCPT_RE
-	},
-	{
-		"^[0-9]+$",
-		ACCESS_CONCURRENT_RE "|" ACCESS_RATE_RE "|"
-		ACCESS_GREY_CONN_RE "|" ACCESS_GREY_RCPT_RE "|"
-		ACCESS_NULL_RE
-	},
-	{	"^-?[0-9]+[KMGkmg]?$",
-		ACCESS_SIZE_CONN_RE "|" ACCESS_SIZE_MAIL_RE "|" ACCESS_SIZE_RCPT_RE
-	},
-	{
-		"^[0-9]+\\/([0-9]*[WDHMSwdhms]|[0-9]+[WDHMSwdhms]?)$",
-		ACCESS_MSGS_CONN_RE "|" ACCESS_MSGS_MAIL_RE "|" ACCESS_MSGS_RCPT_RE
-	},
-	{
-		".+",
-		ACCESS_EMEW_RE "|" ACCESS_SPAM_RE
-	},
-	{ NULL, NULL }
-};
-#endif
 
 void
 accessPrintMapping(AccessMapping *table)

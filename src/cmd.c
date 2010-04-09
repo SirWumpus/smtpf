@@ -1150,16 +1150,16 @@ open relay.
 		helo = sess->helo_state == stateEhlo ? "EHLO" : "HELO";
 
 		/* Send HELO or EHLO to MX. */
-		sess->msg.chunk0_length = snprintf(sess->msg.chunk0, sizeof (sess->msg.chunk0), "%s %s\r\n", helo, sess->iface->name);
-		if (mxCommand(sess, fwd, sess->msg.chunk0, 250)) {
+		sess->msg.chunk0_length = snprintf((char *)sess->msg.chunk0, sizeof (sess->msg.chunk0), "%s %s\r\n", helo, sess->iface->name);
+		if (mxCommand(sess, fwd, (char *)sess->msg.chunk0, 250)) {
 			statsCount(SMTP_IS_TEMP(fwd->smtp_code) ? &stat_forward_helo_tempfail : &stat_forward_helo_reject);
 			RCPT_SET(sess, RCPT_FAILED);
 			goto error4;
 		}
 
 		/* Send MAIL FROM: to MX. */
-		sess->msg.chunk0_length = snprintf(sess->msg.chunk0, sizeof (sess->msg.chunk0), "MAIL FROM:<%s>\r\n", sess->msg.mail->address.string);
-		if (mxCommand(sess, fwd, sess->msg.chunk0, 250)) {
+		sess->msg.chunk0_length = snprintf((char *)sess->msg.chunk0, sizeof (sess->msg.chunk0), "MAIL FROM:<%s>\r\n", sess->msg.mail->address.string);
+		if (mxCommand(sess, fwd, (char *)sess->msg.chunk0, 250)) {
 			statsCount(SMTP_IS_TEMP(fwd->smtp_code) ? &stat_forward_mail_tempfail : &stat_forward_mail_reject);
 			RCPT_SET(sess, RCPT_FAILED);
 			goto error4;
@@ -1167,11 +1167,11 @@ open relay.
 	}
 
 	/* Send RCPT TO: to MX. */
-	sess->msg.chunk0_length = snprintf(sess->msg.chunk0, sizeof (sess->msg.chunk0), "RCPT TO:<%s>\r\n", rcpt->address.string);
-	if (mxCommand(sess, fwd, sess->msg.chunk0, 250)) {
+	sess->msg.chunk0_length = snprintf((char *)sess->msg.chunk0, sizeof (sess->msg.chunk0), "RCPT TO:<%s>\r\n", rcpt->address.string);
+	if (mxCommand(sess, fwd, (char *)sess->msg.chunk0, 250)) {
 		if (*rcpt->localRight.string != '\0') {
-			sess->msg.chunk0_length = snprintf(sess->msg.chunk0, sizeof (sess->msg.chunk0), "RCPT TO:<%s@%s>\r\n", rcpt->localLeft.string, rcpt->domain.string);
-			if (!mxCommand(sess, fwd, sess->msg.chunk0, 250))
+			sess->msg.chunk0_length = snprintf((char *)sess->msg.chunk0, sizeof (sess->msg.chunk0), "RCPT TO:<%s@%s>\r\n", rcpt->localLeft.string, rcpt->domain.string);
+			if (!mxCommand(sess, fwd, (char *)sess->msg.chunk0, 250))
 				goto unplussed_rcpt;
 		}
 

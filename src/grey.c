@@ -1076,14 +1076,14 @@ greyData(Session *sess, va_list args)
 	grey->mime = NULL;
 	grey->fp = NULL;
 
-	if (accessClient(sess, ACCESS_CONNECT, sess->client.name, sess->client.addr, NULL, &value, 1) != SMDB_ACCESS_NOT_FOUND) {
+	if (accessClient(sess, ACCESS_CONNECT, sess->client.name, sess->client.addr, NULL, &value, 1) != ACCESS_NOT_FOUND) {
 		grey->period = strtol(value, NULL, 10);
 		free(value);
 	}
 
 	for (fwd = sess->msg.fwds; fwd != NULL; fwd = fwd->next) {
 		for (rcpt = fwd->rcpts; rcpt != NULL; rcpt = rcpt->next) {
-			if (accessEmail(sess, ACCESS_TO, rcpt->rcpt->address.string, NULL, &value) != SMDB_ACCESS_NOT_FOUND) {
+			if (accessEmail(sess, ACCESS_TO, rcpt->rcpt->address.string, NULL, &value) != ACCESS_NOT_FOUND) {
 				delay = strtol(value, NULL, 10);
 				if (delay < grey->period)
 					grey->period = delay;

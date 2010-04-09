@@ -24,15 +24,15 @@ extern Option optDenyContentType;
 extern Stats statDenyContentType;
 extern Stats statDenyContentName;
 
-extern int attachmentRegister(Session *null, va_list ignore);
-extern int attachmentRset(Session *sess, va_list ignore);
-extern int attachmentConnect(Session *sess, va_list ignore);
-extern int attachmentMail(Session *sess, va_list args);
-extern int attachmentRcpt(Session *sess, va_list args);
-extern int attachmentData(Session *sess, va_list ignore);
-extern int attachmentHeaders(Session *sess, va_list args);
-extern int attachmentContent(Session *sess, va_list args);
-extern int attachmentDot(Session *sess, va_list ignore);
+extern SmtpfCode attachmentRegister(Session *null, va_list ignore);
+extern SmtpfCode attachmentRset(Session *sess, va_list ignore);
+extern SmtpfCode attachmentConnect(Session *sess, va_list ignore);
+extern SmtpfCode attachmentMail(Session *sess, va_list args);
+extern SmtpfCode attachmentRcpt(Session *sess, va_list args);
+extern SmtpfCode attachmentData(Session *sess, va_list ignore);
+extern SmtpfCode attachmentHeaders(Session *sess, va_list args);
+extern SmtpfCode attachmentContent(Session *sess, va_list args);
+extern SmtpfCode attachmentDot(Session *sess, va_list ignore);
 
 /***********************************************************************
  ***

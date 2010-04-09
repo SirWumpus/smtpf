@@ -1094,7 +1094,9 @@ routeForward(Session *sess, ParsePath *rcpt, Connection *fwd)
 		if (verb_smtp.option.value)
 			syslog(LOG_DEBUG, LOG_MSG(560) "rcpt=%s connecting forward=%s index=%d ...", LOG_ARGS(sess), rcpt->address.string, host, i);
 
-		if ((fwd->mx = mxConnect(sess, host, IS_IP_RESERVED)) != NULL) {
+		if ((fwd->mx = socketConnect(host, SMTP_PORT, optSmtpConnectTimeout.value)) != NULL) {
+			connectionOptions(fwd);
+
 			/* Get welcome message from forward host. */
 			if (mxCommand(sess, fwd, NULL, 220)) {
 				connectionClose(fwd);

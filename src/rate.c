@@ -132,7 +132,7 @@ rateAtForkChild(void)
 }
 #endif
 
-int
+SmtpfCode
 rateRegister(Session *sess, va_list ignore)
 {
 	verboseRegister(&verb_rate);
@@ -147,7 +147,7 @@ rateRegister(Session *sess, va_list ignore)
 	return SMTPF_CONTINUE;
 }
 
-int
+SmtpfCode
 rateInit(Session *null, va_list ignore)
 {
 	(void) pthread_mutex_init(&rate_mutex, NULL);
@@ -160,7 +160,7 @@ rateInit(Session *null, va_list ignore)
 	return SMTPF_CONTINUE;
 }
 
-int
+SmtpfCode
 rateFini(Session *nul, va_list ignore)
 {
 	(void) pthread_mutex_destroy(&rate_mutex);
@@ -198,7 +198,7 @@ rateUpdate(Session *sess, RateInterval *intervals, unsigned long ticks)
  *** locked. Therefore no mutex is required to guard updates to globals
  *** connections_per_second and last_connection.
  ***/
-int
+SmtpfCode
 rateAccept(Session *sess, va_list ignore)
 {
 	unsigned long cpm;
@@ -235,12 +235,13 @@ See the <a href="summary.html#opt_rate_throttle">rate-throttle</a> option.
 	return SMTPF_CONTINUE;
 }
 
-int
+SmtpfCode
 rateConnect(Session *sess, va_list ignore)
 {
-	int i, rc;
+	int i;
 	time_t now;
 	char *value;
+	SmtpfCode rc;
 	long client_limit;
 	RateHash *entry, *oldest;
 	unsigned long hash, client_rate;
@@ -252,16 +253,18 @@ rateConnect(Session *sess, va_list ignore)
 
 	/* Find the client specific connection rate limit. */
 	switch (accessClient(sess, ACCESS_TAG, sess->client.name, sess->client.addr, NULL, &value, 1)) {
-	case SMDB_ACCESS_NOT_FOUND:
+	case ACCESS_NOT_FOUND:
 		return SMTPF_CONTINUE;
 
-	case SMDB_ACCESS_TEMPFAIL:
+	case ACCESS_TEMPFAIL:
 		return replyPushFmt(sess, SMTPF_DROP, msg_421_unavailable, ID_ARG(sess));
 /*{REPLY
 The access-map lookups are failing possible because of incorrect local databased
 file permissions; or in the case of a socketmap, the socketmap daemon has stopped.
 Connections are temporarily turned away.
 }*/
+	default:
+		break;
 	}
 
 	client_limit = strtol(value, NULL, 10);

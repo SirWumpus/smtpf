@@ -187,7 +187,7 @@ concurrentConnect(Session *sess, va_list ignore)
 		syslog(LOG_DEBUG, LOG_MSG(328) "concurrentConnect()", LOG_ARGS(sess));
 
 	if (CLIENT_NOT_SET(sess, CLIENT_HOLY_TRINITY)
-	&& accessClient(sess, ACCESS_TAG, sess->client.name, sess->client.addr, NULL, &value, 1) != SMDB_ACCESS_NOT_FOUND) {
+	&& accessClient(sess, ACCESS_TAG, sess->client.name, sess->client.addr, NULL, &value, 1) != ACCESS_NOT_FOUND) {
 		sess->max_concurrent = strtol(value, NULL, 10);
 		free(value);
 

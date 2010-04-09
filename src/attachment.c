@@ -346,7 +346,7 @@ static void attachmentRarMimeDecodedOctet(Mime *m, int octet);
  ***
  ***********************************************************************/
 
-int
+SmtpfCode
 attachmentRegister(Session *sess, va_list ignore)
 {
 	verboseRegister(&verb_attachment);
@@ -365,7 +365,7 @@ attachmentRegister(Session *sess, va_list ignore)
 	return SMTPF_CONTINUE;
 }
 
-int
+SmtpfCode
 attachmentRset(Session *sess, va_list ignore)
 {
 	Attachment *ctx;
@@ -398,7 +398,7 @@ attachmentRset(Session *sess, va_list ignore)
 	return SMTPF_CONTINUE;
 }
 
-int
+SmtpfCode
 attachmentConnect(Session *sess, va_list ignore)
 {
 	Attachment *ctx;
@@ -413,7 +413,7 @@ attachmentConnect(Session *sess, va_list ignore)
 	return SMTPF_CONTINUE;
 }
 
-int
+SmtpfCode
 attachmentMail(Session *sess, va_list args)
 {
 	char *value;
@@ -424,15 +424,15 @@ attachmentMail(Session *sess, va_list args)
 	ctx = filterGetContext(sess, attachment_context);
 
 	if (0 < mail->address.length) {
-		if (accessEmail(sess, ACCESS_FILENAME_MAIL_TAG, mail->address.string, NULL, &value) != SMDB_ACCESS_NOT_FOUND) {
+		if (accessEmail(sess, ACCESS_FILENAME_MAIL_TAG, mail->address.string, NULL, &value) != ACCESS_NOT_FOUND) {
 			free(ctx->filename);
 			ctx->filename = value;
 		}
-		if (accessEmail(sess, ACCESS_MIMETYPE_MAIL_TAG, mail->address.string, NULL, &value) != SMDB_ACCESS_NOT_FOUND) {
+		if (accessEmail(sess, ACCESS_MIMETYPE_MAIL_TAG, mail->address.string, NULL, &value) != ACCESS_NOT_FOUND) {
 			free(ctx->mimetype);
 			ctx->mimetype = value;
 		}
-		if (accessEmail(sess, ACCESS_ARCHNAME_MAIL_TAG, mail->address.string, NULL, &value) != SMDB_ACCESS_NOT_FOUND) {
+		if (accessEmail(sess, ACCESS_ARCHNAME_MAIL_TAG, mail->address.string, NULL, &value) != ACCESS_NOT_FOUND) {
 			free(ctx->archname);
 			ctx->archname = value;
 		}
@@ -441,7 +441,7 @@ attachmentMail(Session *sess, va_list args)
 	return SMTPF_CONTINUE;
 }
 
-int
+SmtpfCode
 attachmentRcpt(Session *sess, va_list args)
 {
 	char *value;
@@ -452,15 +452,15 @@ attachmentRcpt(Session *sess, va_list args)
 	ctx = filterGetContext(sess, attachment_context);
 
 	if (0 < rcpt->address.length) {
-		if (accessEmail(sess, ACCESS_FILENAME_RCPT_TAG, rcpt->address.string, NULL, &value) != SMDB_ACCESS_NOT_FOUND) {
+		if (accessEmail(sess, ACCESS_FILENAME_RCPT_TAG, rcpt->address.string, NULL, &value) != ACCESS_NOT_FOUND) {
 			free(ctx->filename);
 			ctx->filename = value;
 		}
-		if (accessEmail(sess, ACCESS_MIMETYPE_RCPT_TAG, rcpt->address.string, NULL, &value) != SMDB_ACCESS_NOT_FOUND) {
+		if (accessEmail(sess, ACCESS_MIMETYPE_RCPT_TAG, rcpt->address.string, NULL, &value) != ACCESS_NOT_FOUND) {
 			free(ctx->mimetype);
 			ctx->mimetype = value;
 		}
-		if (accessEmail(sess, ACCESS_ARCHNAME_RCPT_TAG, rcpt->address.string, NULL, &value) != SMDB_ACCESS_NOT_FOUND) {
+		if (accessEmail(sess, ACCESS_ARCHNAME_RCPT_TAG, rcpt->address.string, NULL, &value) != ACCESS_NOT_FOUND) {
 			free(ctx->archname);
 			ctx->archname = value;
 		}
@@ -469,7 +469,7 @@ attachmentRcpt(Session *sess, va_list args)
 	return SMTPF_CONTINUE;
 }
 
-int
+SmtpfCode
 attachmentData(Session *sess, va_list ignore)
 {
 	Attachment *ctx;
@@ -593,7 +593,7 @@ attachmentMimeHeader(Mime *m)
 	}
 }
 
-int
+SmtpfCode
 attachmentHeaders(Session *sess, va_list args)
 {
 	Attachment *ctx;
@@ -635,7 +635,7 @@ error0:
 	return attachmentRset(sess, args);
 }
 
-int
+SmtpfCode
 attachmentContent(Session *sess, va_list args)
 {
 	long size;
@@ -678,10 +678,10 @@ attachmentContent(Session *sess, va_list args)
 	return SMTPF_CONTINUE;
 }
 
-int
+SmtpfCode
 attachmentDot(Session *sess, va_list ignore)
 {
-	smtpf_code rc;
+	SmtpfCode rc;
 	Attachment *ctx;
 
 	rc = SMTPF_CONTINUE;

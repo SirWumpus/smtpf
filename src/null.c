@@ -180,7 +180,7 @@ nullRcpt(Session *sess, va_list args)
 
 	/* Find the client specific connection rate limit. */
 	key = value = NULL;
-	if (accessEmail(sess, ACCESS_TAG, rcpt->address.string, &key, &value) == SMDB_ACCESS_NOT_FOUND)
+	if (accessEmail(sess, ACCESS_TAG, rcpt->address.string, &key, &value) == ACCESS_NOT_FOUND)
 		return SMTPF_CONTINUE;
 
 	limit = strtol(value, NULL, 10);

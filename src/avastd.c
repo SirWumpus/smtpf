@@ -189,28 +189,30 @@ See <a href="summary.html#opt_avastd_socket">avastd-socket</a> and <a href="summ
 
 		/* Check for infected result, string "[L]". */
 		if (tab[2] == 'L' && rc == SMTPF_CONTINUE) {
-			MSG_SET(sess, MSG_POLICY);
 			statsCount(&stat_virus_infected);
-			(void) snprintf(sess->input, sizeof (sess->input), "message %s is INFECTED with %s", sess->msg.id, tab+5);
+			MSG_SET(sess, MSG_POLICY|MSG_INFECTED);
+			(void) snprintf(sess->input, sizeof (sess->input), "message %s is INFECTED with %s%s", sess->msg.id, tab+5, MSG_ANY_SET(sess, MSG_OK_AV) ? ", but ignored because OK+AV" : "");
 
-			switch (*optAvastdPolicy.string) {
-			case 'd':
-				MSG_SET(sess, MSG_DISCARD);
-				rc = SMTPF_DISCARD;
-				/*@fallthrough@*/
-			default:
-				syslog(LOG_ERR, LOG_MSG(161) "%s", LOG_ARGS(sess), sess->input);
+			if (MSG_NOT_SET(sess, MSG_OK_AV)) {
+				switch (*optAvastdPolicy.string) {
+				case 'd':
+					MSG_SET(sess, MSG_DISCARD);
+					rc = SMTPF_DISCARD;
+					/*@fallthrough@*/
+				default:
+					syslog(LOG_ERR, LOG_MSG(161) "%s", LOG_ARGS(sess), sess->input);
 /*{LOG
 The avastd daemon found a virus or suspicious content in the message.
 See <a href="summary.html#opt_avastd_policy">avastd-policy</a>.
 }*/
-				break;
-			case 'r':
-				rc = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 %s" ID_MSG(162) "\r\n", sess->input, ID_ARG(sess));
+					break;
+				case 'r':
+					rc = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 %s" ID_MSG(162) "\r\n", sess->input, ID_ARG(sess));
 /*{REPLY
 The avastd daemon found a virus or suspicious content in the message.
 See <a href="summary.html#opt_avastd_policy">avastd-policy</a>.
 }*/
+				}
 			}
 		}
 

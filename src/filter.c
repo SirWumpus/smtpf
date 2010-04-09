@@ -1154,11 +1154,8 @@ FilterHandler filter_dot_table	[] = {
 #ifdef FILTER_CLAMD
 	FILTER_HANDLER(clamdDot),
 #endif
-#ifdef FILTER_EMEW
-	FILTER_HANDLER(emewDot),
-#endif
-#ifdef FILTER_SIZE
-	FILTER_HANDLER(sizeDot),
+#if defined(FILTER_CTASD)
+	FILTER_HANDLER(ctasdDot),
 #endif
 #ifdef FILTER_AVASTD
 	FILTER_HANDLER(avastdDot),
@@ -1168,6 +1165,12 @@ FilterHandler filter_dot_table	[] = {
 #endif
 #ifdef FILTER_SAVDID
 	FILTER_HANDLER(savdidDot),
+#endif
+#ifdef FILTER_EMEW
+	FILTER_HANDLER(emewDot),
+#endif
+#ifdef FILTER_SIZE
+	FILTER_HANDLER(sizeDot),
 #endif
 	FILTER_HANDLER(accessDot),
 #if defined(FILTER_ATTACHMENT) && !defined(FILTER_ATTACHMENT_CONTENT_SHORTCUT)
@@ -1181,9 +1184,6 @@ FilterHandler filter_dot_table	[] = {
 #endif
 #if defined(FILTER_GREY) && !defined(FILTER_GREY_CONTENT_SHORTCUT)
 	FILTER_HANDLER(greyDot),
-#endif
-#if defined(FILTER_CTASD)
-	FILTER_HANDLER(ctasdDot),
 #endif
 #ifdef FILTER_CLI
 	FILTER_HANDLER(cliDot),
@@ -1345,12 +1345,12 @@ filterFini(void)
 	(void) filterRun(NULL, filter_fini_table);
 }
 
-int
+SmtpfCode
 filterRun(Session *sess, FilterHandler table[], ...)
 {
 	va_list args;
 	char *table_name;
-	int rc = SMTPF_CONTINUE;
+	SmtpfCode rc = SMTPF_CONTINUE;
 	TIMER_DECLARE(mark);
 
 	table_name = table->name;
@@ -1366,7 +1366,7 @@ filterRun(Session *sess, FilterHandler table[], ...)
 		if (verb_timers.option.value)
 			TIMER_START(mark);
 		va_start(args, table);
-		rc = (*table->handler)(sess, args);
+		rc = (*table->fn.handler)(sess, args);
 		va_end(args);
 
 		if (verb_timers.option.value) {
@@ -1412,6 +1412,8 @@ filterRun(Session *sess, FilterHandler table[], ...)
 		case SMTPF_SKIP_REMAINDER:
 			/* Skip remainder of function table and return. */
 			return SMTPF_CONTINUE;
+		default:
+			break;
 		}
 	}
 

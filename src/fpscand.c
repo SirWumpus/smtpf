@@ -189,28 +189,30 @@ See <a href="summary.html#opt_fpscand_socket">fpscand-socket</a> and <a href="su
 
 	rc = SMTPF_CONTINUE;
 	if (code & FPSCAND_RESULT_INFECTED) {
-		MSG_SET(sess, MSG_POLICY);
 		statsCount(&stat_virus_infected);
-		(void) snprintf(sess->input, sizeof (sess->input), "message %s is %s", sess->msg.id, result+1);
+		MSG_SET(sess, MSG_POLICY|MSG_INFECTED);
+		(void) snprintf(sess->input, sizeof (sess->input), "message %s is %s%s", sess->msg.id, result+1, MSG_ANY_SET(sess, MSG_OK_AV) ? ", but ignored because OK+AV" : "");
 
-		switch (*optFpscandPolicy.string) {
-		case 'd':
-			MSG_SET(sess, MSG_DISCARD);
-			rc = SMTPF_DISCARD;
-			/*@fallthrough@*/
-		default:
-			syslog(LOG_ERR, LOG_MSG(375) "%s", LOG_ARGS(sess), sess->input);
+		if (MSG_NOT_SET(sess, MSG_OK_AV)) {
+			switch (*optFpscandPolicy.string) {
+			case 'd':
+				MSG_SET(sess, MSG_DISCARD);
+				rc = SMTPF_DISCARD;
+				/*@fallthrough@*/
+			default:
+				syslog(LOG_ERR, LOG_MSG(375) "%s", LOG_ARGS(sess), sess->input);
 /*{LOG
 The fpscand daemon found a virus or suspicious content in the message.
 See <a href="summary.html#opt_fpscand_policy">fpscand-policy</a>.
 }*/
-			break;
-		case 'r':
-			rc = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 %s" ID_MSG(376) "\r\n", sess->input, ID_ARG(sess));
+				break;
+			case 'r':
+				rc = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 %s" ID_MSG(376) "\r\n", sess->input, ID_ARG(sess));
 /*{REPLY
 The fpscand daemon found a virus or suspicious content in the message.
 See <a href="summary.html#opt_fpscand_policy">fpscand-policy</a>.
 }*/
+			}
 		}
 	}
 error2:

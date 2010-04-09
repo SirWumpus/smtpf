@@ -235,7 +235,7 @@ emew2Set(Session *sess, time_t when, char *msgid, char *buffer, size_t size)
 	if (length <= 0 || size <= EMEW2_PREFIX_LENGTH + sess->msg.mail->address.length + 1 + length)
 		return 0;
 
-	if (accessEmail(sess, ACCESS_TAG, sess->msg.mail->address.string, NULL, &secret) == SMDB_ACCESS_NOT_FOUND)
+	if (accessEmail(sess, ACCESS_TAG, sess->msg.mail->address.string, NULL, &secret) == ACCESS_NOT_FOUND)
 		secret = optEmewSecret.string;
 
 	if (*secret == '\0' || (sender = malloc(sess->msg.mail->address.length+1)) == NULL) {
@@ -397,7 +397,7 @@ emew3Set(Session *sess, char *msgid, char *buffer, size_t size)
 	if (msgid_length <= 0 || size <= EMEW3_MAIL_OFFSET + sess->msg.mail->address.length + 1 + msgid_length)
 		return 0;
 
-	if (accessEmail(sess, ACCESS_TAG, sess->msg.mail->address.string, NULL, &secret) == SMDB_ACCESS_NOT_FOUND)
+	if (accessEmail(sess, ACCESS_TAG, sess->msg.mail->address.string, NULL, &secret) == ACCESS_NOT_FOUND)
 		secret = optEmewSecret.string;
 
 	if (*secret == '\0') {
@@ -497,7 +497,7 @@ emew2IsValid(Session *sess, char *msgid)
 	if ((at_sign = strchr(original_sender, '%')) != NULL)
 		*at_sign = '@';
 
-	if (accessEmail(sess, ACCESS_TAG, original_sender, NULL, &secret) == SMDB_ACCESS_NOT_FOUND)
+	if (accessEmail(sess, ACCESS_TAG, original_sender, NULL, &secret) == ACCESS_NOT_FOUND)
 		secret = optEmewSecret.string;
 
 	if (*secret == '\0')
@@ -604,7 +604,7 @@ emew3IsValid(Session *sess, char *msgid)
 	if (verb_emew.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(932) "EMEW address=\"%s\"", LOG_ARGS(sess), msgid+EMEW3_MAIL_OFFSET);
 
-	if (accessEmail(sess, ACCESS_TAG, msgid+EMEW3_MAIL_OFFSET, NULL, &secret) == SMDB_ACCESS_NOT_FOUND)
+	if (accessEmail(sess, ACCESS_TAG, msgid+EMEW3_MAIL_OFFSET, NULL, &secret) == ACCESS_NOT_FOUND)
 		secret = optEmewSecret.string;
 
 	if (verb_emew.option.value) {
@@ -739,7 +739,7 @@ emewMailRcpt(Session *sess, va_list args)
 	if (*optEmewSecret.string != '\0')
 		emew->required = 1;
 
-	else if (accessEmail(sess, ACCESS_TAG, rcpt->address.string, NULL, NULL) != SMDB_ACCESS_NOT_FOUND)
+	else if (accessEmail(sess, ACCESS_TAG, rcpt->address.string, NULL, NULL) != ACCESS_NOT_FOUND)
 		emew->required = 1;
 
 	return SMTPF_CONTINUE;

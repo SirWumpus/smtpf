@@ -440,22 +440,25 @@ ctasdDot(Session *sess, va_list ignore)
 		} else {
 			statsCount(&stat_ctasd_vod_reject);
 			statsCount(&stat_virus_infected);
+			MSG_SET(sess, MSG_INFECTED);
 		}
 
-		switch (*optCtasdPolicy.string) {
-		case 'd':
-			rc = SMTPF_DISCARD;
-			/*@fallthrough@*/
-		default:
-			syslog(LOG_ERR, LOG_MSG(959) "%s", LOG_ARGS(sess), sess->input);
+		if (!MSG_ALL_SET(sess, MSG_OK_AV|MSG_INFECTED)) {
+			switch (*optCtasdPolicy.string) {
+			case 'd':
+				rc = SMTPF_DISCARD;
+				/*@fallthrough@*/
+			default:
+				syslog(LOG_ERR, LOG_MSG(959) "%s", LOG_ARGS(sess), sess->input);
 /*{LOG
 The ctasd daemon found a virus or suspicious content in the message.
 See <a href="summary.html#opt_ctasd_policy">ctasd-policy</a>.
 }*/
-			break;
-		case 'r':
-			rc = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 %s" ID_MSG(960) CRLF, sess->input, ID_ARG(sess));
+				break;
+			case 'r':
+				rc = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 %s" ID_MSG(960) CRLF, sess->input, ID_ARG(sess));
 /*{NEXT}*/
+			}
 		}
 	} else if (strcmp(x_ctch_vod, "Medium") == 0) {
 		statsCount(&stat_ctasd_vod_tempfail);

@@ -1,7 +1,7 @@
 /*
  * access.h
  *
- * Copyright 2006, 2007 by Anthony Howe. All rights reserved.
+ * Copyright 2006, 2010 by Anthony Howe. All rights reserved.
  */
 
 #ifndef __access_h__
@@ -12,13 +12,42 @@ extern "C" {
 #endif
 
 /***********************************************************************
+ *** Access Actions
+ ***********************************************************************/
+
+typedef enum {
+	ACCESS_OK,
+	ACCESS_REJECT,
+	ACCESS_IREJECT,
+	ACCESS_CONTENT,
+	ACCESS_DISCARD,
+	ACCESS_NEXT,
+	ACCESS_OK_AV,
+	ACCESS_SAVE,
+	ACCESS_SKIP,
+	ACCESS_SPF_PASS,
+	ACCESS_TAG,
+	ACCESS_TEMPFAIL,
+	ACCESS_TRAP,
+	ACCESS_UNKNOWN,
+	ACCESS_NOT_FOUND = SMDB_ACCESS_NOT_FOUND,
+} AccessCode;
+
+typedef struct {
+	const int code;
+	const char *name;
+} EnumStringMapping;
+
+extern AccessCode access_word_to_code(const char *word);
+
+/***********************************************************************
  ***
  ***********************************************************************/
 
 extern smdb *access_map;
-extern int accessPattern(Session *sess, const char *hay, char *pins, char **actionp);
-extern int accessClient(Session *sess, const char *tag, const char *client_name, const char *client_addr, char **lhs, char **rhs, int include_default);
-extern int accessEmail(Session *sess, const char *tag, const char *mail, char **lhs, char **rhs);
+extern AccessCode accessPattern(Session *sess, const char *hay, char *pins, char **actionp);
+extern AccessCode accessClient(Session *sess, const char *tag, const char *client_name, const char *client_addr, char **lhs, char **rhs, int include_default);
+extern AccessCode accessEmail(Session *sess, const char *tag, const char *mail, char **lhs, char **rhs);
 extern char *accessDefault(Session *sess, const char *tag);
 extern int accessMapOpen(Session *);
 extern void accessMapClose(Session *);
@@ -41,19 +70,19 @@ extern Stats stat_rcpt_bl;
 extern Stats stat_rcpt_wl;
 extern Stats stat_tagged;
 
-extern int accessRegister(Session *null, va_list ignore);
-extern int accessInit(Session *null, va_list ignore);
-extern int accessFini(Session *null, va_list ignore);
-extern int accessIdle(Session *sess, va_list ignore);
-extern int accessConnect(Session *sess, va_list ignore);
-extern int accessHelo(Session *sess, va_list ignore);
-extern int accessMail(Session *sess, va_list args);
-extern int accessRcpt(Session *sess, va_list args);
-extern int accessData(Session *sess, va_list ignore);
-extern int accessHeaders(Session *sess, va_list args);
-extern int accessContent(Session *sess, va_list args);
-extern int accessDot(Session *sess, va_list ignore);
-extern int accessClose(Session *sess, va_list ignore);
+extern SmtpfCode accessRegister(Session *null, va_list ignore);
+extern SmtpfCode accessInit(Session *null, va_list ignore);
+extern SmtpfCode accessFini(Session *null, va_list ignore);
+extern SmtpfCode accessIdle(Session *sess, va_list ignore);
+extern SmtpfCode accessConnect(Session *sess, va_list ignore);
+extern SmtpfCode accessHelo(Session *sess, va_list ignore);
+extern SmtpfCode accessMail(Session *sess, va_list args);
+extern SmtpfCode accessRcpt(Session *sess, va_list args);
+extern SmtpfCode accessData(Session *sess, va_list ignore);
+extern SmtpfCode accessHeaders(Session *sess, va_list args);
+extern SmtpfCode accessContent(Session *sess, va_list args);
+extern SmtpfCode accessDot(Session *sess, va_list ignore);
+extern SmtpfCode accessClose(Session *sess, va_list ignore);
 
 /***********************************************************************
  *** Description of access-map tags and words.
@@ -168,6 +197,7 @@ extern int accessClose(Session *sess, va_list ignore);
  * Action Values
  */
 #define ACCESS_OK_WORD			"OK"				/* all */
+#define ACCESS_OK_AV_WORD		"OK+AV"				/* Connect: Helo: From: To: and combos */
 #define ACCESS_CONTENT_WORD		"CONTENT"			/* Connect */
 #define ACCESS_DISCARD_WORD		"DISCARD"			/* all */
 #define ACCESS_IREJECT_WORD		"IREJECT"			/* Connect, Connect:From, From */
@@ -181,6 +211,7 @@ extern int accessClose(Session *sess, va_list ignore);
 #define ACCESS_TRAP_WORD		"TRAP"				/* Connect, From, To */
 
 #define ACCESS_OK_RE			ACCESS_OK_WORD "(:\"[^\"]*\")?"
+#define ACCESS_OK_AV_RE			"OK\+AV(:\"[^\"]*\")?"
 #define ACCESS_CONTENT_RE		ACCESS_CONTENT_WORD
 #define ACCESS_DISCARD_RE		ACCESS_DISCARD_WORD
 #define ACCESS_IREJECT_RE		ACCESS_IREJECT_WORD "(:\"[^\"]*\")?"
@@ -193,7 +224,7 @@ extern int accessClose(Session *sess, va_list ignore);
 #define ACCESS_TEMPFAIL_RE		ACCESS_TEMPFAIL_WORD "(:\"[^\"]*\")?"
 #define ACCESS_TRAP_RE			ACCESS_TRAP_WORD
 
-#define ACCESS_PATTERN_LIST_RE	"(([/![].+[]!/])?[A-Z-]+(:\".*\")?([ \t]+)?)+([ \t]+[A-Z-]+)?"
+#define ACCESS_PATTERN_LIST_RE	"(([/![].+[]!/])?[+A-Z-]+(:\".*\")?([ \t]+)?)+([ \t]+[+A-Z-]+)?"
 
 typedef struct {
 	const char *token;

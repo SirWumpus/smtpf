@@ -17,16 +17,20 @@ extern "C" {
 
 typedef size_t FilterContext;
 
-typedef int (*filter_fn)(Session *sess, va_list args);
+typedef int (*filter_fn_old)(Session *sess, va_list args);
+typedef SmtpfCode (*filter_fn)(Session *sess, va_list args);
 
 typedef struct {
 	char *name;
-	filter_fn handler;
+	union {
+		filter_fn handler;
+		filter_fn_old old;
+	} fn;
 } FilterHandler;
 
-#define FILTER_TABLE_BEGIN(n)	{ #n, NULL }
-#define FILTER_HANDLER(fn)	{ #fn, fn }
-#define FILTER_TABLE_END	{ NULL, NULL }
+#define FILTER_TABLE_BEGIN(n)	{ #n, { NULL } }
+#define FILTER_HANDLER(fn)	{ #fn, { (filter_fn) fn } }
+#define FILTER_TABLE_END	{ NULL, { NULL } }
 
 extern Verbose verb_timers;
 
@@ -497,7 +501,7 @@ extern void	filterClose(Session *sess);
 extern void filterInit(void);
 extern void filterFini(void);
 extern void filterRegister(void);
-extern int filterRun(Session *sess, FilterHandler table[], ...);
+extern SmtpfCode filterRun(Session *sess, FilterHandler table[], ...);
 
 extern FilterContext filterRegisterContext(size_t size);
 extern size_t filterSizeOfContext(FilterContext ctx);

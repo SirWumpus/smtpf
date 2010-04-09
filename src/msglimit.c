@@ -258,7 +258,7 @@ msgLimitConnect(Session *sess, va_list ignore)
 	if (verb_trace.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(476) "msgLimitConnect()", LOG_ARGS(sess));
 
-	if (accessClient(sess, ACCESS_CONNECT, sess->client.name, sess->client.addr, NULL, &value, 1) != SMDB_ACCESS_NOT_FOUND) {
+	if (accessClient(sess, ACCESS_CONNECT, sess->client.name, sess->client.addr, NULL, &value, 1) != ACCESS_NOT_FOUND) {
 		msgLimitParse(value, &limit->client);
 		free(value);
 	} else {
@@ -277,7 +277,7 @@ msgLimitMail(Session *sess, va_list args)
 	if (verb_trace.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(477) "msgLimitMail()", LOG_ARGS(sess));
 
-	if (0 < sess->msg.mail->address.length && accessEmail(sess, ACCESS_FROM, sess->msg.mail->address.string, NULL, &value) != SMDB_ACCESS_NOT_FOUND) {
+	if (0 < sess->msg.mail->address.length && accessEmail(sess, ACCESS_FROM, sess->msg.mail->address.string, NULL, &value) != ACCESS_NOT_FOUND) {
 		msgLimitParse(value, &limit->msg);
 		free(value);
 	} else {
@@ -300,7 +300,7 @@ msgLimitRcpt(Session *sess, va_list args)
 
 	rcpt = va_arg(args, ParsePath *);
 
-	if (accessEmail(sess, ACCESS_TO, rcpt->address.string, NULL, &value) != SMDB_ACCESS_NOT_FOUND) {
+	if (accessEmail(sess, ACCESS_TO, rcpt->address.string, NULL, &value) != ACCESS_NOT_FOUND) {
 		msgLimitParse(value, &limit_rcpt);
 		msgLimitCacheUpdate(sess, &limit_rcpt, rcpt->address.string);
 		free(value);

@@ -56,7 +56,7 @@ static DnsList *digest_bl;
  ***
  ***********************************************************************/
 
-int
+SmtpfCode
 digestRegister(Session *sess, va_list ignore)
 {
 	verboseRegister(&verb_digest);
@@ -67,21 +67,21 @@ digestRegister(Session *sess, va_list ignore)
 	return SMTPF_CONTINUE;
 }
 
-int
+SmtpfCode
 digestInit(Session *null, va_list ignore)
 {
 	digest_bl = dnsListCreate(optDigestBL.string);
 	return SMTPF_CONTINUE;
 }
 
-int
+SmtpfCode
 digestFini(Session *null, va_list ignore)
 {
 	dnsListFree(digest_bl);
 	return SMTPF_CONTINUE;
 }
 
-int
+SmtpfCode
 digestRset(Session *sess, va_list ignore)
 {
 	Digest *ctx;
@@ -180,7 +180,7 @@ digestMimeDecodedOctet(Mime *m, int octet)
 	md5_append(&ctx->md5, (md5_byte_t *) &byte, 1);
 }
 
-int
+SmtpfCode
 digestHeaders(Session *sess, va_list args)
 {
 	Digest *ctx;
@@ -208,7 +208,7 @@ error0:
 	return digestRset(sess, args);
 }
 
-int
+SmtpfCode
 digestContent(Session *sess, va_list args)
 {
 	long size;
@@ -251,10 +251,10 @@ digestContent(Session *sess, va_list args)
 	return SMTPF_CONTINUE;
 }
 
-int
+SmtpfCode
 digestDot(Session *sess, va_list ignore)
 {
-	smtpf_code rc;
+	SmtpfCode rc;
 	Digest *ctx;
 
 	rc = SMTPF_CONTINUE;

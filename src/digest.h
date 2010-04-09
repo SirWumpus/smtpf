@@ -21,13 +21,13 @@ extern Option optDigestBL;
 
 extern Stats statDigestBL;
 
-extern int digestRegister(Session *null, va_list ignore);
-extern int digestInit(Session *null, va_list ignore);
-extern int digestFini(Session *sess, va_list ignore);
-extern int digestRset(Session *sess, va_list ignore);
-extern int digestHeaders(Session *sess, va_list args);
-extern int digestContent(Session *sess, va_list args);
-extern int digestDot(Session *sess, va_list ignore);
+extern SmtpfCode digestRegister(Session *null, va_list ignore);
+extern SmtpfCode digestInit(Session *null, va_list ignore);
+extern SmtpfCode digestFini(Session *sess, va_list ignore);
+extern SmtpfCode digestRset(Session *sess, va_list ignore);
+extern SmtpfCode digestHeaders(Session *sess, va_list args);
+extern SmtpfCode digestContent(Session *sess, va_list args);
+extern SmtpfCode digestDot(Session *sess, va_list ignore);
 
 /***********************************************************************
  ***

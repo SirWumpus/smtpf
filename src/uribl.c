@@ -612,9 +612,10 @@ int
 uriblTestURI(Session *sess, URI *uri, int post_data)
 {
 	long i;
+	AccessCode access;
 	URI *origin = NULL;
 	char *value = NULL, *copy;
-	int access, rc = SMTPF_REJECT;
+	SmtpfCode rc = SMTPF_REJECT;
 	Uribl *ctx = filterGetContext(sess, uribl_context);
 	const char *error, *body_tag, *msg, *host, *list_name;
 
@@ -650,16 +651,14 @@ uriblTestURI(Session *sess, URI *uri, int post_data)
 		msg++;
 
 	switch (access) {
-	case SMDB_ACCESS_ERROR:
-		break;
-	case SMDB_ACCESS_REJECT:
+	case ACCESS_REJECT:
 		snprintf(sess->msg.reject, sizeof (sess->msg.reject), "URI %s %s" ID_NUM(763), body_tag, msg == NULL ? "black listed" : msg);
 /*{REPLY
 See the <a href="access-map.html#access_tags">access-map</a> concerning the
 <a href="access-map.html#tag_body"><span class="tag">Body:</span></a> tag.
 }*/
 		goto error0;
-	case SMDB_ACCESS_OK:
+	case ACCESS_OK:
 		if (verb_info.option.value) {
 			syslog(LOG_INFO, LOG_MSG(764) "URI %s %s", LOG_ARGS(sess), body_tag, msg == NULL ? "white listed" : msg);
 /*{LOG
@@ -668,10 +667,12 @@ See the <a href="access-map.html#access_tags">access-map</a> concerning the
 }*/
 		}
 		goto ignore1;
+	default:
+		break;
 	}
 
 	if (post_data && optUriRequireDomain.value && uri->schemeInfo != NULL && 0 < spanIP(uri->host)) {
-		snprintf(sess->msg.reject, sizeof (sess->msg.reject), "host is an IP in URL %s" ID_NUM(765), uri->uri);
+		snprintf(sess->msg.reject, sizeof (sess->msg.reject), "host is an IP in URL \"%s\"" ID_NUM(765), uri->uriDecoded);
 /*{REPLY
 See <a href="summary.html#opt_uri_require_domain">uri-require-domain</a>
 and <a href="summary.html#opt_uri_bl_policy">uri-bl-policy</a>

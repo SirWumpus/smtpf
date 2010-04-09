@@ -94,7 +94,7 @@ sizeConnect(Session *sess, va_list ignore)
 
 	sess->client.max_size = ULONG_MAX;
 
-	if (accessClient(sess, "length-connect:", sess->client.name, sess->client.addr, NULL, &value, 1) != SMDB_ACCESS_NOT_FOUND) {
+	if (accessClient(sess, "length-connect:", sess->client.name, sess->client.addr, NULL, &value, 1) != ACCESS_NOT_FOUND) {
 		sess->client.max_size = size_in_bytes(value);
 		free(value);
 	}
@@ -127,7 +127,7 @@ sizeMail(Session *sess, va_list args)
 
 	mail = va_arg(args, ParsePath *);
 
-	if (accessEmail(sess, "length-from:", mail->address.string, NULL, &value) != SMDB_ACCESS_NOT_FOUND) {
+	if (accessEmail(sess, "length-from:", mail->address.string, NULL, &value) != ACCESS_NOT_FOUND) {
 		sess->msg.max_size = size_in_bytes(value);
 		free(value);
 	}
@@ -159,7 +159,7 @@ sizeRcpt(Session *sess, va_list args)
 
 	rcpt = va_arg(args, ParsePath *);
 
-	if (accessEmail(sess, "length-to:", rcpt->address.string, NULL, &value) != SMDB_ACCESS_NOT_FOUND) {
+	if (accessEmail(sess, "length-to:", rcpt->address.string, NULL, &value) != ACCESS_NOT_FOUND) {
 		size_limit = size_in_bytes(value);
 		if (sess->msg.max_size_rcpt < size_limit)
 			sess->msg.max_size_rcpt = size_limit;

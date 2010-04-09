@@ -127,7 +127,7 @@ rateConnect(Session *sess, va_list ignore)
 		return SMTPF_CONTINUE;
 
 	/* Find the client specific connection rate limit. */
-	if (accessClient(sess, ACCESS_TAG, sess->client.name, sess->client.addr, NULL, &value, 1) == SMDB_ACCESS_NOT_FOUND)
+	if (accessClient(sess, ACCESS_TAG, sess->client.name, sess->client.addr, NULL, &value, 1) == ACCESS_NOT_FOUND)
 		return SMTPF_CONTINUE;
 	client_limit = strtol(value, NULL, 10);
 	free(value);
