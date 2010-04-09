@@ -277,6 +277,46 @@ is no set schedule for releases.
    +	Use SIZE= to by-pass SpamAssassin and/or the length of the temp.
    	file to by-pass when spamd-max-size is being used. Steve F.
 
+--2.3.15--
+
+   *	Requires Libsnert 1.73.19
+
+   !	accessPattern: Fix segmentation fault when parsing the pattern
+	lists and there is a syntax error. For example:
+
+   		[82.97.10.32/29/OK	syntax error causes seg. fault.
+
+   		[82.97.10.32/29]OK	correct version works
+
+	Affects all three pattern types [.../..], !...!, and /.../.
+	Reported by Quentin Campbell.
+
+   !	Allow FORWARD: route to connect to multi-homed host name.
+	Reported by Steve Freegard.
+
+   !	Define AccessCode enum type to be used in place of SMDB_ACCESS_
+   	constants, which no longer reflect the variety of action words
+   	available in smtpf. Replaced smdbAccessCode by action_word_to_code.
+
+   !	Replaced generic int return of many filter functions to make
+	clear the distinction between either AccessCode or SmtpfCode so
+	as to avoid confusion and make use of compliler type checking.
+	*** This switch over is not complete.
+
+   +	Implemented OK+AV access action word as a means to by-pass all
+	tests including anti-virus scanning. Requested by Quentin
+	Campbell. This is a shoot yourself in foot enhancement, but
+	sometimes necessary since ClamAV and possibly other AV products
+	that identify phish and spam as viruses can falsely identify
+	mail from anti-spam/virus discussion lists.
+
+   !	routeForward: fix issue with connecting to mutli-homed forward
+   	host. Reported by Steve Freegard.
+
+   !	lickeySendWarning: changed behaviour so as NOT to send the
+	warning notice in the event the cache database is unreachable.
+	smtpf won't work very well without the database anyway.
+
 --2.3.14--
 
    *	Requires Libsnert 1.73.18
