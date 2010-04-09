@@ -341,11 +341,12 @@ lickeySendWarning(void)
 	row.key_size = snprintf((char *) row.key_data, sizeof (row.key_data), "lickey:%s", mail);
 
 	/* Check if the most recent warning has been sent. */
-        if (mccGetRow(mcc, &row) == MCC_OK) {
-                row.value_data[row.value_size] = '\0';
-                if (strtol((char *) row.value_data, NULL, 10) <= days)
-                        return;
-        }
+        if (mccGetRow(mcc, &row) != MCC_OK)
+		return;
+
+	row.value_data[row.value_size] = '\0';
+	if (strtol((char *) row.value_data, NULL, 10) <= days)
+		return;
 
 #if defined(HAVE_PTHREAD_ATTR_SETSTACKSIZE)
 	(void) pthread_attr_init(&thread_attr);
