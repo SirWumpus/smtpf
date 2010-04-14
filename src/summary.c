@@ -52,7 +52,7 @@ static const char *message_flags[] = {
 	"queued,",
 	"save,",
 	"trap,",
-	"infected",
+	"infected,",
 	"ok_av,",
 	NULL
 };
