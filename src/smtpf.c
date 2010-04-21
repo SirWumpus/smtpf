@@ -282,7 +282,7 @@ writeClient(Session *sess, const char *line, long length)
 	 * since it's perfectly reasonable to perform some additional
 	 * tests at DATA and return 4xy or 5xy response instead of 354.
 	 */
-	&& sess->state != stateData && sess->state != NULL
+	&& sess->state != stateData && sess->state != stateQuit && sess->state != NULL
 
 	&& socketHasInput(sess->client.socket, SMTP_PIPELINING_TIMEOUT)) {
 		/*** I'm being lazy by using a buffer intended for another
@@ -989,7 +989,7 @@ the session "end" log line only.
 		socketSetTimeout(sess->client.socket, optSmtpCommandTimeoutBlack.value);
 
 	if (SIGSETJMP(sess->on_error, 1) == 0) {
-		while (sess->state != NULL) {
+		while (sess->state != stateQuit && sess->state != NULL) {
 #ifdef OLD_SERVER_MODEL
 #ifdef __WIN32__
 			if (WaitForSingleObject(sess->kill_event, 0) == WAIT_OBJECT_0)

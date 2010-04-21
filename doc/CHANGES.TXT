@@ -277,6 +277,13 @@ is no set schedule for releases.
    +	Use SIZE= to by-pass SpamAssassin and/or the length of the temp.
    	file to by-pass when spamd-max-size is being used. Steve F.
 
+--2.3.16--
+
+   *	Requires Libsnert 1.74.1
+
+   !	Replace old LibSnert server list/queue code with LibSnert's
+	thread-safe queue API.
+
 --2.3.15--
 
    *	Requires Libsnert 1.73.19

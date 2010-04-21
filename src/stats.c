@@ -790,14 +790,10 @@ statsHttpPost(void)
 		_NAME"="_VERSION
 		"&start-time=0x%lx"
 		"&age=%lu"
-		"&active-connections=%u",
+		"&active-connections=%lu",
 		(unsigned long) start_time,
-		(unsigned long) (time(NULL) - start_time),
-#ifdef OLD_SERVER_MODEL
-		server.connections
-#else
-		serverListLength(&server.workers)
-#endif
+		(unsigned long) difftime(time(NULL), start_time),
+		queueLength(&server.workers)
 	);
 	if (statsHttpPostChunk(socket, buffer, length))
 		goto error2;
@@ -1532,11 +1528,8 @@ statsNotify(unsigned long one, unsigned long five, unsigned long fifteen)
 
 	pct_of = stat_open_files.runtime * 100 / optRunOpenFileLimit.value;
 	pct_max_of = stat_high_open_files.runtime * 100 / optRunOpenFileLimit.value;
-#ifdef OLD_SERVER_MODEL
-	pct_capacity = (server.connections * FD_PER_THREAD + FD_OVERHEAD) * 100 / optRunOpenFileLimit.value;
-#else
-	pct_capacity = (serverListLength(&server.workers) * FD_PER_THREAD + FD_OVERHEAD) * 100 / optRunOpenFileLimit.value;
-#endif
+	pct_capacity = (queueLength(&server.workers) * FD_PER_THREAD + FD_OVERHEAD) * 100 / optRunOpenFileLimit.value;
+
 	row.hits = 0;
 	row.created = row.touched = time(NULL);
 	row.expires = row.created + optCacheGcInterval.value;

@@ -156,7 +156,7 @@ verboseReset(void)
 #endif
 	server.option.min_threads = optServerMinThreads.value;
 	server.option.max_threads = optServerMaxThreads.value;
-	server.option.new_threads = optServerNewThreads.value;
+	server.option.spare_threads = optServerNewThreads.value;
 	server.option.accept_to   = optServerAcceptTimeout.value;
 	server.option.read_to     = optSmtpCommandTimeout.value;
 	server.debug.level 	  = verb_connect.option.value;

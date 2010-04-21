@@ -116,8 +116,8 @@ extern "C" {
 #include "valgrind/valgrind.h"
 #include "valgrind/memcheck.h"
 
-#if LIBSNERT_MAJOR < 1 || LIBSNERT_MINOR < 73 || LIBSNERT_BUILD < 16
-# error "LibSnert 1.73.16 or better is required"
+#if LIBSNERT_MAJOR < 1 || LIBSNERT_MINOR < 74
+# error "LibSnert 1.74.0 or better is required"
 #endif
 
 /***********************************************************************
@@ -539,6 +539,7 @@ extern struct command stateEhlo[];
 extern struct command stateMail[];
 extern struct command stateRcpt[];
 extern struct command stateData[];
+extern struct command stateQuit[];
 extern struct command stateSink[];
 
 extern int cmdData(Session *sess);
@@ -584,15 +585,6 @@ extern void headerAddPrefix(Session *sess, const char *name, const char *prefix)
 extern void headerReplace(Vector headers, const char *hdr_name, char *replacement);
 extern int headerRemove(Vector headers, const char *name);
 extern void keepAlive(Session *sess);
-
-
-typedef struct {
-	char *suffix;
-	unsigned long mask;
-} BL;
-
-extern Vector blCreate(const char *list);
-extern void blFree(void *list);
 
 /***********************************************************************
  ***

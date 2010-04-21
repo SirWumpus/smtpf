@@ -440,8 +440,8 @@ extern void sessionProcess(Session *);
 void
 serverNumbers(Server *server, unsigned numbers[2])
 {
+	numbers[0] = queueLength(&server->workers);
 	PTHREAD_MUTEX_LOCK(&server->workers.mutex);
-	numbers[0] = server->workers.length;
 	numbers[1] = server->workers_active;
 	PTHREAD_MUTEX_UNLOCK(&server->workers.mutex);
 }
@@ -501,7 +501,7 @@ session_process(ServerSession *session)
 	if (verb_trace.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(594) "client [%s] close", LOG_ARGS(sess), session->address);
 
-	if (sess->state != NULL)
+	if (sess->state != stateQuit && sess->state != NULL)
 		(void) statsCount(&stat_connect_dropped);
 
 	filterRun(sess, filter_close_table);

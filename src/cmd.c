@@ -1,7 +1,7 @@
 /*
  * cmd.c
  *
- * Copyright 2006, 2008 by Anthony Howe. All rights reserved.
+ * Copyright 2006, 2010 by Anthony Howe. All rights reserved.
  */
 
 /***********************************************************************
@@ -53,11 +53,7 @@ getMsgId(Session *sess, char buffer[20])
 {
 	time62Encode(time(NULL), buffer);
 
-#ifdef OLD_SERVER_MODEL
-	(void) snprintf(buffer+TIME62_BUFFER_SIZE, 20-TIME62_BUFFER_SIZE, "%05u%05u", getpid(), sess->id);
-#else
 	(void) snprintf(buffer+TIME62_BUFFER_SIZE, 20-TIME62_BUFFER_SIZE, "%05u%05u", getpid(), sess->session->id);
-#endif
 
 	if (62 * 62 <= ++sess->msg.count)
 		sess->msg.count = 1;
@@ -119,8 +115,8 @@ cmdQuit(Session *sess)
 	else if (sess->state == stateHelo)
 		statsCount(&stat_quit_after_helo);
 
-	sess->state = NULL;
 	replyDelayFree(sess);
+	sess->state = stateQuit;
 	statsCount(&stat_clean_quit);
 	CLIENT_SET(sess, CLIENT_HAS_QUIT);
 
@@ -2233,18 +2229,42 @@ cmdLickey(Session *sess)
 	return replyPush(sess, reply);
 }
 
+static int
+cmdConnReport(List *list, ListItem *node, void *data)
+{
+	time_t now;
+	Session *conn;
+	Command *state;
+	Reply *reply = data;
+	ServerWorker *worker;
+
+	worker = node->data;
+	if (worker->session == NULL)
+		return 0;
+
+	conn = worker->session->data;
+	state = conn->state;
+
+	(void) time(&now);
+	reply = replyAppendFmt(
+		reply, "214-2.0.0 %s %s " CLIENT_FORMAT " %lu %lu %lu\r\n",
+		conn->long_id, state == NULL ? "null" : state[0].command, CLIENT_INFO(conn),
+		(long) difftime(now, conn->start),
+		(long) difftime(now, conn->last_mark),
+		conn->client.octets
+	);
+
+	return 0;
+}
+
 int
 cmdConnections(Session *sess)
 {
-	time_t now;
 	Reply *reply;
-	Session *conn;
-	Command *state;
 
 	if (CLIENT_NOT_SET(sess, CLIENT_IS_LOCALHOST|CLIENT_IS_LAN))
 		return cmdOutOfSequence(sess);
 
-	now = time(NULL);
 	statsCount(&stat_admin_commands);
 
 	/* NOTE that the server.connections value and the number of active
@@ -2252,70 +2272,31 @@ cmdConnections(Session *sess)
 	 * start or finish while the list is being displayed and so alter
 	 * the count.
 	 */
-#ifdef OLD_SERVER_MODEL
-	reply = replyFmt(SMTPF_CONTINUE, "214-2.0.0 th=%lu cn=%lu cs=%lu\r\n", server.threads, server.connections, connections_per_second);
-#else
 {
 	unsigned numbers[2];
 	serverNumbers(sess->session->server, numbers);
 	reply = replyFmt(SMTPF_CONTINUE, "214-2.0.0 th=%lu cn=%lu cs=%lu\r\n", numbers[0], numbers[1], connections_per_second);
 }
-#endif
 	if (reply == NULL)
 		replyInternalError(sess, FILE_LINENO);
 
-	/* Lock the list from alteration while we display it. */
-#ifdef OLD_SERVER_MODEL
-	if (!mutex_lock(SESSION_ID_ZERO, FILE_LINENO, &server.connections_mutex)) {
-		for (conn = server.head; conn != NULL; conn = conn->next) {
-			state = conn->state;
-			if (state == NULL)
-				continue;
-
-			reply = replyAppendFmt(
-				reply, "214-2.0.0 %s %s " CLIENT_FORMAT " %lu %lu %lu\r\n",
-				conn->long_id, state[0].command, CLIENT_INFO(conn),
-				now - conn->start, now - conn->last_mark,
-				conn->client.octets
-			);
-		}
-		(void) mutex_unlock(SESSION_ID_ZERO, FILE_LINENO, &server.connections_mutex);
-	}
-#else
-	if (!pthread_mutex_lock(&server.workers.mutex)) {
-		ServerWorker *worker;
-		ServerListNode *node;
-
-#ifdef PTHREAD_CLEANUP_PUSH
-		pthread_cleanup_push((void (*)(void *)) pthread_mutex_unlock, &server.workers.mutex);
-#endif
-		for (node = server.workers.head; node != NULL; node = node->next) {
-			worker = node->data;
-			if (worker->session == NULL)
-				continue;
-
-			conn = worker->session->data;
-			state = conn->state;
-			if (state == NULL)
-				continue;
-
-			reply = replyAppendFmt(
-				reply, "214-2.0.0 %s %s " CLIENT_FORMAT " %lu %lu %lu\r\n",
-				conn->long_id, state[0].command, CLIENT_INFO(conn),
-				now - conn->start, now - conn->last_mark,
-				conn->client.octets
-			);
-		}
-#ifdef PTHREAD_CLEANUP_PUSH
-		pthread_cleanup_pop(1);
-#else
-		(void) pthread_mutex_unlock(&server.workers.mutex);
-#endif
-	}
-#endif
+	(void) queueWalk(&server.workers, cmdConnReport, reply);
 	reply = replyAppendFmt(reply, msg_end, ID_ARG(sess));
 
 	return replyPush(sess, reply);
+}
+
+static int
+cmdKillFind(List *list, ListItem *node, void *data)
+{
+	ServerWorker *worker;
+	char *sess_id = data;
+
+	worker = node->data;
+	if (worker->session != NULL && strcmp(worker->session->id_log, sess_id) == 0)
+		return -1;
+
+	return 0;
 }
 
 int
@@ -2323,6 +2304,7 @@ cmdKill(Session *sess)
 {
 	int rc;
 	char *arg;
+	ListItem *node;
 
 	if (CLIENT_NOT_SET(sess, CLIENT_IS_LOCALHOST))
 		return cmdOutOfSequence(sess);
@@ -2337,79 +2319,30 @@ cmdKill(Session *sess)
 
 	/* Lock the list from alteration while we display it. */
 	rc = SMTPF_UNKNOWN;
-#ifdef OLD_SERVER_MODEL
-	if (!mutex_lock(SESSION_ID_ZERO, FILE_LINENO, &server.connections_mutex)) {
-		Session *conn;
 
-		for (conn = server.head; conn != NULL; conn = conn->next) {
-			if (strcmp(conn->long_id, arg) == 0) {
-				rc = replySetFmt(sess, SMTPF_CONTINUE, "214 2.0.0 killing session %s" ID_MSG(324) "\r\n", arg, ID_ARG(sess));
+	if ((node = queueWalk(&server.workers, cmdKillFind, arg)) != NULL) {
+		ServerWorker *worker = node->data;
+		rc = replySetFmt(sess, SMTPF_CONTINUE, "214 2.0.0 killing session %s" ID_MSG(324) "\r\n", arg, ID_ARG(sess));
 /*{REPLY
 }*/
-				(void) replySetFmt(conn, SMTPF_DROP, "550 5.0.0 session %s killed" ID_MSG(325) "\r\n", arg, ID_ARG(sess));
+		(void) replySetFmt(worker->session->data, SMTPF_DROP, "550 5.0.0 session %s killed" ID_MSG(325) "\r\n", arg, ID_ARG(sess));
 /*{REPLY
 }*/
-				(void) socketSetLinger(conn->client.socket, 0);
-				(void) shutdown(conn->client.socket->fd, SHUT_RDWR);
-				closesocket(conn->client.socket->fd);
+		(void) socketSetLinger(worker->session->client, 0);
+		(void) shutdown(socketGetFd(worker->session->client), SHUT_RDWR);
+		closesocket(socketGetFd(worker->session->client));
 
-				/* Don't try to send this to ourself. */
-				if (strcmp(conn->long_id, sess->long_id) != 0) {
+		/* Don't try to send this to ourself. */
+		if (strcmp(worker->session->id_log, sess->session->id_log) != 0) {
 #ifdef USE_PTHREAD_CANCEL
-					pthread_cancel(conn->thread);
+		pthread_cancel(worker->thread);
 #elif defined(HAVE_PTHREAD_KILL)
-					pthread_kill(conn->thread, SIGUSR1);
+		pthread_kill(worker->thread, SIGUSR1);
 #else
-					SetEvent(conn->kill_event);
+		SetEvent(worker->kill_event);
 #endif
-				}
-				break;
-			}
 		}
-		(void) mutex_unlock(SESSION_ID_ZERO, FILE_LINENO, &server.connections_mutex);
 	}
-#else /* OLD_SERVER_MODEL */
-	if (!pthread_mutex_lock(&server.workers.mutex)) {
-		ServerListNode *node;
-		ServerWorker *worker;
-
-#ifdef PTHREAD_CLEANUP_PUSH
-		pthread_cleanup_push((void (*)(void *)) pthread_mutex_unlock, &server.workers.mutex);
-#endif
-		for (node = server.workers.head; node != NULL; node = node->next) {
-			worker = node->data;
-
-			if (worker->session != NULL && strcmp(worker->session->id_log, arg) == 0) {
-				rc = replySetFmt(sess, SMTPF_CONTINUE, "214 2.0.0 killing session %s" ID_MSG(324) "\r\n", arg, ID_ARG(sess));
-/*{REPLY
-}*/
-				(void) replySetFmt(worker->session->data, SMTPF_DROP, "550 5.0.0 session %s killed" ID_MSG(325) "\r\n", arg, ID_ARG(sess));
-/*{REPLY
-}*/
-				(void) socketSetLinger(worker->session->client, 0);
-				(void) shutdown(socketGetFd(worker->session->client), SHUT_RDWR);
-				closesocket(socketGetFd(worker->session->client));
-
-				/* Don't try to send this to ourself. */
-				if (strcmp(worker->session->id_log, sess->session->id_log) != 0) {
-#ifdef USE_PTHREAD_CANCEL
-					pthread_cancel(worker->thread);
-#elif defined(HAVE_PTHREAD_KILL)
-					pthread_kill(worker->thread, SIGUSR1);
-#else
-					SetEvent(worker->kill_event);
-#endif
-				}
-				break;
-			}
-		}
-#ifdef PTHREAD_CLEANUP_PUSH
-		pthread_cleanup_pop(1);
-#else
-		(void) pthread_mutex_unlock(&server.workers.mutex);
-#endif
-	}
-#endif /* OLD_SERVER_MODEL */
 
 	if (rc == SMTPF_UNKNOWN)
 		rc = replySetFmt(sess, SMTPF_REJECT, "504 5.5.4 session %s not found" ID_MSG(326) "\r\n", arg, ID_ARG(sess));
@@ -2706,6 +2639,11 @@ struct command stateSink[] = {
 	{ "CACHE", cmdOutOfSequence },
 	{ "INFO", cmdOutOfSequence },
 	{ "XCLIENT", cmdOutOfSequence },
+	{ NULL, cmdUnknown }
+};
+
+struct command stateQuit[] = {
+	{ "QUIT", cmdUnknown },		/* First entry is state name. */
 	{ NULL, cmdUnknown }
 };
 
