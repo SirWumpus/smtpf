@@ -720,7 +720,7 @@ cmdMail(Session *sess)
 {
 	int rc, span, args;
 	Vector params_list;
-	const char *error, *params;
+	const char *error, *params, **table;
 
 	sessionReset(sess);
 
@@ -811,6 +811,12 @@ See <a href="summary.html#opt_rfc2821_extra_spaces">rfc2821-extra-spaces</a>.
 		statsCount(&stat_null_sender);
 
 	params_list = TextSplit(params, " \t", 0);
+	for (table = (const char **) VectorBase(params_list); *table != NULL; table++) {
+		if (TextInsensitiveCompare(*table, "BODY=8BITMIME") == 0)
+			MAIL_SET(sess, MAIL_IS_8BITMIME);
+		else if (TextInsensitiveCompare(*table, "BODY=BINARYMIME") == 0)
+			MAIL_SET(sess, MAIL_IS_BINARYMIME);
+	}
 	rc = filterRun(sess, filter_mail_table, sess->msg.mail, params_list);
 	VectorDestroy(params_list);
 
@@ -877,7 +883,8 @@ cmdRcpt(Session *sess)
 {
 	ParsePath *rcpt;
 	Connection *fwd;
-	const char *error, *helo;
+	Vector params_list;
+	const char *error, *params;
 	int i, rc, span, args, apply_smtpf_delay;
 
 	*sess->reply = '\0';
@@ -898,6 +905,7 @@ cmdRcpt(Session *sess)
 		args = span + strcspn(sess->input+span, " \t");
 	else
 		args++;
+	params = &sess->input[args + strspn(sess->input+args, " \t")];
 	sess->input[args] = '\0';
 
 	if ((error = parsePath(sess->input+span, parse_path_flags, 0, &rcpt)) != NULL) {
@@ -985,7 +993,11 @@ open relay.
 		goto error2;
 	}
 
-	switch (rc = filterRun(sess, filter_rcpt_table, rcpt)) {
+	params_list = TextSplit(params, " \t", 0);
+	rc = filterRun(sess, filter_rcpt_table, rcpt, params_list);
+	VectorDestroy(params_list);
+
+	switch (rc) {
 	case SMTPF_CONTINUE:
 		/* No black or white listing. Any previously recorded
 		 * policy rejections _may_ be reported in place of a
@@ -1142,19 +1154,23 @@ open relay.
 			goto error2;
 		}
 
-		/* Do we need to send EHLO? */
-		helo = sess->helo_state == stateEhlo ? "EHLO" : "HELO";
-
 		/* Send HELO or EHLO to MX. */
-		sess->msg.chunk0_length = snprintf((char *)sess->msg.chunk0, sizeof (sess->msg.chunk0), "%s %s\r\n", helo, sess->iface->name);
+		sess->msg.chunk0_length = snprintf((char *)sess->msg.chunk0, sizeof (sess->msg.chunk0), "EHLO %s\r\n", sess->iface->name);
 		if (mxCommand(sess, fwd, (char *)sess->msg.chunk0, 250)) {
-			statsCount(SMTP_IS_TEMP(fwd->smtp_code) ? &stat_forward_helo_tempfail : &stat_forward_helo_reject);
-			RCPT_SET(sess, RCPT_FAILED);
-			goto error4;
+			sess->msg.chunk0_length = snprintf((char *)sess->msg.chunk0, sizeof (sess->msg.chunk0), "HELO %s\r\n", sess->iface->name);
+			if (mxCommand(sess, fwd, (char *)sess->msg.chunk0, 250)) {
+				statsCount(SMTP_IS_TEMP(fwd->smtp_code) ? &stat_forward_helo_tempfail : &stat_forward_helo_reject);
+				RCPT_SET(sess, RCPT_FAILED);
+				goto error4;
+			}
 		}
 
 		/* Send MAIL FROM: to MX. */
-		sess->msg.chunk0_length = snprintf((char *)sess->msg.chunk0, sizeof (sess->msg.chunk0), "MAIL FROM:<%s>\r\n", sess->msg.mail->address.string);
+		sess->msg.chunk0_length = snprintf(
+			(char *)sess->msg.chunk0, sizeof (sess->msg.chunk0),
+			"MAIL FROM:<%s>%s\r\n", sess->msg.mail->address.string,
+			optRFC16528bitmime.value && MAIL_ANY_SET(sess, MAIL_IS_8BITMIME) ? " BODY=8BITMIME" : ""
+		);
 		if (mxCommand(sess, fwd, (char *)sess->msg.chunk0, 250)) {
 			statsCount(SMTP_IS_TEMP(fwd->smtp_code) ? &stat_forward_mail_tempfail : &stat_forward_mail_reject);
 			RCPT_SET(sess, RCPT_FAILED);
@@ -1471,7 +1487,7 @@ forwardCommand(Session *sess, const char *cmd, int expect, long timeout, int *co
 			(void) mxResponse(sess, fwd);
 			socketSetTimeout(fwd->mx, optSmtpCommandTimeout.value);
 
-			if (verb_smtp_dot.option.value && *cmd == '.' && *fwd->reply != NULL)
+			if (verb_smtp_dot.option.value && *cmd == '.' && fwd->reply != NULL)
 				syslog(LOG_DEBUG, LOG_MSG(304) "%s << %s", LOG_ARGS(sess), fwd->route.key, *fwd->reply);
 
 			if (fwd->smtp_code == expect)

@@ -166,9 +166,11 @@ Stats stat_helo_is_ptr			= { STATS_TABLE_CONNECT, "helo-is-ptr" };
 Stats stat_mail_ip_in_ns		= { STATS_TABLE_MAIL, "_mail-ip-in-ns" };
 Stats stat_mail_ns_nxdomain		= { STATS_TABLE_MAIL, "_mail-ns-nxdomain" };
 #endif
+Stats stat_helo_mail_params		= { STATS_TABLE_MAIL, "helo-mail-params" };
 Stats stat_mail_require_mx		= { STATS_TABLE_MAIL, "mail-require-mx" };
 Stats stat_mail_require_mx_error	= { STATS_TABLE_MAIL, "mail-require-mx-error" };
 Stats stat_one_domain_per_session	= { STATS_TABLE_MAIL, "one-domain-per-session" };
+Stats stat_helo_rcpt_params		= { STATS_TABLE_RCPT, "helo-rcpt-params" };
 Stats stat_one_rcpt_per_null		= { STATS_TABLE_RCPT, "one-rcpt-per-null" };
 
 Stats stat_smtp_command_pause		= { STATS_TABLE_CONNECT, "smtp-command-pause" };
@@ -612,8 +614,6 @@ heloIsPtrRcpt(Session *sess, va_list args)
 	return heloIsPtr(sess);
 }
 
-#ifdef ENABLE_PDQ
-
 int
 pdqListAllRcode(PDQ_rr *list, PDQ_class class, PDQ_type type, const char *name, PDQ_rcode rcode)
 {
@@ -649,8 +649,21 @@ mailTestsMail(Session *sess, va_list args)
 	char *domain;
 	PDQ_rr *list, *rr;
 	ParsePath *mail = va_arg(args, ParsePath *);
+	Vector params_list = va_arg(args, Vector);
 
 	LOG_TRACE(sess, 433, mailTestsMail);
+
+	if ((sess->helo_state == stateHelo && 0 < VectorLength(params_list))
+	|| MAIL_ANY_SET(sess, MAIL_IS_BINARYMIME)) {
+		statsCount(&stat_helo_mail_params);
+		return replyPushFmt(sess, SMTPF_REJECT, "555 5.5.4 invalid or unsupported parameters" ID_MSG(000) CRLF, ID_ARG(sess));
+/*{REPLY
+Sender sent a HELO command indicating the older RFC 822 SMTP
+standard, yet set MAIL FROM: parameters as though RFC 5321 SMTP
+and extensions were in use without knowing what extensions are
+supported.
+}*/
+	}
 
 	if (CLIENT_ANY_SET(sess, CLIENT_HOLY_TRINITY))
 		return SMTPF_CONTINUE;
@@ -778,9 +791,20 @@ rcptTestsRcpt(Session *sess, va_list args)
 {
 	PDQ_rr *list, *rr;
 	ParsePath *rcpt = va_arg(args, ParsePath *);
+	Vector params_list = va_arg(args, Vector);
 
-	if (verb_trace.option.value)
-		syslog(LOG_DEBUG, LOG_MSG(440) "rcptTestsRcpt", LOG_ARGS(sess));
+	LOG_TRACE(sess, 440, rcptTestsRcpt);
+
+	if (sess->helo_state == stateHelo && 0 < VectorLength(params_list)) {
+		statsCount(&stat_helo_rcpt_params);
+		return replyPushFmt(sess, SMTPF_REJECT, "555 5.5.4 invalid or unsupported parameters" ID_MSG(000) CRLF, ID_ARG(sess));
+/*{REPLY
+Sender sent a HELO command indicating the older RFC 822 SMTP
+standard, yet set RCPT TO: parameters as though RFC 5321 SMTP
+and extensions were in use without knowing what extensions are
+supported.
+}*/
+	}
 
 	if (optOneRcptPerNull.value && sess->msg.mail->address.length == 0 && 0 < sess->msg.rcpt_count) {
 		statsCount(&stat_one_rcpt_per_null);
@@ -807,203 +831,6 @@ See <a href="summary.html#opt_one_rcpt_per_null">one-rcpt-per-null</a> option.
 
 	return SMTPF_CONTINUE;
 }
-
-#else /* not ENABLE_PDQ */
-
-int
-mailTestsMail(Session *sess, va_list args)
-{
-	char *domain;
-	Vector answers;
-	DnsEntry *entry;
-	const char *error;
-	int i, rc, dns_rcode;
-	ParsePath *mail = va_arg(args, ParsePath *);
-
-	if (verb_trace.option.value)
-		syslog(LOG_DEBUG, LOG_MSG(442) "mailTestsMail", LOG_ARGS(sess));
-
-	if (CLIENT_ANY_SET(sess, CLIENT_HOLY_TRINITY))
-		return SMTPF_CONTINUE;
-
-	/* Skip MX related tests for domains we route, because of split
-	 * DNS configurations.
-	 */
-	if (0 < mail->address.length && routeKnownDomain(sess, mail->domain.string))
-		return SMTPF_CONTINUE;
-
-	/* We can not reliably check for MX hosts when mail is from the
-	 * null sender and the HELO argument refers to localhost or LAN
-	 * IP addresses.
-	 */
-	if (mail->address.length == 0 && isReservedIP(sess->client.helo, IS_IP_LOCAL|IS_IP_LAN))
-		return SMTPF_CONTINUE;
-
-	rc = SMTPF_CONTINUE;
-	domain = 0 < mail->address.length ? mail->domain.string : sess->client.helo;
-
-	switch ((dns_rcode = DnsGet2(DNS_TYPE_MX, 1, domain, &answers, &error))) {
-	case DNS_RCODE_UNDEFINED:
-		if (optMailRequireMx.value && 0 < sess->msg.mail->address.length) {
-			statsCount(&stat_mail_require_mx);
-			return replyPushFmt(sess, SMTPF_DELAY|SMTPF_REJECT, "553 5.1.8 sender <%s> from %s has no MX record" ID_MSG(443) CRLF, mail->address.string, domain, ID_ARG(sess));
-/*{REPLY
-See <a href="summary.html#opt_mail_require_mx">mail-require-mx</a> option.
-}*/
-		}
-		break;
-
-	case DNS_RCODE_OK:
-		(void) mxPrune(answers);
-		if (0 < VectorLength(answers))
-			break;
-
-		VectorDestroy(answers);
-		answers = NULL;
-
-		if (verb_warn.option.value) {
-			syslog(LOG_WARN, LOG_MSG(444) "empty MX list after pruning", LOG_ARGS(sess));
-/*{LOG
-The MX list gathered from DNS is pruned to remove hosts that resolve to localhost,
-RFC 3330 reserved IP addresses that cannot be reached from the Internet, or
-have no A/AAAA record. This message is reported if the MX list is empty after pruning.
-}*/
-		}
-
-		return replyPushFmt(sess, SMTPF_TEMPFAIL, "553 5.1.8 sender <%s> from %s MX invalid" ID_MSG(445) CRLF, sess->msg.mail->address.string, domain, ID_ARG(sess));
-/*{REPLY
-The MX list gathered from DNS is pruned to remove hosts that resolve to localhost,
-RFC 3330 reserved IP addresses that cannot be reached from the Internet, or
-have no A/AAAA record. This message is reported if the MX list is empty after pruning.
-}*/
-
-	case DNS_RCODE_ERRNO:
-		if (errno == EMFILE || errno == ENFILE)
-			replyResourcesError(sess, FILE_LINENO);
-		/*@fallthrough@*/
-
-	default:
-		syslog(LOG_ERR, LOG_MSG(446) "MX %s lookup: %s (%d)", LOG_ARGS(sess), domain, error, dns_rcode);
-/*{LOG
-The MX record is always fetched and verified regardless of the setting
-of <a href="summary.html#opt_client_is_mx">client-is-mx</a> and
-<a href="summary.html#opt_mail_require_mx">mail-require-mx</a> options.
-}*/
-                if (optMailRequireMx.value && 0 < sess->msg.mail->address.length && dns_rcode != DNS_RCODE_NOT_IMPLEMENTED) {
-                	statsCount(&stat_mail_require_mx_error);
-			return replyPushFmt(sess, SMTPF_TEMPFAIL, "451 4.4.3 sender <%s> from %s MX lookup error" ID_MSG(447) CRLF, sess->msg.mail->address.string, domain, ID_ARG(sess));
-/*{REPLY
-See <a href="summary.html#opt_mail_require_mx">mail-require-mx</a> option.
-}*/
-		}
-		break;
-	}
-
-	if (optClientIsMx.value
-	&& CLIENT_ANY_SET(sess, CLIENT_NO_PTR|CLIENT_IS_IP_IN_PTR)
-	&& 0 < mail->address.length
-#ifdef FILTER_SPF
-	&& sess->msg.spf_mail != SPF_PASS
-#endif
-	) {
-		for (i = 0; i < VectorLength(answers); i++) {
-			if ((entry = VectorGet(answers, i)) == NULL)
-				continue;
-
-			/* The implicit MX 0 rule is intentionally ignored.
-			 * Consider web servers that have A records.
-			 */
-			if (entry->type == DNS_TYPE_MX
-			&& TextInsensitiveCompare(sess->client.addr, entry->address_string) == 0) {
-				CLIENT_SET(sess, CLIENT_IS_MX);
-				statsCount(&stat_client_is_mx);
-				break;
-			}
-		}
-
-		if (CLIENT_ANY_SET(sess, CLIENT_IS_MX)) {
-			syslog(LOG_INFO, LOG_MSG(448) "client " CLIENT_FORMAT " is MX for %s", LOG_ARGS(sess), CLIENT_INFO(sess), domain);
-/*{LOG
-See <a href="summary.html#opt_client_is_mx">client-is-mx</a> option.
-}*/
-		} else if (optClientPtrRequired.value && CLIENT_ANY_SET(sess, CLIENT_NO_PTR)) {
-			rc = replyPushFmt(sess, SMTPF_DELAY|SMTPF_REJECT, "550 5.7.1 reject [%s] missing PTR record (2)" ID_MSG(449) CRLF, sess->client.addr, ID_ARG(sess));
-/*{REPLY
-See <a href="summary.html#opt_client_is_mx">client-is-mx</a>
-and <a href="summary.html#opt_client_ptr_required">client-ptr-required</a> options.
-}*/
-		} else if (optClientIpInPtr.value && CLIENT_IS_SET(sess, CLIENT_IS_IP_IN_PTR|CLIENT_IS_HELO_HOSTNAME, CLIENT_IS_IP_IN_PTR)) {
-			rc = replyPushFmt(sess, SMTPF_DELAY|SMTPF_REJECT, "550 5.7.1 reject IP in client name " CLIENT_FORMAT " (2)" ID_MSG(450) CRLF, CLIENT_INFO(sess), ID_ARG(sess));
-/*{REPLY
-See <a href="summary.html#opt_client_is_mx">client-is-mx</a>
-and <a href="summary.html#opt_client_ip_in_ptr">client-ip-in-ptr</a> options.
-}*/
-		}
-	}
-
-	VectorDestroy(answers);
-
-	return rc;
-}
-
-int
-rcptTestsRcpt(Session *sess, va_list args)
-{
-	DnsEntry *mx;
-	Vector mxlist;
-	int i, dns_rcode;
-	const char *error;
-	ParsePath *rcpt = va_arg(args, ParsePath *);
-
-	if (verb_trace.option.value)
-		syslog(LOG_DEBUG, LOG_MSG(451) "rcptTestsRcpt", LOG_ARGS(sess));
-
-	if (optOneRcptPerNull.value && sess->msg.mail->address.length == 0 && 0 < sess->msg.rcpt_count) {
-		statsCount(&stat_one_rcpt_per_null);
-		return replyPushFmt(sess, SMTPF_DELAY|SMTPF_REJECT, "550 5.7.1 too many recipients for DSN or MDN" ID_MSG(452) CRLF, ID_ARG(sess));
-/*{REPLY
-See <a href="summary.html#opt_one_rcpt_per_null">one-rcpt-per-null</a> option.
-}*/
-	}
-
-	if (CLIENT_NOT_SET(sess, CLIENT_IS_2ND_MX)) {
-		/* Check if the client connection is one of our secondary MXes. */
-		switch ((dns_rcode = DnsGet2(DNS_TYPE_MX, 1, rcpt->domain.string, &mxlist, &error))) {
-		case DNS_RCODE_OK:
-			for (i = 0; i < VectorLength(mxlist); i++) {
-				if ((mx = VectorGet(mxlist, i)) == NULL || mx->address == NULL)
-					continue;
-
-				if (memcmp(mx->address, sess->client.ipv6, sizeof (sess->client.ipv6)) == 0) {
-					statsCount(&stat_client_is_2nd_mx);
-					CLIENT_SET(sess, CLIENT_IS_2ND_MX);
-					break;
-				}
-			}
-
-			VectorDestroy(mxlist);
-			break;
-
-		case DNS_RCODE_ERRNO:
-			if (errno == EMFILE || errno == ENFILE)
-				replyResourcesError(sess, FILE_LINENO);
-			/*@fallthrough@*/
-
-		default:
-			syslog(LOG_ERR, LOG_MSG(453) "MX %s lookup: %s (%d)", LOG_ARGS(sess), rcpt->domain.string, error, dns_rcode);
-/*{LOG
-The process checks if the connected client is a secondary MX for
-any of the recipients, during which a DNS MX lookup error may
-occur.
-}*/
-			break;
-		}
-	}
-
-	return SMTPF_CONTINUE;
-}
-
-#endif
 
 /***********************************************************************
  ***
@@ -1267,12 +1094,14 @@ miscRegister(Session *sess, va_list ignore)
 	(void) statsRegister(&stat_helo_claims_us);
 	(void) statsRegister(&stat_helo_ip_mismatch);
 	(void) statsRegister(&stat_helo_is_ptr);
+	(void) statsRegister(&stat_helo_mail_params);
 #ifndef ENABLE_PDQ
 	(void) statsRegister(&stat_mail_ip_in_ns);
 	(void) statsRegister(&stat_mail_ns_nxdomain);
 #endif
 	(void) statsRegister(&stat_mail_require_mx);
 	(void) statsRegister(&stat_mail_require_mx_error);
+	(void) statsRegister(&stat_helo_rcpt_params);
 	(void) statsRegister(&stat_one_domain_per_session);
 	(void) statsRegister(&stat_one_rcpt_per_null);
 	(void) statsRegister(&stat_rfc2821_strict_helo);

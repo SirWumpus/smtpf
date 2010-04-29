@@ -348,6 +348,8 @@ typedef struct {
 #define MAIL_IS_TEMPFAIL		0x00000004
 #define MAIL_HAS_EXTRA_SPACES		0x00000008
 #define MAIL_IS_LOCAL_BLACK		0x00000010
+#define MAIL_IS_8BITMIME		0x00000020
+#define MAIL_IS_BINARYMIME		0x00000040
 
 #define RCPT_SET(s, m)			FLAG_SET((s)->msg.rcpt_flags, m)
 #define RCPT_CLEAR(s, m)		FLAG_CLEAR((s)->msg.rcpt_flags, m)

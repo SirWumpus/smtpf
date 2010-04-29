@@ -26,6 +26,8 @@ static const char *mail_flags[] = {
 	"tempfail,",
 	"extra_spaces,",
 	"local_black,",
+	"8bitmime,",
+	"binarymime,",
 	NULL
 };
 
