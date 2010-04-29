@@ -896,20 +896,15 @@ statsSave(void)
 		statsHttpPost();
 
 		/* Lock mutex and make in memory working copies. */
-		(void) mutex_lock(SESS_ID_ZERO, FILE_LINENO, &stats_mutex);
-#ifdef HAVE_PTHREAD_CLEANUP_PUSH
-		pthread_cleanup_push((void (*)(void *)) pthread_mutex_unlock, &stats_mutex);
-#endif
+		PTHREAD_MUTEX_LOCK(&stats_mutex);
+
 		hourly = statsHourlyCopy();
 		routes = statsRouteCopy();
 		statsHourlyReset();
 
 		/* Release mutex and use working copies to update database. */
-#ifdef HAVE_PTHREAD_CLEANUP_PUSH
-		pthread_cleanup_pop(1);
-#else
-		(void) pthread_mutex_unlock(&stats_mutex);
-#endif
+		PTHREAD_MUTEX_UNLOCK(&stats_mutex);
+
 		statsNameSave();
 		statsRouteSave(routes);
 		statsHourlySave(hourly, VectorLength(stats));
@@ -1229,16 +1224,10 @@ statsFini(void)
 		stats_map->close(stats_map);
 		stats_map = NULL;
 	}
-	(void) mutex_lock(SESS_ID_ZERO, FILE_LINENO, &stats_mutex);
-#ifdef HAVE_PTHREAD_CLEANUP_PUSH
-	pthread_cleanup_push((void (*)(void *)) pthread_mutex_unlock, &stats_mutex);
-#endif
+
+	PTHREAD_MUTEX_LOCK(&stats_mutex);
 	statsRouteFini();
-#ifdef HAVE_PTHREAD_CLEANUP_PUSH
-	pthread_cleanup_pop(1);
-#else
-	(void) pthread_mutex_unlock(&stats_mutex);
-#endif
+	PTHREAD_MUTEX_UNLOCK(&stats_mutex);
 	(void) pthread_mutex_destroy(&stats_mutex);
 
 	timerFree(stats_timer);
@@ -1354,37 +1343,20 @@ stats_get_value(unsigned long *valuep)
 {
 	unsigned long count = 0;
 
-	if (!mutex_lock(SESS_ID_ZERO, FILE_LINENO, &stats_mutex)) {
-		count = *valuep;
-		(void) mutex_unlock(SESS_ID_ZERO, FILE_LINENO, &stats_mutex);
-	}
+	PTHREAD_MUTEX_LOCK(&stats_mutex);
+	count = *valuep;
+	PTHREAD_MUTEX_UNLOCK(&stats_mutex);
 
 	return count;
 }
 
-#ifdef OFF
-void
-statsLock(void)
-{
-	(void) mutex_lock(SESS_ID_ZERO, FILE_LINENO, &stats_mutex);
-}
-
-void
-statsUnlock(void)
-{
-	(void) mutex_unlock(SESS_ID_ZERO, FILE_LINENO, &stats_mutex);
-}
-#endif
-
 void
 statsGet(Stats *stat, Stats *out)
 {
-	if (!mutex_lock(SESS_ID_ZERO, FILE_LINENO, &stats_mutex)) {
-		*out = *stat;
-		(void) mutex_unlock(SESS_ID_ZERO, FILE_LINENO, &stats_mutex);
-	} else {
-		memset(out, 0, sizeof (*out));
-	}
+	memset(out, 0, sizeof (*out));
+	PTHREAD_MUTEX_LOCK(&stats_mutex);
+	*out = *stat;
+	PTHREAD_MUTEX_UNLOCK(&stats_mutex);
 }
 
 unsigned long
@@ -1404,13 +1376,12 @@ statsGetWindow(Stats *stat)
 {
 	unsigned long count = 0;
 
-	if (!mutex_lock(SESS_ID_ZERO, FILE_LINENO, &stats_mutex)) {
-		if (stat->is_max_of_intervals)
-			count = stats_get_max_window(stat);
-		else
-			count = stats_get_sum_window(stat);
-		(void) mutex_unlock(SESS_ID_ZERO, FILE_LINENO, &stats_mutex);
-	}
+	PTHREAD_MUTEX_LOCK(&stats_mutex);
+	if (stat->is_max_of_intervals)
+		count = stats_get_max_window(stat);
+	else
+		count = stats_get_sum_window(stat);
+	PTHREAD_MUTEX_UNLOCK(&stats_mutex);
 
 	return count;
 }
@@ -1418,23 +1389,27 @@ statsGetWindow(Stats *stat)
 void
 statsSetValue(Stats *stat, unsigned long value)
 {
-	if (server.running && !mutex_lock(SESS_ID_ZERO, FILE_LINENO, &stats_mutex)) {
-		stat->hourly = value;
-		stat->runtime = value;
-//		(void) stats_set_interval(stat, time(NULL) / STATS_TICK, value);
-		(void) mutex_unlock(SESS_ID_ZERO, FILE_LINENO, &stats_mutex);
-	}
+	if (!server.running)
+		return;
+
+	PTHREAD_MUTEX_LOCK(&stats_mutex);
+	stat->hourly = value;
+	stat->runtime = value;
+//	(void) stats_set_interval(stat, time(NULL) / STATS_TICK, value);
+	PTHREAD_MUTEX_UNLOCK(&stats_mutex);
 }
 
 void
 statsAddValue(Stats *stat, unsigned long value)
 {
-	if (server.running && !mutex_lock(SESS_ID_ZERO, FILE_LINENO, &stats_mutex)) {
-		stat->hourly += value;
-		stat->runtime += value;
-		stats_add_interval(stat, time(NULL) / STATS_TICK, value);
-		(void) mutex_unlock(SESS_ID_ZERO, FILE_LINENO, &stats_mutex);
-	}
+	if (!server.running)
+		return;
+
+	PTHREAD_MUTEX_LOCK(&stats_mutex);
+	stat->hourly += value;
+	stat->runtime += value;
+	stats_add_interval(stat, time(NULL) / STATS_TICK, value);
+	PTHREAD_MUTEX_UNLOCK(&stats_mutex);
 }
 
 void
@@ -1446,10 +1421,7 @@ statsCount(Stats *stat)
 void
 statsSetHighWater(Stats *stat, unsigned long value, int log)
 {
-	(void) mutex_lock(SESS_ID_ZERO, FILE_LINENO, &stats_mutex);
-#ifdef HAVE_PTHREAD_CLEANUP_PUSH
-	pthread_cleanup_push((void (*)(void *)) pthread_mutex_unlock, &stats_mutex);
-#endif
+	PTHREAD_MUTEX_LOCK(&stats_mutex);
 	if (stat->hourly < value) {
 		if (log)
 			syslog(LOG_INFO, LOG_NUM(715) "hourly %s was=%lu now=%lu", stat->name, (unsigned long) stat->hourly, value);
@@ -1467,21 +1439,14 @@ See <a hrfe="runtime.html#runtime_config">STAT</a> command.
 	}
 	if (stats_get_max_window(stat) < value)
 		stats_set_window(stat, value);
-#ifdef HAVE_PTHREAD_CLEANUP_PUSH
-	pthread_cleanup_pop(1);
-#else
-	(void) pthread_mutex_unlock(&stats_mutex);
-#endif
+	PTHREAD_MUTEX_UNLOCK(&stats_mutex);
 }
 
 #ifdef NOT_USED_YET
 void
 statsSetLowWater(Stats *stat, unsigned long value, int log)
 {
-	(void) mutex_lock(SESS_ID_ZERO, FILE_LINENO, &stats_mutex);
-#ifdef HAVE_PTHREAD_CLEANUP_PUSH
-	pthread_cleanup_push((void (*)(void *)) pthread_mutex_unlock, &stats_mutex);
-#endif
+	PTHREAD_MUTEX_LOCK(&stats_mutex);
 	if (value < stat->hourly) {
 		if (log)
 			syslog(LOG_INFO, LOG_NUM(880) "hourly %s was=%lu now=%lu", stat->name, (unsigned long) stat->hourly, value);
@@ -1498,11 +1463,7 @@ Not used at this time.
 	}
 	if (value < stats_get_max_window(stat))
 		stats_set_window(stat, value);
-#ifdef HAVE_PTHREAD_CLEANUP_PUSH
-	pthread_cleanup_pop(1);
-#else
-	(void) pthread_mutex_unlock(&stats_mutex);
-#endif
+	PTHREAD_MUTEX_UNLOCK(&stats_mutex);
 }
 #endif
 
