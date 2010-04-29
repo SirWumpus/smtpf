@@ -277,6 +277,22 @@ is no set schedule for releases.
    +	Use SIZE= to by-pass SpamAssassin and/or the length of the temp.
    	file to by-pass when spamd-max-size is being used. Steve F.
 
+--2.3.17--
+
+   !	Fix segmentation fault due to verb +smtp-dot.
+
+   +	Add test and rejection for HELO being used in combination with
+	MAIL or RCPT parameters.
+
+   !	cmdMail: always attempt to connect with EHLO first and fall back
+	on HELO otherwise.
+
+   !	Detect and reject BINARYMIME.
+
+   !	cmdRcpt: tweak MAIL FROM: to relay BODY=8BITMIME; we still do NOT
+   	support conversion (only pass through) when the forward host does
+   	not support 8BITMIME.
+
 --2.3.16--
 
    *	Requires Libsnert 1.74.1
