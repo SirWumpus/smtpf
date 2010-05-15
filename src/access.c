@@ -471,7 +471,7 @@ See <a href="access-map.html">access-map</a> about right-hand-side
 			if (code == 0) {
 				if (verb_access.option.value)
 					syslog(LOG_DEBUG, LOG_MSG(111) "\"%s\" matched \"%.50s...\"", LOG_ARGS(sess), hay, pin);
-				access = smdbAccessCode(action);
+				access = access_word_to_code(action);
 				regfree(&re);
 				break;
 			}

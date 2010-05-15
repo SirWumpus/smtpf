@@ -277,6 +277,12 @@ is no set schedule for releases.
    +	Use SIZE= to by-pass SpamAssassin and/or the length of the temp.
    	file to by-pass when spamd-max-size is being used. Steve F.
 
+--2.3.18--
+
+   !	accessPattern: Fixed missing access_word_to_code for regular
+   	expression pattern/action. Oversight from 2.3.15 update.
+
+
 --2.3.17--
 
    !	Fix segmentation fault due to verb +smtp-dot.
@@ -319,7 +325,7 @@ is no set schedule for releases.
 
    !	Define AccessCode enum type to be used in place of SMDB_ACCESS_
    	constants, which no longer reflect the variety of action words
-   	available in smtpf. Replaced smdbAccessCode by action_word_to_code.
+   	available in smtpf. Replaced smdbAccessCode by access_word_to_code.
 
    !	Replaced generic int return of many filter functions to make
 	clear the distinction between either AccessCode or SmtpfCode so
