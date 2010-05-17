@@ -328,6 +328,7 @@ Stats stat_uri_dns_bl			= { STATS_TABLE_MSG,	"uri-dns-bl" };
 Stats stat_uri_bl_helo			= { STATS_TABLE_CONNECT,"uri-bl-helo" };
 Stats stat_uri_bl_ptr			= { STATS_TABLE_CONNECT,"uri-bl-ptr" };
 Stats stat_uri_bl_mail			= { STATS_TABLE_MAIL,	"uri-bl-mail" };
+Stats stat_uri_implicit			= { STATS_TABLE_MSG, 	"uri-implicit"};
 Stats stat_uri_ip_in_name		= { STATS_TABLE_MSG, 	"uri-ip-in-name"};
 Stats stat_uri_ip_in_ns			= { STATS_TABLE_MSG, 	"_uri-ip-in-ns"};
 Stats stat_uri_links_policy		= { STATS_TABLE_MSG, 	"uri-links-policy"};
@@ -690,18 +691,24 @@ options.
 		if ((list_name = dnsListQueryName(d_bl, sess->pdq, NULL, uri->host)) != NULL) {
 			setRejectMessage(sess, uri->host, list_name, post_data, MSG_IS_URIBL, &stat_domain_bl_body);
 			dnsListSysLog(sess, "domain-bl", uri->host, list_name);
+			if (post_data && uri->schemeInfo == NULL)
+				statsCount(&stat_uri_implicit);
 			goto error1;
 		}
 
 		if ((list_name = dnsListQueryDomain(uri_bl, sess->pdq, ctx->uri_seen, optUriSubDomains.value, uri->host)) != NULL) {
 			setRejectMessage(sess, uri->host, list_name, post_data, MSG_IS_URIBL, &stat_uri_bl);
 			dnsListSysLog(sess, "uri-bl", uri->host, list_name);
+			if (post_data && uri->schemeInfo == NULL)
+				statsCount(&stat_uri_implicit);
 			goto error1;
 		}
 
 		if ((list_name = dnsListQueryIP(uri_dns_bl, sess->pdq, NULL, uri->host)) != NULL) {
 			setRejectMessage(sess, uri->host, list_name, post_data, MSG_IS_URIBL, &stat_uri_dns_bl);
 			dnsListSysLog(sess, "uri-dns-bl", uri->host, list_name);
+			if (post_data && uri->schemeInfo == NULL)
+				statsCount(&stat_uri_implicit);
 			goto error1;
 		}
 	}
@@ -862,6 +869,7 @@ uriRegister(Session *sess, va_list ignore)
 
 	(void) statsRegister(&stat_uri_bl);
 	(void) statsRegister(&stat_uri_dns_bl);
+	(void) statsRegister(&stat_uri_implicit);
 	(void) statsRegister(&stat_uri_ip_in_name);
 	(void) statsRegister(&stat_uri_ip_in_ns);
 #ifndef ENABLE_PDQ

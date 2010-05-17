@@ -282,6 +282,7 @@ is no set schedule for releases.
    !	accessPattern: Fixed missing access_word_to_code for regular
    	expression pattern/action. Oversight from 2.3.15 update.
 
+   +	Added uri-implicit stat counter for testing with libsnert 1.74.4
 
 --2.3.17--
 
