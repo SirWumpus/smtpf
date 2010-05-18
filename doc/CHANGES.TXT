@@ -283,6 +283,7 @@ is no set schedule for releases.
    	expression pattern/action. Oversight from 2.3.15 update.
 
    +	Added uri-implicit stat counter for testing with libsnert 1.74.4
+   	Also added a MSG_IS_URI_IMPLICIT flag for logging.
 
 --2.3.17--
 

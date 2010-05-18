@@ -691,24 +691,30 @@ options.
 		if ((list_name = dnsListQueryName(d_bl, sess->pdq, NULL, uri->host)) != NULL) {
 			setRejectMessage(sess, uri->host, list_name, post_data, MSG_IS_URIBL, &stat_domain_bl_body);
 			dnsListSysLog(sess, "domain-bl", uri->host, list_name);
-			if (post_data && uri->schemeInfo == NULL)
+			if (post_data && uri->schemeInfo == NULL) {
+				MSG_SET(sess, MSG_IS_URI_IMPLICIT);
 				statsCount(&stat_uri_implicit);
+			}
 			goto error1;
 		}
 
 		if ((list_name = dnsListQueryDomain(uri_bl, sess->pdq, ctx->uri_seen, optUriSubDomains.value, uri->host)) != NULL) {
 			setRejectMessage(sess, uri->host, list_name, post_data, MSG_IS_URIBL, &stat_uri_bl);
 			dnsListSysLog(sess, "uri-bl", uri->host, list_name);
-			if (post_data && uri->schemeInfo == NULL)
+			if (post_data && uri->schemeInfo == NULL) {
+				MSG_SET(sess, MSG_IS_URI_IMPLICIT);
 				statsCount(&stat_uri_implicit);
+			}
 			goto error1;
 		}
 
 		if ((list_name = dnsListQueryIP(uri_dns_bl, sess->pdq, NULL, uri->host)) != NULL) {
 			setRejectMessage(sess, uri->host, list_name, post_data, MSG_IS_URIBL, &stat_uri_dns_bl);
 			dnsListSysLog(sess, "uri-dns-bl", uri->host, list_name);
-			if (post_data && uri->schemeInfo == NULL)
+			if (post_data && uri->schemeInfo == NULL) {
+				MSG_SET(sess, MSG_IS_URI_IMPLICIT);
 				statsCount(&stat_uri_implicit);
+			}
 			goto error1;
 		}
 	}
