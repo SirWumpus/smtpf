@@ -349,6 +349,7 @@ session_create(ServerSession *session)
 	sess->session = session;
 	sess->last_reply = NULL;
 
+	sess->client.ok_av = 0;
 	sess->client.octets = 0;
 	sess->client.name[0] = '\0';
 	sess->client.helo[0] = '\0';
