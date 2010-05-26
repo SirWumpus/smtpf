@@ -277,6 +277,18 @@ is no set schedule for releases.
    +	Use SIZE= to by-pass SpamAssassin and/or the length of the temp.
    	file to by-pass when spamd-max-size is being used. Steve F.
 
+--2.3.19--
+
+  !!	dupmsg: Re-engineered the code to use an MD5 digest based on the
+	message body and Message-Id when available, instead of just the
+	Message-ID header. The Message-ID header is only an RFC SHOULD
+	requirement and some poorly designed MTA and mail applications
+	fail to include the header. Reported by Steven Freegard. Adding
+	the Message-ID when present to the MD5 helps distinguish between
+	templated status messages that are in fact different only by
+	Message-ID and time sent.
+
+
 --2.3.18--
 
    !	accessPattern: Fixed missing access_word_to_code for regular

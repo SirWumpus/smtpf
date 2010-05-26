@@ -21,12 +21,13 @@ extern Option optDupMsgTTL;
 
 extern Stats stat_dupmsg_hit;
 
-extern int dupmsgRegister(Session *null, va_list ignore);
-extern int dupmsgRset(Session *sess, va_list ignore);
-extern int dupmsgHeaders(Session *sess, va_list args);
-extern int dupmsgDot(Session *sess, va_list ignore);
-extern int dupmsgContent(Session *sess, va_list args);
-extern int dupmsgReplyLog(Session *sess, va_list args);
+extern SmtpfCode dupmsgRegister(Session *null, va_list ignore);
+extern SmtpfCode dupmsgConnect(Session *sess, va_list ignore);
+extern SmtpfCode dupmsgRset(Session *sess, va_list ignore);
+extern SmtpfCode dupmsgHeaders(Session *sess, va_list args);
+extern SmtpfCode dupmsgDot(Session *sess, va_list ignore);
+extern SmtpfCode dupmsgContent(Session *sess, va_list args);
+extern SmtpfCode dupmsgReplyLog(Session *sess, va_list args);
 
 /***********************************************************************
  ***
