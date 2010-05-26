@@ -288,6 +288,7 @@ is no set schedule for releases.
 	templated status messages that are in fact different only by
 	Message-ID and time sent.
 
+   !	Fixed more gcc 4 anal signedness warnings.
 
 --2.3.18--
 

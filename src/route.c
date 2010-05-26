@@ -234,11 +234,11 @@ route_walk_count(kvm_data *key, kvm_data *value, void *data)
 	char *at_sign, *domain;
 	RouteCount *rcp = data;
 
-	if (0 <= TextInsensitiveStartsWith(key->data, ROUTE_TAG) && strstr(value->data, ROUTE_ATTR_FORWARD) != NULL) {
-		if ((at_sign = strchr(key->data, '@')) == NULL) {
+	if (0 <= TextInsensitiveStartsWith((char *) key->data, ROUTE_TAG) && strstr((char *) value->data, ROUTE_ATTR_FORWARD) != NULL) {
+		if ((at_sign = strchr((char *) key->data, '@')) == NULL) {
 			rcp->domains++;
 
-			if (VectorAdd(rcp->domain_list, (domain = strdup(key->data + sizeof (ROUTE_TAG)-1))))
+			if (VectorAdd(rcp->domain_list, (domain = strdup((char *) key->data + sizeof (ROUTE_TAG)-1))))
 				free(domain);
 		} else if (at_sign[1] != '\0') {
 			rcp->addresses++;
@@ -429,15 +429,15 @@ routeCacheGetRcpt(Session *sess, char *key)
 		goto error0;
 #endif
 	MEMSET(&row, 0, sizeof (row));
-	row.key_size = snprintf(row.key_data, sizeof (row.key_data), RCPT_TAG "%s", key);
-	TextLower(row.key_data, -1);
+	row.key_size = snprintf((char *) row.key_data, sizeof (row.key_data), RCPT_TAG "%s", key);
+	TextLower((char *) row.key_data, -1);
 
 	if (mccGetRow(mcc, &row) == MCC_OK) {
 		row.value_data[row.value_size] = '\0';
 		if (verb_cache.option.value)
 			syslog(LOG_DEBUG, log_cache_get, LOG_ARGS(sess), row.key_data, row.value_data, FILE_LINENO);
 
-		rc = (int) strtol(row.value_data, NULL, 10);
+		rc = (int) strtol((char *) row.value_data, NULL, 10);
 
 		/* Touch the record. */
 		if (rc == SMTPF_ACCEPT)
@@ -465,9 +465,9 @@ routeCacheAddRcpt(Session *sess, char *key, int smtpf_code)
 	row.hits = 0;
 	row.created = time(NULL);
 	row.expires = row.created + cacheGetTTL(smtpf_code);
-	row.key_size = snprintf(row.key_data, sizeof (row.key_data), RCPT_TAG "%s", key);
-	row.value_size = (unsigned char) snprintf(row.value_data, sizeof (row.value_data), "%d", smtpf_code);
-	TextLower(row.key_data, -1);
+	row.key_size = snprintf((char *) row.key_data, sizeof (row.key_data), RCPT_TAG "%s", key);
+	row.value_size = (unsigned char) snprintf((char *) row.value_data, sizeof (row.value_data), "%d", smtpf_code);
+	TextLower((char *) row.key_data, -1);
 
 	if (verb_cache.option.value)
 		syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), row.key_data, row.value_data, FILE_LINENO);
@@ -743,7 +743,7 @@ routeCallAhead(Session *sess, const char *host, ParsePath *rcpt)
 #ifdef ENABLE_FALSE_RCPT_TEST
 	/* Does the recipient's route blindly accept all recipients? */
 	MEMSET(&dumb_host, 0, sizeof (dumb_host));
-	dumb_host.key_size = (unsigned short) snprintf(dumb_host.key_data, sizeof (dumb_host.key_data), DUMB_TAG "%s,%s", host, rcpt->domain.string);
+	dumb_host.key_size = (unsigned short) snprintf((char *) dumb_host.key_data, sizeof (dumb_host.key_data), DUMB_TAG "%s,%s", host, rcpt->domain.string);
 
 	if ((dumb_host_cached = mccGetRow(mcc, &dumb_host)) == MCC_OK) {
 		dumb_host.value_data[dumb_host.value_size] = '\0';
@@ -877,7 +877,7 @@ unplussed_rcpt:
 			dumb_host.created = time(NULL);
 			dumb_host.expires = dumb_host.created + cacheGetTTL(dumb_host.value_data[0] - '0');
 
-			dumb_host.key_size = (unsigned short) snprintf(dumb_host.key_data, sizeof (dumb_host.key_data), DUMB_TAG "%s,%s", host, rcpt->domain.string);
+			dumb_host.key_size = (unsigned short) snprintf((char *) dumb_host.key_data, sizeof (dumb_host.key_data), DUMB_TAG "%s,%s", host, rcpt->domain.string);
 
 			if (verb_cache.option.value)
 				syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), dumb_host.key_data, dumb_host.value_data, FILE_LINENO);

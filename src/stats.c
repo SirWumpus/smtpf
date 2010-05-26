@@ -421,8 +421,8 @@ statsRouteSave(RouteStat *list)
 		if (entry->accept + entry->reject == 0)
 			continue;
 
-		key.data = entry->route;
 		key.size = entry->length;
+		key.data = (unsigned char *) entry->route;
 
 		switch (stats_map->get(stats_map, &key, &value)) {
 		case KVM_OK:
@@ -439,7 +439,7 @@ statsRouteSave(RouteStat *list)
 			continue;
 		}
 
-		(void) sscanf(value.data, "%d %x:%x:%x%n", &day_of_year, &current.accept, &current.reject, &current.volume, &span);
+		(void) sscanf((unsigned char *) value.data, "%d %x:%x:%x%n", &day_of_year, &current.accept, &current.reject, &current.volume, &span);
 
 		if (verb_stats.option.value)
 			syslog(LOG_DEBUG, LOG_NUM(707) "route stat get %s %d %u:%u:%u", entry->route, day_of_year, current.accept, current.reject, current.volume);
@@ -451,11 +451,11 @@ statsRouteSave(RouteStat *list)
 			 * span covers the day-of-year only and we
 			 * truncate the last ratio.
 			 */
-			span = strcspn(value.data, " ");
+			span = strcspn((unsigned char *) value.data, " ");
 
 			if (value.data != (unsigned char *) stats_domain_zero) {
 				/* Find last ratio and remove it. */
-				last_ratio = strrchr(value.data, ' ');
+				last_ratio = strrchr((unsigned char *) value.data, ' ');
 				*last_ratio = '\0';
 			}
 		} else {
@@ -484,7 +484,7 @@ statsRouteSave(RouteStat *list)
 		}
 		if (value.data != (unsigned char *) stats_domain_zero)
 			free(value.data);
-		value.data = output;
+		value.data = (unsigned char *) output;
 
 		(void) stats_map->put(stats_map, &key, &value);
 
@@ -639,13 +639,13 @@ statsNameSave(void)
 		/* Save the list of stats names in Vector order for
 		 * when we restart we can reload the hourly stats.
 		 */
-		key.data = "fields:" _VERSION;
 		key.size = sizeof ("fields:" _VERSION)-1;
+		key.data = (unsigned char *) "fields:" _VERSION;
 
 		len = snprintf(buffer, sizeof (buffer), "version start-time touch-time");
 
 		value.size = len;
-		value.data = buffer;
+		value.data = (unsigned char *) buffer;
 
 		for (i = 0; i < VectorLength(stats); i++) {
 			if ((stat = VectorGet(stats, i)) == NULL)
@@ -677,7 +677,7 @@ statsHourlySave(unsigned long *table, size_t length)
 	kvm_data key, value;
 
 	(void) time(&now);
-	key.data = date_hour;
+	key.data = (unsigned char *) date_hour;
 	localtime_r(&now, &time_now);
 	time_now.tm_hour = stats_current_hour;
 	key.size = strftime(date_hour, sizeof (date_hour), "%Y%m%d%H", &time_now);
@@ -685,7 +685,7 @@ statsHourlySave(unsigned long *table, size_t length)
 	len = snprintf(buffer, sizeof (buffer), _VERSION " %lx %lx", (unsigned long) start_time, (unsigned long) now);
 
 	value.size = len;
-	value.data = buffer;
+	value.data = (unsigned char *) buffer;
 	for (i = 0; i < length; i++) {
 		len = snprintf(buffer+value.size, sizeof (buffer)-value.size, " %lx", table[i]);
 
@@ -709,13 +709,13 @@ statsHttpPostChunk(Socket2 *socket, char *buffer, int size)
 
 	length = snprintf(chunk_size, sizeof (chunk_size), "%X" CRLF, size);
 
-	if (socketWrite(socket, chunk_size, length) == SOCKET_ERROR)
+	if (socketWrite(socket, (unsigned char *) chunk_size, length) == SOCKET_ERROR)
 		return -1;
 
-	if (socketWrite(socket, buffer, size) == SOCKET_ERROR)
+	if (socketWrite(socket, (unsigned char *) buffer, size) == SOCKET_ERROR)
 		return -1;
 
-	return socketWrite(socket, CRLF, sizeof (CRLF)-1) == SOCKET_ERROR ? -1 : 0;
+	return socketWrite(socket, (unsigned char *) CRLF, sizeof (CRLF)-1) == SOCKET_ERROR ? -1 : 0;
 }
 
 static void
@@ -767,7 +767,7 @@ statsHttpPost(void)
 		b64Init();
 		b64Reset(&b64);
 		encoded_length = 0;
-		b64EncodeBuffer(&b64, credentials, cred_length, encoded, sizeof (encoded), &encoded_length);
+		b64EncodeBuffer(&b64, (const unsigned char *) credentials, cred_length, encoded, sizeof (encoded), &encoded_length);
 		b64EncodeFinish(&b64, encoded, sizeof (encoded), &encoded_length, 0);
 
 		length += snprintf(buffer+length, sizeof (buffer)-length, "Authorization: Basic %s" CRLF, encoded);
@@ -781,7 +781,7 @@ statsHttpPost(void)
 		goto error2;
 	}
 
-	if (socketWrite(socket, buffer, length) == SOCKET_ERROR)
+	if (socketWrite(socket, (unsigned char *) buffer, length) == SOCKET_ERROR)
 		goto error2;
 
 
@@ -793,7 +793,7 @@ statsHttpPost(void)
 		"&active-connections=%lu",
 		(unsigned long) start_time,
 		(unsigned long) difftime(time(NULL), start_time),
-		queueLength(&server.workers)
+		(unsigned long) queueLength(&server.workers)
 	);
 	if (statsHttpPostChunk(socket, buffer, length))
 		goto error2;
@@ -939,7 +939,7 @@ statsLoad(void)
 
 	if (stats_map->get(stats_map, &key, &value) == KVM_OK) {
 		/* Get values version. */
-		name = parse_name(value.data, &next_counter);
+		name = parse_name((char *) value.data, &next_counter);
 		if (*next_counter != '\0')
 			*next_counter++ = '\0';
 
@@ -951,7 +951,7 @@ statsLoad(void)
 		key.size = snprintf(key_data, sizeof (key_data), "fields:%s", value.data);
 		if (stats_map->get(stats_map, &key, &fields) == KVM_OK)	{
 			/* Skip field names: version, start-time, touch-time. */
-			(void) parse_name(fields.data, &next_name);
+			(void) parse_name((char *) fields.data, &next_name);
 			(void) parse_name(next_name, &next_name);
 			(void) parse_name(next_name, &next_name);
 
@@ -1494,9 +1494,9 @@ statsNotify(unsigned long one, unsigned long five, unsigned long fifteen)
 	row.hits = 0;
 	row.created = row.touched = time(NULL);
 	row.expires = row.created + optCacheGcInterval.value;
-	row.key_size = TextCopy(row.key_data, sizeof (row.key_data), "__loadavg");
+	row.key_size = TextCopy((char *) row.key_data, sizeof (row.key_data), "__loadavg");
 	row.value_size = snprintf(
-		row.value_data, sizeof (row.value_data),
+		(char *) row.value_data, sizeof (row.value_data),
 		"%lu,%lu,%lu %lu %lu %lu/%lu/%lu %lu/%lu %lu",
 		one, five, fifteen,
 		(unsigned long)(row.created - start_time),
