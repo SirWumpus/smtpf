@@ -439,7 +439,7 @@ statsRouteSave(RouteStat *list)
 			continue;
 		}
 
-		(void) sscanf((unsigned char *) value.data, "%d %x:%x:%x%n", &day_of_year, &current.accept, &current.reject, &current.volume, &span);
+		(void) sscanf((char *) value.data, "%d %x:%x:%x%n", &day_of_year, &current.accept, &current.reject, &current.volume, &span);
 
 		if (verb_stats.option.value)
 			syslog(LOG_DEBUG, LOG_NUM(707) "route stat get %s %d %u:%u:%u", entry->route, day_of_year, current.accept, current.reject, current.volume);
@@ -451,11 +451,11 @@ statsRouteSave(RouteStat *list)
 			 * span covers the day-of-year only and we
 			 * truncate the last ratio.
 			 */
-			span = strcspn((unsigned char *) value.data, " ");
+			span = strcspn((char *) value.data, " ");
 
 			if (value.data != (unsigned char *) stats_domain_zero) {
 				/* Find last ratio and remove it. */
-				last_ratio = strrchr((unsigned char *) value.data, ' ');
+				last_ratio = strrchr((char *) value.data, ' ');
 				*last_ratio = '\0';
 			}
 		} else {
@@ -932,9 +932,9 @@ statsLoad(void)
 		return;
 
 	now = time(NULL);
-	key.data = key_data;
 	localtime_r(&now, &time_now);
 	stats_current_hour = time_now.tm_hour;
+	key.data = (unsigned char *) key_data;
 	key.size = strftime(key_data, sizeof (key_data), "%Y%m%d%H", &time_now);
 
 	if (stats_map->get(stats_map, &key, &value) == KVM_OK) {
