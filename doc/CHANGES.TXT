@@ -290,6 +290,13 @@ is no set schedule for releases.
 
    !	Fixed more gcc 4 anal signedness warnings.
 
+   !	session_create: Fixed uninitialised structure member "client.ok_av".
+
+   +	Added deny-top-content-type option and access tags top-mimetype-to:,
+   	top-mimetype-from:, and top-mimetype-connect:.
+
+   +	Added msg-trap stat.
+
 --2.3.18--
 
    !	accessPattern: Fixed missing access_word_to_code for regular
