@@ -754,7 +754,7 @@ Start as a background daemon or foreground application.
 <dt><span class="option">deny-compressed-name</span>+=<span class="value">*.pif</span></dt>
 <dt><span class="option">deny-compressed-name</span>+=<span class="value">*.scr</span></dt>
 <dd>
-semi-colon separated list of unacceptable file patterns to reject
+A list of unacceptable file patterns to reject
 when found RAR or ZIP attachments. The default list consists of unsafe
 Windows file extensions as given by Microsoft. Specify an empty list
 to disable.
@@ -805,7 +805,7 @@ When enabled, then deny-content-* options are applied.
 <dt><span class="option">deny-content-name</span>+=<span class="value">*.wsf</span></dt>
 <dt><span class="option">deny-content-name</span>+=<span class="value">*.wsh</span></dt>
 <dd>
-A semi-colon separated list of unacceptable file patterns to reject
+A list of unacceptable file patterns to reject
 when found as MIME attachments. The default list consists of unsafe
 Windows file extensions as given by Microsoft. Specify an empty list
 to disable.
@@ -816,7 +816,14 @@ to disable.
 <dt><span class="option">deny-content-type</span>+=<span class="value">application/*msdos-program</span></dt>
 <dt><span class="option">deny-content-type</span>+=<span class="value">message/partial</span></dt>
 <dd>
-A semi-colon separated list of unacceptable MIME types to reject.
+A list of unacceptable attachment MIME types to reject.
+Specify an empty list to disable.
+</dd>
+
+<a name="opt_deny_top_content_type"></a>
+<dt><span class="option">deny-top-content-type</span>=<span class="value">application/*</span></dt>
+<dd>
+A list of unacceptable message MIME types to reject.
 Specify an empty list to disable.
 </dd>
 

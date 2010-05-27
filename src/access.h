@@ -123,6 +123,9 @@ extern SmtpfCode accessClose(Session *sess, va_list ignore);
 #define ACCESS_ARCHNAME_CONN_TAG	"archname-connect:"
 #define ACCESS_ARCHNAME_MAIL_TAG	"archname-from:"
 #define ACCESS_ARCHNAME_RCPT_TAG	"archname-to:"
+#define ACCESS_TOPMIMETYPE_CONN_TAG	"top-mimetype-connect:"
+#define ACCESS_TOPMIMETYPE_MAIL_TAG	"top-mimetype-from:"
+#define ACCESS_TOPMIMETYPE_RCPT_TAG	"top-mimetype-to:"
 
 /*
  * Key Regex
@@ -157,6 +160,9 @@ extern SmtpfCode accessClose(Session *sess, va_list ignore);
 #define ACCESS_ARCHNAME_CONN_RE		ACCESS_ARCHNAME_CONN_TAG ".*"
 #define ACCESS_ARCHNAME_MAIL_RE		ACCESS_ARCHNAME_MAIL_TAG ".*"
 #define ACCESS_ARCHNAME_RCPT_RE		ACCESS_ARCHNAME_RCPT_TAG ".*"
+#define ACCESS_TOPMIMETYPE_CONN_RE	ACCESS_TOPMIMETYPE_CONN_TAG ".*"
+#define ACCESS_TOPMIMETYPE_MAIL_RE	ACCESS_TOPMIMETYPE_MAIL_TAG ".*"
+#define ACCESS_TOPMIMETYPE_RCPT_RE	ACCESS_TOPMIMETYPE_RCPT_TAG ".*"
 
 /*
  * Key printf formats
@@ -192,6 +198,9 @@ extern SmtpfCode accessClose(Session *sess, va_list ignore);
 #define ACCESS_ARCHNAME_CONN_KEY	ACCESS_ARCHNAME_CONN_TAG "%s"	/* IP | domain */
 #define ACCESS_ARCHNAME_MAIL_KEY	ACCESS_ARCHNAME_MAIL_TAG "%s"	/* mail */
 #define ACCESS_ARCHNAME_RCPT_KEY	ACCESS_ARCHNAME_RCPT_TAG "%s"	/* mail */
+#define ACCESS_TOPMIMETYPE_CONN_KEY	ACCESS_TOPMIMETYPE_CONN_TAG "%s"	/* IP | domain */
+#define ACCESS_TOPMIMETYPE_MAIL_KEY	ACCESS_TOPMIMETYPE_MAIL_TAG "%s"	/* mail */
+#define ACCESS_TOPMIMETYPE_RCPT_KEY	ACCESS_TOPMIMETYPE_RCPT_TAG "%s"	/* mail */
 
 /*
  * Action Values

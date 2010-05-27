@@ -454,7 +454,7 @@ specified will be used.
 <dt><span class="tag">Mimetype-From:</span>mail</dt>
 <dt><span class="tag">Mimetype-To:</span>mail</dt>
 <dd>
-The right hand side value is a semi-colon separated list of unacceptable MIME types to reject.
+The right hand side value is a semi-colon separated list of unacceptable attachment MIME types to reject.
 
 This overrides the global option
 <a href="summary.html#opt_deny_content_type">deny-content-type</a>
@@ -548,6 +548,19 @@ Used to black or white list a recipient's mail address. If black listed (<code>R
 mail to this recipient will be refused; the current message transaction is permitted
 to specify addition recipients or abandon the transaction. If white listed (<code>OK</code>), then
 the message will by-passes all the filtering except anti-virus.
+</dd>
+
+<a name="tag_topmimetype"></a>
+<dt><span class="tag">Top-Mimetype-Connect:</span>ip</dt>
+<dt><span class="tag">Top-Mimetype-Connect:</span>domain</dt>
+<dt><span class="tag">Top-Mimetype-From:</span>mail</dt>
+<dt><span class="tag">Top-Mimetype-To:</span>mail</dt>
+<dd>
+The right hand side value is a semi-colon separated list of unacceptable message MIME types to reject.
+
+This overrides the global option
+<a href="summary.html#opt_deny_top_content_type">deny-top-content-type</a>
+when defined for a specific host, sender, or recipient.
 </dd>
 
 </dl>

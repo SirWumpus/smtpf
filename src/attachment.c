@@ -30,8 +30,8 @@
 Option optDenyContent = { "deny-content", "-", "When enabled, then deny-content-* options are applied." };
 
 static const char usage_deny_content_type[] =
-  "A semi-colon separated list of unacceptable MIME types to reject.\n"
-"# Specify an empty list to disable.\n"
+  "A list of unacceptable attachment MIME types to reject. Specify an\n"
+"# empty list to disable.\n"
 "#"
 ;
 
@@ -46,11 +46,25 @@ Option optDenyContentType = {
 	, usage_deny_content_type
 };
 
+static const char usage_deny_top_content_type[] =
+  "A list of unacceptable message MIME types to reject. Specify an\n"
+"# empty list to disable.\n"
+"#"
+;
+
+Option optDenyTopContentType = {
+	"deny-top-content-type",
+
+	 "application/*"
+
+	, usage_deny_top_content_type
+};
+
 static const char usage_deny_content_name[] =
-  "A semi-colon separated list of unacceptable file patterns to reject\n"
-"# when found as MIME attachments. The default list consists of unsafe\n"
-"# Windows file extensions as given by Microsoft. Specify an empty list\n"
-"# to disable.\n"
+  "A list of unacceptable file patterns to reject when found as\n"
+"# MIME attachments. The default list consists of unsafe Windows\n"
+"# file extensions as given by Microsoft. Specify an empty list to\n"
+"# disable.\n"
 "#"
 ;
 
@@ -105,10 +119,9 @@ Option optDenyContentName = {
 };
 
 static const char usage_deny_zip_name[] =
-  "A semi-colon separated list of unacceptable file patterns to reject\n"
-"# when found RAR or ZIP attachments. The default list consists of unsafe\n"
-"# Windows file extensions as given by Microsoft. Specify an empty list\n"
-"# to disable.\n"
+  "A list of unacceptable file patterns to reject when found RAR or\n"
+"# ZIP attachments. The default list consists of unsafe Windows file\n"
+"# extensions as given by Microsoft. Specify an empty list to disable.\n"
 "#"
 ;
 
@@ -133,6 +146,7 @@ Option optDenyZipName = {
 	, usage_deny_zip_name
 };
 
+Stats statDenyTopContentType = { STATS_TABLE_MSG, "deny-top-content-type" };
 Stats statDenyContentType = { STATS_TABLE_MSG, "deny-content-type" };
 Stats statDenyContentName = { STATS_TABLE_MSG, "deny-content-name" };
 Stats statDenyZipName = { STATS_TABLE_MSG, "deny-compressed-name" };
@@ -314,7 +328,9 @@ typedef struct {
 	char *filename;
 	char *mimetype;
 	char *archname;
+	char *top_mime_type;
 	Vector compressed_names;
+	Vector top_content_types;
 	Vector content_types;
 	Vector content_names;
 	char *attachment_found;
@@ -355,7 +371,9 @@ attachmentRegister(Session *sess, va_list ignore)
 	optionsRegister(&optDenyContentType, 0);
 	optionsRegister(&optDenyContentName, 0);
 	optionsRegister(&optDenyZipName, 0);
+	optionsRegister(&optDenyTopContentType, 0);
 
+	(void) statsRegister(&statDenyTopContentType);
 	(void) statsRegister(&statDenyContentType);
 	(void) statsRegister(&statDenyContentName);
 	(void) statsRegister(&statDenyZipName);
@@ -386,12 +404,22 @@ attachmentRset(Session *sess, va_list ignore)
 		free(ctx->archname);
 	ctx->archname = NULL;
 
+	if (ctx->top_mime_type != optDenyTopContentType.string)
+		free(ctx->top_mime_type);
+	ctx->top_mime_type = NULL;
+
 	VectorDestroy(ctx->content_names);
-	VectorDestroy(ctx->content_types);
-	VectorDestroy(ctx->compressed_names);
 	ctx->content_names = NULL;
+
+	VectorDestroy(ctx->content_types);
 	ctx->content_types = NULL;
+
+	VectorDestroy(ctx->top_content_types);
+	ctx->top_content_types = NULL;
+
+	VectorDestroy(ctx->compressed_names);
 	ctx->compressed_names = NULL;
+
 	mimeFree(ctx->mime);
 	ctx->mime = NULL;
 
@@ -405,10 +433,11 @@ attachmentConnect(Session *sess, va_list ignore)
 
 	ctx = filterGetContext(sess, attachment_context);
 
-	ctx->filename = ctx->mimetype = ctx->archname = NULL;
+	ctx->filename = ctx->mimetype = ctx->archname = ctx->top_mime_type = NULL;
 	(void) accessClient(sess, ACCESS_FILENAME_CONN_TAG, sess->client.name, sess->client.addr, NULL, &ctx->filename, 1);
 	(void) accessClient(sess, ACCESS_MIMETYPE_CONN_TAG, sess->client.name, sess->client.addr, NULL, &ctx->mimetype, 1);
 	(void) accessClient(sess, ACCESS_ARCHNAME_CONN_TAG, sess->client.name, sess->client.addr, NULL, &ctx->archname, 1);
+	(void) accessClient(sess, ACCESS_TOPMIMETYPE_CONN_TAG, sess->client.name, sess->client.addr, NULL, &ctx->top_mime_type, 1);
 
 	return SMTPF_CONTINUE;
 }
@@ -435,6 +464,10 @@ attachmentMail(Session *sess, va_list args)
 		if (accessEmail(sess, ACCESS_ARCHNAME_MAIL_TAG, mail->address.string, NULL, &value) != ACCESS_NOT_FOUND) {
 			free(ctx->archname);
 			ctx->archname = value;
+		}
+		if (accessEmail(sess, ACCESS_TOPMIMETYPE_MAIL_TAG, mail->address.string, NULL, &value) != ACCESS_NOT_FOUND) {
+			free(ctx->top_mime_type);
+			ctx->top_mime_type = value;
 		}
 	}
 
@@ -464,6 +497,10 @@ attachmentRcpt(Session *sess, va_list args)
 			free(ctx->archname);
 			ctx->archname = value;
 		}
+		if (accessEmail(sess, ACCESS_TOPMIMETYPE_RCPT_TAG, rcpt->address.string, NULL, &value) != ACCESS_NOT_FOUND) {
+			free(ctx->top_mime_type);
+			ctx->top_mime_type = value;
+		}
 	}
 
 	return SMTPF_CONTINUE;
@@ -482,6 +519,8 @@ attachmentData(Session *sess, va_list ignore)
 		ctx->mimetype = optDenyContentType.string;
 	if (ctx->archname == NULL)
 		ctx->archname = optDenyZipName.string;
+	if (ctx->top_mime_type == NULL)
+		ctx->top_mime_type = optDenyTopContentType.string;
 
 	return SMTPF_CONTINUE;
 }
@@ -491,13 +530,16 @@ attachmentMimeCheck(Attachment *ctx, const char *string, Vector table)
 {
 	char **pat;
 
+	if (table == NULL)
+		return 0;
+
 	if (verb_attachment.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(820) "attachment=\"%s\"", LOG_ARGS(ctx->session), string);
 
 	for (pat = (char **) VectorBase(table); *pat != NULL; pat++) {
 		if (TextMatch(string, *pat, -1, 1)) {
 			if (verb_attachment.option.value)
-				syslog(LOG_DEBUG, LOG_MSG(821) "found attachment=%s", LOG_ARGS(ctx->session), *pat);
+				syslog(LOG_DEBUG, LOG_MSG(821) "found pattern=%s", LOG_ARGS(ctx->session), *pat);
 			ctx->attachment_found = *pat;
 			return 1;
 		}
@@ -596,12 +638,39 @@ attachmentMimeHeader(Mime *m)
 SmtpfCode
 attachmentHeaders(Session *sess, va_list args)
 {
+	Vector headers;
 	Attachment *ctx;
+	char **hdr, *type;
 
 	LOG_TRACE(sess, 823, attachmentHeaders);
 
 	ctx = filterGetContext(sess, attachment_context);
+	ctx->attachment_found = NULL;
+	ctx->session = sess;
 
+	if ((ctx->top_content_types = TextSplit(ctx->top_mime_type, OPTION_LIST_DELIMS, 0)) != NULL) {
+		headers = va_arg(args, Vector);
+		for (hdr = (char **) VectorBase(headers); *hdr != NULL; hdr++) {
+			if (0 < TextInsensitiveStartsWith(*hdr, "Content-Type:")) {
+				type = *hdr + sizeof ("Content-Type:")-1;
+				type += strspn(type, " \t");
+				if (attachmentMimeCheck(ctx, type, ctx->top_content_types))
+					statsCount(&statDenyTopContentType);
+				break;
+			}
+		}
+	}
+
+#ifdef FILTER_ATTACHMENT_CONTENT_SHORTCUT
+	/* As an optimisation concerning spamd, when we see the
+	 * final dot in a chunk, then call dot handler immediately,
+	 * instead of in the dot handler phase. So if the entire
+	 * message fits in the first chunk, we can avoid connecting
+	 * to spamd entirely, which is last in filter_content_table.
+	 */
+	if (ctx->attachment_found != NULL)
+		return attachmentDot(sess, NULL);
+#endif
 	if (!optDenyContent.value)
 		goto error0;
 
@@ -622,9 +691,6 @@ attachmentHeaders(Session *sess, va_list args)
 		goto error0;
 
 	ctx->mime->mime_header = attachmentMimeHeader;
-	ctx->attachment_found = NULL;
-	ctx->session = sess;
-
 #ifdef NOT_USED
 	littleEndianReset(&ctx->word);
 #endif
@@ -691,13 +757,14 @@ attachmentDot(Session *sess, va_list ignore)
 
 	if (ctx->attachment_found != NULL) {
 		MSG_SET(sess, MSG_POLICY);
-		rc = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.0 message contains blocked file attachment (%s)" ID_MSG(826) "\r\n", ctx->attachment_found, ID_ARG(sess));
+		rc = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.0 message contains blocked content (%s)" ID_MSG(826) CRLF, ctx->attachment_found, ID_ARG(sess));
 /*{REPLY
 See
 <a href="summary.html#opt_deny_content">deny-content</a>,
 <a href="summary.html#opt_deny_content_type">deny-content-type</a>,
-<a href="summary.html#opt_deny_content_name">deny-content-name</a>, and
-<a href="summary.html#opt_deny_compressed_name">deny-compressed-name</a>
+<a href="summary.html#opt_deny_content_name">deny-content-name</a>,
+<a href="summary.html#opt_deny_compressed_name">deny-compressed-name</a>, and
+<a href="summary.html#opt_deny_top_content_type">deny-top-content-type</a>,
 options.
 }*/
 	}
