@@ -139,6 +139,7 @@ extern Stats stat_msg_discard;
 extern Stats stat_msg_drop;
 extern Stats stat_msg_reject;
 extern Stats stat_msg_tempfail;
+extern Stats stat_msg_trap;
 extern Stats stat_dsn_sent;
 extern Stats stat_cli_content;
 extern Stats stat_grey_content;

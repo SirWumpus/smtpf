@@ -214,6 +214,7 @@ Stats stat_msg_discard			= { STATS_TABLE_MSG, "msg-discard" };
 Stats stat_msg_drop			= { STATS_TABLE_MSG, "msg-drop" };
 Stats stat_msg_reject			= { STATS_TABLE_MSG, "msg-reject" };
 Stats stat_msg_tempfail			= { STATS_TABLE_MSG, "msg-tempfail" };
+Stats stat_msg_trap			= { STATS_TABLE_MSG, "msg-trap" };
 Stats stat_dsn_sent			= { STATS_TABLE_MSG, "dsn-sent" };
 Stats stat_line_length			= { STATS_TABLE_MSG, "line-length" };
 Stats stat_strict_dot			= { STATS_TABLE_MSG, "strict-dot" };
@@ -1158,6 +1159,7 @@ statsRegister0(Session *sess, va_list ignore)
 	(void) statsRegister(&stat_msg_drop);
 	(void) statsRegister(&stat_msg_reject);
 	(void) statsRegister(&stat_msg_tempfail);
+	(void) statsRegister(&stat_msg_trap);
 	(void) statsRegister(&stat_dsn_sent);
 	(void) statsRegister(&stat_disconnect_after_dot);
 	(void) statsRegister(&stat_line_length);
