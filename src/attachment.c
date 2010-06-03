@@ -534,12 +534,12 @@ attachmentMimeCheck(Attachment *ctx, const char *string, Vector table)
 		return 0;
 
 	if (verb_attachment.option.value)
-		syslog(LOG_DEBUG, LOG_MSG(820) "attachment=\"%s\"", LOG_ARGS(ctx->session), string);
+		syslog(LOG_DEBUG, LOG_MSG(820) "content=\"%s\"", LOG_ARGS(ctx->session), string);
 
 	for (pat = (char **) VectorBase(table); *pat != NULL; pat++) {
 		if (TextMatch(string, *pat, -1, 1)) {
 			if (verb_attachment.option.value)
-				syslog(LOG_DEBUG, LOG_MSG(821) "found pattern=%s", LOG_ARGS(ctx->session), *pat);
+				syslog(LOG_DEBUG, LOG_MSG(821) "found content=%s pattern=%s", LOG_ARGS(ctx->session), string, *pat);
 			ctx->attachment_found = *pat;
 			return 1;
 		}
