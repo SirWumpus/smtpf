@@ -157,10 +157,9 @@ mutex_unlock(session_id id, const char *name, unsigned long line, pthread_mutex_
 int
 serverOptn0(Session *null, va_list ignore)
 {
-#ifdef ENABLE_PDQ
 	pdqMaxTimeout(optDnsMaxTimeout.value);
 	pdqSetRoundRobin(optDnsRoundRobin.value);
-#endif
+
 	optServerAcceptTimeout.value = strtol(optServerAcceptTimeout.string, NULL, 10) * 1000;
 	optSmtpCommandTimeout.value = strtol(optSmtpCommandTimeout.string, NULL, 10) * 1000;
 	optSmtpConnectTimeout.value = strtol(optSmtpConnectTimeout.string, NULL, 10) * 1000;
