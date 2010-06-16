@@ -277,6 +277,16 @@ is no set schedule for releases.
    +	Use SIZE= to by-pass SpamAssassin and/or the length of the temp.
    	file to by-pass when spamd-max-size is being used. Steve F.
 
+
+--2.3.20--
+
+   !	Refined deny-top-content-type list to target scripts and executables.
+
+   !	deny-content option now includes deny-top-content-type under its
+   	control.
+
+   +	Added the ability to negate patterns in the deny-* options.
+
 --2.3.19--
 
   !!	dupmsg: Re-engineered the code to use an MD5 digest based on the
