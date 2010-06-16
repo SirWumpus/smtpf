@@ -1681,30 +1681,39 @@ readClientData(Session *sess, unsigned char *chunk, unsigned long *size)
 	 * enough room left for the largest possible line.
 	 */
 	for (offset = 0; offset+SMTP_TEXT_LINE_LENGTH < sizeof (sess->msg.chunk1)-1; offset += length) {
-		if (!socketHasInput(sess->client.socket, optSmtpDataLineTimeout.value))
+		if (!socketHasInput(sess->client.socket, optSmtpDataLineTimeout.value)) {
+			if (verb_data.option.value)
+				syslog(LOG_ERR, LOG_MSG(000) "%s(%lu)", LOG_ARGS(sess), FILE_LINENO);
 			goto read_error;
+		}
 
 		pthread_testcancel();
 
 		/* Check for dot transparency at start of new line. */
 		leading_dot_removed = 0;
-		if ((length = socketPeek(sess->client.socket, chunk+offset, 2)) < 0)
+		if ((length = socketPeek(sess->client.socket, chunk+offset, 2)) < 0) {
+			if (verb_data.option.value)
+				syslog(LOG_ERR, LOG_MSG(000) "%s(%lu)", LOG_ARGS(sess), FILE_LINENO);
 			goto read_error;
+		}
 
 		if (length == 2 && chunk[offset] == '.' && chunk[offset+1] != '\r' && chunk[offset+1] != '\n') {
 			/* Strip SMTP dot transparency. RFC 5321 section 4.5.2. */
-			(void) socketRead(sess->client.socket, chunk+offset, 1);
+			if (verb_smtp_data.option.value)
+				syslog(LOG_DEBUG, LOG_MSG(000) "dot transparency, next=%c", LOG_ARGS(sess), chunk[offset+1]);
+			if (socketRead(sess->client.socket, chunk+offset, 1) != 1) {
+				if (verb_data.option.value)
+					syslog(LOG_ERR, LOG_MSG(000) "%s(%lu)", LOG_ARGS(sess), FILE_LINENO);
+				goto read_error;
+			}
 			leading_dot_removed = 1;
+			sess->client.octets++;
+			sess->msg.length++;
 		}
 
 		/* Get remainder of line. */
 		length = socketReadLine2(sess->client.socket, (char *) chunk+offset, sizeof (sess->msg.chunk1)-1-offset, 1);
-		if (verb_smtp_data.option.value) {
-			if (leading_dot_removed)
-				syslog(LOG_DEBUG, LOG_MSG(318) "line %ld:.%.75s", LOG_ARGS(sess), length+1, chunk+offset);
-			else
-				syslog(LOG_DEBUG, LOG_MSG(318) "line %ld:%.75s", LOG_ARGS(sess), length, chunk+offset);
-		}
+
 		if (length < 0) {
 read_error:
 			if (errno != 0)
@@ -1732,6 +1741,13 @@ The client appears to have disconnected. A read error occured in the DATA collec
 			VALGRIND_PRINTF("readClientData longjmp: %s (%d)\n", strerror(errno), errno);
 			VALGRIND_DO_LEAK_CHECK;
 			SIGLONGJMP(sess->on_error, SMTPF_DROP);
+		}
+
+		if (verb_smtp_data.option.value) {
+			if (leading_dot_removed)
+				syslog(LOG_DEBUG, LOG_MSG(000) "line %ld:.%.75s", LOG_ARGS(sess), length+1, chunk+offset);
+			else
+				syslog(LOG_DEBUG, LOG_MSG(318) "line %ld:%.75s", LOG_ARGS(sess), length, chunk+offset);
 		}
 
 		sess->client.octets += length;
