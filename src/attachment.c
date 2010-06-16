@@ -55,7 +55,31 @@ static const char usage_deny_top_content_type[] =
 Option optDenyTopContentType = {
 	"deny-top-content-type",
 
-	 "application/*"
+#ifdef SPECIFIC_LIST
+	 "application/octet-stream"
+	";application/remote-printing"
+	";application/riscos"
+	";application/x-director"
+	";application/x-javascript"
+	";application/x-*sh"
+	";application/x-sprite"
+	";application/x-perl"
+	";application/x-ole*"
+	";application/x-*basic"
+	";application/x-tcl"
+	";text/javascript"
+	";text/vbscript"
+#else
+	/* Allow this type by negating the pattern. */
+	  "!application/pdf"		/* Seen used for sending invoices. */
+
+	/* Disallow these suspicious top level types. */
+	";application/*"
+	";text/*script"
+	";audio/*"
+	";image/*"
+	";video/*"
+#endif
 
 	, usage_deny_top_content_type
 };
@@ -529,6 +553,7 @@ static int
 attachmentMimeCheck(Attachment *ctx, const char *string, Vector table)
 {
 	char **pat;
+	int negate;
 
 	if (table == NULL)
 		return 0;
@@ -537,9 +562,13 @@ attachmentMimeCheck(Attachment *ctx, const char *string, Vector table)
 		syslog(LOG_DEBUG, LOG_MSG(820) "content=\"%s\"", LOG_ARGS(ctx->session), string);
 
 	for (pat = (char **) VectorBase(table); *pat != NULL; pat++) {
-		if (TextMatch(string, *pat, -1, 1)) {
-			if (verb_attachment.option.value)
-				syslog(LOG_DEBUG, LOG_MSG(821) "found content=%s pattern=%s", LOG_ARGS(ctx->session), string, *pat);
+		negate = **pat == '!';
+		if (TextMatch(string, *pat + negate, -1, 1)) {
+			if (negate)
+				break;
+
+			if (verb_info.option.value)
+				syslog(LOG_INFO, LOG_MSG(821) "found content=%s pattern=%s", LOG_ARGS(ctx->session), string, *pat);
 			ctx->attachment_found = *pat;
 			return 1;
 		}
@@ -644,6 +673,9 @@ attachmentHeaders(Session *sess, va_list args)
 
 	LOG_TRACE(sess, 823, attachmentHeaders);
 
+	if (!optDenyContent.value)
+		goto error0;
+
 	ctx = filterGetContext(sess, attachment_context);
 	ctx->attachment_found = NULL;
 	ctx->session = sess;
@@ -671,9 +703,6 @@ attachmentHeaders(Session *sess, va_list args)
 	if (ctx->attachment_found != NULL)
 		return attachmentDot(sess, NULL);
 #endif
-	if (!optDenyContent.value)
-		goto error0;
-
 	if ((ctx->mime = mimeCreate(ctx)) == NULL)
 		goto error0;
 
