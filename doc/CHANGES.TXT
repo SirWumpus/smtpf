@@ -278,6 +278,14 @@ is no set schedule for releases.
    	file to by-pass when spamd-max-size is being used. Steve F.
 
 
+--2.3.21--
+
+   !	clamdDot: smtpf should temp.fail a message when the AV scanner
+	is not available. With clamd-socket=SCAN and clamd server is not
+	running, smtpf would incorrectly continue to process the
+	message. This was caused due to failure to check the return code
+	when contacting clamd for a file SCAN.
+
 --2.3.20--
 
    !	Refined deny-top-content-type list to target scripts and executables.
