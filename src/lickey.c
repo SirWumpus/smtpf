@@ -231,7 +231,7 @@ lickeyMailWarning(void *data)
 	Mail *mail;
 	int days, flags;
 	Option **opt, *o;
-	char timestamp[40], sender[SMTP_PATH_LENGTH],  host[DOMAIN_STRING_LENGTH];
+	char timestamp[32], sender[SMTP_PATH_LENGTH],  host[DOMAIN_STRING_LENGTH];
 
 	/* This is a NO-NO, but I'm too lazy to allocate memory for an int. */
 	days = (int) data;
@@ -266,7 +266,7 @@ lickeyMailWarning(void *data)
 	(void) mailPrintf(mail, "Subject: %s license key expires in less than %d day%s\r\n", _NAME, days, days <= 1 ? "" : "s");
 	(void) mailPrintf(mail, "Message-ID: <%s@[%s]>\r\n", mail->list->id_string, mail->list->local_ip);
 	(void) mailPrintf(mail, "Priority: normal\r\n");
-	(void) mailPrintf(mail, "User-Agent: lickey-" _VERSION "\r\n");
+	(void) mailPrintf(mail, "User-Agent: lickey-%s\r\n",  _VERSION);
 	(void) mailPrintf(mail, "\r\n");
 
 	(void) mailPrintf(
