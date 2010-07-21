@@ -139,6 +139,9 @@ FilterHandler filter_register_table	[] = {
 #ifdef FILTER_GREY
 	FILTER_HANDLER(greyRegister),
 #endif
+#ifdef FILTER_IXHASH
+	FILTER_HANDLER(ixhashRegister),
+#endif
 #ifdef FILTER_MISC
 	FILTER_HANDLER(miscRegister),
 #endif
@@ -243,6 +246,9 @@ FilterHandler filter_init_table	[] = {
 #ifdef FILTER_GREY
 	FILTER_HANDLER(greyInit),
 #endif
+#ifdef FILTER_IXHASH
+	FILTER_HANDLER(ixhashInit),
+#endif
 #ifdef FILTER_MSG_LIMIT
 	FILTER_HANDLER(msgLimitInit),
 #endif
@@ -312,6 +318,9 @@ FilterHandler filter_fini_table	[] = {
 	FILTER_HANDLER(accessFini),
 #ifdef FILTER_GREY
 	FILTER_HANDLER(greyFini),
+#endif
+#ifdef FILTER_IXHASH
+	FILTER_HANDLER(ixhashFini),
 #endif
 #ifdef FILTER_MSG_LIMIT
 	FILTER_HANDLER(msgLimitFini),
@@ -921,6 +930,9 @@ FilterHandler filter_data_table	[] = {
 #ifdef FILTER_GREY
 	FILTER_HANDLER(greyData),
 #endif
+#ifdef FILTER_IXHASH
+	FILTER_HANDLER(ixhashData),
+#endif
 	FILTER_HANDLER(accessData),
 #if defined(FILTER_NULL) && defined(FILTER_NULL_DEFER)
 	FILTER_HANDLER(nullData),
@@ -960,7 +972,7 @@ FilterHandler filter_data_table	[] = {
 FilterHandler filter_data_init_table[] = {
 	FILTER_TABLE_BEGIN(data-init),
 #ifdef __FILTER_CLAMD__see_clamdHeaders
-	/* Always virus scan mail), even for white listed messages. */
+	/* Always virus scan mail, even for white listed messages. */
 	FILTER_HANDLER(clamdData),
 #endif
 	FILTER_TABLE_END
@@ -1104,6 +1116,9 @@ FilterHandler filter_content_table	[] = {
 #ifdef FILTER_GREY
 	FILTER_HANDLER(greyContent),
 #endif
+#ifdef FILTER_IXHASH
+	FILTER_HANDLER(ixhashContent),
+#endif
 #ifdef FILTER_CLI
 	FILTER_HANDLER(cliContent),
 #endif
@@ -1184,6 +1199,9 @@ FilterHandler filter_dot_table	[] = {
 #endif
 #if defined(FILTER_GREY) && !defined(FILTER_GREY_CONTENT_SHORTCUT)
 	FILTER_HANDLER(greyDot),
+#endif
+#ifdef FILTER_IXHASH
+	FILTER_HANDLER(ixhashDot),
 #endif
 #ifdef FILTER_CLI
 	FILTER_HANDLER(cliDot),

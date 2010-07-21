@@ -100,14 +100,14 @@ title :
 	@echo
 
 MODULE_H = access.h attachment.h avastd.h clamd.h cli.h click.h concurrent.h \
-	ctasd.h digest.h dupmsg.h emew.h freemail.h four21.h fpscand.h grey.h misc.h \
-	msglimit.h null.h pad.h p0f.h rate.h rbl.h sav.h save.h savdid.h siq.h \
-	size.h spamd2.h spf.h timelimit.h uribl.h
+	ctasd.h digest.h dupmsg.h emew.h freemail.h four21.h fpscand.h grey.h \
+	ixhash.h misc.h msglimit.h null.h pad.h p0f.h rate.h rbl.h sav.h save.h \
+	savdid.h siq.h size.h spamd2.h spf.h timelimit.h uribl.h
 
 MODULE_O = access$O attachment$O avastd$O clamd$O cli$O click$O concurrent$O \
-	ctasd$O digest$O dupmsg$O emew$O freemail$O four21$O fpscand$O grey$O misc$O \
-	msglimit$O null$O pad$O p0f$O rate$O rbl$O sav$O save$O savdid$O siq$O \
-	size$O spamd2$O spf$O timelimit$O uribl$O
+	ctasd$O digest$O dupmsg$O emew$O freemail$O four21$O fpscand$O grey$O \
+	ixhash$O misc$O msglimit$O null$O pad$O p0f$O rate$O rbl$O sav$O save$O \
+	savdid$O siq$O size$O spamd2$O spf$O timelimit$O uribl$O
 
 CORE = built$O server$O smtpf$O cache$O cmd$O dsn$O filter$O latency$O mx$O options$O \
        route$O reply$O stats$O summary$O verbose$O
@@ -210,6 +210,9 @@ four21$O : config.h ${TARNAME}.h four21.c
 
 grey$O : config.h ${TARNAME}.h grey.c
 	${CC} ${CFLAGS} -c grey.c
+
+ixhash$O : config.h ${TARNAME}.h ixhash.c
+	${CC} ${CFLAGS} -c ixhash.c
 
 latency$O : config.h ${TARNAME}.h latency.c
 	${CC} ${CFLAGS} -c latency.c

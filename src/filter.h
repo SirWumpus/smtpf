@@ -559,6 +559,9 @@ extern void filterClearAllContexts(Session *sess);
 #ifdef FILTER_GREY
 # include "grey.h"
 #endif
+#ifdef FILTER_IXHASH
+# include "ixhash.h"
+#endif
 #include "misc.h"
 #ifdef FILTER_MSG_LIMIT
 # include "msglimit.h"

@@ -109,6 +109,8 @@ com/snert/src/@PACKAGE_NAME@/src/greybody.c
 com/snert/src/@PACKAGE_NAME@/src/greycontent.c
 com/snert/src/@PACKAGE_NAME@/src/grey.c
 com/snert/src/@PACKAGE_NAME@/src/grey.h
+com/snert/src/@PACKAGE_NAME@/src/ixhash.c
+com/snert/src/@PACKAGE_NAME@/src/ixhash.h
 com/snert/src/@PACKAGE_NAME@/src/latency.c
 com/snert/src/@PACKAGE_NAME@/src/latency.h
 com/snert/src/@PACKAGE_NAME@/src/lickey.c
