@@ -23,9 +23,11 @@ typedef enum {
 	ACCESS_DISCARD,
 	ACCESS_NEXT,
 	ACCESS_OK_AV,
+	ACCESS_POLICY_OK,
+	ACCESS_POLICY_PASS,
 	ACCESS_SAVE,
 	ACCESS_SKIP,
-	ACCESS_SPF_PASS,
+	ACCESS_SPF_PASS,		/* replaced by policy-pass */
 	ACCESS_TAG,
 	ACCESS_TEMPFAIL,
 	ACCESS_TRAP,
@@ -211,6 +213,8 @@ extern SmtpfCode accessClose(Session *sess, va_list ignore);
 #define ACCESS_DISCARD_WORD		"DISCARD"			/* all */
 #define ACCESS_IREJECT_WORD		"IREJECT"			/* Connect, Connect:From, From */
 #define ACCESS_NEXT_WORD		"NEXT"				/* all */
+#define ACCESS_POLICY_PASS_WORD		"POLICY-PASS"			/* Connect:From, From */
+#define ACCESS_POLICY_OK_WORD		"POLICY-OK"			/* Connect:From, From */
 #define ACCESS_REJECT_WORD		"REJECT"			/* all */
 #define ACCESS_SAVE_WORD		"SAVE"				/* Connect, From, To */
 #define ACCESS_SKIP_WORD		"SKIP"				/* all */

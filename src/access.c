@@ -188,6 +188,8 @@ const char access_ireject[]	= ACCESS_IREJECT_WORD;
 const char access_next[]	= ACCESS_NEXT_WORD;
 const char access_ok[]		= ACCESS_OK_WORD;
 const char access_ok_av[]	= ACCESS_OK_AV_WORD;
+const char access_policy_ok[]	= ACCESS_POLICY_OK_WORD;
+const char access_policy_pass[]	= ACCESS_POLICY_PASS_WORD;
 const char access_reject[]	= ACCESS_REJECT_WORD;
 const char access_save[]	= ACCESS_SAVE_WORD;
 const char access_skip[]	= ACCESS_SKIP_WORD;
@@ -198,20 +200,22 @@ const char access_trap[]	= ACCESS_TRAP_WORD;
 const char access_unknown[]	= "?";
 
 EnumStringMapping access_action_mapping[] = {
-	{ ACCESS_OK,		access_ok 	},
-	{ ACCESS_REJECT,	access_reject 	},
-	{ ACCESS_IREJECT,	access_ireject 	},
-	{ ACCESS_CONTENT,	access_content 	},
-	{ ACCESS_DISCARD,	access_discard 	},
-	{ ACCESS_NEXT,		access_next 	},
-	{ ACCESS_OK_AV,		access_ok_av	},
-	{ ACCESS_SAVE,		access_save 	},
-	{ ACCESS_SKIP,		access_skip	},
-	{ ACCESS_SPF_PASS,	access_spf_pass	},
-	{ ACCESS_TAG,		access_tag	},
-	{ ACCESS_TEMPFAIL,	access_tempfail	},
-	{ ACCESS_TRAP,		access_trap	},
-	{ ACCESS_UNKNOWN,	NULL		},
+	{ ACCESS_OK,		access_ok 		},
+	{ ACCESS_REJECT,	access_reject 		},
+	{ ACCESS_IREJECT,	access_ireject 		},
+	{ ACCESS_CONTENT,	access_content 		},
+	{ ACCESS_DISCARD,	access_discard 		},
+	{ ACCESS_NEXT,		access_next 		},
+	{ ACCESS_OK_AV,		access_ok_av		},
+	{ ACCESS_POLICY_OK,	access_policy_ok	},
+	{ ACCESS_POLICY_PASS,	access_policy_pass	},
+	{ ACCESS_SAVE,		access_save 		},
+	{ ACCESS_SKIP,		access_skip		},
+	{ ACCESS_SPF_PASS,	access_spf_pass		},
+	{ ACCESS_TAG,		access_tag		},
+	{ ACCESS_TEMPFAIL,	access_tempfail		},
+	{ ACCESS_TRAP,		access_trap		},
+	{ ACCESS_UNKNOWN,	NULL			},
 };
 
 AccessCode
@@ -854,19 +858,19 @@ accessClientAction(Session *sess, const char *value, const char *msg)
 {
 	SmtpfCode rc = SMTPF_CONTINUE;
 
-	if (strcmp(value, "CONTENT") == 0) {
+	if (strcmp(value, access_content) == 0) {
 		rc = SMTPF_GREY;
 		statsCount(&stat_connect_gl);
 		CLIENT_SET(sess, CLIENT_IS_GREY);
 		sess->client.bw_state = SMTPF_GREY;
 	}
 
-	else if (0 < TextSensitiveStartsWith(value, "SAVE")) {
+	else if (0 < TextSensitiveStartsWith(value, access_save)) {
 		CLIENT_SET(sess, CLIENT_IS_SAVE);
 		saveSetSaveDir(sess, msg);
 	}
 
-	else if (0 < TextSensitiveStartsWith(value, "TRAP")) {
+	else if (0 < TextSensitiveStartsWith(value, access_trap)) {
 		CLIENT_SET(sess, CLIENT_IS_TRAP);
 		saveSetTrapDir(sess, msg);
 
@@ -877,7 +881,7 @@ accessClientAction(Session *sess, const char *value, const char *msg)
 		rc = SMTPF_DISCARD;
 	}
 
-	else if (strcmp(value, "TAG") == 0) {
+	else if (strcmp(value, access_tag) == 0) {
 		CLIENT_SET(sess, CLIENT_IS_TAG);
 	}
 
@@ -944,9 +948,10 @@ SmtpfCode
 accessConnect(Session *sess, va_list args)
 {
 	AccessCode access;
-	char *msg, *value = NULL;
+	char *msg, *key, *value;
 	SmtpfCode rc = SMTPF_CONTINUE;
 
+	key = value = NULL;
 	LOG_TRACE(sess, 118, accessConnect);
 
 	/* Typicallyed already cleared at start of session. Reset these flags
@@ -974,7 +979,7 @@ accessConnect(Session *sess, va_list args)
 	 *	tag:[ip]
 	 *	tag:
 	 */
-	if ((access = accessClient(sess, "connect:", sess->client.name, sess->client.addr, NULL, &value, 1)) != ACCESS_NOT_FOUND) {
+	if ((access = accessClient(sess, "connect:", sess->client.name, sess->client.addr, &key, &value, 1)) != ACCESS_NOT_FOUND) {
 		if ((msg = strchr(value, ':')) != NULL)
 			msg++;
 
@@ -985,7 +990,7 @@ accessConnect(Session *sess, va_list args)
 
 		case ACCESS_OK:
 			if (verb_info.option.value) {
-				syslog(LOG_INFO, LOG_MSG(119) "host " CLIENT_FORMAT " %s", LOG_ARGS(sess), CLIENT_INFO(sess), msg == NULL ? "white listed" : msg);
+				syslog(LOG_INFO, LOG_MSG(119) "host " CLIENT_FORMAT " %s (%s)", LOG_ARGS(sess), CLIENT_INFO(sess), msg == NULL ? "white listed" : msg, key);
 /*{LOG
 There is a <span class="tag">Connect:</span> tag entry for either the
 client name or IP address with a right-hand-side value of OK.
@@ -1026,7 +1031,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			break;
 
 		default:
-			if (0 < TextSensitiveStartsWith(value, "IREJECT")) {
+			if (0 < TextSensitiveStartsWith(value, access_ireject)) {
 				rc = replyPushFmt(sess, SMTPF_DROP, "550 5.7.1 host " CLIENT_FORMAT " %s" ID_MSG(854) "\r\n", CLIENT_INFO(sess), msg == NULL ? "black listed" : msg, ID_ARG(sess));
 /*{REPLY
 There is a <a href="access-map.html#tag_connect"><span class="tag">Connect:</span></a> tag entry for either the
@@ -1043,6 +1048,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 		}
 
 		free(value);
+		free(key);
 	}
 
 	/* Unless by-pass above in the access database, then RFC 2606
@@ -1087,16 +1093,31 @@ accessIdle(Session *sess, va_list ignore)
 	return rc;
 }
 
+static AccessCode
+access_policy_check(Session *sess, const char *value, AccessCode code)
+{
+	if (sess->msg.spf_mail == SPF_PASS) {
+		if (0 < TextSensitiveStartsWith(value, access_policy_pass)
+		||  0 < TextSensitiveStartsWith(value, access_policy_ok)
+		||  0 < TextSensitiveStartsWith(value, access_spf_pass))
+			code = ACCESS_OK;
+	} else if (0 < TextSensitiveStartsWith(value, access_policy_ok)) {
+		code = ACCESS_OK;
+	}
+
+	return code;
+}
+
 static SmtpfCode
 accessMsgAction(Session *sess, const char *value, const char *msg, SmtpfCode code)
 {
-	if (0 < TextSensitiveStartsWith(value, "SAVE")) {
+	if (0 < TextSensitiveStartsWith(value, access_save)) {
 		code = SMTPF_CONTINUE;
 		MSG_SET(sess, MSG_SAVE);
 		saveSetSaveDir(sess, msg);
 	}
 
-	else if (0 < TextSensitiveStartsWith(value, "TRAP")) {
+	else if (0 < TextSensitiveStartsWith(value, access_trap)) {
 		/* Use SMTPF_DISCARD as test by-pass. cmdData will make
 		 * a final evaluation and convert SMTPF_DISCARD when MSG_TRAP
 		 * is set to SMTPF_REJECT.
@@ -1106,12 +1127,12 @@ accessMsgAction(Session *sess, const char *value, const char *msg, SmtpfCode cod
 		saveSetTrapDir(sess, msg);
 	}
 
-	else if (strcmp(value, "TAG") == 0) {
+	else if (strcmp(value, access_tag) == 0) {
 		code = SMTPF_CONTINUE;
 		MSG_SET(sess, MSG_TAG);
 	}
 
-	else if (0 < TextSensitiveStartsWith(value, "DISCARD")) {
+	else if (0 < TextSensitiveStartsWith(value, access_discard)) {
 		if (verb_info.option.value)
 			syslog(LOG_INFO, LOG_MSG(000) "message %s", LOG_ARGS(sess), msg == NULL ? "discard" : msg);
 		MSG_SET(sess, MSG_DISCARD);
@@ -1167,9 +1188,10 @@ accessMail(Session *sess, va_list args)
 {
 	SmtpfCode rc;
 	AccessCode access;
-	char *msg, *action, *value = NULL;
+	char *msg, *action, *key, *value;
 	ParsePath *path = va_arg(args, ParsePath *);
 
+	key = value = NULL;
 	LOG_TRACE(sess, 123, accessMail);
 
 	CLIENT_CLEAR(sess, CLIENT_IS_MX);
@@ -1188,8 +1210,8 @@ accessMail(Session *sess, va_list args)
 	if (path->address.length == 0)
 		rc = SMTPF_CONTINUE;
 
-	if ((access = smdbIpMail(sess->access_map, "connect:", sess->client.addr, SMDB_COMBO_TAG_DELIM "from:", sess->msg.mail->address.string, NULL, &value)) != ACCESS_NOT_FOUND
-	|| (*sess->client.name != '\0' && (access = smdbDomainMail(sess->access_map, "connect:", sess->client.name, SMDB_COMBO_TAG_DELIM "from:", sess->msg.mail->address.string, NULL, &value)) != ACCESS_NOT_FOUND)) {
+	if ((access = smdbIpMail(sess->access_map, "connect:", sess->client.addr, SMDB_COMBO_TAG_DELIM "from:", sess->msg.mail->address.string, &key, &value)) != ACCESS_NOT_FOUND
+	|| (*sess->client.name != '\0' && (access = smdbDomainMail(sess->access_map, "connect:", sess->client.name, SMDB_COMBO_TAG_DELIM "from:", sess->msg.mail->address.string, &key, &value)) != ACCESS_NOT_FOUND)) {
 		access = accessPattern(sess, sess->client.addr, value, &action);
 		if (access == ACCESS_NOT_FOUND) {
 			access = accessPattern(sess, sess->client.name, value, &action);
@@ -1199,11 +1221,10 @@ accessMail(Session *sess, va_list args)
 		free(value);
 		value = action;
 
-		if (strcmp(value, "SPF-PASS") == 0 && sess->msg.spf_mail == SPF_PASS)
-			access = ACCESS_OK;
-
 		if ((msg = strchr(value, ':')) != NULL)
 			msg++;
+
+		access = access_policy_check(sess, value, access);
 
 		switch (access) {
 		case ACCESS_OK_AV:
@@ -1212,7 +1233,7 @@ accessMail(Session *sess, va_list args)
 
 		case ACCESS_OK:
 			if (verb_info.option.value) {
-				syslog(LOG_INFO, LOG_MSG(124) "host " CLIENT_FORMAT " sender <%s> %s", LOG_ARGS(sess), CLIENT_INFO(sess), sess->msg.mail->address.string, msg == NULL ? "white listed" : msg);
+				syslog(LOG_INFO, LOG_MSG(124) "host " CLIENT_FORMAT " sender <%s> %s (%s)", LOG_ARGS(sess), CLIENT_INFO(sess), sess->msg.mail->address.string, msg == NULL ? "white listed" : msg, key);
 /*{LOG
 There is a <a href="access-map.html#tag_connect_from"><span class="tag">Connect:From:</span></a>
  combo tag entry for either the client name and sender pair or client IP address and sender pair with a
@@ -1252,7 +1273,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			break;
 
 		default:
-			if (0 < TextSensitiveStartsWith(value, "IREJECT")) {
+			if (0 < TextSensitiveStartsWith(value, access_ireject)) {
 				rc = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 host " CLIENT_FORMAT " sender <%s> %s" ID_MSG(855) "\r\n", CLIENT_INFO(sess), sess->msg.mail->address.string, msg == NULL ? "black listed" : msg, ID_ARG(sess));
 /*{REPLY
 There is a <a href="access-map.html#tag_connect_from"><span class="tag">Connect:From:</span></a> combo tag entry for either the
@@ -1281,12 +1302,11 @@ See <a href="access-map.html#access_tags">access-map</a>.
 	 *	tag:account@
 	 *	tag:
 	 */
-	else if ((access = accessEmail(sess, "from:", path->address.string, NULL, &value)) != ACCESS_NOT_FOUND) {
-		if (strcmp(value, "SPF-PASS") == 0 && sess->msg.spf_mail == SPF_PASS)
-			access = ACCESS_OK;
-
+	else if ((access = accessEmail(sess, "from:", path->address.string, &key, &value)) != ACCESS_NOT_FOUND) {
 		if ((msg = strchr(value, ':')) != NULL)
 			msg++;
+
+		access = access_policy_check(sess, value, access);
 
 		switch (access) {
 		case ACCESS_OK_AV:
@@ -1295,7 +1315,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 
 		case ACCESS_OK:
 			if (verb_info.option.value) {
-				syslog(LOG_INFO, LOG_MSG(126) "sender <%s> %s", LOG_ARGS(sess), path->address.string, msg == NULL ? "white listed" : msg);
+				syslog(LOG_INFO, LOG_MSG(126) "sender <%s> %s (%s)", LOG_ARGS(sess), path->address.string, msg == NULL ? "white listed" : msg, key);
 /*{LOG
 There is a <a href="access-map.html#tag_from"><span class="tag">From:</span></a> tag entry for
 the sender address or their domain with a right-hand-side value of OK.
@@ -1332,7 +1352,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			break;
 
 		default:
-			if (0 < TextSensitiveStartsWith(value, "IREJECT")) {
+			if (0 < TextSensitiveStartsWith(value, access_ireject)) {
 				rc = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 sender <%s> %s" ID_MSG(856) "\r\n", path->address.string, msg == NULL ? "black listed" : msg, ID_ARG(sess));
 /*{REPLY
 There is a <a href="access-map.html#tag_from"><span class="tag">From:</span></a> tag entry for
@@ -1377,6 +1397,7 @@ See <a href="summary.html#opt_reject_unknown_tld">reject-unknown-tld</a>.
 
 	sess->msg.bw_state = rc;
 	free(value);
+	free(key);
 
 	return rc;
 }
@@ -1413,9 +1434,10 @@ accessRcpt(Session *sess, va_list args)
 {
 	SmtpfCode rc;
 	AccessCode access;
-	char *msg, *action, *value = NULL;
+	char *msg, *action, *key, *value;
 	ParsePath *path = va_arg(args, ParsePath *);
 
+	key = value = NULL;
 	LOG_TRACE(sess, 130, accessRcpt);
 
 	/* Block this form of routed address:
@@ -1471,7 +1493,7 @@ See <a href="summary.html#opt_reject_quoted_at_sign">reject-quoted-at-sign</a>.
 
 		case ACCESS_OK:
 			if (verb_info.option.value) {
-				syslog(LOG_INFO, LOG_MSG(134) "host " CLIENT_FORMAT " recipient <%s> %s", LOG_ARGS(sess), CLIENT_INFO(sess), path->address.string, msg == NULL ? "white listed" : msg);
+				syslog(LOG_INFO, LOG_MSG(134) "host " CLIENT_FORMAT " recipient <%s> %s (%s)", LOG_ARGS(sess), CLIENT_INFO(sess), path->address.string, msg == NULL ? "white listed" : msg, key);
 /*{LOG
 There is a <a href="access-map.html#tag_connect_to"><span class="tag">Connect:To:</span></a> combo tag entry for either the
 client name and recipient pair or client IP address and recipient pair with a
@@ -1533,7 +1555,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 
 		case ACCESS_OK:
 			if (verb_info.option.value) {
-				syslog(LOG_INFO, LOG_MSG(136) "sender <%s> recipient <%s> %s", LOG_ARGS(sess), sess->msg.mail->address.string, path->address.string, msg == NULL ? "white listed" : msg);
+				syslog(LOG_INFO, LOG_MSG(136) "sender <%s> recipient <%s> %s (%s)", LOG_ARGS(sess), sess->msg.mail->address.string, path->address.string, msg == NULL ? "white listed" : msg, key);
 /*{LOG
 There is a <a href="access-map.html#tag_from_to"><span class="tag">From:To:</span></a> combo tag entry for a sender
 and recipient pair with a right-hand-side value of OK.
@@ -1595,7 +1617,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 
 		case ACCESS_OK:
 			if (verb_info.option.value) {
-				syslog(LOG_INFO, LOG_MSG(138) "recipient <%s> %s", LOG_ARGS(sess), path->address.string, msg == NULL ? "white listed" : msg);
+				syslog(LOG_INFO, LOG_MSG(138) "recipient <%s> %s (%s)", LOG_ARGS(sess), path->address.string, msg == NULL ? "white listed" : msg, key);
 /*{LOG
 There is a <a href="access-map.html#tag_to"><span class="tag">To:</span></a> tag entry for sender's
 address with a right-hand-side value of OK.
@@ -1665,6 +1687,7 @@ See <a href="summary.html#opt_reject_unknown_tld">reject-unknown-tld</a>.
 	}
 
 	free(value);
+	free(key);
 
 	return rc;
 }
@@ -1674,8 +1697,9 @@ accessHelo(Session *sess, va_list args)
 {
 	AccessCode access;
 	SmtpfCode rc = SMTPF_CONTINUE;
-	char *helo, *msg, *value = NULL;
+	char *helo, *msg, *key, *value;
 
+	key = value = NULL;
 	LOG_TRACE(sess, 142, accessHelo);
 
 	if (CLIENT_ANY_SET(sess, CLIENT_USUAL_SUSPECTS|CLIENT_IS_GREY))
@@ -1694,7 +1718,7 @@ accessHelo(Session *sess, va_list args)
 
 		case ACCESS_OK:
 			if (verb_info.option.value) {
-				syslog(LOG_INFO, LOG_MSG(923) "helo %s %s", LOG_ARGS(sess), helo, msg == NULL ? "white listed" : msg);
+				syslog(LOG_INFO, LOG_MSG(923) "helo %s %s (%s)", LOG_ARGS(sess), helo, msg == NULL ? "white listed" : msg, key);
 /*{LOG
 There is a <a href="access-map.html#tag_helo"><span class="tag">Helo:</span></a> tag entry for
 HELO/EHLO argument with a right-hand-side value of OK.
@@ -1735,7 +1759,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			break;
 
 		default:
-			if (0 < TextSensitiveStartsWith(value, "IREJECT")) {
+			if (0 < TextSensitiveStartsWith(value, access_ireject)) {
 				rc = replyPushFmt(sess, SMTPF_DROP, "550 5.7.1 helo %s %s" ID_MSG(926) "\r\n", helo, msg == NULL ? "black listed" : msg, ID_ARG(sess));
 /*{REPLY
 There is a <a href="access-map.html#tag_helo"><span class="tag">Helo:</span></a>
@@ -1752,6 +1776,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 		}
 
 		free(value);
+		free(key);
 	}
 
 	return rc;
@@ -1902,6 +1927,8 @@ AccessMapping accessTagWordsMap[] =
 		"|" ACCESS_SKIP_WORD
 		"|" ACCESS_TAG_WORD
 		"|" ACCESS_SPF_PASS_WORD
+		"|" ACCESS_POLICY_OK_WORD
+		"|" ACCESS_POLICY_PASS_WORD
 	},
 	{	ACCESS_CONN_MAIL_TAG,
 		    ACCESS_OK_WORD
@@ -1916,6 +1943,8 @@ AccessMapping accessTagWordsMap[] =
 		"|" ACCESS_SKIP_WORD
 		"|" ACCESS_TAG_WORD
 		"|" ACCESS_SPF_PASS_WORD
+		"|" ACCESS_POLICY_OK_WORD
+		"|" ACCESS_POLICY_PASS_WORD
 	},
 	{	ACCESS_RCPT_TAG,
 		    ACCESS_OK_WORD
@@ -1956,6 +1985,8 @@ AccessMapping accessTagWordsMap[] =
 	{ 	ACCESS_BODY_TAG,
 		    ACCESS_OK_WORD
 		"|" ACCESS_REJECT_WORD
+		"|" ACCESS_SAVE_WORD
+		"|" ACCESS_TRAP_WORD
 	},
 	{ 	ACCESS_RATE_TAG,
 		    "^[0-9]+$"
@@ -2107,6 +2138,16 @@ AccessMapping accessWordTagsMap[] =
 		    ".+"
 	},
 	{
+		ACCESS_POLICY_OK_WORD,
+		    ACCESS_MAIL_TAG
+		"|" ACCESS_CONN_MAIL_TAG
+	},
+	{
+		ACCESS_POLICY_PASS_WORD,
+		    ACCESS_MAIL_TAG
+		"|" ACCESS_CONN_MAIL_TAG
+	},
+	{
 		ACCESS_REJECT_WORD,
 		    ACCESS_CONN_TAG
 		"|" ACCESS_HELO_TAG
@@ -2126,6 +2167,7 @@ AccessMapping accessWordTagsMap[] =
 		"|" ACCESS_CONN_MAIL_TAG
 		"|" ACCESS_CONN_RCPT_TAG
 		"|" ACCESS_MAIL_RCPT_TAG
+		"|" ACCESS_BODY_TAG
 	},
 	{
 		ACCESS_SKIP_WORD,
@@ -2165,6 +2207,7 @@ AccessMapping accessWordTagsMap[] =
 		"|" ACCESS_CONN_MAIL_TAG
 		"|" ACCESS_CONN_RCPT_TAG
 		"|" ACCESS_MAIL_RCPT_TAG
+		"|" ACCESS_BODY_TAG
 	},
 	{
 		"^[0-9]+$",
