@@ -1802,7 +1802,7 @@ See <a href="summary.html#opt_rfc2821_line_length">rfc2821-line-length</a>.
 			/* Detect the start of a header line or a blank header/body separator. */
 			if ((!isspace(chunk[offset]) && strchr((char *) chunk+offset+1, ':') == NULL)
 			||  (length == 2 && chunk[offset] == '\r' && chunk[offset+1] == '\n')) {
-				sess->msg.eoh = offset;
+				sess->msg.eoh = offset+length;
 				continue;
 			}
 
