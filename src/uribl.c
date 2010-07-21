@@ -647,6 +647,9 @@ uriblTestURI(Session *sess, URI *uri, int post_data)
 		access = accessClient(sess, "body:", body_tag = uri->host, NULL, NULL, &value, 1);
 	}
 
+	if (access == ACCESS_UNKNOWN)
+		access = access_word_to_code(value);
+
 	msg = NULL;
 	if (value != NULL && (msg = strchr(value, ':')) != NULL)
 		msg++;
