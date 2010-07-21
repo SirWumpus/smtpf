@@ -1,5 +1,5 @@
 /*
- * attachment.c
+ * digest.c
  *
  * Copyright 2008 by Anthony Howe. All rights reserved.
  */
@@ -119,20 +119,6 @@ digestListLookup(Session *sess, DnsList *dnslist, const char *name)
 }
 
 static void
-digestToString(unsigned char digest[16], char digest_string[33])
-{
-	int i;
-	static const char hex_digit[] = "0123456789abcdef";
-
-	for (i = 0; i < 16; i++) {
-		digest_string[i << 1] = hex_digit[(digest[i] >> 4) & 0x0F];
-		digest_string[(i << 1) + 1] = hex_digit[digest[i] & 0x0F];
-	}
-	digest_string[32] = '\0';
-}
-
-
-static void
 digestMimePartStart(Mime *m)
 {
 	Digest *ctx = m->mime_data;
@@ -153,7 +139,7 @@ digestMimePartFinish(Mime *m)
 		return;
 
 	md5_finish(&ctx->md5, (md5_byte_t *) digest);
-	digestToString(digest, ctx->digest_string);
+	md5_digest_to_string(digest, ctx->digest_string);
 
 	if (verb_digest.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(868) "digest=%s", LOG_ARGS(ctx->session), ctx->digest_string);

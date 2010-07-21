@@ -525,19 +525,6 @@ greyFini(Session *null, va_list ignore)
 	return SMTPF_CONTINUE;
 }
 
-void
-digestToString(unsigned char digest[16], char digest_string[33])
-{
-	int i;
-	static const char hex_digit[] = "0123456789abcdef";
-
-	for (i = 0; i < 16; i++) {
-		digest_string[i << 1] = hex_digit[(digest[i] >> 4) & 0x0F];
-		digest_string[(i << 1) + 1] = hex_digit[digest[i] & 0x0F];
-	}
-	digest_string[32] = '\0';
-}
-
 static int
 greyHeader(Session *sess, mcc_row *row, time_t *now)
 {
@@ -1316,7 +1303,7 @@ greyDot(Session *sess, va_list ignore)
 		return SMTPF_CONTINUE;
 
 	md5_finish(&grey->md5, (md5_byte_t *) digest);
-	digestToString(digest, grey->digest);
+	md5_digest_to_string(digest, grey->digest);
 
 	if (optGreyKey.value & GREY_TUPLE_RCPT) {
 		rc = SMTPF_CONTINUE;

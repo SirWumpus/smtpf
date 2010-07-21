@@ -21,8 +21,6 @@
 #include <ctype.h>
 #include <com/snert/lib/util/md5.h>
 
-extern void digestToString(unsigned char digest[16], char digest_string[33]);
-
 /***********************************************************************
  ***
  ***********************************************************************/
@@ -233,7 +231,7 @@ dupmsgDot(Session *sess, va_list ignore)
 	 */
 	md5_append(&ctx->md5, (md5_byte_t *) ctx->original_msg_id, strlen(ctx->original_msg_id));
 	md5_finish(&ctx->md5, (md5_byte_t *) ctx->digest);
-	digestToString(ctx->digest, ctx->digest_string);
+	md5_digest_to_string(ctx->digest, ctx->digest_string);
 
 	rc = SMTPF_CONTINUE;
 	MEMSET(&row, 0, sizeof (row));
