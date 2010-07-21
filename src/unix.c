@@ -238,6 +238,7 @@ not start.
 			if (10 <= count) {
 				syslog(LOG_ERR, LOG_NUM(969) "force kill of pid=%d", old_pid);
 				kill(old_pid, SIGKILL);
+				(void) sleep(5);
 			}
 
 			syslog(LOG_ERR, LOG_NUM(970) "previous instance pid=%d", old_pid);
