@@ -67,7 +67,7 @@ static const char verbose_usage[] =
 
 static char usage_verbose[1024];
 
-Option optVerbose = { "verbose", "warn,info", (const char *) usage_verbose };
+Option optVerbose = { "verbose", "warn,info,smtp-dot", (const char *) usage_verbose };
 
 /***********************************************************************
  ***
