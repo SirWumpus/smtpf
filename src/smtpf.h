@@ -325,6 +325,7 @@ typedef struct {
 #define MSG_TRAP			0x00001000
 #define MSG_INFECTED			0x00002000
 #define MSG_OK_AV			0x00004000
+#define MSG_OK				0x00008000
 
 #define MSG_END_BIT			MSG_TRAP
 

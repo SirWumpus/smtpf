@@ -57,6 +57,7 @@ static const char *message_flags[] = {
 	"trap,",
 	"infected,",
 	"ok_av,",
+	"ok,",
 	NULL
 };
 

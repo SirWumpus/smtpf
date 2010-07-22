@@ -188,7 +188,8 @@ clickMail(Session *sess, va_list args)
 				syslog(LOG_INFO, LOG_MSG(242) "host " CLIENT_FORMAT " sender <%s> white listed", LOG_ARGS(sess), CLIENT_INFO(sess), sess->msg.mail->address.string);
 
 			statsCount(&stat_click_accept);
-			MSG_SET(sess, MAIL_IS_WHITE);
+			MAIL_SET(sess, MAIL_IS_WHITE);
+			MSG_SET(sess, MSG_OK);
 
 			/* Clear any previously delayed rejection. When
 			 * there are two or more RCPTs, then subsequent
@@ -274,6 +275,32 @@ clickRcpt(Session *sess, va_list args)
 	return sess->msg.bw_state = SMTPF_DISCARD;
 }
 
+char *
+clickUrlEncode(const char *string)
+{
+	size_t length;
+	char *out, *op;
+	static char uri_unreserved[] = "-_.~";
+	static const char hex_digit[] = "0123456789ABCDEF";
+
+	length = strlen(string);
+	if ((out = malloc(length * 3 + 1)) == NULL)
+		return NULL;
+
+	for (op = out ; *string != '\0'; string++) {
+		if (isalnum(*string) || strchr(uri_unreserved, *string) != NULL) {
+			*op++ = *string;
+		} else {
+			*op++ = '%';
+			*op++ = hex_digit[(*string >> 4) & 0x0F];
+			*op++ = hex_digit[*string & 0x0F];
+		}
+	}
+	*op = '\0';
+
+	return out;
+}
+
 int
 clickReplyLog(Session *sess, va_list args)
 {
@@ -282,13 +309,14 @@ clickReplyLog(Session *sess, va_list args)
 	mcc_row row;
 	Click *click;
 	const char **reply;
+	unsigned char *c_arg;
 	size_t *reply_length;
 
 	LOG_TRACE(sess, 246, clickReplyLog);
 
 	if (*optClickUrl.string == '\0' || sess->msg.mail == NULL
 	|| CLIENT_ANY_SET(sess, CLIENT_IS_LOCAL_BLACK|CLIENT_IS_GREY|CLIENT_IS_WHITE)
-	|| MSG_ANY_SET(sess, MSG_DISCARD|MSG_TRAP|MSG_POLICY)
+	|| MSG_ANY_SET(sess, MSG_OK|MSG_OK_AV|MSG_DISCARD|MSG_TRAP|MSG_POLICY)
 	|| MAIL_ANY_SET(sess, MAIL_IS_LOCAL_BLACK|MAIL_IS_WHITE)
 	|| RCPT_ANY_SET(sess, RCPT_IS_LOCAL_BLACK|RCPT_IS_WHITE|RCPT_FAILED)
 	)
@@ -329,12 +357,16 @@ clickReplyLog(Session *sess, va_list args)
 		 * to present some form of CAPTCHA to validate the sender
 		 * before white listing.
 		 */
+		if ((c_arg = clickUrlEncode((const char *) row.key_data)) == NULL)
+			c_arg = row.key_data;
 		len = snprintf(
 			click->reply+(*reply_length-2), sizeof (click->reply)-(*reply_length-2),
 			CLICK_HTTP_FORMAT, optClickUrl.string,
 			sess->reply + sizeof (CLICK_STRING)-1,
-			row.key_data
+			c_arg
 		);
+		if (c_arg != row.key_data)
+			free(c_arg);
 		break;
 	default:
 		return SMTPF_CONTINUE;
