@@ -15,13 +15,13 @@ extern "C" {
  ***
  ***********************************************************************/
 
-enum {
+typedef enum {
 	ROUTE_OK,
 	ROUTE_BAD,
 	ROUTE_QUEUE,
 	ROUTE_FORWARD,
 	ROUTE_NO_ROUTE
-};
+} RouteCode;
 
 #define ROUTE_TAG			"route:"
 #define ROUTE_ATTR_FORWARD		"FORWARD:"
@@ -66,9 +66,9 @@ extern Connection *routeKnownAuth(Session *sess, const char *auth, int *can_queu
 extern int routeKnownDomain(Session *sess, const char *domain);
 extern int routeExpire(kvm_data *key, kvm_data *value, void *data);
 extern int routeCheckRcpt(Session *sess, ParsePath *rcpt);
-extern int routeRcpt(Session *sess, ParsePath *rcpt);
+extern RouteCode routeRcpt(Session *sess, ParsePath *rcpt);
 extern int routeQueue(Session *sess, ParsePath *rcpt, Connection *fwd);
-extern int routeForward(Session *sess, ParsePath *rcpt, Connection *fwd);
+extern RouteCode routeForward(Session *sess, ParsePath *rcpt, Connection *fwd);
 extern int routeAdd(Session *sess, ParsePath *rcpt, Connection **out);
 extern int routeAddRcpt(Connection *fwd, ParsePath *rcpt);
 

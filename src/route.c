@@ -457,7 +457,7 @@ error0:
 }
 
 static void
-routeCacheAddRcpt(Session *sess, char *key, int smtpf_code)
+routeCacheAddRcpt(Session *sess, char *key, SmtpfCode smtpf_code)
 {
 	mcc_row row;
 
@@ -726,10 +726,10 @@ routeLocal(Session *sess, const char *domain, char **keyp, char **valuep)
  *	Return one of SMTPF_CONTINUE, SMTPF_ACCEPT, SMTPF_REJECT,
  *	or SMTPF_TEMPFAIL.
  */
-int
+SmtpfCode
 routeCallAhead(Session *sess, const char *host, ParsePath *rcpt)
 {
-	int rc;
+	SmtpfCode rc;
 	Connection *conn;
 #ifdef ENABLE_FALSE_RCPT_TEST
 	long length;
@@ -928,10 +928,11 @@ A summary of call-ahead results.
  *	ROUTE_FORWARD	skip call-ahead and just forward
  *	ROUTE_NO_ROUTE	relaying denied, not our domain
  */
-int
+RouteCode
 routeRcpt(Session *sess, ParsePath *rcpt)
 {
-	int rc, ret;
+	RouteCode rc;
+	SmtpfCode ret;
 	const char *next;
 	char *value, *host;
 
@@ -972,12 +973,18 @@ routeRcpt(Session *sess, ParsePath *rcpt)
 	case SMTPF_ACCEPT:
 		rc = ROUTE_OK;
 		goto error1;
+	default:
+		break;
 	}
 
 	/* Check each RCPT host in turn. */
 	for (next = host + sizeof (ROUTE_ATTR_RCPT)-1; (host = routeGetNextMember(next, &next)) != NULL; free(host)) {
-		if ((ret = routeCallAhead(sess, host, rcpt)) == SMTPF_ACCEPT) {
+		ret = routeCallAhead(sess, host, rcpt);
+		if (ret == SMTPF_ACCEPT) {
 			rc = ROUTE_OK;
+			break;
+		} else if (ret == SMTPF_REJECT) {
+			rc = ROUTE_BAD;
 			break;
 		}
 
@@ -987,12 +994,10 @@ routeRcpt(Session *sess, ParsePath *rcpt)
 	}
 	free(host);
 
-	/* Cache only definitive results: accept or reject. */
 	switch (ret) {
 	case SMTPF_REJECT:
-		rc = ROUTE_BAD;
-		/*@fallthrough@*/
 	case SMTPF_ACCEPT:
+		/* Cache only definitive results: accept or reject. */
 		routeCacheAddRcpt(sess, rcpt->address.string, ret);
 		break;
 	default:
@@ -1021,12 +1026,13 @@ error0:
  *	ROUTE_FORWARD	forward exists, but failed to connect
  *	ROUTE_NO_ROUTE	relaying denied
  */
-int
+RouteCode
 routeForward(Session *sess, ParsePath *rcpt, Connection *fwd)
 {
 	long length;
+	RouteCode rc;
+	int i, ordered;
 	Vector fwd_list;
-	int rc, i, ordered;
 	char *value, *host;
 
 	rc = ROUTE_NO_ROUTE;
