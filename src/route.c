@@ -938,15 +938,19 @@ routeRcpt(Session *sess, ParsePath *rcpt)
 
 	rc = ROUTE_FORWARD;
 
-	/* Is this recipient destined for the local queue? */
-	if (CLIENT_ANY_SET(sess, CLIENT_IS_RELAY|CLIENT_HAS_AUTH) || rcpt->domain.length == 0) {
+	if (rcpt->domain.length == 0) {
 		rc = ROUTE_QUEUE;
 		goto error0;
 	}
 
+	/* Is this recipient destined for the local queue? */
+	if (CLIENT_ANY_SET(sess, CLIENT_IS_RELAY|CLIENT_HAS_AUTH)) {
+		rc = ROUTE_QUEUE;
+	}
+
 	/* Do we route for this domain? */
 	if (smdbAccessMail(sess->route_map, ROUTE_TAG, rcpt->address.string, NULL, &value) == SMDB_ACCESS_NOT_FOUND) {
-		rc = ROUTE_NO_ROUTE;
+		rc = CLIENT_ANY_SET(sess, CLIENT_IS_RELAY|CLIENT_HAS_AUTH) ? ROUTE_QUEUE : ROUTE_NO_ROUTE;
 		goto error0;
 	}
 
