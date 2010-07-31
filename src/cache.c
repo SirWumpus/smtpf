@@ -145,7 +145,7 @@ mcc_handle *mcc;
  ***********************************************************************/
 
 long
-cacheGetTTL(int code)
+cacheGetTTL(SmtpfCode code)
 {
 	switch (code) {
 	default:
@@ -855,7 +855,7 @@ cacheCommand(Session *sess)
 		new_row.hits = old_row.hits;
 		new_row.created = old_row.created;
 		new_row.touched = old_row.touched;
-		new_row.expires = new_row.touched + cacheGetTTL(*new_row.value_data);
+		new_row.expires = new_row.touched + cacheGetTTL(*new_row.value_data-'0');
 
 		switch (mccPutRow(mcc, &new_row)) {
 		case MCC_OK:

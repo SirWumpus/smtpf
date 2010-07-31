@@ -32,7 +32,7 @@ extern Option optCacheSyncMode;
 extern void cacheInit(void);
 extern void cacheFini(void);
 extern int cacheIsGcRunning(void);
-extern long cacheGetTTL(int code);
+extern long cacheGetTTL(SmtpfCode code);
 extern int cacheRegister(Session *null, va_list ignore);
 extern int cacheGc(Session *null, va_list args);
 extern int cacheCommand(Session *sess);
