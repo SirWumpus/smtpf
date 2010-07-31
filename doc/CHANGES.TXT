@@ -277,6 +277,39 @@ is no set schedule for releases.
    +	Use SIZE= to by-pass SpamAssassin and/or the length of the temp.
    	file to by-pass when spamd-max-size is being used. Steve F.
 
+--2.3.23--
+
+   +	uriblTestURI: Add support for SAVE and TRAP with body; tag.
+
+   !	Replace all private copies of digestToString() with
+	md5_digest_to_string().
+
+   !	Modify the default verbose option setting to include smtp-dot.
+
+   !	readClientData: Fixed bug where msg.eoh was not counting the
+	CRLF separating the headers and body.
+
+   +	Add experimental ixhash-bl option.
+
+   +	Added POLICY-PASS (replaces SPF-PASS) and POLICY-OK access words.
+
+   !	clickReplyLog: URL encode characters that are not URI "unreserved",
+   	ie. RFC 3986 unreserved = ALPHA / DIGIT / "-" / "." / "_" / "~"
+
+   !	routeRcpt: When there are multiple RCPT: (call-ahead) hosts,
+	only try the next call-ahead host if we get something other than
+	accept or reject. Previously we tried the next call-ahead host
+	if the currrent host definitively rejected the recipient, which
+	meant unnecessary connections and in some cases incorrect answers
+	if the other machines are not properly configured. Reported by
+	Steve Freegard.
+
+   !	Fixed CACHE PUT expire times.
+
+   !	routeRcpt: Modified RELAY and AUTH exception handling. We now
+	allow call-ahead for RELAY (including localhost) or AUTH of
+	(local) recipients where possible. Reported by Steve Freegard.
+
 --2.3.22--
 
    *	Requires Libsnert 1.74.9
