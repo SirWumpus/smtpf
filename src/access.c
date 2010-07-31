@@ -1096,14 +1096,23 @@ accessIdle(Session *sess, va_list ignore)
 static AccessCode
 access_policy_check(Session *sess, const char *value, AccessCode code)
 {
+	/* If a policy is defined, passes, and one of POLICY-PASS,
+	 * SPF-PASS, or POLICY-OK set, then white list.
+	 */
 	if (sess->msg.spf_mail == SPF_PASS) {
 		if (0 < TextSensitiveStartsWith(value, access_policy_pass)
 		||  0 < TextSensitiveStartsWith(value, access_policy_ok)
 		||  0 < TextSensitiveStartsWith(value, access_spf_pass))
 			code = ACCESS_OK;
-	} else if (0 < TextSensitiveStartsWith(value, access_policy_ok)) {
-		code = ACCESS_OK;
 	}
+
+	/* Else no policy defined, but POLICY-OK set, then white list. */
+	else if (sess->msg.spf_mail == SPF_NONE) {
+		if (0 < TextSensitiveStartsWith(value, access_policy_ok))
+			code = ACCESS_OK;
+	}
+
+	/* Otherwise continue remaining spam tests. */
 
 	return code;
 }
