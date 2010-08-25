@@ -1101,6 +1101,8 @@ open relay.
 }*/
 		statsCount(&stat_rcpt_relay_denied);
 		goto error2;
+	default:
+		break;
 	}
 
 	if (!connectionIsOpen(fwd) && fwd->rcpt_count == 0) {
