@@ -357,7 +357,7 @@ clickReplyLog(Session *sess, va_list args)
 		 * to present some form of CAPTCHA to validate the sender
 		 * before white listing.
 		 */
-		if ((c_arg = clickUrlEncode((const char *) row.key_data)) == NULL)
+		if ((c_arg = (unsigned char *) clickUrlEncode((const char *) row.key_data)) == NULL)
 			c_arg = row.key_data;
 		len = snprintf(
 			click->reply+(*reply_length-2), sizeof (click->reply)-(*reply_length-2),
