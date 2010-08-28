@@ -1,8 +1,10 @@
 /*
  * lickey.c
  *
- * Copyright 2006 by Anthony Howe. All rights reserved.
+ * Copyright 2006, 2010 by Anthony Howe. All rights reserved.
  */
+
+#define ONE_DAY			86400
 
 #ifndef LICKEY_1ST_WARNING
 #define LICKEY_1ST_WARNING	30
@@ -15,8 +17,6 @@
 #ifndef LICKEY_LAST_WARNING
 #define LICKEY_LAST_WARNING	1
 #endif
-
-#define ONE_DAY			86400
 
 /***********************************************************************
  *** Leave this header alone. Its generated from the configure script.
@@ -264,7 +264,7 @@ lickeyMailWarning(void *data)
 	(void) mailPrintf(mail, "From: \"%s\" <%s>\r\n", lickeyClientName.string, lickeyClientMail.string);
 	(void) mailPrintf(mail, "Sender: \"%s\" <%s>\r\n", lickeyProcessName.string, sender);
 	(void) mailPrintf(mail, "Subject: %s license key expires in less than %d day%s\r\n", _NAME, days, days <= 1 ? "" : "s");
-	(void) mailPrintf(mail, "Message-ID: <%s@[%s]>\r\n", mail->list->id_string, mail->list->local_ip);
+	(void) mailPrintf(mail, "Message-ID: <%s@%s>\r\n", mail->list->id_string, mail->list->local_ip);
 	(void) mailPrintf(mail, "Priority: normal\r\n");
 	(void) mailPrintf(mail, "User-Agent: lickey-%s\r\n",  _VERSION);
 	(void) mailPrintf(mail, "\r\n");
@@ -299,6 +299,7 @@ void
 lickeySendWarning(void)
 {
 	int days;
+	long value;
 	char *mail;
 	mcc_row row;
 	pthread_t thread;
@@ -308,6 +309,7 @@ lickeySendWarning(void)
 #endif
 
 	if (lickeyDateExpires.string == NULL || *lickeyDateExpires.string == '\0')
+		/* No expiration date. */
 		return;
 
 	(void) convertDate(lickeyDateExpires.string, &expire, NULL);
@@ -320,12 +322,14 @@ lickeySendWarning(void)
 	else if (expire <= now + (LICKEY_1ST_WARNING * ONE_DAY))
 		days = LICKEY_1ST_WARNING;
 	else
+		/* Not even close to expiring. */
 		return;
 
 	/* As we get close to the end start nagging. */
 	if (days <= LICKEY_LAST_WARNING)
 		syslog(LOG_WARN, LOG_NUM(395) "%s-%s license key expires in less than %d day%s", _NAME, _VERSION, days, days <= 1 ? "" : "s");
 
+	/* Pick the primary receipient. */
 	if (lickeyClientMail.string != NULL && strchr(lickeyClientMail.string, '@') != NULL)
 		mail = lickeyClientMail.string;
 	else if (lickeyResellerMail.string != NULL && strchr(lickeyResellerMail.string, '@') != NULL)
@@ -333,6 +337,7 @@ lickeySendWarning(void)
 	else if (lickeySupportMail.string != NULL && strchr(lickeySupportMail.string, '@') != NULL)
 		mail = lickeySupportMail.string;
 	else {
+		/* Can't send a warning message without a mail address in the license. */
 		syslog(LOG_ERR, log_internal, SESSION_ID_ZERO, FILE_LINENO, "missing address", strerror(errno), errno);
 		return;
 	}
@@ -343,16 +348,50 @@ lickeySendWarning(void)
 	/* Check if the most recent warning has been sent. */
         switch (mccGetRow(mcc, &row)) {
         case MCC_OK:
+        	/* Stop after three emailed warnings. There will also
+        	 * be additional warnings in the maillog after.
+        	 */
+        	if (3 < row.hits)
+        		return;
+
+        	if (sizeof (row.value_data) <= row.value_size) {
+        		/* We should NEVER get here. */
+			syslog(LOG_ERR, log_cache_get_error, row.key_data, FILE_LINENO);
+			return;
+		}
 		row.value_data[row.value_size] = '\0';
-		if (strtol((char *) row.value_data, NULL, 10) <= days)
+		value = strtol((char *) row.value_data, NULL, 10);
+		if (0 <= value && value <= days)
+			/* We've fallen within the current warning period;
+			 * Do not resend email warning.
+			 */
 			return;
 		break;
 
         case MCC_ERROR:
+		syslog(LOG_ERR, log_cache_get_error, row.key_data, FILE_LINENO);
 		return;
 
 	case MCC_NOT_FOUND:
+		row.created = (uint32_t) now;
 		break;
+	}
+
+	/* Record expires same time as license key. */
+	row.expires = (uint32_t) expire;
+
+	/* Remember who got the notice. */
+	row.key_size = snprintf((char *) row.key_data, sizeof (row.key_data), "lickey:%s", mail);
+	row.value_size = (unsigned char) snprintf((char *) row.value_data, sizeof (row.value_data), "%d", days);
+
+	if (mccPutRow(mcc, &row) == MCC_ERROR) {
+		/* On error skip sending the warning email. If there
+		 * is a cache problem due to permissions or corruption
+		 * then we can end up resending multiple warnings each
+		 * GC interval.
+		 */
+		syslog(LOG_ERR, log_cache_put_error, row.key_data, row.value_data, FILE_LINENO);
+		return;
 	}
 
 #if defined(HAVE_PTHREAD_ATTR_SETSTACKSIZE)
@@ -372,14 +411,6 @@ lickeySendWarning(void)
 	}
 #endif
 	pthread_detach(thread);
-
-	/* Remember that this message has been sent. */
-	row.hits = 0;
-	row.created = time(NULL);
-	row.expires = row.created + (days+1) * ONE_DAY;
-	row.key_size = snprintf((char *) row.key_data, sizeof (row.key_data), "lickey:%s", mail);
-	row.value_size = (unsigned char) snprintf((char *) row.value_data, sizeof (row.value_data), "%d", days);
-	(void) mccPutRow(mcc, &row);
 }
 
 static const char hex_digit[] = "0123456789ABCDEF";
