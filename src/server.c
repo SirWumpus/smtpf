@@ -365,6 +365,7 @@ session_create(ServerSession *session)
 	sess->msg.fwds = NULL;
 	sess->msg.length = 0;
 	sess->msg.rcpt_count = 0;
+	sess->msg.bad_rcpt_count = 0;
 	sess->msg.reject[0] = '\0';
 	sess->msg.count = (int) RAND_MSG_COUNT;
 	sess->msg.fwd_to_queue = NULL;

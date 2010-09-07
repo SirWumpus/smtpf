@@ -347,9 +347,10 @@ summaryMessage(Session *sess)
 		*sess->msg.chunk0 = '\0';
 
 	syslog(
-		LOG_INFO, LOG_MSG(720) "message tid=%s f=\"%s\" b=%lu r=%u m=%s R=%d %sx=\"%s\"", LOG_ARGS(sess),
-		sess->msg.id, messageFlags(sess), sess->msg.length, sess->msg.rcpt_count,
-		sess->msg.msg_id, sess->client.reject_count, sess->msg.chunk0, sess->input
+		LOG_INFO, LOG_MSG(720) "message tid=%s f=\"%s\" b=%lu r=%u/%u m=%s R=%d %sx=\"%s\"",
+		LOG_ARGS(sess), sess->msg.id, messageFlags(sess), sess->msg.length,
+		sess->msg.rcpt_count, sess->msg.bad_rcpt_count, sess->msg.msg_id,
+		sess->client.reject_count, sess->msg.chunk0, sess->input
 	);
 /*{LOG
 The end of a message transaction. This line gives a summary of message highlights.
