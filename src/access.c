@@ -299,8 +299,9 @@ find_delim(const char *start, const char *delims)
 AccessCode
 accessPattern(Session *sess, const char *hay, char *pins, char **actionp)
 {
+	AccessCode access;
 	long cidr, length;
-	int access, is_hay_ip, match;
+	int is_hay_ip, match;
 	char *action, *pin, *next_pin;
 	unsigned char net[IPV6_BYTE_LENGTH], ipv6[IPV6_BYTE_LENGTH];
 
@@ -502,7 +503,10 @@ that prevents it from being compiled.
 
 	if (actionp != NULL && access != ACCESS_NOT_FOUND) {
 		Vector patterns = TextSplit(action, " \t", 0);
-		*actionp = VectorReplace(patterns, 0, NULL);
+		if (0 < VectorLength(patterns))
+			*actionp = VectorReplace(patterns, 0, NULL);
+		else
+			access = ACCESS_NOT_FOUND;
 		VectorDestroy(patterns);
 	}
 error0:
