@@ -310,6 +310,17 @@ is no set schedule for releases.
 	allow call-ahead for RELAY (including localhost) or AUTH of
 	(local) recipients where possible. Reported by Steve Freegard.
 
+   !	Fixed spamd Content-Length: header to reflect the message length
+	including a simulated Return-Path, smtpf's Received, and some
+	other smtpf headers, instead of the spamd-max-size limit. The
+	spamd Content-Length header is optional, simply closing the
+	write channel to signal EOF is sufficient, yet some spamd
+	replacements like rspamd don't respect this.
+
+  !	accessPattern: fix segmentation fault when the right-hand side
+  	value of a key-value pair is completely blank, which is an invalid
+  	result and is now treated as "not found".
+
 --2.3.22--
 
    *	Requires Libsnert 1.74.9

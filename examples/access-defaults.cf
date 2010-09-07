@@ -88,7 +88,7 @@ body:citizensbank.com			OK
 body:cjb.net				OK
 #body:classmates.com			REJECT
 body:click-url.com			OK
-body:clickbank.net			OK
+#body:clickbank.net			REJECT
 body:cnet.com				OK
 body:cnn.com				OK
 body:com.com				OK
@@ -128,6 +128,8 @@ body:free.fr				OK
 body:freebsd.org			OK
 body:freelotto.com			OK
 body:fsl.com              		OK
+body:foursquare.com			OK
+body:4sq.com				OK
 body:gentoo.org				OK
 body:geocities.com			OK
 body:gmail.com				OK
