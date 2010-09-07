@@ -244,6 +244,14 @@ The client has sent HELO or EHLO more than once with different arguments each ti
 #ifdef ENABLE_PRUNED_STATS
 		statsCount(&stat_smtp_enable_esmtp);
 #endif
+		/* Offset the positive count in smtpReplyLog(). When
+		 * ESMTP is disabled there will more often than not
+		 * be an EHLO attempted, which should not be counted
+		 * against smtp-drop-after. A HELO schzio rejection
+		 * would be the real reject to count. [SF]
+		 */
+		sess->client.reject_count--;
+
 		CLIENT_SET(sess, CLIENT_IS_EHLO_NO_HELO);
 		return replySetFmt(sess, SMTPF_REJECT, "502 5.5.1 EHLO not supported" ID_MSG(253) "\r\n", ID_ARG(sess));
 /*{REPLY
@@ -1355,10 +1363,8 @@ headerReceived(Session *sess)
 	length = getReceivedHeader(sess, sess->input, sizeof (sess->input));
 
 	if ((hdr = TextDupN(sess->input, length)) != NULL) {
-		if (!VectorInsert(sess->msg.headers, 0, hdr)) {
-			sess->client.octets += length;
-			sess->msg.length += length;
-		}
+		if (VectorInsert(sess->msg.headers, 0, hdr))
+			free(hdr);
 	}
 }
 
@@ -1605,7 +1611,8 @@ forwardDataAtDot(Session *sess, va_list ignore)
 
 	cliFdCloseOnExec(fileno(fp), 1);
 
-	if (fseek(fp, sess->msg.eoh, SEEK_SET)) {
+	/* Skip headers, but not the CRLF separator. */
+	if (fseek(fp, sess->msg.eoh-CRLF_LENGTH, SEEK_SET)) {
 		syslog(LOG_ERR, LOG_MSG(311) "seek error \"%s\": %s (%d)", LOG_ARGS(sess), name, strerror(errno), errno);
 /*{LOG
 An error trying to find and open a temporary message file
@@ -1776,6 +1783,8 @@ See <a href="summary.html#opt_rfc2821_line_length">rfc2821-line-length</a>.
 			if (length == 3 && chunk[offset+1] == '\r' && chunk[offset+2] == '\n'
 			&& (sess->msg.seen_crlf_before_dot || !optRFC2821StrictDot.value)) {
 				sess->msg.seen_final_dot = 1;
+				/* Do not count DOT-CRLF towards msg.length. */
+				sess->msg.length -= length;
 				break;
 			}
 
@@ -1783,6 +1792,7 @@ See <a href="summary.html#opt_rfc2821_line_length">rfc2821-line-length</a>.
 			 */
 			if (length == 2 && (chunk[offset+1] == '\r' || chunk[offset+1] == '\n')) {
 				last_line_was_dot_lf = 1;
+				sess->msg.length -= length;
 
 				if (!optRFC2821StrictDot.value) {
 					sess->msg.seen_final_dot = 1;
@@ -1972,7 +1982,7 @@ if (MSG_NOT_SET(sess, MSG_TAG) && !(optSaveData.value & 2)) {
 		}
 
 		/* Forward end of headers and start of message. */
-		forwardChunk(sess, sess->msg.chunk0 + sess->msg.eoh, sess->msg.chunk0_length - sess->msg.eoh);
+		forwardChunk(sess, sess->msg.chunk0 + sess->msg.eoh-CRLF_LENGTH, sess->msg.chunk0_length - sess->msg.eoh+CRLF_LENGTH);
 #if !defined(FILTER_SPAMD) && defined(FILTER_SPAMD2)
 }
 #endif

@@ -1,8 +1,10 @@
 /*
- * spamd.c
+ * spamd2.c
  *
- * Copyright 2006 by Anthony Howe. All rights reserved.
+ * Copyright 2006, 2010 by Anthony Howe. All rights reserved.
  */
+
+#define SPAMD_CONTENT_LENGTH
 
 /***********************************************************************
  *** Leave this header alone. Its generated from the configure script.
@@ -168,9 +170,25 @@ spamd_user(Session *sess)
 }
 
 static int
-spamd_open(Session *sess, Spamd *spamd)
+spamd_printf(Session *sess, Spamd *spamd, char *buffer, size_t size, const char *fmt, ...)
 {
 	int length;
+	va_list args;
+
+	va_start(args, fmt);
+	length = vsnprintf(buffer, size, fmt, args);
+	if (verb_spamd.option.value)
+		syslog(LOG_DEBUG, LOG_MSG(672) "spamd >> %d:%s", LOG_ARGS(sess), length, buffer);
+	if (socketWrite(spamd->socket, (unsigned char *) buffer, length) != length)
+		length = -1;
+	va_end(args);
+
+	return length;
+}
+
+static int
+spamd_open(Session *sess, Spamd *spamd)
+{
 	char *user;
 
 	if ((user = spamd_user(sess)) != NULL && strcmp(user, "OK") == 0) {
@@ -191,40 +209,37 @@ spamd_open(Session *sess, Spamd *spamd)
 	statsCount(&stat_spamd_connect);
 
 	socketSetTimeout(spamd->socket, optSpamdTimeout.value);
-
-	length = snprintf(sess->input, sizeof (sess->input), "%s SPAMC/1.2\r\n", optSpamdCommand.string);
-	if (verb_spamd.option.value)
-		syslog(LOG_DEBUG, LOG_MSG(672) "spamd >> %s", LOG_ARGS(sess), sess->input);
-	if (socketWrite(spamd->socket, (unsigned char *) sess->input, length) != length)
+	if (spamd_printf(sess, spamd, sess->input, sizeof (sess->input), "%s SPAMC/1.2" CRLF, optSpamdCommand.string) < 0)
 		goto error2;
 
-	if (user != NULL) {
-		length = snprintf(sess->input, sizeof (sess->input), "User: %s\r\n", user);
-
-		if (verb_spamd.option.value)
-			syslog(LOG_DEBUG, LOG_MSG(673) "spamd >> %s", LOG_ARGS(sess), sess->input);
-		if (socketWrite(spamd->socket, (unsigned char *) sess->input, length) != length)
-			goto error2;
-	}
+	if (user != NULL && spamd_printf(sess, spamd, sess->input, sizeof (sess->input), "User: %s" CRLF, user) < 0)
+		goto error2;
 
 #ifdef SPAMD_CONTENT_LENGTH
+{
 /* The SPAMD protocol documentation sucks. Only by reading the
  * source do you find out that the Content-Length: header is
  * optional. Open source peons write crap documentation.
  */
-	if (0 < optSpamdMaxSize.value) {
-		length = snprintf(sess->input, sizeof (sess->input), "Content-Length: %ld\r\n", optSpamdMaxSize.value);
-		if (verb_spamd.option.value)
-			syslog(LOG_DEBUG, LOG_MSG(674) "spamd >> %s", LOG_ARGS(sess), sess->input);
-		if (socketWrite(spamd->socket, (unsigned char *) sess->input, length) != length)
-			goto error2;
-	}
+ 	char **hdr;
+	size_t msg_length = sess->msg.length - sess->msg.eoh + CRLF_LENGTH;
+	for (hdr = (char **) VectorBase(sess->msg.headers); *hdr != NULL; hdr++) {
+		msg_length += strlen(*hdr);
+ 	}
+
+ 	/* Add length of simulated Return-Path: header. */
+	msg_length += snprintf(sess->input, sizeof (sess->input), "Return-Path: <%s>" CRLF, sess->msg.mail->address.string);
+
+	if (spamd_printf(sess, spamd, sess->input, sizeof (sess->input), "Content-Length: %lu" CRLF, (unsigned long) msg_length) < 0)
+		goto error2;
+}
 #endif
-	if (socketWrite(spamd->socket, (unsigned char *) "\r\n", sizeof ("\r\n")-1) != sizeof ("\r\n")-1)
+	/* End spamd header section. */
+	if (spamd_printf(sess, spamd, sess->input, sizeof (sess->input), CRLF, CRLF_LENGTH) < 0)
 		goto error2;
 
-	length = snprintf(sess->input, sizeof (sess->input), "Return-Path: <%s>\r\n", sess->msg.mail->address.string);
-	if (socketWrite(spamd->socket, (unsigned char *) sess->input, length) != length)
+	/* Start message headers with simulated Return-Path: header. */
+	if (spamd_printf(sess, spamd, sess->input, sizeof (sess->input), "Return-Path: <%s>" CRLF, sess->msg.mail->address.string) < 0)
 		goto error2;
 
 	free(user);
@@ -343,7 +358,7 @@ spamdHeaders(Session *sess, va_list args)
 			if (0 < offset && sscanf(x_spam_status+offset, "%f", &score) == 1
 			&& optSpamdScoreReject.value <= score) {
 				statsCount(&stat_sender_marked_spam);
-				return replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 message was already marked as spam by sender" ID_MSG(678) "\r\n", ID_ARG(sess));
+				return replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 message was already marked as spam by sender" ID_MSG(678) "" CRLF, ID_ARG(sess));
 /*{REPLY
 See
 <a href="summary.html#opt_spamd_reject_sender_marked_spam">spamd-reject-sender-marked-spam</a> and
@@ -358,7 +373,7 @@ See
 		 */
 		else if (x_spam_flag != NULL) {
 			statsCount(&stat_sender_marked_spam);
-			return replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 message was already marked as spam by sender" ID_MSG(679) "\r\n", ID_ARG(sess));
+			return replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 message was already marked as spam by sender" ID_MSG(679) "" CRLF, ID_ARG(sess));
 /*{REPLY
 See <a href="summary.html#opt_spamd_sender_marked_spam">spamd-sender-marked-spam</a> option.
 }*/
@@ -428,10 +443,12 @@ See <a href="summary.html#opt_save_dir">save-dir</a> option.
 		length = (long) strlen(hdr);
 		if (socketWrite(spamd->socket, (unsigned char *) hdr, length) != length)
 			goto error2;
+		if (verb_spamd.option.value)
+			syslog(LOG_DEBUG, LOG_MSG(673) "spamd >> (wrote %ld bytes)", LOG_ARGS(sess), length);
 	}
 
-	/* Send spamd the message body. */
-	if (fseek(fp, sess->msg.eoh, SEEK_SET))
+	/* Send spamd the message body including the EOH CRLF. */
+	if (fseek(fp, sess->msg.eoh-CRLF_LENGTH, SEEK_SET))
 		goto error2;
 
 	for (size = 0; !feof(fp) && size < optSpamdMaxSize.value; size += length) {
@@ -501,14 +518,14 @@ See <a href="summary.html#opt_spamd_socket">spamd-socket</a> option.
 
 	/* Create X-Spam-Flag: header */
 	if (*optSpamdFlagHeader.string != '\0') {
-		(void) snprintf(sess->input, sizeof (sess->input), "%s: %s\r\n", optSpamdFlagHeader.string, spamd->score < spamd->threshold ? "NO" : "YES");
+		(void) snprintf(sess->input, sizeof (sess->input), "%s: %s" CRLF, optSpamdFlagHeader.string, spamd->score < spamd->threshold ? "NO" : "YES");
 		if ((hdr = strdup(sess->input)) != NULL && VectorAdd(sess->msg.headers, hdr))
 			free(hdr);
 	}
 
 	/* Create X-Spam-Status: header */
 	if (*optSpamdStatusHeader.string != '\0') {
-		(void) snprintf(sess->input, sizeof (sess->input), "%s: %s, score=%.2f required=%.2f\r\n", optSpamdStatusHeader.string, spamd->score < spamd->threshold ? "NO" : "YES", spamd->score, spamd->threshold);
+		(void) snprintf(sess->input, sizeof (sess->input), "%s: %s, score=%.2f required=%.2f" CRLF, optSpamdStatusHeader.string, spamd->score < spamd->threshold ? "NO" : "YES", spamd->score, spamd->threshold);
 		if ((hdr = strdup(sess->input)) != NULL && VectorAdd(sess->msg.headers, hdr))
 			free(hdr);
 	}
@@ -557,7 +574,7 @@ A summary of the spamd score for a message.
 
 	if (0 <= optSpamdScoreReject.value && optSpamdScoreReject.value <= spamd->score) {
 		statsCount(&stat_spamd_reject);
-		rc = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 %s" ID_MSG(693) "\r\n", sess->input, ID_ARG(sess));
+		rc = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 %s" ID_MSG(693) "" CRLF, sess->input, ID_ARG(sess));
 /*{REPLY
 See <a href="summary.html#opt_spamd_score_reject">spamd-score-reject</a> option.
 }*/
@@ -565,7 +582,7 @@ See <a href="summary.html#opt_spamd_score_reject">spamd-score-reject</a> option.
 		MSG_SET(sess, MSG_TAGGED);
 		statsCount(&stat_spamd_tag);
 		headerAddPrefix(sess, "Subject", optSpamdSubjectTag.string);
-		headerReplace(sess->msg.headers, "Precedence", strdup("Precedence: bulk\r\n"));
+		headerReplace(sess->msg.headers, "Precedence", strdup("Precedence: bulk" CRLF));
 	}
 error2:
 	socketClose(spamd->socket);

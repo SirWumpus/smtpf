@@ -389,8 +389,8 @@ typedef struct {
 	char reject[SMTP_REPLY_LINE_LENGTH+1];
 	unsigned rcpt_count;
 	unsigned bad_rcpt_count;
-	unsigned long eoh;
-	unsigned long length;
+	unsigned long eoh;		/* chunk0 offset of end of header including CRLF. */
+	unsigned long length;		/* Original message length excluding DOT-CRLF. */
 	unsigned long max_size;
 	unsigned long max_size_rcpt;
 	unsigned long mail_size;
