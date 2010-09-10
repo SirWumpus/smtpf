@@ -277,6 +277,11 @@ is no set schedule for releases.
    +	Use SIZE= to by-pass SpamAssassin and/or the length of the temp.
    	file to by-pass when spamd-max-size is being used. Steve F.
 
+--2.3.24--
+
+   +	Add experimental Lua support. Configure with --with-lua and create
+   	/etc/smtpf/smtpf.lua to enable in smtpf.
+
 --2.3.23--
 
    +	uriblTestURI: Add support for SAVE and TRAP with body; tag.

@@ -56,6 +56,7 @@ com/snert/src/@PACKAGE_NAME@/examples/route.cf
 com/snert/src/@PACKAGE_NAME@/examples/welcome.txt
 com/snert/src/@PACKAGE_NAME@/examples/startup.sh.in
 com/snert/src/@PACKAGE_NAME@/examples/sendmail-hub.mc
+com/snert/src/@PACKAGE_NAME@/examples/smtpf.lua
 com/snert/src/@PACKAGE_NAME@/examples/spamassassin/barricademx.cf
 com/snert/src/@PACKAGE_NAME@/examples/spamassassin/barricademx.pm
 com/snert/src/@PACKAGE_NAME@/examples/extra/bmx-antiphishingreply-update.pl
@@ -113,6 +114,9 @@ com/snert/src/@PACKAGE_NAME@/src/ixhash.c
 com/snert/src/@PACKAGE_NAME@/src/ixhash.h
 com/snert/src/@PACKAGE_NAME@/src/latency.c
 com/snert/src/@PACKAGE_NAME@/src/latency.h
+com/snert/src/@PACKAGE_NAME@/src/lua.c
+com/snert/src/@PACKAGE_NAME@/src/lua.h
+com/snert/src/@PACKAGE_NAME@/src/lua-api.txt
 com/snert/src/@PACKAGE_NAME@/src/lickey.c
 com/snert/src/@PACKAGE_NAME@/src/lickey.h
 com/snert/src/@PACKAGE_NAME@/src/lickey.html

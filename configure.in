@@ -77,6 +77,7 @@ AC_ARG_ENABLE(fpscand, [AC_HELP_STRING([--disable-fpscand],[disable F-Prot AV su
 AC_ARG_ENABLE(grey, [AC_HELP_STRING([--disable-grey],[disable grey-listing])])
 AC_ARG_ENABLE(grey-to-black, [AC_HELP_STRING([--enable-grey-to-black],[enable grey-to-black (experimental)])])
 AC_ARG_ENABLE(ixhash, [AC_HELP_STRING([--disable-ixhash],[disable iXhash DNS black list support])])
+dnl AC_ARG_ENABLE(lua, [AC_HELP_STRING([--enable-lua],[enable LUA scripting support (experimental)])])
 AC_ARG_ENABLE(misc, [AC_HELP_STRING([--disable-misc],[disable miscellanous tests])])
 AC_ARG_ENABLE(msglimit, [AC_HELP_STRING([--disable-msglimit],[disable message limit restrictions])])
 AC_ARG_ENABLE(null, [AC_HELP_STRING([--disable-null],[disable null sender throttling])])
@@ -111,6 +112,7 @@ AS_IF([test ${enable_fpscand:='yes'} = 'yes'],[enable_save='yes'; AC_DEFINE_UNQU
 AS_IF([test ${enable_grey:='yes'} = 'yes'],[AC_DEFINE_UNQUOTED(FILTER_GREY)])
 AS_IF([test ${enable_grey_to_black:='no'} = 'yes'],[AC_DEFINE_UNQUOTED(ENABLE_GREY_TO_BLACK)])
 AS_IF([test ${enable_ixhash:='yes'} = 'yes'],[AC_DEFINE_UNQUOTED(FILTER_IXHASH)])
+dnl AS_IF([test ${enable_lua:='no'} = 'yes'],[AC_DEFINE_UNQUOTED(FILTER_LUA)])
 AS_IF([test ${enable_misc:='yes'} = 'yes'],[AC_DEFINE_UNQUOTED(FILTER_MISC)])
 AS_IF([test ${enable_msglimit:='yes'} = 'yes'],[AC_DEFINE_UNQUOTED(FILTER_MSG_LIMIT)])
 AS_IF([test ${enable_null:='yes'} = 'yes'],[AC_DEFINE_UNQUOTED(FILTER_NULL)])
@@ -145,6 +147,29 @@ if test -d "${with_p0f}" ; then
 	CFLAGS="-I${with_p0f} ${CFLAGS}"
 	AC_CHECK_HEADERS([p0f-query.h])
 fi
+
+AC_ARG_WITH(lua,
+	[AC_HELP_STRING([--with-lua],[enable LUA scripting support (experimental)])],
+	[
+		AC_CHECK_HEADERS([lua.h],[],[],[/* */])
+		if test "$ac_cv_header_lua_h" = 'no'; then
+			saved_cflags=$CFLAGS
+			CFLAGS="-I/usr/local/include ${saved_cflags}"
+			unset ac_cv_header_lua_h
+			echo "retrying with -I/usr/local/include ..."
+			AC_CHECK_HEADERS([lua.h],[],[],[/* */])
+			if test "$ac_cv_header_lua_h" = 'no'; then
+				CFLAGS=$saved_cflags
+			else
+				LDFLAGS="-L/usr/local/lib ${LDFLAGS}"
+			fi
+		fi
+		if test "$ac_cv_header_lua_h" = 'yes'; then
+			AC_DEFINE_UNQUOTED(FILTER_LUA)
+			LIBS="-llua -lm $LIBS"
+		fi
+	]
+)
 
 #######################################################################
 #	Load LibSnert Configuration

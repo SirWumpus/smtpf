@@ -142,6 +142,9 @@ FilterHandler filter_register_table	[] = {
 #ifdef FILTER_IXHASH
 	FILTER_HANDLER(ixhashRegister),
 #endif
+#ifdef FILTER_LUA
+	FILTER_HANDLER(luaRegister),
+#endif
 #ifdef FILTER_MISC
 	FILTER_HANDLER(miscRegister),
 #endif
@@ -581,6 +584,9 @@ FilterHandler filter_connect_table	[] = {
 #ifdef FILTER_CONCURRENT
 	FILTER_HANDLER(concurrentConnect),
 #endif
+#ifdef FILTER_LUA
+	FILTER_HANDLER(luaConnect0),
+#endif
 #if defined(FILTER_P0F) && defined(HAVE_P0F_QUERY_H)
 	FILTER_HANDLER(p0fConnect),
 #endif
@@ -635,6 +641,9 @@ FilterHandler filter_connect_table	[] = {
 #endif
 #ifdef FILTER_URIBL
 	FILTER_HANDLER(uriblPtrConnect),
+#endif
+#ifdef FILTER_LUA
+	FILTER_HANDLER(luaConnect1),
 #endif
 	FILTER_TABLE_END
 };
@@ -695,6 +704,9 @@ FilterHandler filter_helo_table	[] = {
 #endif
 #ifdef FILTER_URIBL
 	FILTER_HANDLER(uriblHeloHelo),
+#endif
+#ifdef FILTER_LUA
+	FILTER_HANDLER(luaHelo),
 #endif
 	FILTER_TABLE_END
 };
@@ -760,6 +772,9 @@ FilterHandler filter_rset_table	[] = {
 #endif
 #ifdef FILTER_URIBL
 	FILTER_HANDLER(uriblRset),
+#endif
+#ifdef FILTER_LUA
+	FILTER_HANDLER(luaRset),
 #endif
 	FILTER_TABLE_END
 };
@@ -828,6 +843,9 @@ FilterHandler filter_mail_table	[] = {
 	FILTER_HANDLER(noPtrMail),
 	FILTER_HANDLER(ipInPtrMail),
 #endif
+#ifdef FILTER_LUA
+	FILTER_HANDLER(luaMail),
+#endif
 	FILTER_TABLE_END
 };
 
@@ -893,6 +911,9 @@ FilterHandler filter_rcpt_table	[] = {
 #if defined(FILTER_NULL) && !defined(FILTER_NULL_DEFER)
 	FILTER_HANDLER(nullRcpt),
 #endif
+#ifdef FILTER_LUA
+	FILTER_HANDLER(luaRcpt),
+#endif
 	FILTER_TABLE_END
 };
 
@@ -942,6 +963,9 @@ FilterHandler filter_data_table	[] = {
 #endif
 #ifdef FILTER_SIQ
 	FILTER_HANDLER(siqData),
+#endif
+#ifdef FILTER_LUA
+	FILTER_HANDLER(luaData),
 #endif
 #ifdef FILTER_CLI
 	FILTER_HANDLER(cliData),
@@ -1049,6 +1073,9 @@ FilterHandler filter_headers_table	[] = {
 #ifdef FILTER_URIBL
 	FILTER_HANDLER(uriblHeaders),
 #endif
+#ifdef FILTER_LUA
+	FILTER_HANDLER(luaHeaders),
+#endif
 	/* Functions that pass headers to daemons. */
 #ifdef FILTER_CLI
 	FILTER_HANDLER(cliHeaders),
@@ -1118,6 +1145,9 @@ FilterHandler filter_content_table	[] = {
 #endif
 #ifdef FILTER_IXHASH
 	FILTER_HANDLER(ixhashContent),
+#endif
+#ifdef FILTER_LUA
+	FILTER_HANDLER(luaContent),
 #endif
 #ifdef FILTER_CLI
 	FILTER_HANDLER(cliContent),
@@ -1203,6 +1233,9 @@ FilterHandler filter_dot_table	[] = {
 #ifdef FILTER_IXHASH
 	FILTER_HANDLER(ixhashDot),
 #endif
+#ifdef FILTER_LUA
+	FILTER_HANDLER(luaDot),
+#endif
 #ifdef FILTER_CLI
 	FILTER_HANDLER(cliDot),
 #endif
@@ -1256,6 +1289,9 @@ FilterHandler filter_close_table	[] = {
 #endif
 #ifdef FILTER_URIBL
 	FILTER_HANDLER(uriblClose),
+#endif
+#ifdef FILTER_LUA
+	FILTER_HANDLER(luaClose),
 #endif
 	FILTER_TABLE_END
 };

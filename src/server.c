@@ -580,6 +580,9 @@ serverMain(void)
 	syslog(LOG_INFO, LOG_NUM(604) "" _NAME " " _VERSION " " _COPYRIGHT);
 	syslog(LOG_INFO, LOG_NUM(605) "LibSnert %s %s", LIBSNERT_VERSION, LIBSNERT_COPYRIGHT);
 	syslog(LOG_INFO, LOG_NUM(606) "SQLite %s Public Domain by D. Richard Hipp", sqlite3_libversion());
+#ifdef FILTER_LUA
+	syslog(LOG_INFO, LOG_NUM(000) "%s %s", LUA_RELEASE, LUA_COPYRIGHT);
+#endif
 	syslog(LOG_INFO, LOG_NUM(904) "Built on %s", smtpf_built);
 /*{LOG
 Version and copyright notices.
@@ -628,6 +631,9 @@ serverPrintVersion(void)
 	printf(_NAME " " _VERSION " " _COPYRIGHT "\n");
 	printf(LIBSNERT_STRING " " _COPYRIGHT "\n");
 	printf("SQLite %s Public Domain by D. Richard Hipp\n", sqlite3_libversion());
+#ifdef FILTER_LUA
+	printf("%s %s\n", LUA_RELEASE, LUA_COPYRIGHT);
+#endif
 	printf("Built on %s\n", smtpf_built);
 }
 
@@ -658,6 +664,9 @@ serverPrintInfo(void)
 #endif
 #ifdef SQLITE_VERSION
 	printVar(0, "SQLITE3_VERSION", SQLITE_VERSION);
+#endif
+#ifdef FILTER_LUA
+	printVar(0, "LUA_RELEASE", LUA_RELEASE);
 #endif
 #ifdef _CFLAGS
 	printVar(LINE_WRAP, "CFLAGS", _CFLAGS);

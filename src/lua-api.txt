@@ -1,0 +1,144 @@
+SMTPF LUA API Overview
+----------------------
+
+When an SMTP client connects, a new Lua context is created and the file
+/etc/mail/smtpf.lua loaded and executed. If the script if missing,
+syntax, or memory error, then all the lua call-backs are skipped. The
+Lua call-backs are performed after all other smtpf tests, but before
+SpamAssassin.
+
+Each Lua call-back can return zero, one, or two results. A return code
+of zero (0) indicates no action, continue condition. If the call-back
+wants to reject or temporary fail an SMTP command or return a different
+positive answer, then the specify an SMTP (RFC 5821) response code and
+a single line reply string (max. 998 bytes). Multi-line replies are
+currently not supported. If a call-back is not defined, then it is
+skipped.
+
+It is the Lua script's responsiblity to handle its own logging.
+
+
+Context Variables & Constants
+-----------------------------
+
+smtp is a global table holding the current session variables and constants.
+
+smtp.sess.id		Session id.
+smtp.sess.helo		HELO/EHLO argument or nil if not yet defined
+
+smtp.tran.id		Transaction id or nil if between transactions.
+smtp.tran.sender	MAIL FROM: address or nil if between transactions
+
+smtp.code.ok		Return constant 250
+smtp.code.closing	Return constant 421
+smtp.code.busy		Return constant 450
+smtp.code.again		Return constant 451 (try again later, grey-list)
+smtp.code.storage	Return constant 452
+smtp.code.bad_syntax	Return constant 500
+smtp.code.bad_arg	Return constant 501
+smtp.code.bad_command	Return constant 502
+smtp.code.bad_sequence	Return constant 503
+smtp.code.bad_param	Return constant 504
+smtp.code.reject	Return constant 550
+smtp.code.bad_user	Return constant 551
+smtp.code.over_quota	Return constant 552
+smtp.code.bad_address	Return constant 553
+smtp.code.failed	Return constant 554
+
+
+Call-Back Functions
+-------------------
+
+smtp_code, smtp_reply = smtp.connect(ip, ptr)
+	Return smtp.code.ok on success or SMTP code and SMTP reply.
+
+smtp_code, smtp_reply = smtp.helo(helo_arg)
+	Return smtp.code.ok on success or SMTP code and SMTP reply.
+
+smtp_code, smtp_reply = smtp.mail(sender, parameter_array)
+	Return smtp.code.ok on success or SMTP code and SMTP reply.
+
+smtp_code, smtp_reply = smtp.rcpt(recipient, parameter_array)
+	Return smtp.code.ok on success or SMTP code and SMTP reply.
+
+smtp_code, smtp_reply = smtp.data()
+	Return smtp.code.ok on success or SMTP code and SMTP reply.
+
+smtp_code, smtp_reply = smtp.headers(headers_array)
+	Return smtp.code.ok on success or SMTP code and SMTP reply.
+	NOT IMPLEMEMNT YET
+
+smtp_code, smtp_reply = smtp.chunk(chunk, size)
+	Return smtp.code.ok on success or SMTP code and SMTP reply.
+	NOT IMPLEMEMNT YET
+
+smtp_code, smtp_reply = smtp.dot(temp_msg_filepath)
+	Return smtp.code.ok on success or SMTP code and SMTP reply.
+
+smtp_rset()
+
+smtp_close()
+
+
+Support Functions
+-----------------
+
+Syslog
+------
+
+syslog.openlog(ident, options, facility)
+
+	Or-able option flags:
+
+		syslog.LOG_PID
+		syslog.LOG_CONS
+		syslog.LOG_ODELAY
+		syslog.LOG_NDELAY
+		syslog.LOG_NOWAIT
+		syslog.LOG_PERROR
+
+	Choice of facility:
+
+		syslog.LOG_KERN
+		syslog.LOG_USER
+		syslog.LOG_MAIL
+		syslog.LOG_DAEMON
+		syslog.LOG_AUTH
+		syslog.LOG_SYSLOG
+		syslog.LOG_LPR
+		syslog.LOG_NEWS
+		syslog.LOG_UUCP
+		syslog.LOG_CRON
+		syslog.LOG_AUTHPRIV
+		syslog.LOG_FTP
+		syslog.LOG_LOCAL0
+		syslog.LOG_LOCAL1
+		syslog.LOG_LOCAL2
+		syslog.LOG_LOCAL3
+		syslog.LOG_LOCAL4
+		syslog.LOG_LOCAL5
+		syslog.LOG_LOCAL6
+		syslog.LOG_LOCAL7
+
+syslog.syslog(level, message)
+
+	Possible log levels:
+
+		syslog.LOG_EMERG
+		syslog.LOG_ALERT
+		syslog.LOG_CRIT
+		syslog.LOG_ERR
+		syslog.LOG_WARNING
+		syslog.LOG_NOTICE
+		syslog.LOG_INFO
+		syslog.LOG_DEBUG
+
+syslog.error(message)
+
+	Equivalent to
+
+		syslog.syslog(syslog.LOG_ERR, message)
+
+	and suitable for as a Lua error function for lua_pcall().
+
+syslog.closelog()
