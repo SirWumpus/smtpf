@@ -277,6 +277,13 @@ is no set schedule for releases.
    +	Use SIZE= to by-pass SpamAssassin and/or the length of the temp.
    	file to by-pass when spamd-max-size is being used. Steve F.
 
+
+--2.3.25--
+
+   *	Requires Libsnert 1.74.13
+
+   !	lua: Fixed dynamic linking with liblua.
+
 --2.3.24--
 
    +	Add experimental Lua support. Configure with --with-lua and create
