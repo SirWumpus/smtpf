@@ -322,7 +322,10 @@ luaConnect0(Session *sess, va_list args)
 		goto error1;
 	}
 
+	/* Stop collector during initialization. */
+	lua_gc(ctx->lua, LUA_GCSTOP, 0);
 	luaL_openlibs(ctx->lua);
+	lua_gc(ctx->lua, LUA_GCRESTART, 0);
 
 	if (verb_lua.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(000) "luaConnect0 top before=%d", LOG_ARGS(sess), lua_gettop(ctx->lua));

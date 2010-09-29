@@ -167,6 +167,7 @@ AC_ARG_WITH(lua,
 		if test "$ac_cv_header_lua_h" = 'yes'; then
 			AC_DEFINE_UNQUOTED(FILTER_LUA)
 			LIBS="-llua -lm $LIBS"
+			LDFLAGS="-Wl,-E ${LDFLAGS}"
 		fi
 	]
 )
