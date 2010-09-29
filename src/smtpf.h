@@ -110,6 +110,10 @@ extern "C" {
 #include <com/snert/lib/util/timer.h>
 #include <com/snert/lib/util/setBitWord.h>
 
+#ifdef DEBUG_MALLOC
+# include <com/snert/lib/util/DebugMalloc.h>
+#endif
+
 #ifdef NDEBUG
 #define NVALGRIND
 #endif
