@@ -27,7 +27,7 @@ extern int saveContent(Session *sess, va_list args);
 extern int saveDot(Session *sess, va_list ignore);
 extern int saveClose(Session *sess, va_list ignore);
 
-extern int save_data_internal;
+extern long saveGetEOH(Session *sess);
 extern const char * saveGetName(Session *sess);
 extern void saveSetSaveDir(Session *sess, const char *dir);
 extern void saveSetTrapDir(Session *sess, const char *dir);

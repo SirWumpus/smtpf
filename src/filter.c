@@ -1025,6 +1025,9 @@ FilterHandler filter_data_init_table[] = {
 FilterHandler filter_headers_table	[] = {
 	FILTER_TABLE_BEGIN(headers),
 	FILTER_HANDLER(summaryHeaders),
+#ifdef FILTER_SPF
+	FILTER_HANDLER(spfHeaders),
+#endif
 #ifdef FILTER_SAVE
 	/* Save handlers before anything that might temp. fail,
 	 * reject, or discard.
@@ -1056,9 +1059,6 @@ FilterHandler filter_headers_table	[] = {
 #endif
 #ifdef FILTER_SIQ
 	FILTER_HANDLER(siqHeaders),
-#endif
-#ifdef FILTER_SPF
-	FILTER_HANDLER(spfHeaders),
 #endif
 	/* Functions that reject based on headers. */
 #ifdef FILTER_MISC

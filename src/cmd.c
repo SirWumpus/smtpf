@@ -979,15 +979,6 @@ The SMTP client specified <code>RCPT TO:&lt;&gt;</code>
 		statsCount(&stat_rcpt_tempfail);
 		goto error1;
 
-#ifdef DONT_DO_THIS
-	case ROUTE_FORWARD:
-		rc = replySetFmt(sess, SMTPF_TEMPFAIL, "451 4.0.0 cannot forward mail for <%s> at this time" ID_MSG(287) "\r\n", rcpt->address.string, ID_ARG(sess));
-/*{REPLY
-}*/
-		statsCount(&stat_rcpt_tempfail);
-		goto error1;
-#endif
-
 	case ROUTE_NO_ROUTE:
 		rc = replySetFmt(sess, SMTPF_REJECT, "550 5.7.1 recipient <%s> relaying denied" ID_MSG(288) "\r\n", rcpt->address.string, ID_ARG(sess));
 /*{REPLY
@@ -1612,7 +1603,7 @@ forwardDataAtDot(Session *sess, va_list ignore)
 	cliFdCloseOnExec(fileno(fp), 1);
 
 	/* Skip headers, but not the CRLF separator. */
-	if (fseek(fp, sess->msg.eoh-CRLF_LENGTH, SEEK_SET)) {
+	if (fseek(fp, saveGetEOH(sess) - CRLF_LENGTH, SEEK_SET)) {
 		syslog(LOG_ERR, LOG_MSG(311) "seek error \"%s\": %s (%d)", LOG_ARGS(sess), name, strerror(errno), errno);
 /*{LOG
 An error trying to find and open a temporary message file
@@ -1855,6 +1846,13 @@ See <a href="summary.html#opt_rfc2821_line_length">rfc2821-line-length</a>.
 			}
 		}
 
+		/* This used to happen in filterContent() after the retContent()
+		 * check. However, when something is white listed so that it
+		 * by-passes much of filterContent(), have to be sure to generate
+		 * the header afterwards.
+		 */
+		headerReceived(sess);
+
 		rc = filterRun(sess, filter_headers_table, sess->msg.headers);
 		if (verb_data.option.value)
 			syslog(LOG_DEBUG, LOG_MSG(863) "filter-table=%s rc=%d", LOG_ARGS(sess), filter_headers_table[0].name, rc);
@@ -1865,13 +1863,6 @@ See <a href="summary.html#opt_rfc2821_line_length">rfc2821-line-length</a>.
 		case SMTPF_ACCEPT:
 			rc = filterRun(sess, filter_content_table, chunk+sess->msg.eoh, offset-sess->msg.eoh);
 		}
-
-		/* This used to happen in filterContent() after the retContent()
-		 * check. However, when something is white listed so that it
-		 * by-passes much of filterContent(), have to be sure to generate
-		 * the header afterwards.
-		 */
-		headerReceived(sess);
 	} else {
 		rc = filterRun(sess, filter_content_table, chunk, offset);
 	}

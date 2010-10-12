@@ -1,8 +1,10 @@
 /*
  * save.c
  *
- * Copyright 2007 by Anthony Howe. All rights reserved.
+ * Copyright 2007, 2010 by Anthony Howe. All rights reserved.
  */
+
+#define SAVE_UPDATED_HEADERS
 
 /***********************************************************************
  *** Leave this header alone. Its generated from the configure script.
@@ -48,6 +50,7 @@ Option optTrapDir	= { "trap-dir",		WORK_DIR,	usage_save_dir };
 
 typedef struct {
 	FILE *fp;
+	long eoh;
 	char *name;
 	char *save_dir;
 	char *trap_dir;
@@ -66,6 +69,18 @@ saveGetName(Session *sess)
 	Save *save = filterGetContext(sess, save_context);
 
 	return save->name;
+}
+
+long
+saveGetEOH(Session *sess)
+{
+#ifdef SAVE_UPDATED_HEADERS
+	Save *save = filterGetContext(sess, save_context);
+
+	return save->eoh;
+#else
+	return sess->msg.eoh;
+#endif
 }
 
 void
@@ -126,9 +141,11 @@ saveConnect(Session *sess, va_list ignore)
 	Save *save = filterGetContext(sess, save_context);
 
 	LOG_TRACE(sess, 575, saveConnect);
+
 	save->save_dir = NULL;
 	save->trap_dir = NULL;
 	save->name = NULL;
+	save->eoh = 0;
 	save->fp = NULL;
 
 	return SMTPF_CONTINUE;
@@ -205,9 +222,21 @@ option being defined in order to function.
 				(void) fstat(fileno(save->fp), &sb);
 				syslog(LOG_DEBUG, LOG_MSG(581) "\"%s\" user=%d group=%d perms=%o", LOG_ARGS(sess), save->name, sb.st_uid, sb.st_gid, sb.st_mode);
 			}
+#ifdef SAVE_UPDATED_HEADERS
+{
+		 	char **hdr;
+			for (hdr = (char **) VectorBase(sess->msg.headers); *hdr != NULL; hdr++) {
+				fputs(*hdr, save->fp);
+			}
+			fputs(CRLF, save->fp);
+			save->eoh = ftell(save->fp);
+}
+#endif
 		}
 	}
-
+#ifndef SAVE_UPDATED_HEADERS
+	save->eoh = sess->msg.eoh;
+#endif
 	return SMTPF_CONTINUE;
 }
 
@@ -222,11 +251,12 @@ saveContent(Session *sess, va_list args)
 	chunk = va_arg(args, unsigned char *);
 	size = va_arg(args, long);
 
+#ifndef SAVE_UPDATED_HEADERS
 	if (chunk == sess->msg.chunk0 + sess->msg.eoh) {
 		chunk = sess->msg.chunk0;
 		size += sess->msg.eoh;
 	}
-
+#endif
 	if (verb_trace.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(582) "saveContent(%lx, chunk=%lx, size=%ld)", LOG_ARGS(sess), (long) sess, (long) chunk, size);
 
