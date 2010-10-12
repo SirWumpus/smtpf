@@ -895,6 +895,7 @@ cmdRcpt(Session *sess)
 	const char *error, *params;
 	int i, rc, span, args, apply_smtpf_delay;
 
+	fwd = NULL;
 	*sess->reply = '\0';
 	statsCount(&stat_rcpt_count);
 	apply_smtpf_delay = SMTPF_DELAY;
@@ -1251,6 +1252,16 @@ Only the reply codes from the forward host are relayed to the client with a stan
 error2:
 	statsCount(&stat_rcpt_reject);
 error1:
+	/* Discard the recipent route if there are no valid recipients.
+	 * A forward host should only contain an open connection with
+	 * valid recipients.
+	 */
+	if (fwd != NULL && fwd->rcpt_count == 0
+	&& fwd != sess->client.fwd_to_queue && !connectionIsOpen(fwd)) {
+		sess->msg.fwds = fwd->next;
+		connectionFree(fwd);
+	}
+
 	sess->msg.bad_rcpt_count++;
 	summaryRecipient(sess, sess->input+span);
 	free(rcpt);
@@ -1461,6 +1472,9 @@ forwardCommand(Session *sess, const char *cmd, int expect, long timeout, int *co
 		return SMTPF_CONTINUE;
 
 	for (fwd = sess->msg.fwds; fwd != NULL; fwd = fwd->next, (*count)++) {
+		if (fwd->rcpt_count == 0)
+			continue;
+
 #ifdef OLD_SMTP_ERROR_CODES
 		if (!(fwd->smtp_error & SMTP_ERROR_IO_MASK)) {
 			if (mxPrint(sess, fwd, cmd, strlen(cmd)) == SMTP_ERROR_OK) {
@@ -1888,6 +1902,9 @@ cmdData(Session *sess)
 
 	/* How many DATA commands. */
 	statsCount(&stat_data_count);
+
+	if (sess->msg.rcpt_count < 1)
+		return replySetFmt(sess, SMTPF_REJECT, "554 5.5.0 no recipients" ID_MSG(000) "\r\n", ID_ARG(sess));
 
 	rc = filterRun(sess, filter_data_table);
 	if (verb_data.option.value)
