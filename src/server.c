@@ -663,7 +663,13 @@ serverPrintInfo(void)
 	printVar(LINE_WRAP, "LIBSNERT_CONFIGURE", LIBSNERT_CONFIGURE);
 #endif
 #ifdef SQLITE_VERSION
+{
+	char digit[2] = { 0, 0 };
+	int mode = sqlite3_threadsafe();
+	digit[0] = mode + '0';
 	printVar(0, "SQLITE3_VERSION", SQLITE_VERSION);
+	printVar(0, "SQLITE_THREADSAFE", digit);
+}
 #endif
 #ifdef FILTER_LUA
 	printVar(0, "LUA_RELEASE", LUA_RELEASE);
