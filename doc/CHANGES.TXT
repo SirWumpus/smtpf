@@ -284,6 +284,24 @@ is no set schedule for releases.
 
    !	lua: Fixed dynamic linking with liblua.
 
+   !	serverInfo() now reports the setting of SQLITE_THREADSAFE.
+
+   !	The temporary message file now saves a Return-Path:, Received:
+	and other updated headers instead of just the original headers.
+	This comes in handy with SAVE and TRAP actions to aid
+	SpamAssassin with bulk training.
+
+   !	cmdRcpt(): Discard the recipent route if there are no valid
+	recipients. A forward host should only contain an open
+	connection with valid recipients.
+
+	This addresses a special case bug when delivering mail to two
+	recipients in different domains, where the first one fails a
+	call-ahead check. The route for the failed recipient was added
+	to the list of forward hosts without ever being connected. Thus
+	when the DATA command is forwarded, a bad file descriptor error
+	is reported and extra DSN generated for an unknown recipient.
+
 --2.3.24--
 
    +	Add experimental Lua support. Configure with --with-lua and create
