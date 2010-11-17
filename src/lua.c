@@ -146,10 +146,38 @@ lua_syslog(lua_State *L)
  * This function can be used for lua_pcall() errfunc.
  */
 static int
-lua_error(lua_State *L)
+lua_log_error(lua_State *L)
 {
 	lua_pushinteger(L, LOG_ERR);	/* msg -- msg LOG_ERR */
 	lua_insert(L, -2);		/* msg LOG_ERR -- LOG_ERR msg */
+
+	return lua_syslog(L);
+}
+
+/**
+ * syslog.info(message);
+ *
+ * This function can be used for lua_pcall() errfunc.
+ */
+static int
+lua_log_info(lua_State *L)
+{
+	lua_pushinteger(L, LOG_INFO);	/* msg -- msg LOG_INFO */
+	lua_insert(L, -2);		/* msg LOG_INFO -- LOG_INFO msg */
+
+	return lua_syslog(L);
+}
+
+/**
+ * syslog.debug(message);
+ *
+ * This function can be used for lua_pcall() errfunc.
+ */
+static int
+lua_log_debug(lua_State *L)
+{
+	lua_pushinteger(L, LOG_DEBUG);	/* msg -- msg LOG_DEBUG */
+	lua_insert(L, -2);		/* msg LOG_DEBUG -- LOG_DEBUG msg */
 
 	return lua_syslog(L);
 }
@@ -182,8 +210,12 @@ lua_define_syslog(lua_State *L)
 	lua_setfield(L, -2, "syslog");
 	lua_pushcfunction(L, lua_closelog);
 	lua_setfield(L, -2, "closelog");
-	lua_pushcfunction(L, lua_error);
+	lua_pushcfunction(L, lua_log_error);
 	lua_setfield(L, -2, "error");
+	lua_pushcfunction(L, lua_log_info);
+	lua_setfield(L, -2, "info");
+	lua_pushcfunction(L, lua_log_debug);
+	lua_setfield(L, -2, "debug");
 
 	lua_setglobal(L, "syslog");
 }

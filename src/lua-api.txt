@@ -49,35 +49,43 @@ smtp.code.failed	Return constant 554
 Call-Back Functions
 -------------------
 
-smtp_code, smtp_reply = smtp.connect(ip, ptr)
+smtp_code, smtp_reply = smtp.do_connect(ip, ptr)
+
 	Return smtp.code.ok on success or SMTP code and SMTP reply.
 
-smtp_code, smtp_reply = smtp.helo(helo_arg)
+smtp_code, smtp_reply = smtp.do_helo(helo_arg)
+
 	Return smtp.code.ok on success or SMTP code and SMTP reply.
 
-smtp_code, smtp_reply = smtp.mail(sender, parameter_array)
+smtp_code, smtp_reply = smtp.do_mail(sender, parameter_array)
+
 	Return smtp.code.ok on success or SMTP code and SMTP reply.
 
-smtp_code, smtp_reply = smtp.rcpt(recipient, parameter_array)
+smtp_code, smtp_reply = smtp.do_rcpt(recipient, parameter_array)
+
 	Return smtp.code.ok on success or SMTP code and SMTP reply.
 
-smtp_code, smtp_reply = smtp.data()
+smtp_code, smtp_reply = smtp.do_data()
+
 	Return smtp.code.ok on success or SMTP code and SMTP reply.
 
-smtp_code, smtp_reply = smtp.headers(headers_array)
+smtp_code, smtp_reply = smtp.do_headers(headers_array)
+
 	Return smtp.code.ok on success or SMTP code and SMTP reply.
 	NOT IMPLEMEMNT YET
 
-smtp_code, smtp_reply = smtp.chunk(chunk, size)
+smtp_code, smtp_reply = smtp.do_chunk(chunk, size)
+
 	Return smtp.code.ok on success or SMTP code and SMTP reply.
 	NOT IMPLEMEMNT YET
 
-smtp_code, smtp_reply = smtp.dot(temp_msg_filepath)
+smtp_code, smtp_reply = smtp.do_dot(temp_msg_filepath)
+
 	Return smtp.code.ok on success or SMTP code and SMTP reply.
 
-smtp_rset()
+smtp.rset()
 
-smtp_close()
+smtp.close()
 
 
 Support Functions
@@ -139,6 +147,16 @@ syslog.error(message)
 
 		syslog.syslog(syslog.LOG_ERR, message)
 
-	and suitable for as a Lua error function for lua_pcall().
+syslog.info(message)
+
+	Equivalent to
+
+		syslog.syslog(syslog.LOG_INFO, message)
+
+syslog.debug(message)
+
+	Equivalent to
+
+		syslog.syslog(syslog.LOG_DEBUG, message)
 
 syslog.closelog()
