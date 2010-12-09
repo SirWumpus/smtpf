@@ -18,6 +18,8 @@ extern "C" {
 #define CRLF			"\x0D\x0A"
 #define CRLF_LENGTH		(sizeof (CRLF)-1)
 
+#define REPLY_SUBJECT_TAG	"[SUSPECT]"
+
 extern const char crlf[];
 
 /***********************************************************************
@@ -26,7 +28,7 @@ extern const char crlf[];
 
 typedef struct reply {
 	void (*free)(void *);
-	int code;
+	SmtpfCode code;
 	size_t size;
 	size_t length;
 	char *string;

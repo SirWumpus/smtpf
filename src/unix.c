@@ -277,13 +277,13 @@ run @PACKAGE_NAME@ as a foreground application.
 			exit(1);
 		}
 
+#ifndef KEEP_STDIO_OPEN
 		/* Make sure we release the standard files to the current
 		 * pseudo terminal. Failure to do so means scripts or
 		 * terminals don't go away until the smtpf daemon exits.
 		 */
 		(void) freopen("/dev/null", "r", stdin);
 		(void) freopen("/dev/null", "a", stdout);
-#ifndef DEBUG_MALLOC_THREAD_REPORT
 		(void) freopen("/dev/null", "a", stderr);
 #endif
 	}

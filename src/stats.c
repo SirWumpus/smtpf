@@ -281,8 +281,10 @@ statsRouteUpdate(Session *sess, const char *route, int smtpf_code)
 	RouteStat *entry;
 	unsigned long hash;
 
-	if (route == NULL || *route == '\0' || mutex_lock(SESS_ID, FILE_LINENO, &routes_mutex))
+	if (route == NULL || *route == '\0')
 		goto error0;
+
+	PTHREAD_MUTEX_LOCK(&routes_mutex);
 
 	/* Only hash the stuff after the route: tag. */
 	hash = djb_hash_index((unsigned char *) route+sizeof(STATS_ROUTE_TAG)-1, strlen(route)-sizeof(STATS_ROUTE_TAG)+1, HASH_TABLE_SIZE);
@@ -347,7 +349,7 @@ statsRouteUpdate(Session *sess, const char *route, int smtpf_code)
 
 	rc = 0;
 error1:
-	(void) mutex_unlock(SESS_ID, FILE_LINENO, &routes_mutex);
+	PTHREAD_MUTEX_UNLOCK(&routes_mutex);
 error0:
 	return rc;
 }
@@ -529,8 +531,7 @@ statsRouteCopy(void)
 	int i;
 	RouteStat *entry, *copy, *list = NULL;
 
-	if (mutex_lock(SESS_ID_ZERO, FILE_LINENO, &routes_mutex))
-		return NULL;
+	PTHREAD_MUTEX_LOCK(&routes_mutex);
 
 	for (i = 0; i < HASH_TABLE_SIZE; i++) {
 		for (entry = routes[i]; entry != NULL; entry = entry->next) {
@@ -553,7 +554,7 @@ statsRouteCopy(void)
 		}
 	}
 
-	(void) mutex_unlock(SESS_ID_ZERO, FILE_LINENO, &routes_mutex);
+	PTHREAD_MUTEX_UNLOCK(&routes_mutex);
 
 	return list;
 }
@@ -1480,10 +1481,12 @@ statsNotify(unsigned long one, unsigned long five, unsigned long fifteen)
 
 	latencySend(mcc);
 
+	PTHREAD_MUTEX_LOCK(&stats_mutex);
 	processed = stat_connect_count.runtime
 		  - stat_admin_commands.runtime
 		  - (stat_grey_tempfail.runtime + stat_grey_accept.runtime)
 		  + stat_msg_count.runtime;
+	PTHREAD_MUTEX_UNLOCK(&stats_mutex);
 
 	statsSetValue(&stat_open_files, (unsigned long) getOpenFileCount());
 	if (0 < stat_open_files.runtime)

@@ -135,8 +135,7 @@ msgLimitCacheUpdate(Session *sess, MsgLimit *limit, const char *key)
 	long value;
 	mcc_row row;
 
-	if (mutex_lock(SESS_ID, FILE_LINENO, &msglimit_mutex))
-		goto error0;
+	PTHREAD_MUTEX_LOCK(&msglimit_mutex);
 
 	value = 0;
 	now = time(NULL);
@@ -178,9 +177,7 @@ msgLimitCacheUpdate(Session *sess, MsgLimit *limit, const char *key)
 	if (mccPutRow(mcc, &row) == MCC_ERROR)
 		syslog(LOG_ERR, log_cache_put_error, LOG_ARGS(sess), row.key_data, row.value_data, FILE_LINENO);
 error1:
-	(void) mutex_unlock(SESS_ID, FILE_LINENO, &msglimit_mutex);
-error0:
-	;
+	PTHREAD_MUTEX_UNLOCK(&msglimit_mutex);
 }
 
 static void

@@ -425,8 +425,7 @@ routeCacheGetRcpt(Session *sess, char *key)
 	 * mutex to avoid a race condition between getting the record
 	 * and updating the record.
 	 */
-	if (mutex_lock(SESS_ID, FILE_LINENO, &route_mutex))
-		goto error0;
+	PTHREAD_MUTEX_LOCK(&route_mutex);
 #endif
 	MEMSET(&row, 0, sizeof (row));
 	row.key_size = snprintf((char *) row.key_data, sizeof (row.key_data), RCPT_TAG "%s", key);
@@ -450,9 +449,8 @@ routeCacheGetRcpt(Session *sess, char *key)
 	}
 
 #ifdef ENABLE_CACHE_UPDATE_MUTEX
-	(void) mutex_unlock(SESS_ID, FILE_LINENO, &route_mutex);
+	PTHREAD_MUTEX_UNLOCK(&route_mutex);
 #endif
-error0:
 	return rc;
 }
 

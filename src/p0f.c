@@ -46,20 +46,12 @@ static const char usage_p0f_socket[] =
 Option optP0fSocket	= { "p0f-socket",	"",	usage_p0f_socket };
 Option optP0fTimeout	= { "p0f-timeout",	"60",	"The p0f I/O timeout in seconds." };
 
-static const char usage_p0f_mutex[] =
-  "The p0f daemon is a single threaded process, but supposedly\n"
-"# fast enough not to require threading or mutex locking. When\n"
-"# enabled, a mutex is used to control access to the p0f daemon.\n"
-"# (Experimental)\n"
-"#"
-;
-
-Option optP0fMutex	= { "p0f-mutex",	"-",	usage_p0f_mutex };
-
 Option optP0fReportHeader = { "p0f-report-header",	"X-p0f-Report",	"The name of the p0f report header. Empty string to disable." };
 
 FilterContext p0f_context;
+#ifdef ENABLE_P0F_MUTEX
 static pthread_mutex_t p0f_mutex;
+#endif
 
 Verbose verb_p0f		= { { "p0f", "-", "" } };
 
@@ -67,6 +59,7 @@ Verbose verb_p0f		= { { "p0f", "-", "" } };
  ***
  ***********************************************************************/
 
+#ifdef ENABLE_P0F_MUTEX
 #if defined(FILTER_CLI) && defined(HAVE_PTHREAD_ATFORK)
 void
 p0fAtForkPrepare(void)
@@ -87,6 +80,7 @@ p0fAtForkChild(void)
 	(void) pthread_mutex_destroy(&p0f_mutex);
 }
 #endif
+#endif
 
 int
 p0fOptn(Session *null, va_list ignore)
@@ -101,7 +95,6 @@ p0fRegister(Session *sess, va_list ignore)
 {
 	verboseRegister(&verb_p0f);
 
-	optionsRegister(&optP0fMutex,			0);
 	optionsRegister(&optP0fSocket,			0);
 	optionsRegister(&optP0fTimeout,			0);
 	optionsRegister(&optP0fReportHeader,		0);
@@ -116,6 +109,7 @@ p0fInit(Session *null, va_list ignore)
 {
 	(void) p0fOptn(null, ignore);
 
+#ifdef ENABLE_P0F_MUTEX
 	(void) pthread_mutex_init(&p0f_mutex, NULL);
 #if defined(FILTER_CLI) && defined(HAVE_PTHREAD_ATFORK)
 	if (pthread_atfork(p0fAtForkPrepare, p0fAtForkParent, p0fAtForkChild)) {
@@ -123,14 +117,16 @@ p0fInit(Session *null, va_list ignore)
 		exit(1);
 	}
 #endif
-
+#endif
 	return SMTPF_CONTINUE;
 }
 
 int
 p0fFini(Session *null, va_list ignore)
 {
+#ifdef ENABLE_P0F_MUTEX
 	(void) pthread_mutex_destroy(&p0f_mutex);
+#endif
 	return SMTPF_CONTINUE;
 }
 
@@ -221,9 +217,9 @@ p0fConnect(Session *sess, va_list ignore)
 	/***
 	 *** p0f 2.0.6 -d option is single thread with a listen() queue of 10.
 	 ***/
-	if (optP0fMutex.value)
-		(void) mutex_lock(SESS_ID, FILE_LINENO, &p0f_mutex);
-
+#ifdef ENABLE_P0F_MUTEX
+	PTHREAD_MUTEX_LOCK(&p0f_mutex);
+#endif
 	if (socketClient(p0f, optP0fTimeout.value)) {
 		syslog(LOG_ERR, LOG_MSG(508) "p0f connection error: %s (%d)", LOG_ARGS(sess), strerror(errno), errno);
 /*{NEXT}*/
@@ -255,11 +251,9 @@ p0fConnect(Session *sess, va_list ignore)
 		goto error2;
 	}
 
-	if (optP0fMutex.value && mutex_unlock(SESS_ID, FILE_LINENO, &p0f_mutex)) {
-		syslog(LOG_ERR, LOG_MSG(513) "p0f mutex unlock failed: %s (%d) ", LOG_ARGS(sess), strerror(errno), errno);
-/*{NEXT}*/
-	}
-
+#ifdef ENABLE_P0F_MUTEX
+	PTHREAD_MUTEX_UNLOCK(&p0f_mutex);
+#endif
 	socketClose(p0f);
 	free(caddr);
 
@@ -291,8 +285,9 @@ and <a href="summary.html#opt_p0f_timeout">p0f-timeout</a>options.
 
 	return SMTPF_CONTINUE;
 error2:
-	if (optP0fMutex.value)
-		(void) (void) mutex_unlock(SESS_ID, FILE_LINENO, &p0f_mutex);
+#ifdef ENABLE_P0F_MUTEX
+	PTHREAD_MUTEX_UNLOCK(&p0f_mutex);
+#endif
 	socketClose(p0f);
 error1:
 	free(caddr);

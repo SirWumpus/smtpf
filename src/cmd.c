@@ -2025,29 +2025,6 @@ if (MSG_NOT_SET(sess, MSG_TAG) && !(optSaveData.value & 2))
 	if (verb_data.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(866) "filter-table=%s rc=%d", LOG_ARGS(sess), filter_dot_table[0].name, rc);
 
-	if (MSG_ANY_SET(sess, MSG_TAG) && rc != SMTPF_TEMPFAIL
-	&& (sess->response.delayed != NULL || sess->response.immediate != NULL)) {
-		statsCount(&stat_tagged);
-
-		MSG_SET(sess, MSG_TAGGED);
-		headerAddPrefix(sess, "Subject", optSpamdSubjectTag.string);
-
-		(void) snprintf(sess->input, sizeof (sess->input), "X-Spam-Flag: YES\r\n");
-		if ((hdr = strdup(sess->input)) != NULL && VectorAdd(sess->msg.headers, hdr))
-			free(hdr);
-
-		(void) snprintf(
-			sess->input, sizeof (sess->input), "X-Spam-Reason: %s\r\n",
-			(sess->response.delayed == NULL)
-				? sess->response.immediate->string
-				: sess->response.delayed->string
-		);
-		if ((hdr = strdup(sess->input)) != NULL && VectorAdd(sess->msg.headers, hdr))
-			free(hdr);
-
-		rc = SMTPF_CONTINUE;
-	}
-
 	switch (rc) {
 #if !defined(FILTER_SPAMD) && defined(FILTER_SPAMD2)
 	default:

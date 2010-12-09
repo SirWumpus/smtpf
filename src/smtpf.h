@@ -113,6 +113,10 @@ extern "C" {
 #ifdef DEBUG_MALLOC
 # include <com/snert/lib/util/DebugMalloc.h>
 #endif
+#ifdef DEBUG_MUTEX
+# define KEEP_STDIO_OPEN
+# include <com/snert/lib/sys/lockpick.h>
+#endif
 
 #ifdef NDEBUG
 #define NVALGRIND
@@ -558,11 +562,6 @@ extern int cmdTryAgainLater(Session *sess);
 extern int cmdReject(Session *sess);
 extern int getReceivedHeader(Session *sess, char *buffer, size_t size);
 extern void sendDSN(Session *sess, Connection *fwd);
-
-extern void mutex_destroy(pthread_mutex_t *mutexp);
-extern int mutex_lock(session_id id, const char *name, unsigned long line, pthread_mutex_t *mutexp);
-extern int mutex_trylock(session_id id, const char *name, unsigned long line, pthread_mutex_t *mutexp);
-extern int mutex_unlock(session_id id, const char *name, unsigned long line, pthread_mutex_t *mutexp);
 
 extern int mxPrint(Session *sess, Connection *relay, const char *line, size_t length);
 extern int mxResponse(Session *sess, Connection *relay);

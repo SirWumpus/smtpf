@@ -277,8 +277,7 @@ Connections are temporarily turned away.
 		hash = djb_hash_index(sess->client.ipv6, sizeof (sess->client.ipv6), HASH_TABLE_SIZE);
 		oldest = &clients[hash];
 
-		if (mutex_lock(SESS_ID, FILE_LINENO, &rate_mutex))
-			return SMTPF_CONTINUE;
+		PTHREAD_MUTEX_LOCK(&rate_mutex);
 
 		for (i = 0; i < MAX_LINEAR_PROBE; i++) {
 			entry = &clients[(hash + i) & (HASH_TABLE_SIZE-1)];
@@ -312,7 +311,7 @@ Connections are temporarily turned away.
 		client_rate = rateUpdate(sess, entry->intervals, now / RATE_TICK);
 		entry->touched = now;
 
-		(void) mutex_unlock(SESS_ID, FILE_LINENO, &rate_mutex);
+		PTHREAD_MUTEX_UNLOCK(&rate_mutex);
 
 		if (client_limit < client_rate) {
 			if (verb_rate.option.value)

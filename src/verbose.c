@@ -35,7 +35,6 @@ Verbose verb_debug	= { { "debug",		"-", empty } };
 Verbose verb_db		= { { "db",		"-", empty } };
 Verbose verb_dns	= { { "dns",		"-", empty } };
 Verbose verb_kvm	= { { "kvm",		"-", empty } };
-Verbose verb_mutex	= { { "mutex",		"-", empty } };
 Verbose verb_socket	= { { "socket-fd",	"-", empty } };
 Verbose verb_subject	= { { "subject",	"-", empty } };
 #ifdef __linux__
@@ -193,7 +192,6 @@ verboseRegister0(Session *null, va_list ignore)
 	verboseRegister(&verb_db);
 	verboseRegister(&verb_dns);
 	verboseRegister(&verb_kvm);
-	verboseRegister(&verb_mutex);
 	verboseRegister(&verb_socket);
 	verboseRegister(&verb_subject);
 #ifdef __linux__

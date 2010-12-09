@@ -65,92 +65,6 @@ ServerSignals signals;
 pthread_mutex_t title_mutex;
 
 /***********************************************************************
- *** Mutex Wrappers
- ***********************************************************************/
-
-#if defined(FILTER_CLI) && defined(HAVE_PTHREAD_ATFORK)
-void
-mutex_destroy(pthread_mutex_t *mutexp)
-{
-	(void) pthread_mutex_trylock(mutexp);
-	(void) pthread_mutex_unlock(mutexp);
-	(void) pthread_mutex_destroy(mutexp);
-}
-#endif
-
-int
-mutex_lock(session_id id, const char *name, unsigned long line, pthread_mutex_t *mutexp)
-{
-	int rc;
-	TIMER_DECLARE(mark);
-
-	if (verb_mutex.option.value) {
-		TIMER_START(mark);
-		syslog(LOG_DEBUG, LOG_MSG(584) "mutex locking %s(%lu) ...", id, name, line);
-	}
-
-	rc = pthread_mutex_lock(mutexp);
-
-	if (verb_mutex.option.value) {
-		TIMER_DIFF(mark);
-		syslog(
-			LOG_DEBUG, LOG_MSG(585) "mutex locked %s(%lu) rc=%d errno=%d time=" TIMER_FORMAT,
-			id, name, line, rc, errno, TIMER_FORMAT_ARG(diff_mark)
-		);
-	}
-
-	return rc;
-}
-
-int
-mutex_trylock(session_id id, const char *name, unsigned long line, pthread_mutex_t *mutexp)
-{
-	int rc;
-	TIMER_DECLARE(mark);
-
-	if (verb_mutex.option.value) {
-		TIMER_START(mark);
-		syslog(LOG_DEBUG, LOG_MSG(586) "mutex locking %s(%lu) ...", id, name, line);
-	}
-
-	rc = pthread_mutex_trylock(mutexp);
-
-	if (verb_mutex.option.value) {
-		TIMER_DIFF(mark);
-		syslog(
-			LOG_DEBUG, LOG_MSG(587) "mutex %s %s(%lu) rc=%d errno=%d time=" TIMER_FORMAT,
-			id, rc == 0 ? "locked" : "busy", name, line, rc, errno, TIMER_FORMAT_ARG(diff_mark)
-		);
-	}
-
-	return rc;
-}
-
-int
-mutex_unlock(session_id id, const char *name, unsigned long line, pthread_mutex_t *mutexp)
-{
-	int rc;
-	TIMER_DECLARE(mark);
-
-	if (verb_mutex.option.value) {
-		TIMER_START(mark);
-		syslog(LOG_DEBUG, LOG_MSG(588) "mutex unlocking %s(%lu) ...", id, name, line);
-	}
-
-	rc = pthread_mutex_unlock(mutexp);
-
-	if (verb_mutex.option.value) {
-		TIMER_DIFF(mark);
-		syslog(
-			LOG_DEBUG, LOG_MSG(589) "mutex unlocked %s(%lu) rc=%d errno=%d time=" TIMER_FORMAT,
-			id, name, line, rc, errno, TIMER_FORMAT_ARG(diff_mark)
-		);
-	}
-
-	return rc;
-}
-
-/***********************************************************************
  ***
  ***********************************************************************/
 
@@ -245,6 +159,9 @@ server_init(Server *server)
 	/* Be sure to specify these global SQLite settings before
 	 * opening any databases.
 	 */
+#ifdef ENABLE_SQLITE_MULTITHREAD
+	sqlite3_config(SQLITE_CONFIG_MULTITHREAD);
+#endif
 	sqlite3_enable_shared_cache(1);
 	sqlite3_soft_heap_limit(SQLITE_SOFT_HEAP_LIMIT);
 
@@ -587,6 +504,10 @@ serverMain(void)
 /*{LOG
 Version and copyright notices.
 }*/
+#ifdef DEBUG_MUTEX
+	fprintf(stderr, "Mutex debugging build\n");
+#endif
+
 	if (pthreadInit())
 		goto error0;
 

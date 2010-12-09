@@ -120,6 +120,9 @@ ${TARNAME}: BUILD_ID.TXT built ${OBJS} unix$O lickey$O
 d-${TARNAME}: BUILD_ID.TXT built ${OBJS} unix$O lickey$O
 	${CC} -DDEBUG_MALLOC ${LDFLAGS} ${CC_E}d-${TARNAME}$E ${OBJS} unix$O lickey$O ${LIBS} ../../lib/util/DebugMalloc$O
 
+m-${TARNAME}: BUILD_ID.TXT built ${OBJS} unix$O lickey$O
+	${CC} -DDEBUG_MUTEX ${LDFLAGS} ${CC_E}m-${TARNAME}$E ${OBJS} unix$O lickey$O  ../../lib/sys/lockpick$O ${LIBS}
+
 # Build native Windows app. using gcc under Cygwin, without cygwin1.dll.
 #
 # 	-s		strip, no symbols

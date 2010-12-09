@@ -769,6 +769,31 @@ replyAccept(Session *sess, va_list ignore)
 int
 replyData(Session *sess, va_list ignore)
 {
+	char *hdr;
+
+	if (MSG_ANY_SET(sess, MSG_TAG)
+	&& (sess->response.delayed != NULL || sess->response.immediate != NULL)) {
+		if (sess->response.delayed != NULL)
+			MSG_SET(sess, MSG_POLICY);
+
+		/* When tagging add a X-Spam-Flag header. */
+		(void) snprintf(sess->input, sizeof (sess->input), "%s: YES" CRLF, optSpamdFlagHeader.string);
+		if ((hdr = strdup(sess->input)) != NULL && VectorAdd(sess->msg.headers, hdr))
+			free(hdr);
+
+		/* Add a X-Spam-Reason header _before_ we free any saved
+		 * replies. Note that reply already has a CRLF.
+		 */
+		(void) snprintf(
+			sess->input, sizeof (sess->input), "X-Spam-Reason: %s",
+			(sess->response.delayed == NULL)
+				? sess->response.immediate->string
+				: sess->response.delayed->string
+		);
+		if ((hdr = strdup(sess->input)) != NULL && VectorAdd(sess->msg.headers, hdr))
+			free(hdr);
+	}
+
 	if (sess->response.delayed != NULL
 	&& !replyIsSession(sess->response.delayed)
 	&& (MSG_NOT_SET(sess, MSG_TAG) || sess->response.delayed->code == (SMTPF_DELAY|SMTPF_CONTINUE)))
@@ -812,6 +837,16 @@ replyContent(Session *sess, va_list args)
 int
 replyDot(Session *sess, va_list ignore)
 {
+	/* Check if we need to tag the subject due to pre-DATA
+	 * test.
+	 */
+	if (MSG_ALL_SET(sess, MSG_TAG|MSG_POLICY)
+	&& strstr(sess->msg.subject, optSpamdSubjectTag.string) == NULL) {
+		statsCount(&stat_tagged);
+		MSG_SET(sess, MSG_TAGGED);
+		headerAddPrefix(sess, "Subject", optSpamdSubjectTag.string);
+	}
+
 	return replyContent(sess, ignore);
 }
 

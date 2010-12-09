@@ -182,7 +182,9 @@ headerAddPrefix(Session *sess, const char *hdr_name, const char *prefix)
 	/* Replace the header. */
 	(void) snprintf(replacement, length, "%s: %s %s", hdr_name, prefix, colon);
 	VectorSet(sess->msg.headers, hdr_index, replacement);
-	sess->msg.subject = &replacement[colon - hdr];
+
+	if (TextInsensitiveCompare(hdr_name, "Subject") == 0)
+		sess->msg.subject = &replacement[colon - hdr];
 }
 
 /***********************************************************************

@@ -185,10 +185,12 @@ nullRcpt(Session *sess, va_list args)
 
 	limit = strtol(value, NULL, 10);
 	free(value);
-	if (limit < 0 || mutex_lock(SESS_ID, FILE_LINENO, &null_mutex)) {
+	if (limit < 0) {
 		free(key);
 		return SMTPF_CONTINUE;
 	}
+
+	PTHREAD_MUTEX_LOCK(&null_mutex);
 
 	/* Find a hash table entry for this client. */
 	hash = djb_hash_index((unsigned char *) key, strlen(key), HASH_TABLE_SIZE);
@@ -227,7 +229,7 @@ nullRcpt(Session *sess, va_list args)
 	entry->touched = now;
 	rate = nullUpdate(sess, entry->intervals, now / NULL_TICK);
 
-	(void) mutex_unlock(SESS_ID, FILE_LINENO, &null_mutex);
+	PTHREAD_MUTEX_UNLOCK(&null_mutex);
 
 	if (limit < rate) {
 		(void) replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 null-sender messages %ld for <%s> exceed %ld/60s" ID_MSG(505) "\r\n", rate, rcpt->address.string, limit, ID_ARG(sess));

@@ -167,134 +167,6 @@ static pthread_mutex_t grey_mutex;
  ***
  ***********************************************************************/
 
-#ifdef ENABLE_GREY_TO_BLACK
-/* NOT USED, KEPT IN CASE WE CHOOSE TO REVISE IT */
-
-#define GREY_SQL_DOWNGRADE_old	\
-"REPLACE INTO mcc (k,d,c,t,e)"	\
-" SELECT grey_key_to_host(k),'5',strftime('%s', 'now'),strftime('%s', 'now'),strftime('%s', 'now')+?2" \
-" FROM mcc WHERE e<=?1 AND k LIKE 'grey:%' AND substr(d,0,1)='4';"
-
-#define GREY_SQL_DOWNGRADE	\
-"REPLACE INTO mcc (k,d,c,t,e)"	\
-" SELECT grey_key_to_host(k),'5',strftime('%s', 'now'),strftime('%s', 'now'),strftime('%s', 'now')+?2" \
-" FROM mcc WHERE e<=?1 AND substr(k,0,5) = 'grey:' AND substr(d,0,1)='4';"
-
-static sqlite3_stmt *grey_sql_downgrade;
-
-static void
-grey_key_to_host(sqlite3_context *context, int argc, sqlite3_value **argv)
-{
-	int span;
-	char *old_key, *new_key;
-
-	if (argc < 1 || SQLITE_NULL == sqlite3_value_type(argv[0]))
-		return;
-
-	/* Are we using grey keys we can convert to grey host?
-	 * NOTE that IP, PTR, and PTRN are mutually exclusive.
-	 */
-	if ((optGreyKey.value & (GREY_TUPLE_PTR|GREY_TUPLE_PTRN|GREY_TUPLE_IP|GREY_TUPLE_HELOS)) == 0)
-		return;
-
-	/* Get the grey key. */
-	old_key = (char *) sqlite3_value_text(argv[0]);
-
-	/* Make sure it is grey: record. */
-	if (old_key == NULL || TextSensitiveStartsWith(old_key, "grey:") < 0)
-		return;
-
-	/* Make sure it hasn't already bee chopped. */
-	span = strcspn(old_key, ",");
-	if (old_key[span] == '\0')
-		return;
-
-	/* When using IP, PTR, or PTRN in combination with HELOS, chop at the 2nd comma. */
-	if ((optGreyKey.value & (GREY_TUPLE_PTR|GREY_TUPLE_PTRN|GREY_TUPLE_IP) != 0
-	&&  (optGreyKey.value & GREY_TUPLE_HELOS) != 0) {
-		span += strcspn(old_key+span, ",");
-		if (old_key[span] == '\0')
-			return;
-	}
-
-	if ((new_key = sqlite3_malloc(span+1)) == NULL) {
-		sqlite3_result_error_nomem(context);
-		return;
-	}
-
-	/* Convert the grey key into a grey host. */
-#ifdef ENABLE_PRUNED_STATS
-	statsCount(&stat_grey_downgrade);
-#endif
-	memcpy(new_key, old_key, span);
-	new_key[span] = '\0';
-
-	if (verb_grey.option.value)
-		syslog(LOG_DEBUG, LOG_NUM(377) "converting %s to %s", old_key, new_key);
-
-	sqlite3_result_text(context, new_key, span, sqlite3_free);
-}
-
-int
-grey_cache_prepare(mcc_handle *mcc)
-{
-	if (sqlite3_create_function(mcc->db, "grey_key_to_host", 1, SQLITE_UTF8, NULL, grey_key_to_host, NULL, NULL) != SQLITE_OK) {
-		syslog(LOG_ERR, LOG_NUM(378) "sql=%s create error: %s %s", mcc->path, "grey_key_to_host", sqlite3_errmsg(mcc->db));
-		return -1;
-	}
-
-	if (sqlite3_prepare_v2(mcc->db, GREY_SQL_DOWNGRADE, -1, &grey_sql_downgrade, NULL) != SQLITE_OK) {
-		syslog(LOG_ERR, LOG_NUM(379) "sql=%s statement error: %s %s", mcc->path, GREY_SQL_DOWNGRADE, sqlite3_errmsg(mcc->db));
-		return -1;
-	}
-
-	return 0;
-}
-
-void
-grey_cache_finalize(mcc_handle *mcc)
-{
-	if (grey_sql_downgrade != NULL) {
-		sqlite3_finalize(grey_sql_downgrade);
-		grey_sql_downgrade = NULL;
-	}
-}
-
-mcc_extra grey_cache_extra = { grey_cache_prepare, grey_cache_finalize };
-
-int
-greyGc(Session *null, va_list args)
-{
-	int rc;
-	time_t *when;
-	mcc_handle *mcc;
-
-	LOG_TRACE0(375, greyGc);
-
-	mcc = va_arg(args, mcc_handle *);
-	when = va_arg(args, time_t *);
-
-	rc = SMTPF_UNKNOWN;
-
-	if (mcc == NULL || when == NULL)
-		goto error0;
-
-	if (mutex_lock(SESSION_ID_ZERO, FILE_LINENO, &mcc->mutex))
-		goto error0;
-	if (sqlite3_bind_int(grey_sql_downgrade, 1, (int)(uint32_t) *when) != SQLITE_OK)
-		goto error1;
-	if (sqlite3_bind_int(grey_sql_downgrade, 2, (int)(uint32_t) optCacheRejectTTL.value) != SQLITE_OK)
-		goto error1;
-	if (mccSqlStep(mcc, grey_sql_downgrade, GREY_SQL_DOWNGRADE) == SQLITE_DONE)
-		rc = SMTPF_CONTINUE;
-error1:
-	(void) mutex_unlock(SESSION_ID_ZERO, FILE_LINENO, &mcc->mutex);
-error0:
-	return rc;
-}
-
-#endif /* ENABLE_GREY_TO_BLACK */
-
 static sqlite3_stmt *grey_sql_expire;
 
 #define GREY_SQL_EXPIRE \
@@ -569,8 +441,7 @@ greyCacheUpdate(Session *sess, Grey *grey, char *key, long *delay, int at_dot)
 	row.value_data[0] = rc + '0';
 	key_size = (unsigned short) TextCopy((char *) row.key_data, sizeof row.key_data, key);
 
-	if (mutex_lock(SESS_ID, FILE_LINENO, &grey_mutex))
-		goto error0;
+	PTHREAD_MUTEX_LOCK(&grey_mutex);
 
 	/* As an optimisation, when we upgrade a grey-listed
 	 * entry from temp.fail to continue, then we know that
@@ -827,8 +698,8 @@ greyCacheUpdate(Session *sess, Grey *grey, char *key, long *delay, int at_dot)
 	if (optGreyContent.value && !at_dot && row.created == now)
 		rc = SMTPF_CONTINUE;
 error1:
-	(void) mutex_unlock(SESS_ID, FILE_LINENO, &grey_mutex);
-error0:
+	PTHREAD_MUTEX_UNLOCK(&grey_mutex);
+
 	return rc;
 }
 
@@ -1004,7 +875,8 @@ greyRcpt(Session *sess, va_list args)
 		;
 #endif
 
-	else if (!mutex_lock(SESS_ID, FILE_LINENO, &grey_mutex)) {
+	else {
+		PTHREAD_MUTEX_LOCK(&grey_mutex);
 		rcpt = va_arg(args, ParsePath *);
 		row.key_size = greyMakeKey(sess, optGreyKey.value, rcpt, (char *) row.key_data, sizeof (row.key_data));
 
@@ -1032,7 +904,7 @@ greyRcpt(Session *sess, va_list args)
 			grey->dnsbl_reset = 1;
 #endif
 		}
-		(void) mutex_unlock(SESS_ID, FILE_LINENO, &grey_mutex);
+		PTHREAD_MUTEX_UNLOCK(&grey_mutex);
 	}
 
 	return SMTPF_CONTINUE;
@@ -1259,9 +1131,9 @@ greyDot(Session *sess, va_list ignore)
 #else
 			;
 #endif
-
-		else if (!mutex_lock(SESS_ID, FILE_LINENO, &grey_mutex)) {
+		else {
 			mcc_row row;
+			PTHREAD_MUTEX_LOCK(&grey_mutex);
 
 			if (optGreyKey.value & GREY_TUPLE_RCPT) {
 				for (fwd = sess->msg.fwds; fwd != NULL; fwd = fwd->next) {
@@ -1295,7 +1167,7 @@ greyDot(Session *sess, va_list ignore)
 				}
 			}
 
-			(void) mutex_unlock(SESS_ID, FILE_LINENO, &grey_mutex);
+			PTHREAD_MUTEX_UNLOCK(&grey_mutex);
 		}
 	}
 #endif

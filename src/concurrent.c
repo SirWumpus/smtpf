@@ -134,8 +134,7 @@ concurrentCacheUpdate(Session *sess, long add)
 	if (sess->max_concurrent <= 0)
 		return 0;
 
-	if (mutex_lock(SESS_ID, FILE_LINENO, &concurrent_mutex))
-		return 0;
+	PTHREAD_MUTEX_LOCK(&concurrent_mutex);
 
 	hash = djb_hash_index(sess->client.ipv6, sizeof (sess->client.ipv6), HASH_TABLE_SIZE);
 	oldest = &clients[hash];
@@ -168,7 +167,7 @@ concurrentCacheUpdate(Session *sess, long add)
 	if (verb_cache.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(327) "concurrency update key={%s} value={%d} add=%ld", LOG_ARGS(sess), sess->client.addr, entry->count, add);
 
-	(void) mutex_unlock(SESS_ID, FILE_LINENO, &concurrent_mutex);
+	PTHREAD_MUTEX_UNLOCK(&concurrent_mutex);
 
 	if (rc) {
 		CLIENT_SET(sess, CLIENT_CONCURRENCY_LIMIT);
