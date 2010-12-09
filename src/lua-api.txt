@@ -29,6 +29,7 @@ smtp.sess.helo		HELO/EHLO argument or nil if not yet defined
 smtp.tran.id		Transaction id or nil if between transactions.
 smtp.tran.sender	MAIL FROM: address or nil if between transactions
 
+smtp.code.continue	Return constant 0   (no action)
 smtp.code.ok		Return constant 250
 smtp.code.closing	Return constant 421
 smtp.code.busy		Return constant 450
@@ -83,9 +84,11 @@ smtp_code, smtp_reply = smtp.do_dot(temp_msg_filepath)
 
 	Return smtp.code.ok on success or SMTP code and SMTP reply.
 
-smtp.rset()
+smtp.do_result(forwarder_reply)
 
-smtp.close()
+smtp.do_rset()
+
+smtp.do_close()
 
 
 Support Functions

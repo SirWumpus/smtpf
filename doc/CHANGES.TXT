@@ -278,6 +278,17 @@ is no set schedule for releases.
    	file to by-pass when spamd-max-size is being used. Steve F.
 
 
+--2.3.26--
+
+   !	cmdData, replyData: When an access connect:, helo:, or from:
+	entry indicated the TAG word, the subject tagging was not being
+	applied, because of filter order / cleanup code in cmdData().
+	The code to tag the subject moved to replyData().
+
+   !	Remove verb mutex and replaced mutex_lock()/mutex_unlock() with
+   	PTHREAD_MUTEX_LOCK() and PTHREAD_MUTEX_UNLOCK() macros that handle
+   	mutex cleanup during thread cancellation.
+
 --2.3.25--
 
    *	Requires Libsnert 1.74.13
