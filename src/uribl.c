@@ -1394,7 +1394,8 @@ uriblMailMail(Session *sess, va_list args)
 	if ((rc = mailBlLookup(sess, sess->msg.mail->address.string, &stat_mail_bl_mail)) != SMTPF_CONTINUE)
 		return rc;
 
-	if (optUriBlMail.value && 0 < mail->address.length && (uri = uriParse2(mail->domain.string, -1, 1)) != NULL) {
+	if (optUriBlMail.value && 0 < mail->domain.length
+	&& (uri = uriParse2(mail->domain.string, mail->domain.length, 1)) != NULL) {
 		rc = uriblTestURI(sess, uri, 0);
 		free(uri);
 

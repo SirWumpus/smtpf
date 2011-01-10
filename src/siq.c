@@ -147,6 +147,7 @@ siqData(Session *sess, va_list ignore)
 	mcc_row cached;
 	const char *error = NULL;
 	SIQ_compact *siq_ctx = filterGetContext(sess, siq_context);
+	mcc_handle *mcc = SESS_GET_MCC(sess);
 
 	if (verb_trace.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(612) "siqData()", LOG_ARGS(sess));

@@ -417,6 +417,7 @@ routeCacheGetRcpt(Session *sess, char *key)
 {
 	int rc;
 	mcc_row row;
+	mcc_handle *mcc = SESS_GET_MCC(sess);
 
 	rc = SMTPF_CONTINUE;
 
@@ -458,6 +459,7 @@ static void
 routeCacheAddRcpt(Session *sess, char *key, SmtpfCode smtpf_code)
 {
 	mcc_row row;
+	mcc_handle *mcc = SESS_GET_MCC(sess);
 
 	MEMSET(&row, 0, sizeof (row));
 	row.hits = 0;
@@ -734,6 +736,7 @@ routeCallAhead(Session *sess, const char *host, ParsePath *rcpt)
 	mcc_row dumb_host;
 	int dumb_host_cached;
 	char false_rcpt[SMTP_LOCAL_PART_LENGTH];
+	mcc_handle *mcc = SESS_GET_MCC(sess);
 
 #endif
 	*sess->reply = '\0';

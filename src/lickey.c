@@ -296,7 +296,7 @@ error0:
 }
 
 void
-lickeySendWarning(void)
+lickeySendWarning(mcc_handle *mcc)
 {
 	int days;
 	long value;

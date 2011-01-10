@@ -58,7 +58,7 @@ latencyReply(mcc_context *mcc, mcc_key_hook *hook, const char *ip, mcc_row *row)
 	CLOCK_GET(&now);
 	CLOCK_SUB(&now, (CLOCK *) row->value_data);
 	(void) snprintf(buffer, sizeof (buffer), LATENCY_FIELD CLOCK_FMT, CLOCK_FMT_DOT(now));
-	mccNotesUpdate(mcc, ip, LATENCY_FIELD, buffer);
+	mccNotesUpdate(ip, LATENCY_FIELD, buffer);
 }
 
 static mcc_key_hook latency_reply_hook = {
@@ -86,7 +86,7 @@ latencySend(mcc_context *mcc)
 }
 
 void
-latencyInit(mcc_context *mcc)
+latencyInit(void)
 {
 	SocketAddress this_host;
 	char hostname[SMTP_DOMAIN_LENGTH+32];
@@ -103,7 +103,7 @@ latencyInit(mcc_context *mcc)
 	latency_reply_hook.prefix = strdup(hostname);
 	latency_reply_hook.prefix_length = strlen(hostname);
 
-	mccRegisterKey(mcc, &latency_client_hook);
-	mccRegisterKey(mcc, &latency_reply_hook);
+	mccRegisterKey(&latency_client_hook);
+	mccRegisterKey(&latency_reply_hook);
 }
 

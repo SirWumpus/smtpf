@@ -86,6 +86,7 @@ dupmsgRset(Session *sess, va_list ignore)
 	mcc_row row;
 	ParsePath *first_rcpt;
 	SmtpfCode smtpf_code = SMTPF_UNKNOWN;
+	mcc_handle *mcc = SESS_GET_MCC(sess);
 
 	LOG_TRACE(sess, 333, dupmsgRset);
 
@@ -203,6 +204,7 @@ dupmsgDot(Session *sess, va_list ignore)
 	DupMsg *ctx;
 	SmtpfCode rc;
 	ParsePath *first_rcpt;
+	mcc_handle *mcc = SESS_GET_MCC(sess);
 
 	LOG_TRACE(sess, 000, dupmsgDot);
 

@@ -70,6 +70,7 @@ four21CacheUpdate(Session *sess, int set_smtpf_code)
 {
 	int rc;
 	mcc_row row;
+	mcc_handle *mcc = SESS_GET_MCC(sess);
 
 	row.hits = 0;
 	row.value_size = 1;

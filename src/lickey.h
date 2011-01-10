@@ -54,7 +54,7 @@ extern Stats stat_route_unique_domains;
 extern void lickeyInit(Vector interfaces);
 extern void lickeyHasExpired(void);
 extern void lickeyRouteCount(void);
-extern void lickeySendWarning(void);
+extern void lickeySendWarning(mcc_handle *);
 extern int lickeyFileIsValid(const char *file, const char *ip);
 extern int lickeyStringIsValid(const char *string, const char *ip);
 

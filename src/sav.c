@@ -111,6 +111,7 @@ savData(Session *sess, va_list ignore)
 	Connection *callback;
 	int rc, domain_cached;
 	mcc_row sender, domain;
+	mcc_handle *mcc = SESS_GET_MCC(sess);
 
 	if (verb_trace.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(571) "savData()", LOG_ARGS(sess));

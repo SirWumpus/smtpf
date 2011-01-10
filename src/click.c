@@ -163,6 +163,7 @@ clickMail(Session *sess, va_list args)
 	int rc;
 	mcc_row row;
 	ParsePath *mail;
+	mcc_handle *mcc = SESS_GET_MCC(sess);
 
 	rc = SMTPF_CONTINUE;
 
@@ -215,6 +216,7 @@ clickRcpt(Session *sess, va_list args)
 	mcc_row row;
 	ParsePath *rcpt;
 	char buffer[CLICK_PREFIX_LENGTH+1];
+	mcc_handle *mcc = SESS_GET_MCC(sess);
 
 	LOG_TRACE(sess, 243, clickRcpt);
 

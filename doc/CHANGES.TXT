@@ -278,7 +278,16 @@ is no set schedule for releases.
    	file to by-pass when spamd-max-size is being used. Steve F.
 
 
+--2.3.27--
+
+   *	Requires Libsnert 1.74.15
+
+   !	Refactored code to use one mcc handle per thread instead of a
+   	global mcc handle. See libsnert concerning mcc API changes.
+
 --2.3.26--
+
+   *	Requires Libsnert 1.74.14
 
    !	cmdData, replyData: When an access connect:, helo:, or from:
 	entry indicated the TAG word, the subject tagging was not being

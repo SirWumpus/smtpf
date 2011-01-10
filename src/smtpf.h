@@ -482,11 +482,14 @@ typedef struct {
 	PDQ *pdq;
 	smdb *route_map;
 	smdb *access_map;
+	mcc_handle *mcc;
 } Worker;
 
 typedef char (session_id)[20];
 
 #include "reply.h"
+
+#define SESS_GET_MCC(sess)		((Worker *) ((sess)->session->worker->data))->mcc;
 
 struct smtpf {
 	ServerSession *session;

@@ -799,6 +799,7 @@ checkClientIP(Session *sess)
 #ifdef FILTER_GREY
 {
 	mcc_row row;
+	mcc_handle *mcc = ((Worker *) sess->session->worker->data)->mcc;
 
 	/* Check the cache to see if this client has previously passed grey-listing.
 	 * and set a flag if true. This flag can then be used to disable certain

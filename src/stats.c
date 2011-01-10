@@ -43,6 +43,7 @@
 #include <com/snert/lib/mail/smdb.h>
 #include <com/snert/lib/util/b64.h>
 #include <com/snert/lib/util/Token.h>
+#include <com/snert/lib/util/timer.h>
 #include <com/snert/lib/sys/Time.h>
 
 /***********************************************************************
@@ -1184,8 +1185,11 @@ statsInit(void)
 
 #ifdef HAVE_GETLOADAVG
 {
+	mcc_handle *mcc;
 	CLOCK period = { 60, 0 };
-	stats_timer = timerCreate(statsTimerTask, NULL, &period, 0);
+
+	if ((mcc = mccCreate()) != NULL)
+		stats_timer = timerCreate(statsTimerTask, mcc, NULL, &period, 0);
 }
 #endif
 #if defined(FILTER_CLI) && defined(HAVE_PTHREAD_ATFORK)
@@ -1233,7 +1237,11 @@ statsFini(void)
 	PTHREAD_MUTEX_UNLOCK(&stats_mutex);
 	(void) pthread_mutex_destroy(&stats_mutex);
 
-	timerFree(stats_timer);
+ 	if (stats_timer != NULL) {
+		mcc_handle *mcc = stats_timer->data;
+		timerFree(stats_timer);
+		mccDestroy(mcc);
+	}
 }
 
 int
@@ -1472,7 +1480,7 @@ Not used at this time.
 
 #ifdef HAVE_GETLOADAVG
 void
-statsNotify(unsigned long one, unsigned long five, unsigned long fifteen)
+statsNotify(mcc_handle *mcc, unsigned long one, unsigned long five, unsigned long fifteen)
 {
 	mcc_row row;
 	char buffer[128];
@@ -1527,11 +1535,11 @@ statsNotify(unsigned long one, unsigned long five, unsigned long fifteen)
 		pct_capacity
 	);
 
-	mccNotesUpdate(mcc, "127.0.0.1", "la=", buffer);
+	mccNotesUpdate("127.0.0.1", "la=", buffer);
 }
 
 void
-statsTimerTask(Timer *ignore)
+statsTimerTask(Timer *timer)
 {
 	double avg[3];
 	unsigned long int_avg[3];
@@ -1541,7 +1549,7 @@ statsTimerTask(Timer *ignore)
 		int_avg[1] = (unsigned long)(avg[1] * 1000);
 		int_avg[2] = (unsigned long)(avg[2] * 1000);
 
-		statsNotify(int_avg[0], int_avg[1], int_avg[2]);
+		statsNotify(timer->data, int_avg[0], int_avg[1], int_avg[2]);
 	}
 }
 #endif /* HAVE_GETLOADAVG */

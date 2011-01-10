@@ -134,6 +134,7 @@ msgLimitCacheUpdate(Session *sess, MsgLimit *limit, const char *key)
 	time_t now;
 	long value;
 	mcc_row row;
+	mcc_handle *mcc = SESS_GET_MCC(sess);
 
 	PTHREAD_MUTEX_LOCK(&msglimit_mutex);
 
@@ -219,7 +220,7 @@ msgLimitReply(Session *sess, MsgLimit *limit, const char *who)
 	long units;
 	const char *word;
 
-	if (limit->messages < limit->count) {
+	if (0 < limit->messages && limit->messages < limit->count) {
 		units = limit->seconds;
 
 		switch (limit->unit) {

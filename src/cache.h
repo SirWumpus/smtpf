@@ -17,8 +17,6 @@ extern "C" {
 
 #include <com/snert/lib/type/mcc.h>
 
-extern mcc_handle *mcc;
-
 extern Option optCachePath;
 extern Option optCacheMulticastIp;
 extern Option optCacheMulticastPort;
@@ -26,7 +24,9 @@ extern Option optCacheSecret;
 extern Option optCacheUnicastDomain;
 extern Option optCacheUnicastHosts;
 extern Option optCacheUnicastPort;
+#ifdef NO_LONGER_USED
 extern Option optCacheOnCorrupt;
+#endif
 extern Option optCacheSyncMode;
 
 extern void cacheInit(void);

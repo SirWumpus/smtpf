@@ -124,20 +124,25 @@ offered only for special partnership deals and is not generally available to cus
 void
 _atExitCleanUp(void)
 {
+	(void) close(pid_fd);
 	filterFini();
 	statsFini();
 	cacheFini();
-	(void) pthreadMutexDestroy(&title_mutex);
+
+	/* Not really required, but here to cleanup for Valgrind. */
+	sqlite3_shutdown();
 
 	VectorDestroy(reject_msg);
 	VectorDestroy(welcome_msg);
+
+	(void) pthreadMutexDestroy(&title_mutex);
+	ProcTitleFini();
 
 	syslog(LOG_INFO, LOG_NUM(732) "terminated");
 	/* Must come after last syslog call, since on Linux it will
 	 * free the duplicated environment created by ProcTitleInit.
 	 * syslog tries to get time zone information from the environment.
 	 */
-	ProcTitleFini();
 	closelog();
 }
 
@@ -155,6 +160,9 @@ server_init(Server *server)
 		syslog(LOG_ERR, log_init, FILE_LINENO, "", strerror(errno), errno);
 		exit(1);
 	}
+
+	/* Not really required, but here for Valgrind. */
+	sqlite3_initialize();
 
 	/* Be sure to specify these global SQLite settings before
 	 * opening any databases.
@@ -205,7 +213,7 @@ server_init(Server *server)
 		exit(0);
 
 	cacheGcStart();
-	latencyInit(mcc);
+	latencyInit();
 
 	/* We have to create the .pid file after we become a daemon process
 	 * but before we change process ownership, particularly if we intend
@@ -453,6 +461,7 @@ worker_free(ServerWorker *worker)
 		data = worker->data;
 		worker->data = NULL;
 		pdqClose(data->pdq);
+		mccDestroy(data->mcc);
 		smdbClose(data->route_map);
 		smdbClose(data->access_map);
 		free(data);
@@ -472,6 +481,9 @@ worker_create(ServerWorker *worker)
 	worker->data = data;
 
 	if ((data->pdq = pdqOpen()) == NULL)
+		goto error1;
+
+	if ((data->mcc = mccCreate()) == NULL)
 		goto error1;
 
 	if ((data->route_map = smdbOpen(route_map_path, 1)) == NULL)
@@ -511,7 +523,7 @@ Version and copyright notices.
 	if (pthreadInit())
 		goto error0;
 
-	if (serverSignalsInit(&signals, _NAME))
+	if (serverSignalsInit(&signals))
 		goto error1;
 
 	if (serverInit(&server, optInterfaces.string, SMTP_PORT))

@@ -1,7 +1,7 @@
 /*
  * cache.c
  *
- * Copyright 2006 by Anthony Howe. All rights reserved.
+ * Copyright 2006, 2010 by Anthony Howe. All rights reserved.
  */
 
 /***********************************************************************
@@ -58,6 +58,7 @@ Option optCacheRejectTTL	= { "cache-reject-ttl",		"604800",	usage_cache_reject_t
 Option optCacheTempFailTTL	= { "cache-temp-fail-ttl",	"7200",		usage_cache_tempfail_ttl };
 Option optCacheGcInterval	= { "cache-gc-interval", 	"300",		usage_cache_gc_interval };
 
+#ifdef NO_LONGER_USED
 static const char usage_cache_on_corrupt[] =
   "Action taken if cache corruption is detected. Set to one of: exit,\n"
 "# rename, or replace. This is intended for debugging.\n"
@@ -73,6 +74,7 @@ static const char usage_cache_sync_mode[] =
 ;
 
 Option optCacheSyncMode		= { "cache-sync-mode",		"off",		usage_cache_sync_mode };
+#endif
 
 
 Verbose verb_cache		= { { "cache",		"-", "" } };
@@ -137,8 +139,6 @@ Option optCacheSecret		= { "cache-secret",		"",			usage_cache_secret };
 Option optCacheUnicastDomain	= { "cache-unicast-domain",	"",			usage_cache_unicast_domain };
 Option optCacheUnicastHosts	= { "cache-unicast-hosts",	"",			usage_cache_unicast_hosts };
 Option optCacheUnicastPort	= { "cache-unicast-port",	QUOTE(CACHE_UNICAST_PORT),	"The listener port for unicast cache updates." };
-
-mcc_handle *mcc;
 
 /***********************************************************************
  ***
@@ -264,7 +264,9 @@ Timer *gc_timer;
 static void
 cacheGcThread(Timer *timer)
 {
+#ifdef REPLACED_BY_MCC_START_GC
 	time_t now;
+#endif
 	TIMER_DECLARE(section);
 	TIMER_DECLARE(overall);
 
@@ -273,6 +275,7 @@ cacheGcThread(Timer *timer)
 		TIMER_START(section);
 	}
 
+#ifdef REPLACED_BY_MCC_START_GC
 	if (verb_cache.option.value)
 		syslog(LOG_DEBUG, LOG_NUM(165) "garbage collecting cache");
 
@@ -280,7 +283,7 @@ cacheGcThread(Timer *timer)
 	timer->period.tv_sec = optCacheGcInterval.value;
 
 	(void) time(&now);
-	(void) filterRun(NULL, filter_cache_gc_table, mcc, &now);
+	(void) filterRun(NULL, filter_cache_gc_table, timer->data, &now);
 
 	if (verb_timers.option.value) {
 		TIMER_DIFF(section);
@@ -288,7 +291,7 @@ cacheGcThread(Timer *timer)
 			syslog(LOG_DEBUG, LOG_NUM(166) "cache gc time-elapsed=" TIMER_FORMAT, TIMER_FORMAT_ARG(diff_section));
 		TIMER_START(section);
 	}
-
+#endif
 	if (verb_cache.option.value)
 		syslog(LOG_DEBUG, LOG_NUM(167) "updating stats");
 
@@ -305,10 +308,10 @@ cacheGcThread(Timer *timer)
 	/*** REMOVAL OF THIS CODE IS IN VIOLATION
 	 *** OF THE TERMS OF THE SOFTWARE LICENSE.
 	 ***/
-	(void) licenseControl(mcc);
+	(void) licenseControl(timer->data);
 #endif
 	lickeyHasExpired();
-	lickeySendWarning();
+	lickeySendWarning(timer->data);
 
 	if (verb_timers.option.value) {
 		TIMER_DIFF(section);
@@ -327,42 +330,52 @@ cacheGcThread(Timer *timer)
 void
 cacheGcStart(void)
 {
+#ifdef REPLACED_BY_MCC_START_GC
+	mcc_handle *mcc;
+#endif
 	CLOCK period = { 0, 0 };
 
 	period.tv_sec = optCacheGcInterval.value;
 
-	if ((gc_timer = timerCreate(cacheGcThread, NULL, &period, 32 * 1024)) == NULL) {
+#ifdef REPLACED_BY_MCC_START_GC
+	if ((mcc = mccCreate()) == NULL) {
 		syslog(LOG_ERR, log_init, FILE_LINENO, "", strerror(errno), errno);
 		exit(1);
 	}
+
+	if ((gc_timer = timerCreate(cacheGcThread, mcc, NULL, &period, 32 * 1024)) == NULL) {
+		syslog(LOG_ERR, log_init, FILE_LINENO, "", strerror(errno), errno);
+		exit(1);
+	}
+#else
+	if (mccStartGc(optCacheGcInterval.value)) {
+		syslog(LOG_ERR, log_init, FILE_LINENO, "", strerror(errno), errno);
+		exit(1);
+	}
+
+	if ((gc_timer = timerCreate(cacheGcThread, NULL, NULL, &period, 32 * 1024)) == NULL) {
+		syslog(LOG_ERR, log_init, FILE_LINENO, "", strerror(errno), errno);
+		exit(1);
+	}
+#endif
 }
 
 void
 cacheFini(void)
 {
-	timerFree(gc_timer);
-	mccDestroy(mcc);
-}
-
-#if defined(FILTER_CLI) && defined(HAVE_PTHREAD_ATFORK)
-void
-cacheAtForkPrepare(void)
-{
-	mccAtForkPrepare(mcc);
-}
-
-void
-cacheAtForkParent(void)
-{
-	mccAtForkParent(mcc);
-}
-
-void
-cacheAtForkChild(void)
-{
-	mccAtForkChild(mcc);
-}
+#ifdef REPLACED_BY_MCC_START_GC
+	if (gc_timer != NULL) {
+		mcc_handle *mcc = gc_timer->data;
+		timerFree(gc_timer);
+		mccDestroy(mcc);
+	}
+#else
+	if (gc_timer != NULL) {
+		timerFree(gc_timer);
+	}
 #endif
+	mccFini();
+}
 
 int
 cacheRegister(Session *null, va_list ignore)
@@ -374,15 +387,16 @@ cacheRegister(Session *null, va_list ignore)
 	optionsRegister(&optCacheMulticastIp, 1);
 	optionsRegister(&optCacheMulticastPort, 1);
 	optionsRegister(&optCacheMulticastTTL, 1);
+#ifdef NO_LONGER_USED
 	optionsRegister(&optCacheOnCorrupt, 1);
+#endif
 	optionsRegister(&optCachePath, 1);
 	optionsRegister(&optCacheRejectTTL, 0);
 	optionsRegister(&optCacheSecret, 0);
+#ifdef NO_LONGER_USED
 	optionsRegister(&optCacheSyncMode, 1);
-	optionsRegister(&optCacheTempFailTTL, 0);
-#if !defined(ENABLE_PDQ)
-	optionsRegister(&optCacheUnicastDomain, 1);
 #endif
+	optionsRegister(&optCacheTempFailTTL, 0);
 	optionsRegister(&optCacheUnicastHosts, 1);
 	optionsRegister(&optCacheUnicastPort, 1);
 
@@ -420,7 +434,7 @@ cache_loadavg_process(mcc_context *mcc, mcc_key_hook *hook, const char *ip, mcc_
 		(long) (time(NULL) - (time_t) row->touched)
 	);
 
-	mccNotesUpdate(mcc, ip, "la=", buffer);
+	mccNotesUpdate(ip, "la=", buffer);
 }
 
 static mcc_key_hook cache_loadavg_hook = {
@@ -440,6 +454,7 @@ cacheInit(void)
 	mccSetDebug(verb_cache.option.value);
 #endif
 
+#ifdef NO_LONGER_USED
 	switch (tolower(optCacheOnCorrupt.string[0])) {
 	case 'e':
 		mccSetOnCorrupt(MCC_ON_CORRUPT_EXIT);
@@ -454,8 +469,8 @@ cacheInit(void)
 			break;
 		}
 	}
-
-	if ((mcc = mccCreate(optCachePath.string, 0, &grey_cache_hooks)) == NULL) {
+#endif
+	if (mccInit(optCachePath.string, &grey_cache_hooks) == MCC_ERROR) {
 		syslog(LOG_ERR, LOG_NUM(172) "cache-path=%s open error: %s (%d)", optCachePath.string, strerror(errno), errno);
 /*{LOG
 The cache database could not be opened. Check the <code>cache.sq3</code> file <a href="install.html#unix_permissions">permissions &amp; ownership</a>
@@ -463,6 +478,7 @@ The cache database could not be opened. Check the <code>cache.sq3</code> file <a
 		exit(1);
 	}
 
+#ifdef NO_LONGER_USED
 	if (mccSetSyncByName(mcc, optCacheSyncMode.string) != MCC_OK) {
 		syslog(LOG_ERR, LOG_NUM(173) "cache-sync-mode=%s error", optCacheSyncMode.string);
 /*{LOG
@@ -470,11 +486,11 @@ An invalid value was specified for this option.
 }*/
 		exit(1);
 	}
-
-	mccRegisterKey(mcc, &cache_loadavg_hook);
+#endif
+	mccRegisterKey(&cache_loadavg_hook);
 
 #if defined(FILTER_CLI) && defined(HAVE_PTHREAD_ATFORK)
-	if (pthread_atfork(cacheAtForkPrepare, cacheAtForkParent, cacheAtForkChild)) {
+	if (pthread_atfork(mccAtForkPrepare, mccAtForkParent, mccAtForkChild)) {
 		syslog(LOG_ERR, log_init, FILE_LINENO, "", strerror(errno), errno);
 		exit(1);
 	}
@@ -486,31 +502,15 @@ An invalid value was specified for this option.
 	(void) pathSetPermsByName(buffer, optRunUser.string, optRunGroup.string, 0664);
 
 	if (*optCacheSecret.string != '\0')
-		(void) mccSetSecret(mcc, optCacheSecret.string);
+		(void) mccSetSecret(optCacheSecret.string);
 
 	if (*optCacheMulticastIp.string != '\0') {
-		if (mccStartMulticast(mcc, optCacheMulticastIp.string, optCacheMulticastPort.value))
+		if (mccStartMulticast(optCacheMulticastIp.string, optCacheMulticastPort.value))
 			exit(1);
-		if (mccSetMulticastTTL(mcc, optCacheMulticastTTL.value))
+		if (mccSetMulticastTTL(optCacheMulticastTTL.value))
 			exit(1);
 	}
 
-#if !defined(ENABLE_PDQ)
-	if (*optCacheUnicastDomain.string != '\0' && *optCacheUnicastHosts.string != '\0') {
-		syslog(LOG_ERR, LOG_NUM(174) "cache-unicast-domain and cache-unicast-hosts are mutually exclusive options");
-/*{LOG
-Check the @PACKAGE_NAME@.cf file. Specify either
-<a href="summary.html#opt_cache_unicast_domain">cache-unicast-domain</a> or
-<a href="summary.html#opt_cache_unicast_hosts">cache-unicast-hosts</a>, but
-not both.
-}*/
-		exit(1);
-	} else if (*optCacheUnicastDomain.string != '\0' && mccStartUnicastDomain(mcc, optCacheUnicastDomain.string, optCacheUnicastPort.value)) {
-		syslog(LOG_ERR, LOG_NUM(175) "cache-unicast-domain error: %s (%d)", strerror(errno), errno);
-/*{NEXT}*/
-		exit(1);
-	} else
-#endif
 	if (*optCacheUnicastHosts.string != '\0') {
 		Vector unicast_list;
 
@@ -520,7 +520,7 @@ not both.
 			exit(1);
 		}
 
-		if (mccStartUnicast(mcc, (const char **) VectorBase(unicast_list), optCacheUnicastPort.value)) {
+		if (mccStartUnicast((const char **) VectorBase(unicast_list), optCacheUnicastPort.value)) {
 			syslog(LOG_ERR, LOG_NUM(177) "cache-unicast-hosts error: %s (%d)", strerror(errno), errno);
 /*{LOG
 An error in parsing the option or starting the unicast cache listener thread.
@@ -574,6 +574,7 @@ cacheCommand(Session *sess)
 	mcc_active_host **cache;
 	mcc_row old_row, new_row;
 	char cstamp[40], tstamp[40], estamp[40];
+	mcc_handle *mcc = ((Worker *) sess->session->worker->data)->mcc;
 
 	if (CLIENT_NOT_SET(sess, CLIENT_IS_LOCALHOST))
 		return cmdUnknown(sess);
@@ -617,7 +618,7 @@ cacheCommand(Session *sess)
 		goto error0;
 
 	case 'A': /* ACTIVE */
-		if ((active = mccGetActive(mcc)) == NULL) {
+		if ((active = mccGetActive()) == NULL) {
 			reply = replyFmt(SMTPF_REJECT, "510 5.0.0 ACTIVE error\r\n");
 			break;
 		}

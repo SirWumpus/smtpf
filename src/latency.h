@@ -15,7 +15,7 @@ extern "C" {
  ***
  ***********************************************************************/
 
-extern void latencyInit(mcc_context *mcc);
+extern void latencyInit(void);
 extern void latencySend(mcc_context *mcc);
 
 /***********************************************************************

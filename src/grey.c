@@ -167,18 +167,28 @@ static pthread_mutex_t grey_mutex;
  ***
  ***********************************************************************/
 
-static sqlite3_stmt *grey_sql_expire;
-
 #define GREY_SQL_EXPIRE \
 "SELECT count(*) FROM mcc WHERE e <= strftime('%s','now') AND substr(k,0,4)='grey' AND substr(d,0,1)='4';"
+
+struct grey_mcc {
+	sqlite3_stmt *expire;
+};
 
 int
 greyGcPrepare(mcc_context *mcc, void *data)
 {
-	if (sqlite3_prepare_v2(mcc->db, GREY_SQL_EXPIRE, -1, &grey_sql_expire, NULL) != SQLITE_OK) {
-		syslog(LOG_ERR, LOG_NUM(908) "sql=%s statement error: %s %s", mcc->path, GREY_SQL_EXPIRE, sqlite3_errmsg(mcc->db));
+	struct grey_mcc *extra;
+
+	if ((extra = malloc(sizeof (*extra))) == NULL)
+		return -1;
+
+	if (sqlite3_prepare_v2(mcc->db, GREY_SQL_EXPIRE, -1, &extra->expire, NULL) != SQLITE_OK) {
+		syslog(LOG_ERR, LOG_NUM(908) "mcc statement error: %s %s", GREY_SQL_EXPIRE, sqlite3_errmsg(mcc->db));
+		free(extra);
 		return -1;
 	}
+
+	mcc->data = extra;
 
 	return 0;
 }
@@ -186,9 +196,10 @@ greyGcPrepare(mcc_context *mcc, void *data)
 int
 greyGcFinalise(mcc_context *mcc, void *data)
 {
-	if (grey_sql_expire != NULL) {
-		(void) sqlite3_finalize(grey_sql_expire);
-		grey_sql_expire = NULL;
+	if (mcc->data != NULL) {
+		struct grey_mcc *extra = mcc->data;
+		(void) sqlite3_finalize(extra->expire);
+		free(extra);
 	}
 
 	return 0;
@@ -200,21 +211,21 @@ int
 greyGcExpire(mcc_context *mcc, void *data)
 {
 	int count;
+	struct grey_mcc *extra = mcc->data;
 
 	LOG_TRACE0(963, greyGcExpire);
 
-	if (mccSqlStep(mcc, grey_sql_expire, GREY_SQL_EXPIRE) == SQLITE_ROW) {
-		count = sqlite3_column_int(grey_sql_expire, 0);
+	if (mccSqlStep(mcc, extra->expire, GREY_SQL_EXPIRE) == SQLITE_ROW) {
+		count = sqlite3_column_int(extra->expire, 0);
 		statsAddValue(&stat_grey_temp_expire, (unsigned long) count);
 		syslog(LOG_INFO, LOG_NUM(910) "greyGcExpire count=%d", count);
-		(void) sqlite3_reset(grey_sql_expire);
+		(void) sqlite3_reset(extra->expire);
 	}
 
 	return 0;
 }
 
 mcc_hooks grey_cache_hooks = {
-	NULL,
 	greyGcExpire,
 	greyGcPrepare,
 	greyGcFinalise,
@@ -429,6 +440,7 @@ greyCacheUpdate(Session *sess, Grey *grey, char *key, long *delay, int at_dot)
 	char *first_comma;
 	mcc_row row, id_row;
 	unsigned short key_size;
+	mcc_handle *mcc = SESS_GET_MCC(sess);
 
 	if (verb_trace.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(380) "greyCacheUpdate(key=%s, at_dot=%d)", LOG_ARGS(sess), key, at_dot);
@@ -855,6 +867,7 @@ greyRcpt(Session *sess, va_list args)
 	Grey *grey;
 	mcc_row row;
 	ParsePath *rcpt;
+	mcc_handle *mcc = SESS_GET_MCC(sess);
 
 	LOG_TRACE(sess, 385, greyRcpt);
 	grey = filterGetContext(sess, grey_context);
@@ -1133,6 +1146,7 @@ greyDot(Session *sess, va_list ignore)
 #endif
 		else {
 			mcc_row row;
+			mcc_handle *mcc = SESS_GET_MCC(sess);
 			PTHREAD_MUTEX_LOCK(&grey_mutex);
 
 			if (optGreyKey.value & GREY_TUPLE_RCPT) {
