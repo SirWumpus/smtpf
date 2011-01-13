@@ -278,6 +278,14 @@ is no set schedule for releases.
    	file to by-pass when spamd-max-size is being used. Steve F.
 
 
+--2.3.28--
+
+   *	Requires Libsnert 1.74.16
+
+   !	Replaced sqlite3_prepare_v2() by sqlite3_prepare_v2_blocking()
+   	support function to handle sqlite3_unlock_notify(). See
+   	libsnert and http://www.sqlite.org/unlock_notify.html
+
 --2.3.27--
 
    *	Requires Libsnert 1.74.15

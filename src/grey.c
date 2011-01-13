@@ -182,7 +182,7 @@ greyGcPrepare(mcc_context *mcc, void *data)
 	if ((extra = malloc(sizeof (*extra))) == NULL)
 		return -1;
 
-	if (sqlite3_prepare_v2(mcc->db, GREY_SQL_EXPIRE, -1, &extra->expire, NULL) != SQLITE_OK) {
+	if (sqlite3_prepare_v2_blocking(mcc->db, GREY_SQL_EXPIRE, -1, &extra->expire, NULL) != SQLITE_OK) {
 		syslog(LOG_ERR, LOG_NUM(908) "mcc statement error: %s %s", GREY_SQL_EXPIRE, sqlite3_errmsg(mcc->db));
 		free(extra);
 		return -1;

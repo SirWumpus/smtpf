@@ -495,7 +495,7 @@ An invalid value was specified for this option.
 		exit(1);
 	}
 #endif
-	if (pathSetPermsByName(optCachePath.string, optRunUser.string, optRunGroup.string, 0664))
+	if (pathSetPermsByName(optCachePath.string, optRunUser.string, optRunGroup.string, 0664) && errno != ENOENT)
 		exit(1);
 
 	snprintf(buffer, sizeof (buffer), "%s-journal", optCachePath.string);
