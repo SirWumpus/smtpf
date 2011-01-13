@@ -14,7 +14,7 @@
  ***
  ***********************************************************************/
 
-#ifdef FILTER_SIZE
+#ifdef FILTER_TIMELIMIT
 
 #include "smtpf.h"
 
@@ -254,4 +254,4 @@ See <a href="smtpf.html#opt_time_limit_delimiters">time-limit-delimiters</a>.
 	return SMTPF_CONTINUE;
 }
 
-#endif /* FILTER_SIZE */
+#endif /* FILTER_TIMELIMIT */
