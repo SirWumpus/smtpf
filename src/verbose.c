@@ -244,7 +244,6 @@ verboseInit(const char *s)
 	}
 #endif
 	setlogmask(LOG_UPTO(LOG_DEBUG));
-	LogSetLevel(LOG_UPTO(LOG_DEBUG));
 
 	verboseParse(s);
 }
