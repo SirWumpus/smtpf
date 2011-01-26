@@ -785,7 +785,7 @@ greyMakeKey(Session *sess, long grey_key, ParsePath *rcpt, char *buffer, size_t 
 		switch (grey_key & i) {
 		case GREY_TUPLE_PTR:
 		case GREY_TUPLE_PTRN:
-			if (CLIENT_NOT_SET(sess, CLIENT_IS_IP_IN_PTR|CLIENT_IS_PTR_MULTIDOMAIN)
+			if (CLIENT_NOT_SET(sess, CLIENT_IS_FORGED|CLIENT_IS_IP_IN_PTR|CLIENT_IS_PTR_MULTIDOMAIN)
 			&& (CLIENT_NOT_SET(sess, CLIENT_NO_PTR) || CLIENT_ANY_SET(sess, CLIENT_IS_HELO_HOSTNAME))
 #ifdef FILTER_SPF
 			&& sess->msg.spf_mail != SPF_FAIL
