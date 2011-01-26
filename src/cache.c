@@ -231,24 +231,10 @@ cacheGcThread(Timer *timer)
 void
 cacheGcStart(void)
 {
-#ifdef REPLACED_BY_MCC_START_GC
-	mcc_handle *mcc;
-#endif
 	CLOCK period = { 0, 0 };
 
 	period.tv_sec = optCacheGcInterval.value;
 
-#ifdef REPLACED_BY_MCC_START_GC
-	if ((mcc = mccCreate()) == NULL) {
-		syslog(LOG_ERR, log_init, FILE_LINENO, "", strerror(errno), errno);
-		exit(1);
-	}
-
-	if ((gc_timer = timerCreate(cacheGcThread, mcc, NULL, &period, 32 * 1024)) == NULL) {
-		syslog(LOG_ERR, log_init, FILE_LINENO, "", strerror(errno), errno);
-		exit(1);
-	}
-#else
 	if (mccStartGc(optCacheGcInterval.value)) {
 		syslog(LOG_ERR, log_init, FILE_LINENO, "", strerror(errno), errno);
 		exit(1);
@@ -258,23 +244,14 @@ cacheGcStart(void)
 		syslog(LOG_ERR, log_init, FILE_LINENO, "", strerror(errno), errno);
 		exit(1);
 	}
-#endif
 }
 
 void
 cacheFini(void)
 {
-#ifdef REPLACED_BY_MCC_START_GC
-	if (gc_timer != NULL) {
-		mcc_handle *mcc = gc_timer->data;
-		timerFree(gc_timer);
-		mccDestroy(mcc);
-	}
-#else
 	if (gc_timer != NULL) {
 		timerFree(gc_timer);
 	}
-#endif
 	mccFini();
 }
 
