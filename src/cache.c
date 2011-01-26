@@ -264,6 +264,7 @@ Timer *gc_timer;
 static void
 cacheGcThread(Timer *timer)
 {
+	mcc_handle *mcc;
 #ifdef REPLACED_BY_MCC_START_GC
 	time_t now;
 #endif
@@ -304,14 +305,18 @@ cacheGcThread(Timer *timer)
 			syslog(LOG_DEBUG, LOG_NUM(168) "statsSave time-elapsed=" TIMER_FORMAT, TIMER_FORMAT_ARG(diff_section));
 		TIMER_START(section);
 	}
+
+	if ((mcc = mccCreate()) != NULL) {
 #ifdef PHONE_HOME
-	/*** REMOVAL OF THIS CODE IS IN VIOLATION
-	 *** OF THE TERMS OF THE SOFTWARE LICENSE.
-	 ***/
-	(void) licenseControl(timer->data);
+		/*** REMOVAL OF THIS CODE IS IN VIOLATION
+		 *** OF THE TERMS OF THE SOFTWARE LICENSE.
+		 ***/
+		(void) licenseControl(mcc);
 #endif
-	lickeyHasExpired();
-	lickeySendWarning(timer->data);
+		lickeyHasExpired();
+		lickeySendWarning(mcc);
+		mccDestroy(mcc);
+	}
 
 	if (verb_timers.option.value) {
 		TIMER_DIFF(section);
