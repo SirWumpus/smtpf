@@ -161,104 +161,6 @@ cacheGetTTL(SmtpfCode code)
 	return 0;
 }
 
-#define PHONE_HOME
-#ifdef PHONE_HOME
-/*** REMOVAL OF THIS CODE IS IN VIOLATION
- *** OF THE TERMS OF THE SOFTWARE LICENSE.
- ***/
-void *
-licenseControl(void *data)
-{
-	FILE *fp;
-	char *host;
-	SMTP2 *smtp;
-	mcc_row row;
-	ssize_t nbytes;
-	mcc_handle *mcc = data;
-	char timestamp[40];
-	int days = 31;
-
-	if ((host = strchr(PHONE_HOME_MAIL, '@')) == NULL)
-		goto error0;
-
-	MEMSET(&row, 0, sizeof (row));
-	row.key_size = snprintf((char *) row.key_data, sizeof (row.key_data), "rcpt:%s", PHONE_HOME_MAIL);
-
-	if (mccGetRow(mcc, &row) == MCC_OK)
-		goto error0;
-
-	/* Try to connect directly. */
-	if ((smtp = smtp2OpenMx(++host, optSmtpConnectTimeout.value, optSmtpCommandTimeout.value, 0)) == NULL) {
-		Vector hosts;
-		char **table;
-
-		/* Find the local route to queue on. */
-		if ((hosts = routeGetLocalHosts()) == NULL)
-			goto error0;
-
-		/* Try to connect to one of the local routes. */
-		for (table = (char **) VectorBase(hosts); *table != NULL; table++) {
-			if ((smtp = smtp2Open(*table, optSmtpConnectTimeout.value, optSmtpCommandTimeout.value, 0)) != NULL)
-				break;
-		}
-
-		VectorDestroy(hosts);
-
-		if (smtp == NULL)
-			goto error1;
-	}
-
-	if (smtp2Mail(smtp, "") != SMTP_OK || smtp2Rcpt(smtp, PHONE_HOME_MAIL) != SMTP_OK) {
-		(void) smtp2Rset(smtp);
-		if (smtp2Mail(smtp, "") != SMTP_OK)
-			goto error2;
-		if (smtp2Rcpt(smtp, PHONE_HOME_MAIL) != SMTP_OK)
-			goto error2;
-	}
-
-	/* Build message headers. */
-	TimeStamp(&smtp->start, timestamp, sizeof (timestamp));
-	(void) smtp2Printf(smtp, "Date: %s\r\n", timestamp);
-	(void) smtp2Printf(smtp, "To: \"SnertSoft\" <%s>\r\n", PHONE_HOME_MAIL);
-	(void) smtp2Printf(smtp, "From: \"%s\" <%s>\r\n", lickeyClientName.string, lickeyClientMail.string);
-	(void) smtp2Printf(smtp, "Subject: %s %s-%s\r\n", lickeyClientName.string, _NAME, _VERSION);
-	(void) smtp2Printf(smtp, "Message-ID: <%s@[%s]>\r\n", smtp->id_string, smtp->local_ip);
-	(void) smtp2Printf(smtp, "Priority: normal\r\n");
-	(void) smtp2Printf(smtp, "User-Agent: " _NAME "-" _VERSION "\r\n");
-	(void) smtp2Printf(smtp, "\r\n");
-
-	/* Get copy of lickey.txt. */
-	if ((fp = fopen(optLicenseKeyFile.string, "r")) == NULL)
-		goto error2;
-
-	while (0 < (nbytes = fread(smtp->text, 1, sizeof (smtp->text), fp)))
-		(void) smtp2Print(smtp, smtp->text, nbytes);
-
-	if (ferror(fp))
-		goto error3;
-
-	if (smtp2Dot(smtp) != SMTP_OK)
-		goto error3;
-
-	/* Success. No follow-up for a year. */
-	days = 365;
-error3:
-	fclose(fp);
-error2:
-	smtp2Close(smtp);
-error1:
-	/* Remember that this message has been sent. */
-	row.hits = 0;
-	row.created = time(NULL);
-	row.expires = row.created + days * 86400;
-	row.key_size = snprintf((char *) row.key_data, sizeof (row.key_data), "rcpt:%s", PHONE_HOME_MAIL);
-	row.value_size = (unsigned char) snprintf((char *) row.value_data, sizeof (row.value_data), "%d", SMTPF_ACCEPT);
-	(void) mccPutRowLocal(mcc, &row, 0);
-error0:
-	return NULL;
-}
-#endif
-
 Timer *gc_timer;
 
 static void
@@ -307,12 +209,6 @@ cacheGcThread(Timer *timer)
 	}
 
 	if ((mcc = mccCreate()) != NULL) {
-#ifdef PHONE_HOME
-		/*** REMOVAL OF THIS CODE IS IN VIOLATION
-		 *** OF THE TERMS OF THE SOFTWARE LICENSE.
-		 ***/
-		(void) licenseControl(mcc);
-#endif
 		lickeyHasExpired();
 		lickeySendWarning(mcc);
 		mccDestroy(mcc);
