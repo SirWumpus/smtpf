@@ -63,7 +63,7 @@ sub download {
  die if (!$remote_url or !$local_file);
 
  my($pre_mtime) = ((stat $local_file)[9] or 0);
- system("$wget -q -N -O $local_file $remote_url");
+ system("$wget -q --no-check-certificate -N -O $local_file $remote_url");
  if($? == -1) {
   die "Command failed: $!\n";
  } else {
