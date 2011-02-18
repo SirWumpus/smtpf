@@ -57,6 +57,8 @@ int internal_restart;
  *** Unix Daemon
  ***********************************************************************/
 
+#undef syslog
+
 void
 syslog(int level, const char *fmt, ...)
 {
