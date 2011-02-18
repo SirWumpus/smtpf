@@ -278,6 +278,24 @@ is no set schedule for releases.
    	file to by-pass when spamd-max-size is being used. Steve F.
 
 
+--2.3.29--
+
+   *	Requires Libsnert 1.74.16
+
+   !	Fix timelimit.c macro from FILTER_SIZE to FILTER_TIMELIMIT.
+
+   !	Fixed greyMakeKey() to use the IP if the PTR is forged.
+
+   !	Fix cacheGcThread() so that it creates its own mcc handle. Due
+	to changes in 2.3.27, the mcc handle used for lickey checks each
+	gc run is NULL and because of NULL guard checks in mcc API,
+	lickey cache records are neither found or created (one of the
+	few instances were an actual crash in testing would have help
+	spot this problem before release).
+
+   !	Fixed verboseInit() to account for upcoming change in libsnert
+   	1.74.17 concerning log level vs log mask.
+
 --2.3.28--
 
    *	Requires Libsnert 1.74.16
