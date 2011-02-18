@@ -278,6 +278,16 @@ is no set schedule for releases.
    	file to by-pass when spamd-max-size is being used. Steve F.
 
 
+--2.3.30--
+
+   *	Requires Libsnert 1.74.19
+
+   !	Fix MIME boundary parse error. See libsnert 1.74.19.
+
+  !!	uriblConnect: Assert that ctx->mime field is NULL when a new
+   	connection arrives. Failure to do so may cause free() to abort
+   	the program due to a double free or free of unknown memory.
+
 --2.3.29--
 
    *	Requires Libsnert 1.74.16

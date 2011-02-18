@@ -909,6 +909,7 @@ uriblConnect(Session *sess, va_list ignore)
 
 	LOG_TRACE(sess, 779, uriblConnect);
 
+	ctx->mime = NULL;
 	ctx->policy = '\0';
 
 	if ((ctx->uri_seen = VectorCreate(10)) != NULL)
