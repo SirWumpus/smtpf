@@ -256,7 +256,7 @@ route_walk_count(kvm_data *key, kvm_data *value, void *data)
 int
 routeGetRouteCount(RouteCount *rcp)
 {
-	int rc;
+	int rc, i;
 	char *value;
 	smdb *route_map;
 
@@ -266,17 +266,26 @@ routeGetRouteCount(RouteCount *rcp)
 	}
 
 	memset(rcp, 0, sizeof (*rcp));
-	rcp->domain_list = VectorCreate(10);
-	VectorSetDestroyEntry(rcp->domain_list, free);
 
 	rc = KVM_ERROR;
-	if ((route_map = smdbOpen(route_map_path, 1)) == NULL) {
+	for (i = 0; i < 6; i++) {
+		if ((route_map = smdbOpen(route_map_path, 1)) != NULL)
+			break;
+		sleep(5);
+	}
+
+	if (route_map == NULL) {
 		syslog(LOG_ERR, LOG_NUM(000) "route-map=%s open error: %s (%d)", optRouteMap.string, strerror(errno), errno);
 		goto error1;
 	}
 
 	if (TextMatch(route_map_path, "*socketmap!*", -1 , 1)) {
-		value = smdbGetValue(route_map, ROUTE_TAG "__counts__");
+		for (i = 0; i < 6; i++) {
+			if ((value = smdbGetValue(route_map, ROUTE_TAG "__counts__")) != NULL)
+				break;
+			sleep(5);
+		}
+
 		if (verb_kvm.option.value)
 			syslog(LOG_DEBUG, ROUTE_TAG "__counts__=\"%s\"", TextNull(value));
 		if (value != NULL
