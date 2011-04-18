@@ -264,7 +264,6 @@ main(int argc, char **argv)
 	 * in ServiceMain for +daemon. All other initialisation
 	 * should happen in serverMain.
 	 */
-	setlogmask(LOG_UPTO(LOG_DEBUG));
 	openlog(_NAME, LOG_PID, LOG_MAIL);
 
 #ifdef ENABLE_CONSOLE

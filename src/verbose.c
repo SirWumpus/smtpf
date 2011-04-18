@@ -243,7 +243,6 @@ verboseInit(const char *s)
 		exit(1);
 	}
 #endif
-	setlogmask(LOG_UPTO(LOG_DEBUG));
 
 	verboseParse(s);
 }
