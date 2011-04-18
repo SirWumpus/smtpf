@@ -278,6 +278,13 @@ is no set schedule for releases.
    	file to by-pass when spamd-max-size is being used. Steve F.
 
 
+--2.3.33--
+
+   *	Requires Libsnert 1.74.22
+
+   *	Build number bumped for FSL.
+
+
 --2.3.32--
 
    !	routeGetRouteCount(): Add kludge to retry opening the route-map
