@@ -278,6 +278,20 @@ is no set schedule for releases.
    	file to by-pass when spamd-max-size is being used. Steve F.
 
 
+--2.3.32--
+
+   !	routeGetRouteCount(): Add kludge to retry opening the route-map
+	for ten seconds. Likewise retry fetching the __counts___ value
+	from a socketmap for ten seconds. This addresses the situation
+	where the socketmap deamon is slow to start.
+
+   !	Fix deny-top-content-type option, which acts on the top level
+	message headers. For example if Content-Type header contained
+	additional parameters following the content type, then the
+	patten matching incorrectly attempted to match the whole header,
+	instead of just the content-type portion.
+
+
 --2.3.31--
 
    *	Requires Libsnert 1.74.20
