@@ -71,7 +71,7 @@ Option optDenyTopContentType = {
 	";text/vbscript"
 #else
 	/* Allow this type by negating the pattern. */
-	  "!application/pdf"		/* Seen used for sending invoices. */
+	 "!application/pdf"		/* Seen used for sending invoices. */
 
 	/* Disallow these suspicious top level types. */
 	";application/*"
@@ -667,9 +667,10 @@ attachmentMimeHeader(Mime *m)
 SmtpfCode
 attachmentHeaders(Session *sess, va_list args)
 {
+	int ch;
 	Vector headers;
 	Attachment *ctx;
-	char **hdr, *type;
+	char **hdr, *type, *semi;
 
 	LOG_TRACE(sess, 823, attachmentHeaders);
 
@@ -686,8 +687,16 @@ attachmentHeaders(Session *sess, va_list args)
 			if (0 < TextInsensitiveStartsWith(*hdr, "Content-Type:")) {
 				type = *hdr + sizeof ("Content-Type:")-1;
 				type += strspn(type, " \t");
+
+				/* Find semi-colon or end-of-string and assert NUL terminator. */
+				semi = type + strcspn(type, "; \t");
+				ch = *semi;
+				*semi = '\0';
+
 				if (attachmentMimeCheck(ctx, type, ctx->top_content_types))
 					statsCount(&statDenyTopContentType);
+
+				*semi = ch;
 				break;
 			}
 		}
