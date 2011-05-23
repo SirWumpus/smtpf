@@ -769,7 +769,7 @@ routeCallAhead(Session *sess, const char *host, ParsePath *rcpt)
 
 		if (SMTP_ISS_OK(dumb_host.value_data)) {
 			(void) TextCopy(sess->reply, sizeof (sess->reply), "dumb mail host, skipping");
-			rc = SMTPF_CONTINUE;
+			rc = SMTPF_ACCEPT;
 			goto error0;
 		}
 	}
@@ -896,7 +896,7 @@ unplussed_rcpt:
 
 			if (SMTP_IS_OK(conn->smtp_code)) {
 				(void) TextCopy(sess->reply, sizeof (sess->reply), "dumb mail host found");
-				rc = SMTPF_CONTINUE;
+				rc = SMTPF_ACCEPT;
 				goto error2;
 			}
 
