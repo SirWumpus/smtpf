@@ -277,6 +277,11 @@ is no set schedule for releases.
    +	Use SIZE= to by-pass SpamAssassin and/or the length of the temp.
    	file to by-pass when spamd-max-size is being used. Steve F.
 
+--2.3.34--
+
+   !	Changed dumb host check in routeCallAhead() to return
+	SMTPF_ACCEPT instead of SMTPF_CONTINUE to skip checking any
+	subsequent call-ahead hosts.
 
 --2.3.33--
 
