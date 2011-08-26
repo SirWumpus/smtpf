@@ -2,7 +2,7 @@
 #	Thus it begins...
 #######################################################################
 
-AC_INIT(smtpf, 2.3, [Anthony Howe <achowe@snert.com>])
+AC_INIT(smtpf, 2.4, [Anthony Howe <achowe@snert.com>])
 
 dnl The autoconf version I learned to deal with.
 AC_PREREQ(2.59)
@@ -215,12 +215,28 @@ if test -f '../lib/version.sh' ; then
 
 	AC_SUBST(ENABLE_MINGW)
 
-	AC_SUBST(HAVE_LIB_DB)
 	AC_SUBST(HAVE_LIB_RT)
+
+	AC_SUBST(CFLAGS_DB)
+	AC_SUBST(LDFLAGS_DB)
+	AC_SUBST(HAVE_LIB_DB)
+
+	AC_SUBST(CFLAGS_LUA)
+	AC_SUBST(LDFLAGS_LUA)
+	AC_SUBST(HAVE_LIB_LUA)
+
+	AC_SUBST(CFLAGS_SQLITE3)
+	AC_SUBST(LDFLAGS_SQLITE3)
 	AC_SUBST(HAVE_LIB_SQLITE3)
+
+	AC_SUBST(CFLAGS_PTHREAD)
+	AC_SUBST(LDFLAGS_PTHREAD)
 	AC_SUBST(HAVE_LIB_PTHREAD)
+
 	AC_SUBST(HAVE_LIB_WS2_32)
 	AC_SUBST(HAVE_LIB_IPHLPAPI)
+
+
 
 	if test "X${HAVE_LIB_SQLITE3}" = 'X' ; then
 		echo
