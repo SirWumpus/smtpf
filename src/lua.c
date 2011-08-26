@@ -680,6 +680,10 @@ luaClose(Session *sess, va_list ignore)
 	lua_getfield(ctx->lua, -1, "close");	/* smtp -- smtp close */
 	if (lua_isfunction(ctx->lua, -1) && lua_pcall(ctx->lua, 0, 0, 0)) {	/* smtp close -- smtp */
 		syslog(LOG_ERR, LOG_MSG(000) "smtp.close: %s", LOG_ARGS(sess), lua_tostring(ctx->lua, -1));
+/*{LOG
+Experimental module using Lua to script additional tests by creating a @PACKAGE_NAME@.lua script.
+This module is undocumented and currently not provided in production code.
+}*/
 		lua_pop(ctx->lua, 1);		/* smtp error -- smtp */
 	}
 	lua_pop(ctx->lua, 1);			/* smtp -- */

@@ -356,7 +356,7 @@ of the ptr element used in <a href="summary.html#opt_grey_key">grey-key</a>.
 </tr>
 <tr valign="top">
 	<td class="key" width="41%"><span class="tag">grey:</span>ip,ptr,helo,mail,rcpt</td>
-	<td class="">ASCII 0 = continue, 4 = temp. fail, 5 = reject; optionally followed
+	<td class="">ASCII 0 = continue, 4 = temp. fail; optionally followed
 	by a space and two hexdecimal MD5 hashes when using <a href="summary.html#opt_grey_content">+grey-content</a>.
 The key field order remains constant, fields present according to <a href="summary.html#opt_grey_key">grey-key</a>;
 be sure to review how the ip and ptr fields are used.

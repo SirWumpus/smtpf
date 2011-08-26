@@ -187,7 +187,10 @@ clickMail(Session *sess, va_list args)
 		if (rc == SMTPF_ACCEPT) {
 			if (verb_info.option.value)
 				syslog(LOG_INFO, LOG_MSG(242) "host " CLIENT_FORMAT " sender <%s> white listed", LOG_ARGS(sess), CLIENT_INFO(sess), sess->msg.mail->address.string);
-
+/*{LOG
+A cached click white-list entry was found.
+See the <a href="summary.html#opt_click_secret">Click</a> family of options.
+}*/
 			statsCount(&stat_click_accept);
 			MAIL_SET(sess, MAIL_IS_WHITE);
 			MSG_SET(sess, MSG_OK);

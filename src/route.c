@@ -276,6 +276,10 @@ routeGetRouteCount(RouteCount *rcp)
 
 	if (route_map == NULL) {
 		syslog(LOG_ERR, LOG_NUM(000) "route-map=%s open error: %s (%d)", optRouteMap.string, strerror(errno), errno);
+/*{LOG
+See the section <a href="route-map.html">Route-Map</a> and
+<a href="summary.html#opt_route_map">route-map</a> option.
+}*/
 		goto error1;
 	}
 

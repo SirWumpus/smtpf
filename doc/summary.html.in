@@ -1112,6 +1112,14 @@ on which to bind and listen for new connections. They can be IPv4
 and/or IPv6.
 </dd>
 
+<a name="opt_ixhash_bl"></a>
+<dt><span class="option">ixhash-bl</span>=<span class="value"></span></dt>
+<dd>
+A list of MD5 iXhash based BL suffixes to consult. Aggregate lists are
+supported using suffix/mask. Without a /mask, suffix is the same as
+suffix/0x00FFFFFE.
+</dd>
+
 <a name="opt_lickey_file"></a>
 <dt><span class="option">lickey-file</span>=<span class="value">/etc/smtpf/lickey.txt</span></dt>
 <dd>
@@ -1503,6 +1511,13 @@ Strict RFC 2822 7-bit ASCII printable message headers.
 <dd>
 Require RFC 2822 minimum required headers.
 </dd>
+
+<a name="opt_rfc2822_missing_eoh"></a>
+<dt>-<span class="option">rfc2822-missing-eoh</span></dt>
+<dd>
+Reject messages missing the RFC 2822 end-of-headers line.
+</dd>
+
 
 <a name="opt_rfc2822_strict_date"></a>
 <dt>-<span class="option">rfc2822-strict-date</span></dt>

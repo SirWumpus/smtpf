@@ -307,6 +307,9 @@ run @PACKAGE_NAME@ as a foreground application.
 		/* Round up to the nearest K worth of file descriptors. */
 		optRunOpenFileLimit.value = (optServerMaxThreads.value * FD_PER_THREAD + 1024) / 1024 * 1024;
 		syslog(LOG_WARN, LOG_NUM(738) "%s increased to %ld", optRunOpenFileLimit.name, optRunOpenFileLimit.value);
+/*{LOG
+See <a href="summary.html#opt_run_open_file_limit">run-open-file-limit</a> option.
+}*/
 	}
 
 	/* Compute and/or set the upper limit on the number of

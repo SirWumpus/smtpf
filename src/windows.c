@@ -146,6 +146,9 @@ void
 atExitCleanUp(void)
 {
 	syslog(LOG_INFO, LOG_NUM(802) "terminated");
+/*{LOG
+Windows binary termination.
+}*/
 	_atExitCleanUp();
 }
 
@@ -312,6 +315,9 @@ main(int argc, char **argv)
 		event = OpenEvent(EVENT_MODIFY_STATE , 0, optSlowQuit.string == NULL ? TERM_EVENT_NAME : QUIT_EVENT_NAME);
 		if (event == NULL) {
 			syslog(LOG_ERR, LOG_NUM(807) "%s quit error %d", _NAME, GetLastError());
+/*{LOG
+Windows binary had a problem with &plusmn;quit command.
+}*/
 			exit(1);
 		}
 

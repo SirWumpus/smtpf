@@ -545,6 +545,9 @@ Version and copyright notices.
 		goto error3;
 
 	syslog(LOG_INFO, LOG_NUM(599) "ready");
+/*{LOG
+The server has completed initialisation and is ready to accept connections.
+}*/
 	signal = serverSignalsLoop(&signals);
 	serverStop(&server, signal == SIGQUIT);
 	rc = EXIT_SUCCESS;

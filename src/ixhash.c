@@ -182,6 +182,11 @@ ixhashDot(Session *sess, va_list ignore)
 			digest_string[0], digest_string[1], digest_string[2],
 			hash_number
 		);
+/*{LOG
+Debug output for verb +ixhash.
+See the section <a href="runtime.html#runtime_config">Runtime Configuration</a>
+and <a href="summary.html#opt_verbose">verbose</a> option.
+}*/
 	}
 
 	if ((list_name = dnsListQueryString(ixhash_bl, sess->pdq, NULL, hash_string)) != NULL) {
@@ -189,6 +194,9 @@ ixhashDot(Session *sess, va_list ignore)
 		statsCount(&stat_ixhash_bl);
 		dnsListSysLog(sess, "ixhash-bl", hash_string, list_name);
 		rc = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.0 message blocked by %s" ID_MSG(000) CRLF, list_name, ID_ARG(sess));
+/*{REPLY
+See <a href="summary.html#opt_ixhash_bl">ixhash-bl</a> option.
+}*/
 	}
 
 	return rc;
