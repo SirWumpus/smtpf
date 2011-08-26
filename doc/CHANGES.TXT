@@ -62,7 +62,7 @@ is no set schedule for releases.
   ??	When FORWARD: and RCPT: lists are eqivalent, then ignore the
    	RCPT: list and skip call-ahead, see routeRcpt().
 
-   ?	uribl: as an optimasation, consider moving the HTTP link tests
+   ?	uribl: as an optimisation, consider moving the HTTP link tests
    	to be done after the URI BL lookups.
 
    ?	uriHttpOrigin(): consider adding tests that can detect and follow
@@ -276,6 +276,20 @@ is no set schedule for releases.
 
    +	Use SIZE= to by-pass SpamAssassin and/or the length of the temp.
    	file to by-pass when spamd-max-size is being used. Steve F.
+
+   !	If a client hits the dns-bl, then then a helo: TRAP rule - the
+	message isn't trapped. Steve F.
+
+--2.4.0--
+
+   *	Requires LibSnert 1.75.0
+
+   !	Overhauled to apply PDQ, MIME, and URI API changes in libnsert
+	1.75.0 and obtain latest library fixes. This affects attachments,
+	ctasd, digest, grey, and uribl modules; in addition several PDQ
+	lookups not handled by the dnsList API.
+
+   !	Fixed spamdDot() handling of end-of-header separator.
 
 --2.3.34--
 
