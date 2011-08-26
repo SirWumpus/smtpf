@@ -345,6 +345,12 @@ Stats stat_uri_valid_soa		= { STATS_TABLE_MSG, 	"uri-valid-soa"};
 Stats stat_uri_soa_error		= { STATS_TABLE_MSG, 	"uri-soa-error"};
 
 typedef struct {
+	Session *session;
+	SmtpfCode uri_found_rc;
+} UriData;
+
+typedef struct {
+	UriData uri_data;
 	int policy;
 	Mime *mime;
 	Vector uri_seen;
@@ -429,7 +435,7 @@ uriCheckIp(Session *sess, const char *host)
 	if ((optUriIpInNs.value || optUriNsNxDomain.value)
 	&& (list = pdqGet(sess->pdq, PDQ_CLASS_IN, PDQ_TYPE_NS, host, NULL)) != NULL) {
 		for (rr = list; rr != NULL; rr = rr->next) {
-			if (rr->rcode != PDQ_RCODE_OK)
+			if (rr->section != PDQ_SECTION_ANSWER)
 				continue;
 
 			if (optUriIpInNs.value && rr->type == PDQ_TYPE_A
@@ -926,9 +932,26 @@ uriblConnect(Session *sess, va_list ignore)
 	return SMTPF_CONTINUE;
 }
 
+static int uriblCheckUri(Session *sess, URI *uri);
+
+static void
+uribl_test_uri_cb(URI *uri, void *_data)
+{
+	UriData *ud = _data;
+	ud->uri_found_rc = uriblCheckUri(ud->session, uri);
+}
+
+static void
+mailbl_test_uri_cb(URI *uri, void *_data)
+{
+	UriData *ud = _data;
+	ud->uri_found_rc = mailBlLookup(ud->session, uri->uriDecoded, &stat_mail_bl_hdr);
+}
+
 int
 uriblData(Session *sess, va_list ignore)
 {
+	UriMime *uri_mime;
 	Uribl *ctx = filterGetContext(sess, uribl_context);
 
 	LOG_TRACE(sess, 780, uriblData);
@@ -940,7 +963,19 @@ uriblData(Session *sess, va_list ignore)
 #endif
 	ctx->policy = '\0';
 	ctx->distinct_uri_tested = 0;
-	ctx->mime = uriMimeCreate(0);
+	ctx->uri_data.session = sess;
+	ctx->uri_data.uri_found_rc = SMTPF_CONTINUE;
+
+	if ((ctx->mime = mimeCreate()) != NULL)
+		return SMTPF_CONTINUE;
+
+	if ((uri_mime = uriMimeInit(uribl_test_uri_cb, 0, &ctx->uri_data)) == NULL) {
+		mimeFree(ctx->mime);
+		ctx->mime = NULL;
+		return SMTPF_CONTINUE;
+	}
+
+	mimeHooksAdd(ctx->mime, (MimeHooks *) uri_mime);
 
 	return SMTPF_CONTINUE;
 }
@@ -1057,63 +1092,38 @@ See <a href="summary.html#opt_uri_max_limit">uri-max-limit</a> option.
 }
 
 static int
-uriCheckString(Session *sess, const char *value)
+uriCheckString(Session *sess, const char *value, UriMimeHook test_fn)
 {
-	int rc;
-	URI *uri;
 	Mime *mime;
+	UriData uri_data;
+	UriMime *uri_mime;
 
 	if (1 < verb_uri.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(896) "uriCheckString value=\"%s\"", LOG_ARGS(sess), value);
 
-	if ((mime = uriMimeCreate(0)) == NULL)
+	if ((mime = mimeCreate()) == NULL)
 		return SMTPF_CONTINUE;
 
-	mimeHeadersFirst(mime, 0);
+	uri_data.session = sess;
+	uri_data.uri_found_rc = SMTPF_CONTINUE;
 
-	for (rc = SMTPF_CONTINUE; rc == SMTPF_CONTINUE && *value != '\0'; value++) {
-		if (mimeNextCh(mime, *value))
-			break;
-
-		if ((uri = uriMimeGetUri(mime)) != NULL) {
-			rc = uriblCheckUri(sess, uri);
-			uriMimeFreeUri(mime);
-		}
-	}
-
-	uriMimeFree(mime);
-
-	return rc;
-}
-
-static int
-mailBlCheckString(Session *sess, const char *value)
-{
-	int rc;
-	URI *uri;
-	Mime *mime;
-
-	if (1 < verb_uri.option.value)
-		syslog(LOG_DEBUG, LOG_MSG(941) "mailBlCheckString value=\"%s\"", LOG_ARGS(sess), value);
-
-	if ((mime = uriMimeCreate(0)) == NULL)
+	if ((uri_mime = uriMimeInit(test_fn, 0, &uri_data)) == NULL) {
+		free(mime);
 		return SMTPF_CONTINUE;
-
-	mimeHeadersFirst(mime, 0);
-
-	for (rc = SMTPF_CONTINUE; rc == SMTPF_CONTINUE && *value != '\0'; value++) {
-		if (mimeNextCh(mime, *value))
-			break;
-
-		if ((uri = uriMimeGetUri(mime)) != NULL) {
-			rc = mailBlLookup(sess, uri->uriDecoded, &stat_mail_bl_hdr);
-			uriMimeFreeUri(mime);
-		}
 	}
 
-	uriMimeFree(mime);
+	mimeHooksAdd(mime, (MimeHooks *) uri_mime);
+	mimeHeadersFirst(mime, 0);
 
-	return rc;
+	for ( ; uri_data.uri_found_rc == SMTPF_CONTINUE && *value != '\0'; value++) {
+		if (mimeNextCh(mime, *value))
+			break;
+	}
+
+	(void) mimeNextCh(mime, EOF);
+	mimeFree(mime);
+
+	return uri_data.uri_found_rc;
 }
 
 int
@@ -1139,7 +1149,6 @@ uriblHeaders(Session *sess, va_list args)
 		while (*hdr != '\0') {
 			if (mimeNextCh(ctx->mime, *hdr++))
 				break;
-			uriMimeFreeUri(ctx->mime);
 		}
 	}
 
@@ -1162,7 +1171,7 @@ uriblHeaders(Session *sess, va_list args)
 				if (verb_uri.option.value)
 					syslog(LOG_DEBUG, LOG_MSG(898) "uri-bl-headers hdr=\"%s\"", LOG_ARGS(sess), hdr);
 
-				if ((rc = uriCheckString(sess, hdr + length + 1)) != SMTPF_CONTINUE)
+				if ((rc = uriCheckString(sess, hdr + length + 1, uribl_test_uri_cb)) != SMTPF_CONTINUE)
 					goto done;
 			}
 		}
@@ -1172,7 +1181,7 @@ uriblHeaders(Session *sess, va_list args)
 				if (verb_uri.option.value)
 					syslog(LOG_DEBUG, LOG_MSG(942) "mail-bl-headers hdr=\"%s\"", LOG_ARGS(sess), hdr);
 
-				if ((rc = mailBlCheckString(sess, hdr + length + 1)) != SMTPF_CONTINUE)
+				if ((rc = uriCheckString(sess, hdr + length + 1, mailbl_test_uri_cb)) != SMTPF_CONTINUE)
 					goto done;
 			}
 		}
@@ -1207,23 +1216,17 @@ uriblContent(Session *sess, va_list args)
 		if (mimeNextCh(ctx->mime, *chunk))
 			break;
 
-		if ((uri = uriMimeGetUri(ctx->mime)) != NULL) {
-			rc = uriblCheckUri(sess, uri);
+		rc = ctx->uri_data.uri_found_rc;
 
-			if (rc == SMTPF_CONTINUE && uriGetSchemePort(uri) == 25)
-				rc = mailBlLookup(sess, uri->uriDecoded, &stat_mail_bl_body);
+		if (rc == SMTPF_CONTINUE && uriGetSchemePort(uri) == 25)
+			rc = mailBlLookup(sess, uri->uriDecoded, &stat_mail_bl_body);
 
-			uriMimeFreeUri(ctx->mime);
+		if (rc == SMTPF_SKIP_REMAINDER)
+			break;
 
-			if (rc == SMTPF_SKIP_REMAINDER)
-				break;
-
-			if (rc != SMTPF_CONTINUE) {
-				MSG_SET(sess, MSG_POLICY);
-				return rc;
-			}
-
-			keepAlive(sess);
+		if (rc != SMTPF_CONTINUE) {
+			MSG_SET(sess, MSG_POLICY);
+			return rc;
 		}
 	}
 
@@ -1265,7 +1268,7 @@ uriblRset(Session *sess, va_list ignore)
 	Uribl *ctx = filterGetContext(sess, uribl_context);
 
 	LOG_TRACE(sess, 899, uriblRset);
-	uriMimeFree(ctx->mime);
+	mimeFree(ctx->mime);
 	ctx->mime = NULL;
 
 	return SMTPF_CONTINUE;
@@ -1287,7 +1290,7 @@ uriblClose(Session *sess, va_list ignore)
 	VectorDestroy(ctx->uri_seen);
 	ctx->uri_seen = NULL;
 
-	uriMimeFree(ctx->mime);
+	mimeFree(ctx->mime);
 	ctx->mime = NULL;
 
 	return SMTPF_CONTINUE;

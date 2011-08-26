@@ -715,13 +715,17 @@ checkClientIP(Session *sess)
 
 	if ((rr_list = pdqGet(sess->pdq, PDQ_CLASS_IN, PDQ_TYPE_PTR, sess->client.addr, NULL)) != NULL) {
 		for (rr = rr_list; rr != NULL; rr = rr->next) {
-			if (rr->rcode != PDQ_RCODE_OK && rr->rcode != PDQ_RCODE_UNDEFINED) {
+			if (rr->section == PDQ_SECTION_QUERY
+			&& ((PDQ_QUERY *)rr)->rcode != PDQ_RCODE_OK
+			&& ((PDQ_QUERY *)rr)->rcode != PDQ_RCODE_UNDEFINED) {
 #ifdef FILTER_MISC
 				statsCount(&stat_client_ptr_required_error);
 #endif
 				CLIENT_SET(sess, CLIENT_NO_PTR|CLIENT_NO_PTR_ERROR);
 				break;
-			} else if (rr->rcode == PDQ_RCODE_OK && rr->type == PDQ_TYPE_PTR) {
+			} else if (rr->section == PDQ_SECTION_QUERY) {
+				continue;
+			} else if (rr->type == PDQ_TYPE_PTR) {
 				CLIENT_CLEAR(sess, CLIENT_NO_PTR|CLIENT_NO_PTR_ERROR);
 				break;
 			} else if (verb_info.option.value && rr->type == PDQ_TYPE_CNAME) {
@@ -759,7 +763,10 @@ checkClientIP(Session *sess)
 	 */
 	if (1 < pdqListLength(rr_list) && 0 < greyPtrSuffix(sess, sess->input, sizeof (sess->input))) {
 		for (rr = rr_list; rr != NULL; rr = rr->next) {
-			if (rr->rcode == PDQ_RCODE_OK && rr->type == PDQ_TYPE_PTR
+			if (rr->section != PDQ_SECTION_ANSWER)
+				continue;
+
+			if (rr->type == PDQ_TYPE_PTR
 			&& TextInsensitiveEndsWith(((PDQ_PTR *) rr)->host.string.value, sess->input) == -1) {
 				CLIENT_SET(sess, CLIENT_IS_PTR_MULTIDOMAIN);
 				break;
@@ -786,7 +793,10 @@ checkClientIP(Session *sess)
 
 	if ((rr_list = pdqGet(sess->pdq, PDQ_CLASS_IN, type, sess->client.name, NULL)) != NULL) {
 		for (rr = rr_list; rr != NULL; rr = rr->next) {
-			if (rr->rcode == PDQ_RCODE_OK && rr->type == type
+			if (rr->section != PDQ_SECTION_ANSWER)
+				continue;
+
+			if (rr->type == type
 			&& memcmp(sess->client.ipv6, ((PDQ_A *) rr)->address.ip.value, sizeof (sess->client.ipv6)) == 0) {
 				CLIENT_CLEAR(sess, CLIENT_IS_FORGED);
 				break;

@@ -42,6 +42,9 @@ Stats stat_digest_bl = { STATS_TABLE_MSG, "digest-bl" };
 static Verbose verb_digest = { { "digest", "-", "" } };
 
 typedef struct {
+	/* Must be first member; extends MimeHooks. */
+	MimeHooks hook;
+
 	Mime *mime;
 	md5_state_t md5;
 	Session *session;
@@ -119,9 +122,9 @@ digestListLookup(Session *sess, DnsList *dnslist, const char *name)
 }
 
 static void
-digestMimePartStart(Mime *m)
+digestMimePartStart(Mime *m, void *_data)
 {
-	Digest *ctx = m->mime_data;
+	Digest *ctx = _data;
 
 	if (ctx->digest_found == NULL) {
 		ctx->digest_string[0] = '\0';
@@ -130,10 +133,10 @@ digestMimePartStart(Mime *m)
 }
 
 static void
-digestMimePartFinish(Mime *m)
+digestMimePartFinish(Mime *m, void *_data)
 {
 	unsigned char digest[16];
-	Digest *ctx = m->mime_data;
+	Digest *ctx = _data;
 
 	if (ctx->digest_found != NULL)
 		return;
@@ -151,16 +154,16 @@ digestMimePartFinish(Mime *m)
 		statsCount(&stat_digest_bl);
 
 		/* Discontinue any further attachment processing. */
-		m->mime_body_start = NULL;
-		m->mime_body_finish = NULL;
-		m->mime_decoded_octet = NULL;
+		ctx->hook.body_start = NULL;
+		ctx->hook.body_finish = NULL;
+		ctx->hook.decoded_octet = NULL;
 	}
 }
 
 static void
-digestMimeDecodedOctet(Mime *m, int octet)
+digestMimeDecodedOctet(Mime *m, int octet, void *_data)
 {
-	Digest *ctx = m->mime_data;
+	Digest *ctx = _data;
 	unsigned char byte = octet;
 
 	md5_append(&ctx->md5, (md5_byte_t *) &byte, 1);
@@ -180,12 +183,16 @@ digestHeaders(Session *sess, va_list args)
 	if (*optDigestBL.string == '\0')
 		goto error0;
 
-	if ((ctx->mime = mimeCreate(ctx)) == NULL)
+	if ((ctx->mime = mimeCreate()) == NULL)
 		goto error0;
 
-	ctx->mime->mime_body_start = digestMimePartStart;
-	ctx->mime->mime_body_finish = digestMimePartFinish;
-	ctx->mime->mime_decoded_octet = digestMimeDecodedOctet;
+	memset(&ctx->hook, 0, sizeof (ctx->hook));
+	ctx->hook.data = ctx;
+	ctx->hook.body_start = digestMimePartStart;
+	ctx->hook.body_finish = digestMimePartFinish;
+	ctx->hook.decoded_octet = digestMimeDecodedOctet;
+	mimeHooksAdd(ctx->mime, &ctx->hook);
+
 	ctx->digest_found = NULL;
 	ctx->session = sess;
 
@@ -249,7 +256,7 @@ digestDot(Session *sess, va_list ignore)
 	ctx = filterGetContext(sess, digest_context);
 
 	if (ctx->mime != NULL)
-		digestMimePartFinish(ctx->mime);
+		digestMimePartFinish(ctx->mime, ctx->hook.data);
 
 	if (ctx->digest_found != NULL) {
 		MSG_SET(sess, MSG_POLICY);

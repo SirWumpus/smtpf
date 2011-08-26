@@ -77,7 +77,7 @@ static const char usage_ctasd_subject_tag[] =
 Option optCtasdSubjectTag	= { "ctasd-subject-tag",	"[SUSPECT]",	usage_ctasd_subject_tag };
 
 typedef struct {
-	Socket2 *socket;
+	SOCKET socket;
 } Ctasd;
 
 static FilterContext ctasd_context;
@@ -102,8 +102,8 @@ ctasdError(Session *sess, Ctasd *ctx, const char *fmt, ...)
 	(void) vsnprintf(sess->msg.reject, sizeof (sess->msg.reject), fmt, args);
 	va_end(args);
 
-	socketClose(ctx->socket);
-	ctx->socket = NULL;
+	socket3_close(ctx->socket);
+	ctx->socket = INVALID_SOCKET;
 }
 
 int
@@ -153,9 +153,13 @@ ctasdInit(Session *null, va_list ignore)
 int
 ctasdConnect(Session *sess, va_list ignore)
 {
+	Ctasd *ctx;
+
 	LOG_TRACE(sess, 946, ctasdConnect);
 
+	ctx = filterGetContext(sess, ctasd_context);
 	filterClearContext(sess, ctasd_context);
+	ctx->socket = INVALID_SOCKET;
 
 	return SMTPF_CONTINUE;
 }
@@ -170,8 +174,8 @@ ctasdRset(Session *sess, va_list ignore)
 	ctx = filterGetContext(sess, ctasd_context);
 
 	/* Assert that these are closed between messages. */
-	socketClose(ctx->socket);
-	ctx->socket = NULL;
+	socket3_close(ctx->socket);
+	ctx->socket = INVALID_SOCKET;
 
 	return SMTPF_CONTINUE;
 }
@@ -221,13 +225,13 @@ ctasdHeaders(Session *sess, va_list args)
 	if (verb_ctasd.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(949) "ctasd request=%lu:%s", LOG_ARGS(sess), (unsigned long) request.post_size, buffer);
 
-	ctx->socket = httpSend(&request, SESS_ID);
+	ctx->socket = httpSend(&request);
 	free(request.url);
 
-	if (ctx->socket == NULL)
+	if (ctx->socket == INVALID_SOCKET)
 		return SMTPF_CONTINUE;
 
-	if (socketWrite(ctx->socket, sess->msg.chunk0, sess->msg.eoh) != sess->msg.eoh)
+	if (socket3_write(ctx->socket, sess->msg.chunk0, sess->msg.eoh, NULL) != sess->msg.eoh)
 		ctasdError(sess, ctx, "451 4.4.0 ctasd session write error after %lu bytes" ID_MSG(950), sess->msg.length, ID_ARG(sess));
 
 	if (verb_ctasd.option.value)
@@ -250,10 +254,10 @@ ctasdContent(Session *sess, va_list args)
 	if (verb_trace.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(952) "ctasdContent(%lx, chunk=%lx, size=%ld)", LOG_ARGS(sess), (long) sess, (long) chunk, length);
 
-	if (ctx->socket == NULL)
+	if (ctx->socket == INVALID_SOCKET)
 		return SMTPF_CONTINUE;
 
-	if (socketWrite(ctx->socket, chunk, length) != length) {
+	if (socket3_write(ctx->socket, chunk, length, NULL) != length) {
 		ctasdError(sess, ctx, "451 4.4.0 ctasd session write error after %lu bytes" ID_MSG(953), sess->msg.length, ID_ARG(sess));
 /*{NEXT}*/
 		return SMTPF_CONTINUE;
@@ -307,7 +311,7 @@ ctasdSendFile(Session *sess, Ctasd *ctx)
 	if (verb_ctasd.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(955) "ctasd request=%lu:%s", LOG_ARGS(sess), (unsigned long) request.post_size, buffer);
 
-	ctx->socket = httpSend(&request, SESS_ID);
+	ctx->socket = httpSend(&request);
 	free(request.url);
 
 	return 0;
@@ -355,11 +359,11 @@ ctasdSendInline(Session *sess, Ctasd *ctx)
 	if (verb_ctasd.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(956) "ctasd request=%lu:%s", LOG_ARGS(sess), (unsigned long) request.post_size, buffer);
 
-	ctx->socket = httpSend(&request, SESS_ID);
+	ctx->socket = httpSend(&request);
 	free(request.url);
 
 	while (0 < (length = fread(buffer, 1, sizeof (buffer), fp)))
-		(void) socketWrite(ctx->socket, (unsigned char *) buffer, length);
+		(void) socket3_write(ctx->socket, (unsigned char *) buffer, length, NULL);
 	rc = 0;
 error1:
 	(void) fclose(fp);
@@ -397,7 +401,7 @@ ctasdDot(Session *sess, va_list ignore)
 		 * with the request, instead of detecting EOF or
 		 * using HTTP/1.1 chunked data format. Wankers.
 		 */
-		socketShutdown(ctx->socket, SHUT_WR);
+		socket3_shutdown(ctx->socket, SHUT_WR);
 		break;
 
 	case 2:
@@ -407,12 +411,13 @@ ctasdDot(Session *sess, va_list ignore)
 		break;
 	}
 
-	if (ctx->socket == NULL)
+	if (ctx->socket == INVALID_SOCKET)
 		goto error0;
 
 	httpResponseInit(&response);
+	response.socket = ctx->socket;
 	response.debug = verb_ctasd.option.value;
-	result = httpRead(ctx->socket, &response, SESS_ID);
+	result = httpRead(&response);
 	if (result < 200 || 299 < result)
 		goto error1;
 
@@ -422,7 +427,7 @@ ctasdDot(Session *sess, va_list ignore)
 
 	if (verb_info.option.value)
 		syslog(LOG_INFO, LOG_MSG(958) "ctasd vod=%s spam=%s refid=%s", LOG_ARGS(sess), TextEmpty(x_ctch_vod), TextEmpty(x_ctch_spam), TextEmpty(x_ctch_refid));
-
+/*{NEXT}*/
 	if (x_ctch_refid != NULL) {
 		(void) snprintf(sess->input, sizeof (sess->input), "X-CTCH-RefID: %s" CRLF, x_ctch_refid);
 		if ((hdr = strdup(sess->input)) != NULL && VectorAdd(sess->msg.headers, hdr))
@@ -481,7 +486,7 @@ See <a href="summary.html#opt_ctasd_policy">ctasd-policy</a>.
 	free(x_ctch_vod);
 error1:
 	httpResponseFree(&response);
-	ctx->socket = NULL;
+	ctx->socket = INVALID_SOCKET;
 error0:
 	return rc;
 }
@@ -499,8 +504,8 @@ ctasdClose(Session *sess, va_list ignore)
 	 * ctasdDot() is not called ,because of a rejection or dropped
 	 * connection betweem DATA and DOT.
 	 */
-	socketClose(ctx->socket);
-	ctx->socket = NULL;
+	socket3_close(ctx->socket);
+	ctx->socket = INVALID_SOCKET;
 
 	return SMTPF_CONTINUE;
 }

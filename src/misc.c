@@ -111,11 +111,6 @@ static const char usage_one_domain_per_session[] =
 ;
 Option optOneDomainPerSession		= { "one-domain-per-session",	"-",	usage_one_domain_per_session };
 
-#ifndef ENABLE_PDQ
-Option optMailIpInNs			= { "_mail-ip-in-ns",		"-",	"Reject if a sender's NS contains IP-in-name." };
-Option optMailNsNxDomain		= { "_mail-ns-nxdomain",		"-",	"Reject if a sender's NS is in a non-existant domain." };
-#endif
-
 Option optMailRequireMx			= { "mail-require-mx",		"+",	"Reject if the sender's domain has no MX record." };
 Option optMailRetestClient		= { "mail-retest-client",	"-",	usage_mail_retest_client };
 Option optRFC2821StrictHelo		= { "rfc2821-strict-helo", 	"+", 	usage_rfc2821_strict_helo };
@@ -162,10 +157,6 @@ Stats stat_client_ptr_required_error	= { STATS_TABLE_CONNECT, "client-ptr-requir
 Stats stat_helo_claims_us		= { STATS_TABLE_CONNECT, "helo-claims-us" };
 Stats stat_helo_ip_mismatch		= { STATS_TABLE_CONNECT, "helo-ip-mismatch" };
 Stats stat_helo_is_ptr			= { STATS_TABLE_CONNECT, "helo-is-ptr" };
-#ifndef ENABLE_PDQ
-Stats stat_mail_ip_in_ns		= { STATS_TABLE_MAIL, "_mail-ip-in-ns" };
-Stats stat_mail_ns_nxdomain		= { STATS_TABLE_MAIL, "_mail-ns-nxdomain" };
-#endif
 Stats stat_helo_mail_params		= { STATS_TABLE_MAIL, "helo-mail-params" };
 Stats stat_mail_require_mx		= { STATS_TABLE_MAIL, "mail-require-mx" };
 Stats stat_mail_require_mx_error	= { STATS_TABLE_MAIL, "mail-require-mx-error" };
@@ -316,12 +307,7 @@ int
 heloSyntaxHelo(Session *sess, va_list ignore)
 {
 	char *h, *stop;
-#ifdef ENABLE_PDQ
 	PDQ_rr *r1, *r2;
-#else
-	Vector answers;
-	DnsEntry *entry;
-#endif
 	size_t helo_length;
 	unsigned long number;
 	unsigned char helo_ipv6[IPV6_BYTE_LENGTH];
@@ -386,14 +372,14 @@ There is no option to turn this test off.
 		 *
 		 * TODO consider merging with is_forged check - looks very similar.
 		 */
-#ifdef ENABLE_PDQ
 		r1 = pdqGet(sess->pdq, PDQ_CLASS_IN, PDQ_TYPE_A, sess->client.helo, NULL);
 		r2 = pdqGet(sess->pdq, PDQ_CLASS_IN, PDQ_TYPE_AAAA, sess->client.helo, NULL);
 		r1 = pdqListAppend(r1, r2);
 
 		for (r2 = r1; r2 != NULL; r2 = r2->next) {
-			if (r2->rcode == PDQ_RCODE_OK
-			&& TextInsensitiveCompare(sess->client.addr, ((PDQ_A *) r2)->address.string.value) == 0) {
+			if (r2->section != PDQ_SECTION_ANSWER)
+				continue;
+			if (TextInsensitiveCompare(sess->client.addr, ((PDQ_A *) r2)->address.string.value) == 0) {
 				/* When a host has no PTR, but the
 				 * HELO arg corresponds to the A/AAAA
 				 * record of the client address, then
@@ -412,36 +398,6 @@ There is no option to turn this test off.
 		}
 
 		pdqFree(r1);
-#else
-		if (DnsGet2(DNS_TYPE_A, 1, sess->client.helo, &answers, NULL) == DNS_RCODE_OK
-		||  DnsGet2(DNS_TYPE_AAAA, 1, sess->client.helo, &answers, NULL) == DNS_RCODE_OK) {
-			int i;
-
-			for (i = 0; i < VectorLength(answers); i++) {
-				if ((entry = VectorGet(answers, i)) == NULL || entry->address_string == NULL)
-					continue;
-
-				if (TextInsensitiveCompare(sess->client.addr, entry->address_string) == 0) {
-					/* When a host has no PTR, but the
-					 * HELO arg corresponds to the A/AAAA
-					 * record of the client address, then
-   					 * we can use the HELO arg for the
-   					 * client.name and subsequently use
-   					 * it with the grey-list ptr key.
-   					 *
-   					 * It also aid with the HELO "claims
-   					 * to be us" test.
-					 */
-					if (CLIENT_ANY_SET(sess, CLIENT_NO_PTR))
-						TextCopy(sess->client.name, sizeof (sess->client.name), sess->client.helo);
-					CLIENT_SET(sess, CLIENT_IS_HELO_HOSTNAME);
-					break;
-				}
-			}
-
-			VectorDestroy(answers);
-		}
-#endif
 	}
 
 	/* If the client connects from a public IP address and HELO's
@@ -620,7 +576,8 @@ pdqListAllRcode(PDQ_rr *list, PDQ_class class, PDQ_type type, const char *name, 
 	int count, match;
 
 	for (count = match = 0; list != NULL; list = list->next) {
-		if (! (list->type == type
+		if (list->section != PDQ_SECTION_QUERY
+		|| ! (list->type == type
 		||  type == PDQ_TYPE_ANY
 		|| (type == PDQ_TYPE_5A && (list->type == PDQ_TYPE_A || list->type == PDQ_TYPE_AAAA))) )
 			continue;
@@ -633,7 +590,7 @@ pdqListAllRcode(PDQ_rr *list, PDQ_class class, PDQ_type type, const char *name, 
 
 		count++;
 
-		if (rcode != PDQ_RCODE_ANY && list->rcode != rcode)
+		if (rcode != PDQ_RCODE_ANY && ((PDQ_QUERY *)list)->rcode != rcode)
 			continue;
 
 		match++;
@@ -687,7 +644,7 @@ supported.
 	list = pdqGet(sess->pdq, PDQ_CLASS_IN, PDQ_TYPE_MX, domain, NULL);
 
 	/* Did we get a result we can use and is it a valid domain? */
-	if (list != NULL && list->rcode == PDQ_RCODE_UNDEFINED
+	if (list != NULL && ((PDQ_QUERY *)list)->rcode == PDQ_RCODE_UNDEFINED
 	&& optMailRequireMx.value && 0 < sess->msg.mail->address.length) {
 		pdqFree(list);
 		statsCount(&stat_mail_require_mx);
@@ -698,8 +655,8 @@ See <a href="summary.html#opt_mail_require_mx">mail-require-mx</a> option.
 	}
 
 	/* Was there some sort of error? */
-	if (list == NULL || list->rcode != PDQ_RCODE_OK) {
-		int rcode = list == NULL ? PDQ_RCODE_ERRNO : list->rcode;
+	if (list == NULL || ((PDQ_QUERY *)list)->rcode != PDQ_RCODE_OK) {
+		int rcode = list == NULL ? PDQ_RCODE_ERRNO : ((PDQ_QUERY *)list)->rcode;
 
 		syslog(LOG_ERR, LOG_MSG(435) "MX %s error %s", LOG_ARGS(sess), domain, pdqRcodeName(rcode));
 /*{LOG
@@ -817,8 +774,10 @@ See <a href="summary.html#opt_one_rcpt_per_null">one-rcpt-per-null</a> option.
 	if (CLIENT_NOT_SET(sess, CLIENT_IS_2ND_MX)
 	&& (list = pdqGet(sess->pdq, PDQ_CLASS_IN, PDQ_TYPE_MX, rcpt->domain.string, NULL)) != NULL) {
 		for (rr = list; rr != NULL; rr = rr->next) {
-			if (rr->rcode == PDQ_RCODE_OK
-			&& (rr->type == PDQ_TYPE_A || rr->type == PDQ_TYPE_AAAA)
+			if (rr->section == PDQ_SECTION_QUERY)
+				continue;
+
+			if ((rr->type == PDQ_TYPE_A || rr->type == PDQ_TYPE_AAAA)
 			&& memcmp(((PDQ_AAAA *) rr)->address.ip.value, sess->client.ipv6, sizeof (sess->client.ipv6)) == 0) {
 				statsCount(&stat_client_is_2nd_mx);
 				CLIENT_SET(sess, CLIENT_IS_2ND_MX);
@@ -1073,10 +1032,6 @@ miscRegister(Session *sess, va_list ignore)
 	optionsRegister(&optHeloIpMismatch, 0);
 	optionsRegister(&optHeloIsPtr, 0);
 	optionsRegister(&optIdleRetestTimer, 0);
-#ifndef ENABLE_PDQ
-	optionsRegister(&optMailIpInNs, 0);
-	optionsRegister(&optMailNsNxDomain, 0);
-#endif
 	optionsRegister(&optMailRequireMx, 0);
 	optionsRegister(&optMailRetestClient, 0);
 	optionsRegister(&optOneRcptPerNull, 0);
@@ -1095,10 +1050,6 @@ miscRegister(Session *sess, va_list ignore)
 	(void) statsRegister(&stat_helo_ip_mismatch);
 	(void) statsRegister(&stat_helo_is_ptr);
 	(void) statsRegister(&stat_helo_mail_params);
-#ifndef ENABLE_PDQ
-	(void) statsRegister(&stat_mail_ip_in_ns);
-	(void) statsRegister(&stat_mail_ns_nxdomain);
-#endif
 	(void) statsRegister(&stat_mail_require_mx);
 	(void) statsRegister(&stat_mail_require_mx_error);
 	(void) statsRegister(&stat_helo_rcpt_params);
@@ -1190,8 +1141,6 @@ infoCommand(Session *sess)
 	return replyPush(sess, reply);
 }
 
-#ifdef ENABLE_PDQ
-
 /*
  * @param sess
  *	A session pointer.
@@ -1259,7 +1208,7 @@ The top level domain is unknown.
 			syslog(LOG_DEBUG, LOG_MSG(466) "lookup %s", LOG_ARGS(sess), domain);
 
 		list = pdqGet(sess->pdq, PDQ_CLASS_IN, PDQ_TYPE_SOA, domain, NULL);
-		rcode = list == NULL ? PDQ_RCODE_ERRNO : list->rcode;
+		rcode = list == NULL ? PDQ_RCODE_ERRNO : ((PDQ_QUERY *)list)->rcode;
 		pdqFree(list);
 
 		switch (rcode) {
@@ -1271,7 +1220,7 @@ The top level domain is unknown.
 /*{NEXT}*/
 			return SMTPF_REJECT;
 		default:
-			syslog(LOG_ERR, LOG_MSG(468) "SOA for %s lookup error: %s", LOG_ARGS(sess), domain, pdqRcodeName(list->rcode));
+			syslog(LOG_ERR, LOG_MSG(468) "SOA for %s lookup error: %s", LOG_ARGS(sess), domain, pdqRcodeName(rcode));
 /*{NEXT}*/
 			return SMTPF_TEMPFAIL;
 		}
@@ -1294,110 +1243,3 @@ the TLD is reached.
 
 	return SMTPF_REJECT;
 }
-#else
-/*
- * @param sess
- *	A session pointer.
- *
- * @param host
- *	A pointer to a C string containing a host / domain name.
- *
- * @return
- *	SMTPF_REJECT if the host and none of its parent domains
- *	upto, but not including, the TLD have an SOA. SMTPF_TEMPFAIL
- *	if there was a DNS lookup error. Otherwise SMTPF_CONTINUE if
- *	the host name or any of its parent domains have an SOA before
- *	the TLD is reached.
- *
- *	Consider:
- *
- *	puff# dig +short ns vocus.com
- *	name.phx.gblx.net.
- *	name.roc.gblx.net.
- *	name.snv.gblx.net.
- *	name.jfk.gblx.net.
- *	name.lon.gblx.net.
- *
- *	puff# dig +short soa vocus.com
- *	gblx.net. dns.gblx.net. 22048 7200 1800 604800 3600
- *
- *	puff# dig +short @gblx.net ns vocus.com
- *	dig: couldn't get address for 'gblx.net': not found
- *
- *	puff# dig +short @gblx.net a gblx.net.
- *	dig: couldn't get address for 'gblx.net': not found
- *
- * ***	[SF] Apperently this is allowed though really weird.
- * ***	From dnsstuff.com
- *
- *	WARN	SOA MNAME Check	WARNING: Your SOA (Start of Authority)
- *	record states that your master (primary) name server is: gblx.net..
- *	However, that server is not listed at the parent servers as one
- *	of your NS records! This is legal, but you should be sure that
- *	you know what you are doing.
- */
-int
-isNxDomain(Session *sess, const char *host)
-{
-	int offset;
-	long length;
-	Vector answers;
-	const char *error, *domain, *tld;
-
-	/* Find start of TLD. */
-	offset = indexValidTLD(host);
-
-	/* Is it an unknown TLD domain or a TLD without a second level? */
-	if (offset <= 0) {
-		syslog(LOG_ERR, LOG_MSG(470) "domain %s does not exist", LOG_ARGS(sess), TextNull(host));
-/*{LOG
-The top level domain is unknown.
-}*/
-		return SMTPF_REJECT;
-	}
-
-	domain = host;
-	tld = &host[offset];
-	do {
-		if (0 < verb_uri.option.value)
-			syslog(LOG_DEBUG, LOG_MSG(471) "lookup %s", LOG_ARGS(sess), domain);
-
-		switch (DnsGet2(DNS_TYPE_SOA, 0, domain, &answers, &error)) {
-		case DNS_RCODE_UNDEFINED:
-			syslog(LOG_ERR, LOG_MSG(472) "domain %s does not exist", LOG_ARGS(sess), domain);
-/*{NEXT}*/
-			return SMTPF_REJECT;
-
-		case DNS_RCODE_OK:
-			length = VectorLength(answers);
-			VectorDestroy(answers);
-			if (0 < length)
-				return SMTPF_CONTINUE;
-			break;
-
-		default:
-			syslog(LOG_ERR, LOG_MSG(473) "SOA for %s lookup error: %s", LOG_ARGS(sess), domain, error);
-/*{NEXT}*/
-			return SMTPF_TEMPFAIL;
-		}
-
-		if ((domain = strchr(domain, '.')) == NULL)
-			break;
-
-		domain++;
-	} while (domain < tld);
-
-	syslog(LOG_ERR, LOG_MSG(474) "SOA for %s does not exist", LOG_ARGS(sess), host);
-/*{LOG
-Part of the experimental is-nxdomain family of tests.
-Reject a domain if the host and none of its parent domains
-upto, but not including, the TLD have an SOA. Temp. fail
-if there was a DNS lookup error. Otherwise continue if
-the host name or any of its parent domains have an SOA before
-the TLD is reached.
-}*/
-
-	return SMTPF_REJECT;
-}
-
-#endif

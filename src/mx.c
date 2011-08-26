@@ -199,7 +199,9 @@ See <a href="summary.html#opt_call_back">call-back</a> option.
 		replyResourcesError(sess, FILE_LINENO);
 
 	/* Did we get a result we can use and is it a valid domain? */
-	if (list != NULL && list->rcode == PDQ_RCODE_UNDEFINED) {
+	if (list != NULL
+	&& list->section == PDQ_SECTION_QUERY
+	&& ((PDQ_QUERY *)list)->rcode == PDQ_RCODE_UNDEFINED) {
 		snprintf(sess->reply, sizeof (sess->reply), "553 5.4.4 %s does not exist" ID_MSG(489) CRLF, domain, ID_ARG(sess));
 /*{NEXT}*/
 #ifdef OLD_SMTP_ERROR_CODES
@@ -212,8 +214,9 @@ See <a href="summary.html#opt_call_back">call-back</a> option.
 	}
 
 	/* Was there some sort of error? */
-	if (list == NULL || list->rcode != PDQ_RCODE_OK) {
-		int rcode = list == NULL ? PDQ_RCODE_ERRNO : list->rcode;
+	if (list == NULL
+	|| (list->section == PDQ_SECTION_QUERY && ((PDQ_QUERY *)list)->rcode != PDQ_RCODE_OK)) {
+		int rcode = list == NULL ? PDQ_RCODE_ERRNO : ((PDQ_QUERY *)list)->rcode;
 		syslog(LOG_ERR, LOG_MSG(490) "MX %s error %s", LOG_ARGS(sess), domain, pdqRcodeName(rcode));
 /*{LOG
 While attempting to perfom a call-back, there was an error

@@ -146,6 +146,9 @@ enum {
 };
 
 typedef struct {
+	/* Must be first member; extends MimeHooks. */
+	MimeHooks hook;
+
 	FILE *fp;
 	long period;
 	char digest[33];
@@ -248,12 +251,12 @@ greyHashChar(Grey *grey, unsigned char ch)
 }
 
 static void
-greyHashLine(Mime *m)
+greyHashLine(Mime *m, void *_data)
 {
 	unsigned char *decode;
-	Grey *grey = m->mime_data;
+	Grey *grey = _data;
 
-	if (grey->skip_mime_part || (m->is_multipart && m->mime_part_number == 0))
+	if (grey->skip_mime_part || (m->state.is_multipart && m->mime_part_number == 0))
 		return;
 
 	for (decode = m->decode.buffer; *decode != '\0'; decode++) {
@@ -287,18 +290,18 @@ greyHashLine(Mime *m)
 }
 
 static void
-greyMimeResetPart(Mime *m)
+greyMimeResetPart(Mime *m, void *_data)
 {
-	Grey *grey = m->mime_data;
+	Grey *grey = _data;
 
 	grey->skip_mime_part = 0;
 	grey->state = STATE_TEXT;
 }
 
 static void
-greyMimeHeader(Mime *m)
+greyMimeHeader(Mime *m, void *_data)
 {
-	Grey *grey = m->mime_data;
+	Grey *grey = _data;
 
 	if (TextMatch((char *) m->source.buffer, "Content-Type:*text/html*", m->source.length, 1))
 		grey->state = STATE_CONTENT;
@@ -312,12 +315,15 @@ greyMimeInit(Grey *grey)
 	grey->state = STATE_TEXT;
 	grey->skip_mime_part = 0;
 
-	if ((grey->mime = mimeCreate(grey)) == NULL)
+	if ((grey->mime = mimeCreate()) == NULL)
 		return -1;
 
-	grey->mime->mime_header = greyMimeHeader;
-	grey->mime->mime_source_flush = greyHashLine;
-	grey->mime->mime_body_finish = greyMimeResetPart;
+	memset(&grey->hook, 0, sizeof (grey->hook));
+	grey->hook.data = grey;
+	grey->hook.header = greyMimeHeader;
+	grey->hook.source_flush = greyHashLine;
+	grey->hook.body_finish = greyMimeResetPart;
+	mimeHooksAdd(grey->mime, &grey->hook);
 
 	return 0;
 }
@@ -1029,6 +1035,10 @@ and <a href="summary.html#opt_grey_temp_fail_period">grey-temp-fail-period</a> o
 		(void) replyPushFmt(sess, rc, "550 5.7.1 " CLIENT_FORMAT " failed grey listing" ID_MSG(388) "\r\n", CLIENT_INFO(sess), ID_ARG(sess));
 #else
 		syslog(LOG_WARN, LOG_MSG(937) "WARNING grey list {%s} rc=%d unexpected, check cache", LOG_ARGS(sess), tuple, rc);
+/*{LOG
+The grey: cache entry has an unexpected value.
+See the section <a href="runtime.html#cache_structure">Cache Structure</a>.
+}*/
 		rc = SMTPF_CONTINUE;
 #endif
 		statsCount(&stat_grey_reject);

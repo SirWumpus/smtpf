@@ -120,6 +120,8 @@ verboseSet(char *s)
 	return -1;
 }
 
+extern void socket3_set_debug(int);
+
 #if defined(FILTER_CLI) && defined(HAVE_PTHREAD_ATFORK)
 static void
 verboseClear(void)
@@ -128,9 +130,9 @@ verboseClear(void)
 	pdqSetDebug(0);
 	dnsListSetDebug(0);
 	smdbSetDebug(0);
-	smtpSetDebug(0);
 	mccSetDebug(0);
 	socketSetDebug(0);
+	socket3_set_debug(0);
 }
 #endif
 
@@ -142,11 +144,9 @@ verboseReset(void)
 	dnsListSetDebug(verb_dns.option.value);
 
 	smdbSetDebug(verb_db.option.value);
-#ifdef OLD_SMTP_ERROR_CODES
-	smtpSetDebug(verb_smtp.option.value);
-#endif
 	mccSetDebug(verb_cache.option.value);
 	socketSetDebug(verb_socket.option.value);
+	socket3_set_debug(verb_socket.option.value);
 #ifdef FILTER_SPF
 	spfSetDebug(verb_spf.option.value);
 #endif

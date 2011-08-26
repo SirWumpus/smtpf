@@ -347,6 +347,9 @@ typedef union {
 } ArchiveHeaders;
 
 typedef struct {
+	/* Must be first member; extends MimeHooks. */
+	MimeHooks hook;
+
 	Mime *mime;
 	Session *session;
 	char *filename;
@@ -374,13 +377,13 @@ Verbose verb_attachment = { { "attachment", "-", "" } };
 static void littleEndianReset(LittleEndian *);
 static int littleEndianAddByte(LittleEndian *, unsigned);
 #endif
-static void attachmentMimeHeader(Mime *m);
-static void attachmentZipMimePartStart(Mime *m);
-static void attachmentZipMimeDecodedOctet(Mime *m, int octet);
+static void attachmentMimeHeader(Mime *m, void *);
+static void attachmentZipMimePartStart(Mime *m, void *);
+static void attachmentZipMimeDecodedOctet(Mime *m, int octet, void *);
 
-static void attachmentMimeHeader(Mime *m);
-static void attachmentRarMimePartStart(Mime *m);
-static void attachmentRarMimeDecodedOctet(Mime *m, int octet);
+static void attachmentMimeHeader(Mime *m, void *);
+static void attachmentRarMimePartStart(Mime *m, void *);
+static void attachmentRarMimeDecodedOctet(Mime *m, int octet, void *);
 
 /***********************************************************************
  ***
@@ -567,8 +570,13 @@ attachmentMimeCheck(Attachment *ctx, const char *string, Vector table)
 			if (negate)
 				break;
 
-			if (verb_info.option.value)
+			if (verb_info.option.value) {
 				syslog(LOG_INFO, LOG_MSG(821) "found content=%s pattern=%s", LOG_ARGS(ctx->session), string, *pat);
+/*{LOG
+Reported by the deny-content family of options.
+See <a href="summary.html#opt_deny_content">deny-content</a>.
+}*/
+			}
 			ctx->attachment_found = *pat;
 			return 1;
 		}
@@ -578,11 +586,11 @@ attachmentMimeCheck(Attachment *ctx, const char *string, Vector table)
 }
 
 static void
-attachmentMimeHeader(Mime *m)
+attachmentMimeHeader(Mime *m, void *_data)
 {
 	long offset;
 	int has_quote, span, ch;
-	Attachment *ctx = m->mime_data;
+	Attachment *ctx = _data;
 
 	if (verb_headers.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(822) "MIME header buffer=\"%s\"", LOG_ARGS(ctx->session), m->source.buffer);
@@ -590,7 +598,7 @@ attachmentMimeHeader(Mime *m)
 	/* RFC 2045, 2046 MIME part 1 & 2 Content-Type */
 	if (0 <= (offset = TextFind((char *) m->source.buffer, "Content-Type:*", m->source.length, 1))) {
 		/* New Content-Type header, disable the decoded octet handler. */
-		m->mime_decoded_octet = NULL;
+		ctx->hook.decoded_octet = NULL;
 
 		offset += sizeof ("Content-Type:")-1;
 		offset += strspn((char *) m->source.buffer+offset, " \t");
@@ -606,12 +614,12 @@ attachmentMimeHeader(Mime *m)
 		/* application/x-zip-compressed application/zip */
 		else if (0 <= TextFind((char *) m->source.buffer+offset, "*application/*zip*", m->source.length-offset, 1)) {
 			/* Decoded .zip attachments on the fly. */
-			m->mime_body_start = attachmentZipMimePartStart;
+			ctx->hook.body_start = attachmentZipMimePartStart;
 		}
 
 		else if (0 <= TextFind((char *) m->source.buffer+offset, "*application/x-rar*", m->source.length-offset, 1)) {
 			/* Decoded .rar attachments on the fly. */
-			m->mime_body_start = attachmentRarMimePartStart;
+			ctx->hook.body_start = attachmentRarMimePartStart;
 		}
 
 		m->source.buffer[offset+span] = ch;
@@ -619,10 +627,10 @@ attachmentMimeHeader(Mime *m)
 
 		if (0 <= TextFind((char *) m->source.buffer+offset, "*name=*.zip*", m->source.length-offset, 1)) {
 			/* Decoded .zip attachments on the fly. */
-			m->mime_body_start = attachmentZipMimePartStart;
+			ctx->hook.body_start = attachmentZipMimePartStart;
 		} else if (0 <= TextFind((char *) m->source.buffer+offset, "*name=*.rar*", m->source.length-offset, 1)) {
 			/* Decoded .rar attachments on the fly. */
-			m->mime_body_start = attachmentRarMimePartStart;
+			ctx->hook.body_start = attachmentRarMimePartStart;
 		}
 
 		if (0 <= (span = TextFind((char *) m->source.buffer+offset, "*name=*", m->source.length-offset, 1))) {
@@ -712,7 +720,7 @@ attachmentHeaders(Session *sess, va_list args)
 	if (ctx->attachment_found != NULL)
 		return attachmentDot(sess, NULL);
 #endif
-	if ((ctx->mime = mimeCreate(ctx)) == NULL)
+	if ((ctx->mime = mimeCreate()) == NULL)
 		goto error0;
 
 	if ((ctx->compressed_names = TextSplit(ctx->archname, OPTION_LIST_DELIMS, 0)) == NULL)
@@ -728,7 +736,11 @@ attachmentHeaders(Session *sess, va_list args)
 	if (VectorLength(ctx->content_types) == 0 && VectorLength(ctx->content_names))
 		goto error0;
 
-	ctx->mime->mime_header = attachmentMimeHeader;
+	memset(&ctx->hook, 0, sizeof (ctx->hook));
+	ctx->hook.data = ctx;
+	ctx->hook.header = attachmentMimeHeader;
+	mimeHooksAdd(ctx->mime, &ctx->hook);
+
 #ifdef NOT_USED
 	littleEndianReset(&ctx->word);
 #endif
@@ -835,19 +847,19 @@ littleEndianAddByte(LittleEndian *word, unsigned byte)
 #endif
 
 static void
-attachmentZipMimePartStart(Mime *m)
+attachmentZipMimePartStart(Mime *m, void *_data)
 {
-	Attachment *ctx = m->mime_data;
+	Attachment *ctx = _data;
 
-	m->mime_decoded_octet = attachmentZipMimeDecodedOctet;
-	m->mime_body_start = NULL;
+	ctx->hook.decoded_octet = attachmentZipMimeDecodedOctet;
+	ctx->hook.body_start = NULL;
 	ctx->hdr_length = 0;
 }
 
 static void
-attachmentZipMimeDecodedOctet(Mime *m, int octet)
+attachmentZipMimeDecodedOctet(Mime *m, int octet, void *_data)
 {
-	Attachment *ctx = m->mime_data;
+	Attachment *ctx = _data;
 
 	/* Read enough bytes to fill the header signature. */
 	if (ctx->hdr_length < sizeof (ZipSignature)) {
@@ -917,20 +929,20 @@ attachmentZipMimeDecodedOctet(Mime *m, int octet)
  ***********************************************************************/
 
 static void
-attachmentRarMimePartStart(Mime *m)
+attachmentRarMimePartStart(Mime *m, void *_data)
 {
-	Attachment *ctx = m->mime_data;
+	Attachment *ctx = _data;
 
-	m->mime_decoded_octet = attachmentRarMimeDecodedOctet;
-	m->mime_body_start = NULL;
+	ctx->hook.decoded_octet = attachmentRarMimeDecodedOctet;
+	ctx->hook.body_start = NULL;
 	ctx->found_marker = 0;
 	ctx->hdr_length = 0;
 }
 
 static void
-attachmentRarMimeDecodedOctet(Mime *m, int octet)
+attachmentRarMimeDecodedOctet(Mime *m, int octet, void *_data)
 {
-	Attachment *ctx = m->mime_data;
+	Attachment *ctx = _data;
 
 	/* Read enough bytes to fill the header signature. */
 	if (ctx->hdr_length < sizeof (RarHeader)) {
@@ -951,7 +963,7 @@ attachmentRarMimeDecodedOctet(Mime *m, int octet)
 					if (verb_attachment.option.value)
 						syslog(LOG_DEBUG, LOG_MSG(860) "RAR end marker found", LOG_ARGS(ctx->session));
 
-					m->mime_decoded_octet = NULL;
+					ctx->hook.decoded_octet = NULL;
 					ctx->found_marker = 0;
 					ctx->hdr_length = 0;
 				}
