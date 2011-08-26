@@ -448,7 +448,7 @@ See <a href="summary.html#opt_save_dir">save-dir</a> option.
 	}
 
 	/* Send spamd the message body including the EOH CRLF. */
-	if (fseek(fp, saveGetEOH(sess), SEEK_SET))
+	if (fseek(fp, saveGetEOH(sess) - CRLF_LENGTH, SEEK_SET))
 		goto error2;
 
 	for (size = 0; !feof(fp) && size < optSpamdMaxSize.value; size += length) {
