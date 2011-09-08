@@ -966,7 +966,7 @@ uriblData(Session *sess, va_list ignore)
 	ctx->uri_data.session = sess;
 	ctx->uri_data.uri_found_rc = SMTPF_CONTINUE;
 
-	if ((ctx->mime = mimeCreate()) != NULL)
+	if ((ctx->mime = mimeCreate()) == NULL)
 		return SMTPF_CONTINUE;
 
 	if ((uri_mime = uriMimeInit(uribl_test_uri_cb, 0, &ctx->uri_data)) == NULL) {
