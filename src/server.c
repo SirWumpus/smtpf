@@ -510,7 +510,7 @@ serverMain(void)
 	syslog(LOG_INFO, LOG_NUM(605) "LibSnert %s %s", LIBSNERT_VERSION, LIBSNERT_COPYRIGHT);
 	syslog(LOG_INFO, LOG_NUM(606) "SQLite %s Public Domain by D. Richard Hipp", sqlite3_libversion());
 #ifdef FILTER_LUA
-	syslog(LOG_INFO, LOG_NUM(000) "%s %s", LUA_RELEASE, LUA_COPYRIGHT);
+	syslog(LOG_INFO, LOG_NUM(1019) "%s %s", LUA_RELEASE, LUA_COPYRIGHT);
 #endif
 	syslog(LOG_INFO, LOG_NUM(904) "Built on %s", smtpf_built);
 /*{LOG

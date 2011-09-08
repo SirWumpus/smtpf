@@ -98,7 +98,7 @@ _clean :
 _clean_doc :
 	-rm -f doc/BarricadeMX.html doc/configure.html doc/install.html doc/glossary.html
 	-rm -f doc/license.html doc/manual.shtml doc/runtime.html doc/summary.html doc/smtpf.0
-	-rm -f doc/reply.html doc/syslog.html doc/reply.html.in doc/syslog.html.in
+	-rm -f doc/reply.html doc/syslog.html
 
 _distclean : _clean _clean_doc
 	-rm -f examples/smtpf.cf examples/startup.sh
@@ -141,18 +141,20 @@ list:
 
 pack: next-id tar
 
-docs: _clean_doc doc/reply.html.in doc/syslog.html.in
+docs: _clean_doc reply.html.in syslog.html.in
 	./config.status
 
-#doc/reply.html.in: src/number_msg.txt doc/reply-header.html doc/syslog-footer.html doc/reply.awk doc/reply.sh
-doc/reply.html.in:
+# doc/reply.html.in: src/number_msg.txt doc/reply-header.html doc/syslog-footer.html doc/reply.awk doc/reply.sh
+reply.html.in:
+	@echo generating reply.html...
 	cd doc; sh reply.sh
 
 doc/reply.html: doc/reply.html.in
 	./config.status doc/reply.html
 
-#doc/syslog.html.in: src/number_msg.txt doc/syslog-header.html doc/syslog-footer.html doc/syslog.awk doc/syslog.sh
-doc/syslog.html.in:
+# doc/syslog.html.in: src/number_msg.txt doc/syslog-header.html doc/syslog-footer.html doc/syslog.awk doc/syslog.sh
+syslog.html.in:
+	@echo generating syslog.html...
 	cd doc; sh syslog.sh
 
 doc/syslog.html: doc/syslog.html.in

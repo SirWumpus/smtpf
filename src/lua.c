@@ -133,7 +133,7 @@ lua_syslog(lua_State *L)
 	sess_id = lua_tostring(L, -1);
 	level = luaL_optint(L, 1, LOG_DEBUG);
 
-	syslog(level, "%s " LOG_NUM(000) "lua: %s", sess_id, luaL_checkstring(L, 2));
+	syslog(level, "%s " LOG_NUM(989) "lua: %s", sess_id, luaL_checkstring(L, 2));
 
 	lua_pop(L, 3);			/* level msg smtp sess id -- level msg */
 
@@ -269,10 +269,10 @@ lua_result(Session *sess, lua_State *L, const char *func_name, Stats *stat)
 	const char *smtp_reply = lua_tostring(L, -1);
 
 	if (verb_lua.option.value)
-		syslog(LOG_DEBUG, LOG_MSG(000) "lua %s smtp-code=%ld smtp-reply=\"%s\"", LOG_ARGS(sess), func_name, (long) smtp_code, TextNull(smtp_reply));
+		syslog(LOG_DEBUG, LOG_MSG(990) "lua %s smtp-code=%ld smtp-reply=\"%s\"", LOG_ARGS(sess), func_name, (long) smtp_code, TextNull(smtp_reply));
 
 	if (smtp_code != 0 && smtp_code != SMTP_OK) {
-		rc = replyPushFmt(sess, smtp_code / 100, "%d %d.0.0 %s" ID_MSG(000) CRLF, smtp_code, smtp_code / 100, smtp_reply, ID_ARG(sess));
+		rc = replyPushFmt(sess, smtp_code / 100, "%d %d.0.0 %s" ID_MSG(991) CRLF, smtp_code, smtp_code / 100, smtp_reply, ID_ARG(sess));
 		statsCount(stat);
 	}
 
@@ -329,7 +329,7 @@ luaConnect0(Session *sess, va_list args)
 {
 	LuaContext *ctx = filterGetContext(sess, lua_context);
 
-	LOG_TRACE(sess, 000, luaConnect0);
+	LOG_TRACE(sess, 992, luaConnect0);
 
 	if ((ctx->lua = luaL_newstate()) == NULL)
 		goto error0;
@@ -350,7 +350,7 @@ luaConnect0(Session *sess, va_list args)
 
 	case LUA_ERRMEM:
 	case LUA_ERRSYNTAX:
-		syslog(LOG_ERR, LOG_MSG(000) "lua load: %s", LOG_ARGS(sess), lua_tostring(ctx->lua, -1));
+		syslog(LOG_ERR, LOG_MSG(993) "lua load: %s", LOG_ARGS(sess), lua_tostring(ctx->lua, -1));
 		goto error1;
 	}
 
@@ -360,14 +360,14 @@ luaConnect0(Session *sess, va_list args)
 	lua_gc(ctx->lua, LUA_GCRESTART, 0);
 
 	if (verb_lua.option.value)
-		syslog(LOG_DEBUG, LOG_MSG(000) "luaConnect0 top before=%d", LOG_ARGS(sess), lua_gettop(ctx->lua));
+		syslog(LOG_DEBUG, LOG_MSG(994) "luaConnect0 top before=%d", LOG_ARGS(sess), lua_gettop(ctx->lua));
 
 	if (lua_pcall(ctx->lua, 0, LUA_MULTRET, -2)) {
 		goto error1;
 	}
 
 	if (verb_lua.option.value)
-		syslog(LOG_DEBUG, LOG_MSG(000) "luaConnect0 top after=%d", LOG_ARGS(sess), lua_gettop(ctx->lua));
+		syslog(LOG_DEBUG, LOG_MSG(995) "luaConnect0 top after=%d", LOG_ARGS(sess), lua_gettop(ctx->lua));
 
 	return SMTPF_CONTINUE;
 error1:
@@ -382,7 +382,7 @@ luaConnect1(Session *sess, va_list args)
 {
 	LuaContext *ctx = filterGetContext(sess, lua_context);
 
-	LOG_TRACE(sess, 000, luaConnect1);
+	LOG_TRACE(sess, 996, luaConnect1);
 
 	if (ctx->lua == NULL)
 		return SMTPF_CONTINUE;
@@ -401,16 +401,16 @@ luaConnect1(Session *sess, va_list args)
 	lua_pushstring(ctx->lua, sess->client.name);	/* smtp connect ip -- smtp connect ip ptr */
 
 	if (verb_lua.option.value)
-		syslog(LOG_DEBUG, LOG_MSG(000) "luaConnect1 top before=%d", LOG_ARGS(sess), lua_gettop(ctx->lua));
+		syslog(LOG_DEBUG, LOG_MSG(997) "luaConnect1 top before=%d", LOG_ARGS(sess), lua_gettop(ctx->lua));
 
 	if (lua_pcall(ctx->lua, 2, 2, 0)) {	/* smtp connect ip ptr -- smtp code reply */
-		syslog(LOG_ERR, LOG_MSG(000) "smtp.connect: %s", LOG_ARGS(sess), lua_tostring(ctx->lua, -1));
+		syslog(LOG_ERR, LOG_MSG(998) "smtp.connect: %s", LOG_ARGS(sess), lua_tostring(ctx->lua, -1));
 		lua_pop(ctx->lua, 2);		/* smtp error -- */
 		return SMTPF_CONTINUE;
 	}
 
 	if (verb_lua.option.value)
-		syslog(LOG_DEBUG, LOG_MSG(000) "luaConnect1 top after=%d", LOG_ARGS(sess), lua_gettop(ctx->lua));
+		syslog(LOG_DEBUG, LOG_MSG(999) "luaConnect1 top after=%d", LOG_ARGS(sess), lua_gettop(ctx->lua));
 
 	return lua_result(sess, ctx->lua, "smtp.connect", &stat_lua_connect);
 }
@@ -421,7 +421,7 @@ luaHelo(Session *sess, va_list args)
 	LuaContext *ctx = filterGetContext(sess, lua_context);
 	const char *helo = va_arg(args, const char *);
 
-	LOG_TRACE(sess, 000, luaHelo);
+	LOG_TRACE(sess, 1000, luaHelo);
 
 	if (ctx->lua == NULL)
 		return SMTPF_CONTINUE;
@@ -443,7 +443,7 @@ luaHelo(Session *sess, va_list args)
 	lua_pushstring(ctx->lua, helo);
 
 	if (lua_pcall(ctx->lua, 1, 2, 0)) {	/* smtp helo helo_arg -- smtp code reply */
-		syslog(LOG_ERR, LOG_MSG(000) "smtp.helo: %s", LOG_ARGS(sess), lua_tostring(ctx->lua, -1));
+		syslog(LOG_ERR, LOG_MSG(1001) "smtp.helo: %s", LOG_ARGS(sess), lua_tostring(ctx->lua, -1));
 		lua_pop(ctx->lua, 2);		/* smtp error -- */
 		return SMTPF_CONTINUE;
 	}
@@ -460,7 +460,7 @@ luaMail(Session *sess, va_list args)
 	Vector params_list = va_arg(args, Vector);
 	LuaContext *ctx = filterGetContext(sess, lua_context);
 
-	LOG_TRACE(sess, 000, luaMail);
+	LOG_TRACE(sess, 1002, luaMail);
 
 	if (ctx->lua == NULL)
 		return SMTPF_CONTINUE;
@@ -488,7 +488,7 @@ luaMail(Session *sess, va_list args)
 	}
 
 	if (lua_pcall(ctx->lua, 2, 2, 0)) {	/* smtp mail addr array -- smtp code reply */
-		syslog(LOG_ERR, LOG_MSG(000) "smtp.mail: %s", LOG_ARGS(sess), lua_tostring(ctx->lua, -1));
+		syslog(LOG_ERR, LOG_MSG(1003) "smtp.mail: %s", LOG_ARGS(sess), lua_tostring(ctx->lua, -1));
 		lua_pop(ctx->lua, 2);		/* smtp error -- */
 		return SMTPF_CONTINUE;
 	}
@@ -506,7 +506,7 @@ luaRcpt(Session *sess, va_list args)
 	Vector params_list = va_arg(args, Vector);
 	LuaContext *ctx = filterGetContext(sess, lua_context);
 
-	LOG_TRACE(sess, 000, luaRcpt);
+	LOG_TRACE(sess, 1004, luaRcpt);
 
 	if (ctx->lua == NULL)
 		return SMTPF_CONTINUE;
@@ -529,7 +529,7 @@ luaRcpt(Session *sess, va_list args)
 	}
 
 	if (lua_pcall(ctx->lua, 2, 2, 0)) {	/* smtp rcpt addr array -- smtp code reply */
-		syslog(LOG_ERR, LOG_MSG(000) "smtp.rcpt: %s", LOG_ARGS(sess), lua_tostring(ctx->lua, -1));
+		syslog(LOG_ERR, LOG_MSG(1005) "smtp.rcpt: %s", LOG_ARGS(sess), lua_tostring(ctx->lua, -1));
 		lua_pop(ctx->lua, 2);		/* smtp error -- */
 		return SMTPF_CONTINUE;
 	}
@@ -542,7 +542,7 @@ luaData(Session *sess, va_list ignore)
 {
 	LuaContext *ctx = filterGetContext(sess, lua_context);
 
-	LOG_TRACE(sess, 000, luaData);
+	LOG_TRACE(sess, 1006, luaData);
 
 	if (ctx->lua == NULL)
 		return SMTPF_CONTINUE;
@@ -558,7 +558,7 @@ luaData(Session *sess, va_list ignore)
 	}
 
 	if (lua_pcall(ctx->lua, 0, 2, 0)) {
-		syslog(LOG_ERR, LOG_MSG(000) "smtp.data: %s", LOG_ARGS(sess), lua_tostring(ctx->lua, -1));
+		syslog(LOG_ERR, LOG_MSG(1007) "smtp.data: %s", LOG_ARGS(sess), lua_tostring(ctx->lua, -1));
 		lua_pop(ctx->lua, 2);		/* smtp error -- */
 		return SMTPF_CONTINUE;
 	}
@@ -572,7 +572,7 @@ luaHeaders(Session *sess, va_list args)
 	SmtpfCode rc = SMTPF_CONTINUE;
 	LuaContext *ctx = filterGetContext(sess, lua_context);
 
-	LOG_TRACE(sess, 000, luaHeaders);
+	LOG_TRACE(sess, 1008, luaHeaders);
 
 	if (ctx->lua == NULL)
 		return SMTPF_CONTINUE;
@@ -590,7 +590,7 @@ luaContent(Session *sess, va_list args)
 	SmtpfCode rc = SMTPF_CONTINUE;
 	LuaContext *ctx = filterGetContext(sess, lua_context);
 
-	LOG_TRACE(sess, 000, luaContent);
+	LOG_TRACE(sess, 1009, luaContent);
 
 	if (ctx->lua == NULL)
 		return SMTPF_CONTINUE;
@@ -607,7 +607,7 @@ luaDot(Session *sess, va_list ignore)
 {
 	LuaContext *ctx = filterGetContext(sess, lua_context);
 
-	LOG_TRACE(sess, 000, luaDot);
+	LOG_TRACE(sess, 1010, luaDot);
 
 	if (ctx->lua == NULL)
 		return SMTPF_CONTINUE;
@@ -625,7 +625,7 @@ luaDot(Session *sess, va_list ignore)
 	lua_pushstring(ctx->lua, saveGetName(sess)); 	/* smtp dot -- smtp dot path */
 
 	if (lua_pcall(ctx->lua, 1, 2, 0)) {	/* smtp dot path -- smtp code reply */
-		syslog(LOG_ERR, LOG_MSG(000) "smtp.dot: %s", LOG_ARGS(sess), lua_tostring(ctx->lua, -1));
+		syslog(LOG_ERR, LOG_MSG(1011) "smtp.dot: %s", LOG_ARGS(sess), lua_tostring(ctx->lua, -1));
 		lua_pop(ctx->lua, 2);		/* smtp error -- */
 		return SMTPF_CONTINUE;
 	}
@@ -639,7 +639,7 @@ luaRset(Session *sess, va_list ignore)
 {
 	LuaContext *ctx = filterGetContext(sess, lua_context);
 
-	LOG_TRACE(sess, 000, luaRset);
+	LOG_TRACE(sess, 1012, luaRset);
 
 	if (ctx->lua == NULL)
 		return SMTPF_CONTINUE;
@@ -656,7 +656,7 @@ luaRset(Session *sess, va_list ignore)
 	 */
 	lua_getfield(ctx->lua, -1, "rset");	/* smtp -- smtp rset */
 	if (lua_isfunction(ctx->lua, -1) && lua_pcall(ctx->lua, 0, 0, 0)) {	/* smtp rset -- smtp */
-		syslog(LOG_ERR, LOG_MSG(000) "smtp.rset: %s", LOG_ARGS(sess), lua_tostring(ctx->lua, -1));
+		syslog(LOG_ERR, LOG_MSG(1013) "smtp.rset: %s", LOG_ARGS(sess), lua_tostring(ctx->lua, -1));
 		lua_pop(ctx->lua, 1);		/* smtp error -- smtp */
 	}
 	lua_pop(ctx->lua, 1);			/* smtp -- */
@@ -669,7 +669,7 @@ luaClose(Session *sess, va_list ignore)
 {
 	LuaContext *ctx = filterGetContext(sess, lua_context);
 
-	LOG_TRACE(sess, 000, luaClose);
+	LOG_TRACE(sess, 1014, luaClose);
 
 	if (ctx->lua == NULL)
 		return SMTPF_CONTINUE;
@@ -679,7 +679,7 @@ luaClose(Session *sess, va_list ignore)
 	lua_getglobal(ctx->lua, "smtp");	/* -- smtp */
 	lua_getfield(ctx->lua, -1, "close");	/* smtp -- smtp close */
 	if (lua_isfunction(ctx->lua, -1) && lua_pcall(ctx->lua, 0, 0, 0)) {	/* smtp close -- smtp */
-		syslog(LOG_ERR, LOG_MSG(000) "smtp.close: %s", LOG_ARGS(sess), lua_tostring(ctx->lua, -1));
+		syslog(LOG_ERR, LOG_MSG(1015) "smtp.close: %s", LOG_ARGS(sess), lua_tostring(ctx->lua, -1));
 /*{LOG
 Experimental module using Lua to script additional tests by creating a @PACKAGE_NAME@.lua script.
 This module is undocumented and currently not provided in production code.

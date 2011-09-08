@@ -613,7 +613,7 @@ mailTestsMail(Session *sess, va_list args)
 	if ((sess->helo_state == stateHelo && 0 < VectorLength(params_list))
 	|| MAIL_ANY_SET(sess, MAIL_IS_BINARYMIME)) {
 		statsCount(&stat_helo_mail_params);
-		return replyPushFmt(sess, SMTPF_REJECT, "555 5.5.4 invalid or unsupported parameters" ID_MSG(000) CRLF, ID_ARG(sess));
+		return replyPushFmt(sess, SMTPF_REJECT, "555 5.5.4 invalid or unsupported parameters" ID_MSG(1016) CRLF, ID_ARG(sess));
 /*{REPLY
 Sender sent a HELO command indicating the older RFC 822 SMTP
 standard, yet set MAIL FROM: parameters as though RFC 5321 SMTP
@@ -754,7 +754,7 @@ rcptTestsRcpt(Session *sess, va_list args)
 
 	if (sess->helo_state == stateHelo && 0 < VectorLength(params_list)) {
 		statsCount(&stat_helo_rcpt_params);
-		return replyPushFmt(sess, SMTPF_REJECT, "555 5.5.4 invalid or unsupported parameters" ID_MSG(000) CRLF, ID_ARG(sess));
+		return replyPushFmt(sess, SMTPF_REJECT, "555 5.5.4 invalid or unsupported parameters" ID_MSG(1017) CRLF, ID_ARG(sess));
 /*{REPLY
 Sender sent a HELO command indicating the older RFC 822 SMTP
 standard, yet set RCPT TO: parameters as though RFC 5321 SMTP

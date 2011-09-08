@@ -1697,7 +1697,7 @@ readClientData(Session *sess, unsigned char *chunk, unsigned long *size)
 	for (offset = 0; offset+SMTP_TEXT_LINE_LENGTH < sizeof (sess->msg.chunk1)-1; offset += length) {
 		if (!socketHasInput(sess->client.socket, optSmtpDataLineTimeout.value)) {
 			if (verb_data.option.value)
-				syslog(LOG_ERR, LOG_MSG(000) "%s(%lu)", LOG_ARGS(sess), FILE_LINENO);
+				syslog(LOG_ERR, LOG_MSG(977) "%s(%lu)", LOG_ARGS(sess), FILE_LINENO);
 /*{LOG
 Read error for verb +data.
 See the section <a href="runtime.html#runtime_config">Runtime Configuration</a>
@@ -1712,7 +1712,7 @@ and <a href="summary.html#opt_verbose">verbose</a> option.
 		leading_dot_removed = 0;
 		if ((length = socketPeek(sess->client.socket, chunk+offset, 2)) < 0) {
 			if (verb_data.option.value)
-				syslog(LOG_ERR, LOG_MSG(000) "%s(%lu)", LOG_ARGS(sess), FILE_LINENO);
+				syslog(LOG_ERR, LOG_MSG(978) "%s(%lu)", LOG_ARGS(sess), FILE_LINENO);
 /*{NEXT}*/
 			goto read_error;
 		}
@@ -1720,11 +1720,11 @@ and <a href="summary.html#opt_verbose">verbose</a> option.
 		if (length == 2 && chunk[offset] == '.' && chunk[offset+1] != '\r' && chunk[offset+1] != '\n') {
 			/* Strip SMTP dot transparency. RFC 5321 section 4.5.2. */
 			if (verb_data.option.value)
-				syslog(LOG_DEBUG, LOG_MSG(000) "dot transparency, next=%c", LOG_ARGS(sess), chunk[offset+1]);
+				syslog(LOG_DEBUG, LOG_MSG(979) "dot transparency, next=%c", LOG_ARGS(sess), chunk[offset+1]);
 /*{NEXT}*/
 			if (socketRead(sess->client.socket, chunk+offset, 1) != 1) {
 				if (verb_data.option.value)
-					syslog(LOG_ERR, LOG_MSG(000) "%s(%lu)", LOG_ARGS(sess), FILE_LINENO);
+					syslog(LOG_ERR, LOG_MSG(980) "%s(%lu)", LOG_ARGS(sess), FILE_LINENO);
 /*{LOG
 Read error and debug output for verb +data during the stripping of SMTP dot transparency;
 <a href="http://tools.ietf.org/html/rfc5321#section-4.5.2">RFC 5321 section 4.5.2</a>.
@@ -1772,7 +1772,7 @@ The client appears to have disconnected. A read error occured in the DATA collec
 
 		if (verb_smtp_data.option.value) {
 			if (leading_dot_removed)
-				syslog(LOG_DEBUG, LOG_MSG(000) "line %ld:.%.75s", LOG_ARGS(sess), length+1, chunk+offset);
+				syslog(LOG_DEBUG, LOG_MSG(981) "line %ld:.%.75s", LOG_ARGS(sess), length+1, chunk+offset);
 /*{NEXT}*/
 			else
 				syslog(LOG_DEBUG, LOG_MSG(318) "line %ld:%.75s", LOG_ARGS(sess), length, chunk+offset);
@@ -1927,11 +1927,11 @@ cmdData(Session *sess)
 	statsCount(&stat_data_count);
 
 	if (sess->msg.rcpt_count < 1)
-		return replySetFmt(sess, SMTPF_REJECT, "554 5.5.0 no recipients" ID_MSG(000) "\r\n", ID_ARG(sess));
+		return replySetFmt(sess, SMTPF_REJECT, "554 5.5.0 no recipients" ID_MSG(982) "\r\n", ID_ARG(sess));
 /*{REPLY
 The SMTP transaction attempted to send a DATA command without any valid recipients.
 Either there were no recipients specified or all the RCPT commands were rejected.
-The latter is can occur with scripted mail transactions, a typical sign of spam.
+The latter can occur with scripted mail transactions, a typical sign of spam.
 }*/
 
 	rc = filterRun(sess, filter_data_table);

@@ -1030,7 +1030,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 
 		case ACCESS_DISCARD:
 			if (verb_info.option.value)
-				syslog(LOG_INFO, LOG_MSG(000) "host " CLIENT_FORMAT " %s", LOG_ARGS(sess), CLIENT_INFO(sess), msg == NULL ? "discard" : msg);
+				syslog(LOG_INFO, LOG_MSG(974) "host " CLIENT_FORMAT " %s", LOG_ARGS(sess), CLIENT_INFO(sess), msg == NULL ? "discard" : msg);
 /*{LOG
 There is a <a href="access-map.html#tag_connect"><span class="tag">Connect:</span></a> tag entry for either the
 client name or IP address with a right-hand-side value of DISCARD.
@@ -1152,7 +1152,7 @@ accessMsgAction(Session *sess, const char *value, const char *msg, SmtpfCode cod
 
 	else if (0 < TextSensitiveStartsWith(value, access_discard)) {
 		if (verb_info.option.value)
-			syslog(LOG_INFO, LOG_MSG(000) "message %s", LOG_ARGS(sess), msg == NULL ? "discard" : msg);
+			syslog(LOG_INFO, LOG_MSG(975) "message %s", LOG_ARGS(sess), msg == NULL ? "discard" : msg);
 /*{LOG
 There is a <a href="access-map.html#access_tags">tag entry</a> with a right-hand-side value of DISCARD.
 See <a href="access-map.html#access_action_words">access-map</a>.
@@ -1776,7 +1776,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 
 		case ACCESS_DISCARD:
 			if (verb_info.option.value)
-				syslog(LOG_INFO, LOG_MSG(000) "helo %s %s", LOG_ARGS(sess), helo, msg == NULL ? "discard" : msg);
+				syslog(LOG_INFO, LOG_MSG(976) "helo %s %s", LOG_ARGS(sess), helo, msg == NULL ? "discard" : msg);
 /*{LOG
 There is a <a href="access-map.html#tag_helo"><span class="tag">Helo:</span></a>
 tag entry for HELO/EHLO argument a right-hand-side value of DISCARD.

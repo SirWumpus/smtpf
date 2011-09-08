@@ -86,7 +86,7 @@ ixhashData(Session *sess, va_list ignore)
 {
 	Ixhash *ctx;
 
-	LOG_TRACE(sess, 000, ixhashData);
+	LOG_TRACE(sess, 984, ixhashData);
 
 	ctx = filterGetContext(sess, ixhash_context);
 
@@ -113,7 +113,7 @@ ixhashContent(Session *sess, va_list args)
 	size = va_arg(args, long);
 
 	if (verb_trace.option.value)
-		syslog(LOG_DEBUG, LOG_MSG(000) "ixhashContent(%lx, chunk=%lx, size=%ld)", LOG_ARGS(sess), (long) sess, (long) chunk, size);
+		syslog(LOG_DEBUG, LOG_MSG(985) "ixhashContent(%lx, chunk=%lx, size=%ld)", LOG_ARGS(sess), (long) sess, (long) chunk, size);
 
 	/* Be sure to scan the original message headers in order
 	 * correctly parse a MIME message.
@@ -149,7 +149,7 @@ ixhashDot(Session *sess, va_list ignore)
 	char hash_number, digest_string[3][33];
 
 	rc = SMTPF_CONTINUE;
-	LOG_TRACE(sess, 000, ixhashDot);
+	LOG_TRACE(sess, 986, ixhashDot);
 
 	ctx = filterGetContext(sess, ixhash_context);
 
@@ -174,7 +174,7 @@ ixhashDot(Session *sess, va_list ignore)
 
 	if (verb_ixhash.option.value) {
 		syslog(
-			LOG_DEBUG, LOG_MSG(000) "lf=%lu ws=%lu html-chars=%lu ix1=%s ix2=%s ix3=%s hash=%c",
+			LOG_DEBUG, LOG_MSG(987) "lf=%lu ws=%lu html-chars=%lu ix1=%s ix2=%s ix3=%s hash=%c",
 			LOG_ARGS(sess),
 			(unsigned long) ctx->count_lf,
 			(unsigned long) ctx->count_ws,
@@ -193,7 +193,7 @@ and <a href="summary.html#opt_verbose">verbose</a> option.
 		MSG_SET(sess, MSG_POLICY);
 		statsCount(&stat_ixhash_bl);
 		dnsListSysLog(sess, "ixhash-bl", hash_string, list_name);
-		rc = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.0 message blocked by %s" ID_MSG(000) CRLF, list_name, ID_ARG(sess));
+		rc = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.0 message blocked by %s" ID_MSG(988) CRLF, list_name, ID_ARG(sess));
 /*{REPLY
 See <a href="summary.html#opt_ixhash_bl">ixhash-bl</a> option.
 }*/

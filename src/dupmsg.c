@@ -206,7 +206,7 @@ dupmsgDot(Session *sess, va_list ignore)
 	ParsePath *first_rcpt;
 	mcc_handle *mcc = SESS_GET_MCC(sess);
 
-	LOG_TRACE(sess, 000, dupmsgDot);
+	LOG_TRACE(sess, 983, dupmsgDot);
 
 	if (optDupMsgTTL.value <= 0)
 		return SMTPF_CONTINUE;
