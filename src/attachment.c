@@ -553,7 +553,7 @@ attachmentData(Session *sess, va_list ignore)
 }
 
 static int
-attachmentMimeCheck(Attachment *ctx, const char *string, Vector table)
+attachmentMimeCheck(Attachment *ctx, const char *string, Vector table, const char *opt_name)
 {
 	char **pat;
 	int negate;
@@ -571,7 +571,7 @@ attachmentMimeCheck(Attachment *ctx, const char *string, Vector table)
 				break;
 
 			if (verb_info.option.value) {
-				syslog(LOG_INFO, LOG_MSG(821) "found content=%s pattern=%s", LOG_ARGS(ctx->session), string, *pat);
+				syslog(LOG_INFO, LOG_MSG(821) "%s found content=%s pattern=%s", LOG_ARGS(ctx->session), opt_name, string, *pat);
 /*{LOG
 Reported by the deny-content family of options.
 See <a href="summary.html#opt_deny_content">deny-content</a>.
@@ -608,7 +608,7 @@ attachmentMimeHeader(Mime *m, void *_data)
 		ch = m->source.buffer[offset+span];
 		m->source.buffer[offset+span] = '\0';
 
-		if (attachmentMimeCheck(ctx, (char *) m->source.buffer+offset, ctx->content_types))
+		if (attachmentMimeCheck(ctx, (char *) m->source.buffer+offset, ctx->content_types, "content-type"))
 			statsCount(&statDenyContentType);
 
 		/* application/x-zip-compressed application/zip */
@@ -646,7 +646,7 @@ attachmentMimeHeader(Mime *m, void *_data)
 
 			ch = m->source.buffer[offset+span];
 			m->source.buffer[offset+span] = '\0';
-			if (attachmentMimeCheck(ctx, (char *) m->source.buffer+offset, ctx->content_names))
+			if (attachmentMimeCheck(ctx, (char *) m->source.buffer+offset, ctx->content_names, "content-name"))
 				statsCount(&statDenyContentName);
 			m->source.buffer[offset+span] = ch;
 		}
@@ -666,7 +666,7 @@ attachmentMimeHeader(Mime *m, void *_data)
 
 		ch = m->source.buffer[offset+span];
 		m->source.buffer[offset+span] = '\0';
-		if (attachmentMimeCheck(ctx, (char *) m->source.buffer+offset, ctx->content_names))
+		if (attachmentMimeCheck(ctx, (char *) m->source.buffer+offset, ctx->content_names, "content-name"))
 			statsCount(&statDenyContentName);
 		m->source.buffer[offset+span] = ch;
 	}
@@ -701,7 +701,7 @@ attachmentHeaders(Session *sess, va_list args)
 				ch = *semi;
 				*semi = '\0';
 
-				if (attachmentMimeCheck(ctx, type, ctx->top_content_types))
+				if (attachmentMimeCheck(ctx, type, ctx->top_content_types, "top-content-type"))
 					statsCount(&statDenyTopContentType);
 
 				*semi = ch;
@@ -908,7 +908,7 @@ attachmentZipMimeDecodedOctet(Mime *m, int octet, void *_data)
 
 		if (ctx->hdr.zip.file.filename_length == 0) {
 			ctx->hdr.zip.base[ctx->hdr_length++] = '\0';
-			if (attachmentMimeCheck(ctx, (char *) ctx->hdr.zip.base + sizeof (ZipLocalFileHeader), ctx->compressed_names))
+			if (attachmentMimeCheck(ctx, (char *) ctx->hdr.zip.base + sizeof (ZipLocalFileHeader), ctx->compressed_names, "compressed-name"))
 				statsCount(&statDenyZipName);
 		}
 
@@ -1051,7 +1051,7 @@ attachmentRarMimeDecodedOctet(Mime *m, int octet, void *_data)
 
 		if (ctx->hdr.rar.file.name_size == 0) {
 			ctx->hdr.rar.base[ctx->hdr_length++] = '\0';
-			if (attachmentMimeCheck(ctx, (char *) ctx->hdr.rar.base + sizeof (RarFileHeader), ctx->compressed_names))
+			if (attachmentMimeCheck(ctx, (char *) ctx->hdr.rar.base + sizeof (RarFileHeader), ctx->compressed_names, "compressed-name"))
 				statsCount(&statDenyZipName);
 
 			if (verb_attachment.option.value) {
