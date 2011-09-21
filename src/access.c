@@ -307,11 +307,11 @@ accessPattern(Session *sess, const char *hay, char *pins, char **actionp)
 
 	access = ACCESS_NOT_FOUND;
 
-	if (hay == NULL || pins == NULL || *pins == '\0')
-		goto error0;
-
 	if (actionp != NULL)
 		*actionp = NULL;
+
+	if (hay == NULL || pins == NULL || *pins == '\0')
+		goto error0;
 
 	action = "";
 	is_hay_ip = 0 < parseIPv6(hay, ipv6);
