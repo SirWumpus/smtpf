@@ -111,6 +111,10 @@ An error occurred while reading an SMTP reply from a forward host.
 /*{LOG
 An error occurred while reading an SMTP reply from a forward host.
 }*/
+		(void) snprintf(sess->reply, sizeof (sess->reply), "451 4.4.2 internal network error for %s" ID_MSG(485), relay->route.key, ID_ARG(sess));
+/*{REPLY
+An error occurred while reading an SMTP reply from a forward host.
+}*/
 	} else {
 		for (ln = relay->reply; *ln != NULL; ln++) {
 			if (verb_smtp.option.value
