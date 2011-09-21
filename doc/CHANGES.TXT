@@ -291,6 +291,15 @@ is no set schedule for releases.
 
    !	Fixed spamdDot() handling of end-of-header separator.
 
+   !	Pass into attachmentMimeCheck() the type of list being checked.
+
+   !	Fixed uriblHeaders() missing an end-of-headers transition for
+   	the MIME API. This appears to be an old bug.
+
+   !	Fix debug logging when verb +access is set; in accessPattern()
+	reorder the NULL guard after actionp is cleared. This is an old
+	bug.
+
 --2.3.34--
 
    !	Changed dumb host check in routeCallAhead() to return
