@@ -935,17 +935,27 @@ uriblConnect(Session *sess, va_list ignore)
 static int uriblCheckUri(Session *sess, URI *uri);
 
 static void
-uribl_test_uri_cb(URI *uri, void *_data)
+uribl_hdr_uri_cb(URI *uri, void *_data)
 {
 	UriData *ud = _data;
 	ud->uri_found_rc = uriblCheckUri(ud->session, uri);
 }
 
 static void
-mailbl_test_uri_cb(URI *uri, void *_data)
+mailbl_hdr_uri_cb(URI *uri, void *_data)
 {
 	UriData *ud = _data;
 	ud->uri_found_rc = mailBlLookup(ud->session, uri->uriDecoded, &stat_mail_bl_hdr);
+}
+
+static void
+uribl_mailbl_uri_cb(URI *uri, void *_data)
+{
+	UriData *ud = _data;
+
+	ud->uri_found_rc = uriblCheckUri(ud->session, uri);
+	if (ud->uri_found_rc == SMTPF_CONTINUE && uriGetSchemePort(uri) == 25)
+		ud->uri_found_rc = mailBlLookup(ud->session, uri->uriDecoded, &stat_mail_bl_body);
 }
 
 int
@@ -969,13 +979,14 @@ uriblData(Session *sess, va_list ignore)
 	if ((ctx->mime = mimeCreate()) == NULL)
 		return SMTPF_CONTINUE;
 
-	if ((uri_mime = uriMimeInit(uribl_test_uri_cb, 0, &ctx->uri_data)) == NULL) {
+	if ((uri_mime = uriMimeInit(uribl_mailbl_uri_cb, 0, &ctx->uri_data)) == NULL) {
 		mimeFree(ctx->mime);
 		ctx->mime = NULL;
 		return SMTPF_CONTINUE;
 	}
 
 	mimeHooksAdd(ctx->mime, (MimeHooks *) uri_mime);
+	mimeHeadersFirst(ctx->mime, 1);
 
 	return SMTPF_CONTINUE;
 }
@@ -1011,7 +1022,7 @@ uriblCheckUri(Session *sess, URI *uri)
 	&& (0 < indexValidTLD(uri->host) || 0 < spanIP(uri->host))
 	) {
 		if (1 < verb_uri.option.value)
-			syslog(LOG_DEBUG, LOG_MSG(892) "uriDecoded=%s", LOG_ARGS(sess), uri->uriDecoded);
+			syslog(LOG_DEBUG, LOG_MSG(892) "uriDecoded=%s uriHost=%s", LOG_ARGS(sess), uri->uriDecoded, uri->host);
 
 #ifdef CONFUSING
 		if (0 < optUriMaxLimit.value && optUriMaxLimit.value <= ctx->uri_count++) {
@@ -1152,6 +1163,10 @@ uriblHeaders(Session *sess, va_list args)
 		}
 	}
 
+	/* Assert that the MIME API sees the end-of-headers transition. */
+	(void) mimeNextCh(ctx->mime, '\r');
+	(void) mimeNextCh(ctx->mime, '\n');
+
 	if (CLIENT_ANY_SET(sess, CLIENT_USUAL_SUSPECTS))
 		return SMTPF_CONTINUE;
 
@@ -1171,7 +1186,7 @@ uriblHeaders(Session *sess, va_list args)
 				if (verb_uri.option.value)
 					syslog(LOG_DEBUG, LOG_MSG(898) "uri-bl-headers hdr=\"%s\"", LOG_ARGS(sess), hdr);
 
-				if ((rc = uriCheckString(sess, hdr + length + 1, uribl_test_uri_cb)) != SMTPF_CONTINUE)
+				if ((rc = uriCheckString(sess, hdr + length + 1, uribl_hdr_uri_cb)) != SMTPF_CONTINUE)
 					goto done;
 			}
 		}
@@ -1181,7 +1196,7 @@ uriblHeaders(Session *sess, va_list args)
 				if (verb_uri.option.value)
 					syslog(LOG_DEBUG, LOG_MSG(942) "mail-bl-headers hdr=\"%s\"", LOG_ARGS(sess), hdr);
 
-				if ((rc = uriCheckString(sess, hdr + length + 1, mailbl_test_uri_cb)) != SMTPF_CONTINUE)
+				if ((rc = uriCheckString(sess, hdr + length + 1, mailbl_hdr_uri_cb)) != SMTPF_CONTINUE)
 					goto done;
 			}
 		}
@@ -1197,7 +1212,6 @@ int
 uriblContent(Session *sess, va_list args)
 {
 	int rc;
-	URI *uri;
 	long size;
 	unsigned char *stop;
 	unsigned char *chunk;
@@ -1217,9 +1231,6 @@ uriblContent(Session *sess, va_list args)
 			break;
 
 		rc = ctx->uri_data.uri_found_rc;
-
-		if (rc == SMTPF_CONTINUE && uriGetSchemePort(uri) == 25)
-			rc = mailBlLookup(sess, uri->uriDecoded, &stat_mail_bl_body);
 
 		if (rc == SMTPF_SKIP_REMAINDER)
 			break;
@@ -1251,6 +1262,11 @@ uriblDot(Session *sess, va_list ignore)
 
 	LOG_TRACE(sess, 784, uriblDot);
 
+	/* Make sure the MIME API see the end-of-message in order to
+	 * finalise anything still pending in the buffers.
+	 */
+	(void) mimeNextCh(ctx->mime, EOF);
+
 	if (ctx->policy == 'd') {
 		syslog(LOG_ERR, LOG_MSG(785) "discarded: %s", LOG_ARGS(sess), sess->msg.reject);
 /*{LOG
@@ -1259,7 +1275,7 @@ See <a href="summary.html#opt_uri_bl_policy">uri-bl-policy</a> option.
 		return SMTPF_DISCARD;
 	}
 
-	return SMTPF_CONTINUE;
+	return ctx->uri_data.uri_found_rc;
 }
 
 int
