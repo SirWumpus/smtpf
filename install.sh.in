@@ -244,7 +244,7 @@ $INSTALL -m 755 $INSTALL_WHEEL -d $bindir
 echo 'Installing...' $bindir/pdq
 $INSTALL -m 555 $INSTALL_WHEEL ../lib/net/pdq $bindir
 echo 'Installing...' $bindir/show
-$INSTALL -m 555 $INSTALL_WHEEL ../tools/show $bindir
+$INSTALL -m 555 $INSTALL_WHEEL ../lib/tools/show $bindir
 echo 'Installing...' $bindir/spf
 $INSTALL -m 555 $INSTALL_WHEEL ../lib/mail/spf $bindir
 echo 'Installing...' $bindir/uri
