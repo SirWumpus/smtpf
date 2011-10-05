@@ -282,7 +282,7 @@ is no set schedule for releases.
 
 --2.4.0--
 
-   *	Requires LibSnert 1.75.0
+   *	Requires LibSnert 1.75.1
 
    !	Overhauled to apply PDQ, MIME, and URI API changes in libnsert
 	1.75.0 and obtain latest library fixes. This affects attachments,
