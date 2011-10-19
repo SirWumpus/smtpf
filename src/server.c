@@ -526,6 +526,29 @@ Version and copyright notices.
 	if (serverSignalsInit(&signals))
 		goto error1;
 
+	if (socket3_init_tls()) {
+		syslog(LOG_ERR, "socket3_init_tls() failed");
+		goto error1;
+	}
+#ifdef HAVE_OPENSSL_SSL_H
+	if (socket3_set_ca_certs(opt_cert_dir.string, opt_cert_chain.string)) {
+		syslog(LOG_ERR, "socket3_set_ca_certs() failed");
+		goto error2;
+	}
+	if (socket3_set_cert_key(opt_server_cert.string, opt_server_key.string, opt_server_key_pass.string)) {
+		syslog(LOG_ERR, "socket3_set_cert_key() failed");
+		goto error2;
+	}
+	if (*opt_server_dh.string != '\0' && socket3_set_server_dh(opt_server_dh.string)) {
+		syslog(LOG_ERR, "socket3_set_server_dh() failed");
+		goto error2;
+	}
+#endif
+	/* NOTE serverInit() calls the old socketInit(), which in
+	 * turn calls the socket3_init(), but only once. So calling
+	 * socket3_init_tls() before will render the subsequent calls
+	 * mute.
+	 */
 	if (serverInit(&server, optInterfaces.string, SMTP_PORT))
 		goto error2;
 

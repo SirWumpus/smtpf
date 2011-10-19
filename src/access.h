@@ -31,6 +31,8 @@ typedef enum {
 	ACCESS_TAG,
 	ACCESS_TEMPFAIL,
 	ACCESS_TRAP,
+	ACCESS_REQUIRE,
+	ACCESS_VERIFY,
 	ACCESS_UNKNOWN,
 	ACCESS_NOT_FOUND = SMDB_ACCESS_NOT_FOUND,
 } AccessCode;
@@ -129,6 +131,10 @@ extern SmtpfCode accessClose(Session *sess, va_list ignore);
 #define ACCESS_TOPMIMETYPE_MAIL_TAG	"top-mimetype-from:"
 #define ACCESS_TOPMIMETYPE_RCPT_TAG	"top-mimetype-to:"
 
+#define ACCESS_TLS_CONN_TAG		"tls-connect:"
+#define ACCESS_TLS_MAIL_TAG		"tls-from:"
+#define ACCESS_TLS_RCPT_TAG		"tls-to:"
+
 /*
  * Key Regex
  */
@@ -165,6 +171,10 @@ extern SmtpfCode accessClose(Session *sess, va_list ignore);
 #define ACCESS_TOPMIMETYPE_CONN_RE	ACCESS_TOPMIMETYPE_CONN_TAG ".*"
 #define ACCESS_TOPMIMETYPE_MAIL_RE	ACCESS_TOPMIMETYPE_MAIL_TAG ".*"
 #define ACCESS_TOPMIMETYPE_RCPT_RE	ACCESS_TOPMIMETYPE_RCPT_TAG ".*"
+
+#define ACCESS_TLS_CONN_RE		ACCESS_TLS_CONN_TAG ".*"
+#define ACCESS_TLS_MAIL_RE		ACCESS_TLS_MAIL_TAG ".*"
+#define ACCESS_TLS_RCPT_RE		ACCESS_TLS_RCPT_TAG ".*"
 
 /*
  * Key printf formats
@@ -204,6 +214,10 @@ extern SmtpfCode accessClose(Session *sess, va_list ignore);
 #define ACCESS_TOPMIMETYPE_MAIL_KEY	ACCESS_TOPMIMETYPE_MAIL_TAG "%s"	/* mail */
 #define ACCESS_TOPMIMETYPE_RCPT_KEY	ACCESS_TOPMIMETYPE_RCPT_TAG "%s"	/* mail */
 
+#define ACCESS_TLS_CONN_KEY		ACCESS_TLS_CONN_TAG "%s"	/* IP | domain */
+#define ACCESS_TLS_MAIL_KEY		ACCESS_TLS_MAIL_TAG "%s"	/* mail */
+#define ACCESS_TLS_RCPT_KEY		ACCESS_TLS_RCPT_TAG "%s"		/* mail */
+
 /*
  * Action Values
  */
@@ -223,6 +237,9 @@ extern SmtpfCode accessClose(Session *sess, va_list ignore);
 #define ACCESS_TEMPFAIL_WORD		"TEMPFAIL"			/* all */
 #define ACCESS_TRAP_WORD		"TRAP"				/* Connect, From, To */
 
+#define ACCESS_REQUIRE_WORD		"REQUIRE"			/* tls-* */
+#define ACCESS_VERIFY_WORD		"VERIFY"			/* tls-* */
+
 #define ACCESS_OK_RE			ACCESS_OK_WORD "(:\"[^\"]*\")?"
 #define ACCESS_OK_AV_RE			"OK\+AV(:\"[^\"]*\")?"
 #define ACCESS_CONTENT_RE		ACCESS_CONTENT_WORD
@@ -236,6 +253,10 @@ extern SmtpfCode accessClose(Session *sess, va_list ignore);
 #define ACCESS_TAG_RE			ACCESS_TAG_WORD
 #define ACCESS_TEMPFAIL_RE		ACCESS_TEMPFAIL_WORD "(:\"[^\"]*\")?"
 #define ACCESS_TRAP_RE			ACCESS_TRAP_WORD
+
+#define ACCESS_REQUIRE_RE		ACCESS_REQUIRE_WORD
+#define ACCESS_VERIFY_RE		ACCESS_VERIFY_WORD "(:[A-Z]+=([^,]+,)*([^,;]+))?"
+
 
 #define ACCESS_PATTERN_LIST_RE	"(([/![].+[]!/])?[+A-Z-]+(:\".*\")?([ \t]+)?)+([ \t]+[+A-Z-]+)?"
 

@@ -149,6 +149,7 @@ cmdUnknown(Session *sess)
 
 	rc = SMTPF_REJECT;
 error0:
+	MSG_SET(sess, MSG_POLICY);
 	sess->input[strcspn(sess->input, " ")] = '\0';
 	return replySetFmt(sess, rc, "500 5.5.1 %s command unknown" ID_MSG(248) "\r\n", sess->input, ID_ARG(sess));
 /*{REPLY
@@ -168,6 +169,7 @@ cmdMissingArg(Session *sess, int cmd_length)
 	if (rc != SMTPF_CONTINUE && replyDefined(sess))
 		return rc;
 
+	MSG_SET(sess, MSG_POLICY);
 	return replySetFmt(sess, SMTPF_REJECT, "501 5.5.2 %s missing argument" ID_MSG(249) "\r\n", sess->input, ID_ARG(sess));
 /*{REPLY
 The specified command requires one or more arguments.
@@ -177,6 +179,7 @@ The specified command requires one or more arguments.
 int
 cmdNotImplemented(Session *sess)
 {
+	MSG_SET(sess, MSG_POLICY);
 	sess->input[strcspn(sess->input, " ")] = '\0';
 	return replySetFmt(sess, SMTPF_REJECT, "502 5.5.1 %s not implemented" ID_MSG(250) "\r\n", sess->input, ID_ARG(sess));
 /*{REPLY
@@ -187,14 +190,16 @@ The given command is specified in a known RFC, but not supported.
 int
 cmdOutOfSequence(Session *sess)
 {
+	MSG_SET(sess, MSG_POLICY);
 	sess->input[strcspn(sess->input, " ")] = '\0';
 	return replySetFmt(sess, SMTPF_REJECT, "503 5.5.1 %s out of sequence" ID_MSG(251) "\r\n", sess->input, ID_ARG(sess));
 /*{REPLY
 The specified command was sent out of order with respect to other commands expected before this command.
 For example HELO or EHLO must be issued and accepted before the first MAIL FROM:; a successful MAIL FROM:
 must be sent before any RCPT TO: commands; and there must be at least one successful RCPT TO: before
-the DATA command will be accepted. See RFC 2821 for details. Other SMTP command extensions may impose
-similar sequence restrictions, such as AUTH (RFC 2554) after EHLO and before MAIL FROM:.
+the DATA command will be accepted. See RFC 5321 for details. Other SMTP command extensions may impose
+similar sequence restrictions, such as AUTH (RFC 2554) after EHLO and before MAIL FROM:,
+STARTTLS (RFC 3207) after EHLO and not after a previous STARTTLS.
 }*/
 }
 
@@ -278,8 +283,16 @@ we force the client to down grade to the older HELO command per RFC 2821.
 	reply = replyFmt(SMTPF_CONTINUE, "250-Hello " CLIENT_FORMAT "" ID_MSG(254) "\r\n", CLIENT_INFO(sess), ID_ARG(sess));
 /*{REPLY
 }*/
-	if (optSmtpAuthEnable.value)
-		reply = REPLY_APPEND_CONST(reply, "250-AUTH " AUTH_MECHANISMS "\r\n");
+#ifdef HAVE_OPENSSL_SSL_H
+	if (*opt_server_cert.string != '\0' && !socket3_is_tls(socketGetFd(sess->client.socket)))
+		reply = REPLY_APPEND_CONST(reply, "250-STARTTLS\r\n");
+#endif
+	if (optSmtpAuthEnable.value) {
+#ifdef HAVE_OPENSSL_SSL_H
+		if (socket3_is_tls(socketGetFd(sess->client.socket)) || !optSmtpAuthTls.value)
+#endif
+			reply = REPLY_APPEND_CONST(reply, "250-AUTH " AUTH_MECHANISMS "\r\n");
+	}
 
 	reply = REPLY_APPEND_CONST(reply, "250-ENHANCEDSTATUSCODES\r\n");
 	if (optRFC2920Pipelining.value)
@@ -288,9 +301,6 @@ we force the client to down grade to the older HELO command per RFC 2821.
 		reply = REPLY_APPEND_CONST(reply, "250-8BITMIME\r\n");
 	if (optSmtpXclientEnable.value && CLIENT_ANY_SET(sess, CLIENT_USUAL_SUSPECTS))
 		reply = REPLY_APPEND_CONST(reply, "250-XCLIENT ADDR HELO NAME PROTO\r\n");
-#ifdef ENABLE_STARTTLS
-	reply = REPLY_APPEND_CONST(reply, "250-STARTTLS\r\n");
-#endif
 #ifdef ENABLE_ETRN
 	reply = REPLY_APPEND_CONST(reply, "250-ETRN\r\n");
 #endif
@@ -338,6 +348,102 @@ The client has sent HELO or EHLO more than once with different arguments each ti
 	return replySetFmt(sess, SMTPF_CONTINUE, "250 Hello " CLIENT_FORMAT "" ID_MSG(256) "\r\n", CLIENT_INFO(sess), ID_ARG(sess));
 /*{REPLY
 }*/
+}
+
+SmtpfCode
+tlsRcpt(Session *sess, va_list args)
+{
+	ParsePath *rcpt;
+	char *value = NULL, **t;
+	SmtpfCode rc = SMTPF_CONTINUE;
+
+	LOG_TRACE(sess, 1027, tlsRcpt);
+
+	rcpt = va_arg(args, ParsePath *);
+
+	if (accessEmail(sess, ACCESS_TLS_RCPT_TAG, rcpt->address.string, NULL, &value) != ACCESS_NOT_FOUND)
+		;
+	else if (accessEmail(sess, ACCESS_TLS_MAIL_TAG, sess->msg.mail->address.string, NULL, &value) != ACCESS_NOT_FOUND)
+		;
+	else if (accessClient(sess, ACCESS_TLS_CONN_TAG, sess->client.name, sess->client.addr, NULL, &value, 1) != ACCESS_NOT_FOUND)
+		;
+
+	if (value == NULL)
+		return SMTPF_CONTINUE;
+
+	if (TextSensitiveCompare(value, ACCESS_REQUIRE_WORD) == 0
+	&& !socket3_is_tls(socketGetFd(sess->client.socket))) {
+		rc = replySetFmt(sess, SMTPF_REJECT, "530 5.7.0 Must issue a STARTTLS command first" ID_MSG(1024) "\r\n", ID_ARG(sess));
+	}
+
+	else if (TextSensitiveCompare(value, ACCESS_VERIFY_WORD) == 0
+	&& !socket3_is_peer_ok(socketGetFd(sess->client.socket))) {
+		rc = replySetFmt(sess, SMTPF_REJECT, "535 5.7.8 TLS certificate invalid" ID_MSG(1025) "\r\n", ID_ARG(sess));
+	}
+
+	else if (0 < TextSensitiveStartsWith(value, ACCESS_VERIFY_WORD)
+	&& 0 < TextSensitiveStartsWith(value+sizeof (ACCESS_VERIFY_WORD)-1, ":CN=")) {
+		Vector table = TextSplit(value + sizeof (ACCESS_VERIFY_WORD)-1 + sizeof (":CN=")-1, ",", 0);
+
+		for (t = (char **)VectorBase(table); *t != NULL; t++) {
+			if (socket3_is_cn_tls(socketGetFd(sess->client.socket), *t)) {
+				break;
+			}
+		}
+
+		if (*t == NULL) {
+			syslog(LOG_ERR, LOG_MSG(1026) "no CN match: %s", LOG_ARGS(sess), value);
+			rc = replySetFmt(sess, SMTPF_REJECT, "535 5.7.8 TLS certificate invalid" ID_MSG(1025) "\r\n", ID_ARG(sess));
+		}
+
+		VectorDestroy(table);
+	}
+
+	free(value);
+
+	return rc;
+}
+
+int
+cmdStartTLS(Session *sess)
+{
+	if (socket3_is_tls(socketGetFd(sess->client.socket)))
+		return cmdOutOfSequence(sess);
+
+	SENDCLIENT(sess, "220 ready to start TLS\r\n");
+
+	if (socket3_start_tls(socketGetFd(sess->client.socket), 2, optSmtpConnectTimeout.value)) {
+		return replySetFmt(sess, SMTPF_DROP, "550 5.7.5 TLS negotiation failed" ID_MSG(1022) "\r\n", ID_ARG(sess));
+/*{REPLY
+}*/
+	}
+
+	if (verb_info.option.value) {
+		syslog(LOG_INFO, LOG_MSG(1023) "TLS started", LOG_ARGS(sess));
+/*{LOG
+}*/
+	}
+
+	/* Access-Map tags and related words:
+	 *
+	 *	tls-connect:ip	REQUIRE | VERIFY | VERIFY:CN=name,...;XX=...
+	 *	tls-connect:ptr	REQUIRE | VERIFY | VERIFY:CN=name,...;XX=...
+	 *	tls-from:mail	REQUIRE | VERIFY | VERIFY:CN=name,...;XX=...
+	 *	tls-to:mail	REQUIRE | VERIFY (no CN= possible)
+	 *
+	 *	REQUIRE		STARTTLS required
+	 *	VERIFY		STARTTLS required, client certificate validated
+	 *	VERIFY:CN=name	STARTTLS required, client certificate validated,
+	 *			and CN of client certificate must match name.
+	 *
+	 * Possible furture combo-tag variants:
+	 *
+	 * 	tls-connect:ip/ptr:from:mail	...
+	 *	tls-connect:ip/ptr:to:mail	... VERIFY:CN=name,...;XX=...
+	 * 	tls-from:ip/ptr:to:mail		... VERIFY:CN=name,...;XX=...
+	 */
+
+	return replySet(sess, &reply_no_reply);
 }
 
 /* Perform man-in-the-middle AUTH LOGIN dialogue with the client
@@ -494,6 +600,14 @@ See <a href="summary.html#opt_smtp_auth_enable">smtp-auth-enable</a> documentati
 }*/
 	}
 
+#ifdef HAVE_OPENSSL_SSL_H
+	if (optSmtpAuthTls.value && !socket3_is_tls(socketGetFd(sess->client.socket))) {
+		return replySetFmt(sess, SMTPF_REJECT, "538 5.7.11 Encryption required for requested authentication mechanism" ID_MSG(1020) "\r\n", ID_ARG(sess));
+/*{REPLY
+See <a href="summary.html#opt_smtp_auth_tls">smtp-auth-tls</a> documentation.
+}*/
+	}
+#endif
 	if (CLIENT_ANY_SET(sess, CLIENT_HAS_AUTH)) {
 		(void) replySetFmt(sess, SMTPF_REJECT, "503 5.5.1 already authenticated" ID_MSG(267) "\r\n", ID_ARG(sess));
 /*{REPLY
@@ -2537,6 +2651,7 @@ struct command state0[] = {
 	{ "CACHE", cacheCommand },
 	{ "INFO", infoCommand },
 	{ "XCLIENT", cmdXclient },
+	{ "STARTTLS", cmdOutOfSequence },
 	{ NULL, cmdUnknown }
 };
 
@@ -2568,6 +2683,7 @@ struct command stateHelo[] = {
 	{ "CACHE", cacheCommand },
 	{ "INFO", infoCommand },
 	{ "XCLIENT", cmdXclient },
+	{ "STARTTLS", cmdOutOfSequence },
 	{ NULL, cmdUnknown }
 };
 
@@ -2603,6 +2719,7 @@ struct command stateEhlo[] = {
 	{ "CACHE", cacheCommand },
 	{ "INFO", infoCommand },
 	{ "XCLIENT", cmdXclient },
+	{ "STARTTLS", cmdStartTLS },
 	{ NULL, cmdUnknown }
 };
 
@@ -2634,6 +2751,7 @@ struct command stateMail[] = {
 	{ "CACHE", cmdOutOfSequence },
 	{ "INFO", cmdOutOfSequence },
 	{ "XCLIENT", cmdOutOfSequence },
+	{ "STARTTLS", cmdOutOfSequence },
 	{ NULL, cmdUnknown }
 };
 
@@ -2665,6 +2783,7 @@ struct command stateRcpt[] = {
 	{ "CACHE", cmdOutOfSequence },
 	{ "INFO", cmdOutOfSequence },
 	{ "XCLIENT", cmdOutOfSequence },
+	{ "STARTTLS", cmdOutOfSequence },
 	{ NULL, cmdUnknown }
 };
 
@@ -2701,6 +2820,7 @@ struct command stateSink[] = {
 	{ "CACHE", cmdOutOfSequence },
 	{ "INFO", cmdOutOfSequence },
 	{ "XCLIENT", cmdOutOfSequence },
+	{ "STARTTLS", cmdOutOfSequence },
 	{ NULL, cmdUnknown }
 };
 

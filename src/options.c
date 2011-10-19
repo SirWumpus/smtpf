@@ -1,7 +1,7 @@
 /*
  * options.c
  *
- * Copyright 2006 by Anthony Howe. All rights reserved.
+ * Copyright 2006, 2011 by Anthony Howe. All rights reserved.
  */
 
 /***********************************************************************
@@ -331,6 +331,52 @@ static const char usage_smtp_xclient_enable[] =
 ;
 Option optSmtpXclientEnable	= { "smtp-xclient-enable",	"+",		usage_smtp_xclient_enable };
 
+#ifdef HAVE_OPENSSL_SSL_H
+static const char usage_cert_chain[] =
+  "The file path for a collection of CA root certificates as a PEM\n"
+"# formatted chain file.\n"
+"#"
+;
+Option opt_cert_chain		= { "cert-chain-file",		CA_CHAIN, 	usage_cert_chain };
+
+static const char usage_cert_dir[] =
+  "The directory path for individual CA certificates in PEM format.\n"
+"#"
+;
+Option opt_cert_dir		= { "cert-dir",			CERT_DIR, 		usage_cert_dir };
+
+static const char usage_server_cert[] =
+  "The file path of the server's public certificate in PEM format.\n"
+"#"
+;
+Option opt_server_cert		= { "server-cert",	CERT_DIR "/" _NAME ".pem",	usage_server_cert };
+
+static const char usage_server_key[] =
+  "The file path of the server's private key in PEM format.\n"
+"#"
+;
+Option opt_server_key		= { "server-key",	"",		usage_server_key };
+
+static const char usage_server_key_pass[] =
+  "The server key password, if required; otherwise an empty string.\n"
+"#"
+;
+Option opt_server_key_pass	= { "server-key-pass",	"",		usage_server_key_pass };
+
+static const char usage_dh_pem[] =
+  "The path of an optional Diffie-Hellman parameter file in PEM format.\n"
+"#"
+;
+Option opt_server_dh		= { "server-dh",		"",		usage_dh_pem };
+
+static const char usage_smtp_auth_tls[] =
+  "When set true, ESMTP AUTH is only available over TLS connection.\n"
+"#"
+;
+Option optSmtpAuthTls		= { "smtp-auth-tls",	"+",		usage_smtp_auth_tls };
+
+#endif /* HAVE_OPENSSL_SSL_H */
+
 Option optTestLickey		= { "test-lickey",		"-",		usage_test_lickey };
 Option optTestMode		= { "test-mode",		"-",		usage_test_mode };
 #ifdef ENABLE_TEST_ON_COMMAND
@@ -484,7 +530,10 @@ optionsRegister0(Session *sess, va_list ignore)
 	optionsRegister(&optVersion, 			1);
 
 	optionsRegister(&optAuthDelayChecks, 		0);
-
+#ifdef HAVE_OPENSSL_SSL_H
+	optionsRegister(&opt_cert_chain,		1);
+	optionsRegister(&opt_cert_dir,			1);
+#endif
 	optionsRegister(&optDnsMaxTimeout, 		0);
 	optionsRegister(&optDnsRoundRobin, 		0);
 
@@ -523,11 +572,20 @@ optionsRegister0(Session *sess, va_list ignore)
 	optionsRegister(&opt_run_save_core,		1);
 	optionsRegister(&optRunUser, 			1);
 	optionsRegister(&optRunWorkDir, 		1);
+#ifdef HAVE_OPENSSL_SSL_H
+	optionsRegister(&opt_server_cert, 		1);
+	optionsRegister(&opt_server_dh,			1);
+	optionsRegister(&opt_server_key,		1);
+	optionsRegister(&opt_server_key_pass,		1);
+#endif
 	optionsRegister(&optServerMaxThreads, 		0);
 	optionsRegister(&optServerMinThreads, 		0);
 	optionsRegister(&optServerNewThreads, 		0);
 	optionsRegister(&optSmtpAcceptTimeout, 		0);
 	optionsRegister(&optSmtpAuthEnable,		0);
+#ifdef HAVE_OPENSSL_SSL_H
+	optionsRegister(&optSmtpAuthTls,		0);
+#endif
 	optionsRegister(&optSmtpAuthWhite, 		0);
 	optionsRegister(&optSmtpCommandTimeout, 	0);
 	optionsRegister(&optSmtpCommandTimeoutBlack, 	0);

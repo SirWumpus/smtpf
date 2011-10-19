@@ -887,8 +887,8 @@ error0:
 void
 statsSave(void)
 {
-	RouteStat *routes;
-	unsigned long *hourly;
+	RouteStat *routes = NULL;
+	unsigned long *hourly = NULL;
 
 	/* Note that on exit, we want to save the stats regardless of
 	 * whether another thread has the mutex or not, otherwise we
@@ -1484,7 +1484,7 @@ statsNotify(mcc_handle *mcc, unsigned long one, unsigned long five, unsigned lon
 {
 	mcc_row row;
 	char buffer[128];
-	unsigned long processed;
+	unsigned long processed = 0;
 	unsigned long pct_of, pct_max_of, pct_capacity;
 
 	latencySend(mcc);

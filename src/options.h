@@ -1,7 +1,7 @@
 /*
  * options.h
  *
- * Copyright 2006, 2008 by Anthony Howe. All rights reserved.
+ * Copyright 2006, 2011 by Anthony Howe. All rights reserved.
  */
 
 #ifndef __options_h__
@@ -113,6 +113,14 @@ extern Option optVersion;
 
 #define optServerQueueSize		optSmtpServerQueue
 #define optServerAcceptTimeout		optSmtpAcceptTimeout
+
+extern Option opt_cert_chain;
+extern Option opt_cert_dir;
+extern Option opt_server_cert;
+extern Option opt_server_key;
+extern Option opt_server_key_pass;
+extern Option opt_server_dh;
+extern Option optSmtpAuthTls;
 
 /***********************************************************************
  ***

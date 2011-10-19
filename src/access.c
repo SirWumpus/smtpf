@@ -2070,6 +2070,18 @@ AccessMapping accessTagWordsMap[] =
 		"|" ACCESS_NEXT_WORD
 		"|" ACCESS_SKIP_WORD
 	},
+	{ 	ACCESS_TLS_CONN_TAG,
+		    ACCESS_REQUIRE_WORD
+		"|" ACCESS_VERIFY_WORD
+	},
+	{ 	ACCESS_TLS_MAIL_TAG,
+		    ACCESS_REQUIRE_WORD
+		"|" ACCESS_VERIFY_WORD
+	},
+	{ 	ACCESS_TLS_RCPT_TAG,
+		    ACCESS_REQUIRE_WORD
+		"|" ACCESS_VERIFY_WORD
+	},
 	{ 	ACCESS_SPAM_TAG,
 		    ".+"
 	},
@@ -2186,6 +2198,12 @@ AccessMapping accessWordTagsMap[] =
 		"|" ACCESS_BODY_TAG
 	},
 	{
+		ACCESS_REQUIRE_WORD,
+		    ACCESS_TLS_CONN_TAG
+		"|" ACCESS_TLS_MAIL_TAG
+		"|" ACCESS_TLS_RCPT_TAG
+	},
+	{
 		ACCESS_SAVE_WORD,
 		    ACCESS_CONN_TAG
 		"|" ACCESS_HELO_TAG
@@ -2258,6 +2276,12 @@ AccessMapping accessWordTagsMap[] =
 	{
 		".+",
 		    ACCESS_SPAM_TAG
+	},
+	{
+		ACCESS_VERIFY_WORD,
+		    ACCESS_TLS_CONN_TAG
+		"|" ACCESS_TLS_MAIL_TAG
+		"|" ACCESS_TLS_RCPT_TAG
 	},
 	{
 		".*",

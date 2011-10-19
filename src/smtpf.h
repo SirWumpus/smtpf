@@ -88,6 +88,7 @@ extern "C" {
 #include <com/snert/lib/io/Log.h>
 #include <com/snert/lib/io/file.h>
 #include <com/snert/lib/io/socket2.h>
+#include <com/snert/lib/io/socket3.h>
 #include <com/snert/lib/mail/siq.h>
 #ifdef OLD_SMTP_ERROR_CODES
 #include <com/snert/lib/mail/smtp.h>
@@ -626,6 +627,9 @@ extern long smtpDataToDaemon(FILE *fp, Socket2 *daemon, long max_out, Vector hea
 
 extern Vector reject_msg;
 extern Vector welcome_msg;
+
+extern SmtpfCode tlsRcpt(Session *sess, va_list args);
+
 
 #ifdef NOT_COMPLETE
 /***********************************************************************

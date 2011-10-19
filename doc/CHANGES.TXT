@@ -280,6 +280,20 @@ is no set schedule for releases.
    !	If a client hits the dns-bl, then then a helo: TRAP rule - the
 	message isn't trapped. Steve F.
 
+--2.5.0--
+
+   *	Requires LibSnert 1.75.2
+
+   +	Added STARTTLS support:
+
+		cert-chain-file
+   		cert-dir
+   		server-cert
+   		server-key
+   		server-key-pass
+   		server-dh
+   		smtp-auth-tls
+
 --2.4.0--
 
    *	Requires LibSnert 1.75.1

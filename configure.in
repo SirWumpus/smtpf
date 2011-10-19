@@ -2,7 +2,7 @@
 #	Thus it begins...
 #######################################################################
 
-AC_INIT(smtpf, 2.4, [Anthony Howe <achowe@snert.com>])
+AC_INIT(smtpf, 2.5, [Anthony Howe <achowe@snert.com>])
 
 dnl The autoconf version I learned to deal with.
 AC_PREREQ(2.59)
@@ -233,10 +233,15 @@ if test -f '../lib/version.sh' ; then
 	AC_SUBST(LDFLAGS_PTHREAD)
 	AC_SUBST(HAVE_LIB_PTHREAD)
 
+	AC_SUBST(HAVE_LIB_SEM)
 	AC_SUBST(HAVE_LIB_WS2_32)
 	AC_SUBST(HAVE_LIB_IPHLPAPI)
+	AC_SUBST(NETWORK_LIBS)
 
-
+	AC_SUBST(HAVE_LIBSSL)
+	AC_SUBST(HAVE_LIBCRYPTO)
+	AC_SUBST(CFLAGS_SSL)
+	AC_SUBST(LDFLAGS_SSL)
 
 	if test "X${HAVE_LIB_SQLITE3}" = 'X' ; then
 		echo
@@ -246,7 +251,7 @@ if test -f '../lib/version.sh' ; then
 		echo
 #		exit 1
 	fi
-	expr "${CFLAGS}" : '.*-pthread' >/dev/null ;
+	expr "${CFLAGS_PTHREAD}" : '.*-pthread' >/dev/null ;
 	has_freebsd_pthread=$?
 	if test "X${HAVE_LIB_PTHREAD}" = 'X' -a $has_freebsd_pthread -ne 0 -a "X${ENABLE_MINGW}" = 'X'; then
 		echo
@@ -257,7 +262,7 @@ if test -f '../lib/version.sh' ; then
 		exit 1
 	fi
 
-	LIBS="${LIBS} ${HAVE_LIB_DB} ${HAVE_LIB_RT} ${HAVE_LIB_SQLITE3} ${HAVE_LIB_PTHREAD} ${HAVE_LIB_WS2_32} ${HAVE_LIB_IPHLPAPI}"
+	LIBS="${LIBS} ${HAVE_LIB_DB} ${HAVE_LIB_RT} ${HAVE_LIB_SQLITE3} ${HAVE_LIB_PTHREAD} ${HAVE_LIBSSL} ${HAVE_LIBCRYPTO} ${HAVE_LIB_WS2_32} ${HAVE_LIB_IPHLPAPI}"
 else
 	snert_libsnert=no
 	echo

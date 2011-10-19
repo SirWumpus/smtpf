@@ -159,16 +159,16 @@ replyNoFree(void *_r)
 	/* Do nothing. */
 }
 
-const Reply reply_ok 		= { replyNoFree, SMTPF_CONTINUE, 0, sizeof (msg_ok)-1, (char *) msg_ok };
-const Reply reply_end 		= { replyNoFree, SMTPF_CONTINUE, 0, sizeof (msg_end)-1, (char *) msg_end };
-const Reply reply_proceed	= { replyNoFree, SMTPF_CONTINUE, 0, sizeof (msg_proceed)-1, (char *) msg_proceed };
+Reply reply_ok 		= { replyNoFree, SMTPF_CONTINUE, 0, sizeof (msg_ok)-1, (char *) msg_ok };
+Reply reply_end 		= { replyNoFree, SMTPF_CONTINUE, 0, sizeof (msg_end)-1, (char *) msg_end };
+Reply reply_proceed	= { replyNoFree, SMTPF_CONTINUE, 0, sizeof (msg_proceed)-1, (char *) msg_proceed };
 
-const Reply reply_no_reply	= { replyNoFree, SMTPF_CONTINUE, 0, 0, "" };
+Reply reply_no_reply	= { replyNoFree, SMTPF_CONTINUE, 0, 0, NULL };
 
-const Reply reply_unavailable 	= { replyNoFree, SMTPF_TEMPFAIL, 0, sizeof (msg_421_unavailable)-1, (char *) msg_421_unavailable };
-const Reply reply_internal 	= { replyNoFree, SMTPF_TEMPFAIL, 0, sizeof (msg_421_internal)-1, (char *) msg_421_internal };
-const Reply reply_resources 	= { replyNoFree, SMTPF_TEMPFAIL, 0, sizeof (msg_resources)-1, (char *) msg_resources };
-const Reply reply_try_again 	= { replyNoFree, SMTPF_TEMPFAIL, 0, sizeof (msg_451_try_again)-1, (char *) msg_451_try_again };
+Reply reply_unavailable 	= { replyNoFree, SMTPF_TEMPFAIL, 0, sizeof (msg_421_unavailable)-1, (char *) msg_421_unavailable };
+Reply reply_internal 	= { replyNoFree, SMTPF_TEMPFAIL, 0, sizeof (msg_421_internal)-1, (char *) msg_421_internal };
+Reply reply_resources 	= { replyNoFree, SMTPF_TEMPFAIL, 0, sizeof (msg_resources)-1, (char *) msg_resources };
+Reply reply_try_again 	= { replyNoFree, SMTPF_TEMPFAIL, 0, sizeof (msg_451_try_again)-1, (char *) msg_451_try_again };
 
 
 static Verbose verb_reply	= { { "reply", "-", "" } };
@@ -222,16 +222,23 @@ replyClone(Reply *reply)
 	Reply *clone;
 
 	if ((clone = malloc(sizeof (*clone))) != NULL) {
-		if ((clone->string = malloc(reply->length+1)) == NULL) {
-			free(clone);
-			return NULL;
-		}
-
 		clone->next = NULL;
 		clone->free = replyFree;
 		clone->code = reply->code;
 		clone->size = reply->length+1;
-		clone->length = TextCopy(clone->string, clone->size, reply->string);
+
+		if (reply->length == 0) {
+			clone->size = 0;
+			clone->length = 0;
+			clone->string = NULL;
+		} else {
+			if ((clone->string = malloc(reply->length+1)) == NULL) {
+				free(clone);
+				return NULL;
+			}
+
+			clone->length = TextCopy(clone->string, clone->size, reply->string);
+		}
 	}
 
 	return clone;

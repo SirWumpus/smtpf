@@ -880,6 +880,7 @@ FilterHandler filter_rcpt_table	[] = {
 #ifdef FILTER_SIZE
 	FILTER_HANDLER(sizeRcpt),
 #endif
+	FILTER_HANDLER(tlsRcpt),
 	FILTER_HANDLER(accessRcpt),
 #ifdef FILTER_CLICK
 	/* A previously white listed connection or sender means we'd

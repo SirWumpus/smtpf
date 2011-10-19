@@ -127,7 +127,7 @@ concurrentFini(Session *null, va_list ignore)
 static int
 concurrentCacheUpdate(Session *sess, long add)
 {
-	int i, rc;
+	int i, rc = 0;
 	unsigned long hash;
 	ConcurrentHash *entry, *oldest;
 

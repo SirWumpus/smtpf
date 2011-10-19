@@ -249,8 +249,6 @@ static int
 writeClient(Session *sess, const char *line, long length)
 {
 	long sent, offset, n;
-	SOCKET fd = sess->client.socket->fd;
-
 #ifdef REPORT_NEGATIVES
 	if (verb_smtp.option.value || SMTP_ISS_PERM(line) || SMTP_ISS_TEMP(line)) {
 #else
@@ -335,7 +333,7 @@ See the <a href="access-map.html#access_tags">access-map</a> concerning the
 		&& SMTP_SLOW_REPLY_SIZE + 2 < n)
 			n = SMTP_SLOW_REPLY_SIZE;
 
-		if ((sent = send(fd, line+offset, n, 0)) < 0) {
+		if ((sent = socketWrite(sess->client.socket, (unsigned char *)line+offset, n)) < 0) {
 			UPDATE_ERRNO;
 			if (!ERRNO_EQ_EAGAIN) {
 				if (offset == 0) {
@@ -480,6 +478,14 @@ int
 sendClient(Session *sess, const char *line, size_t length)
 {
 	int rc;
+
+	/* Allow for no reply to be sent. Part of the STARTTLS
+	 * handshake. After the 220 proceed response to STARTTLS
+	 * the TLS handshake is done, after which no banner or
+	 * reply is sent. Thus we should simply ignore the call.
+	 */
+	if (line == NULL || length == 0)
+		return 0;
 
 	/*** Do NOT longjmp() for any errors until after
 	 *** filter_reply_clean_table has been processed

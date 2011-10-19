@@ -169,7 +169,7 @@ nullRcpt(Session *sess, va_list args)
 	time_t now;
 	char *key, *value;
 	NullHash *entry, *oldest;
-	unsigned long hash, rate;
+	unsigned long hash, rate = 0;
 	ParsePath *rcpt = va_arg(args, ParsePath *);
 
 	if (verb_trace.option.value)
