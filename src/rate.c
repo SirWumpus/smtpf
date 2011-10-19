@@ -244,7 +244,7 @@ rateConnect(Session *sess, va_list ignore)
 	SmtpfCode rc;
 	long client_limit;
 	RateHash *entry, *oldest;
-	unsigned long hash, client_rate;
+	unsigned long hash, client_rate = 0;
 
 	LOG_TRACE(sess, 520, rateConnect);
 

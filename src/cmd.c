@@ -149,6 +149,7 @@ cmdUnknown(Session *sess)
 
 	rc = SMTPF_REJECT;
 error0:
+	MSG_SET(sess, MSG_POLICY);
 	sess->input[strcspn(sess->input, " ")] = '\0';
 	return replySetFmt(sess, rc, "500 5.5.1 %s command unknown" ID_MSG(248) "\r\n", sess->input, ID_ARG(sess));
 /*{REPLY
@@ -168,6 +169,7 @@ cmdMissingArg(Session *sess, int cmd_length)
 	if (rc != SMTPF_CONTINUE && replyDefined(sess))
 		return rc;
 
+	MSG_SET(sess, MSG_POLICY);
 	return replySetFmt(sess, SMTPF_REJECT, "501 5.5.2 %s missing argument" ID_MSG(249) "\r\n", sess->input, ID_ARG(sess));
 /*{REPLY
 The specified command requires one or more arguments.
@@ -177,6 +179,7 @@ The specified command requires one or more arguments.
 int
 cmdNotImplemented(Session *sess)
 {
+	MSG_SET(sess, MSG_POLICY);
 	sess->input[strcspn(sess->input, " ")] = '\0';
 	return replySetFmt(sess, SMTPF_REJECT, "502 5.5.1 %s not implemented" ID_MSG(250) "\r\n", sess->input, ID_ARG(sess));
 /*{REPLY
@@ -187,6 +190,7 @@ The given command is specified in a known RFC, but not supported.
 int
 cmdOutOfSequence(Session *sess)
 {
+	MSG_SET(sess, MSG_POLICY);
 	sess->input[strcspn(sess->input, " ")] = '\0';
 	return replySetFmt(sess, SMTPF_REJECT, "503 5.5.1 %s out of sequence" ID_MSG(251) "\r\n", sess->input, ID_ARG(sess));
 /*{REPLY
