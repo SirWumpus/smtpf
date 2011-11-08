@@ -282,21 +282,31 @@ is no set schedule for releases.
 
 --2.5.0--
 
-   *	Requires LibSnert 1.75.2
+   *	Requires LibSnert 1.75.3
 
    +	Added STARTTLS support:
 
-		cert-chain-file
-   		cert-dir
-   		server-cert
-   		server-key
-   		server-key-pass
-   		server-dh
+		tls-cert-chain-file
+   		tls-cert-dir
+   		tls-server-cert
+   		tls-server-key
+   		tls-server-key-pass
+   		tls-server-dh
    		smtp-auth-tls
+   		call-ahead-command-timeout
+
+   !	Fix OPTN bug that would mis-report options with a common prefix
+	needing a restart, eg. uri-bl needs a restart, while uri-bl-helo
+	does not.
+
+   !	Weaken "helo:* OK" entries to simply by-pass subsequent HELO
+	tests instead of white listing the connection.
+
+   !	Changed filter order; moved msgLimitRcpt() ahead of accessRcpt().
 
 --2.4.0--
 
-   *	Requires LibSnert 1.75.1
+   *	Requires LibSnert 1.75.2
 
    !	Overhauled to apply PDQ, MIME, and URI API changes in libnsert
 	1.75.0 and obtain latest library fixes. This affects attachments,

@@ -1627,16 +1627,11 @@ statsCommand(Session *sess)
 	(void) getRFC2821DateTime(&local, stamp, sizeof (stamp));
 	reply = replyAppendFmt(reply, "214-2.0.0 start-time=%s" CRLF, stamp);
 	reply = replyAppendFmt(reply, "214-2.0.0 age=%lu (%.2lu %.2lu:%.2lu:%.2lu)" CRLF, age, d, h, m, s);
-#ifdef OLD_SERVER_MODEL
-	reply = replyAppendFmt(reply, "214-2.0.0 active-connections=%lu" CRLF, server.connections);
-#else
 {
 	unsigned numbers[2];
 	serverNumbers(sess->session->server, numbers);
 	reply = replyAppendFmt(reply, "214-2.0.0 active-connections=%lu" CRLF, numbers[1]);
 }
-#endif
-
 	mem_use = sqlite3_memory_used();
 	human_units((unsigned long) mem_use, &counter, &units);
 	reply = replyAppendFmt(reply, "214-2.0.0 sqlite-memory=%s%lu%s" CRLF, ULONG_MAX == counter ? ">" : "", counter, units);

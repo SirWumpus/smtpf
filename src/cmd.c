@@ -1,7 +1,7 @@
 /*
  * cmd.c
  *
- * Copyright 2006, 2010 by Anthony Howe. All rights reserved.
+ * Copyright 2006, 2011 by Anthony Howe. All rights reserved.
  */
 
 /***********************************************************************
@@ -233,7 +233,7 @@ cmdEhlo(Session *sess)
 		return rc;
 	}
 
-	if (*sess->client.helo != '\0' && TextInsensitiveCompare(sess->client.helo, sess->input + sizeof ("HELO ")-1) != 0) {
+	if (*sess->client.helo != '\0' && TextInsensitiveCompare(sess->client.helo, sess->input + sizeof ("EHLO ")-1) != 0) {
 		statsCount(&stat_helo_schizophrenic);
 		CLIENT_SET(sess, CLIENT_IS_SCHIZO);
 		return replySetFmt(sess, SMTPF_DROP, "550 5.7.1 client " CLIENT_FORMAT " is schizophrenic" ID_MSG(252) "\r\n", CLIENT_INFO(sess), ID_ARG(sess));
@@ -284,12 +284,14 @@ we force the client to down grade to the older HELO command per RFC 2821.
 /*{REPLY
 }*/
 #ifdef HAVE_OPENSSL_SSL_H
-	if (*opt_server_cert.string != '\0' && !socket3_is_tls(socketGetFd(sess->client.socket)))
+	if (*opt_server_key.string != '\0'
+	&&  *opt_server_cert.string != '\0'
+	&&  !(tls_get_flags(sess) & (TLS_FLAG_SKIP|TLS_FLAG_STARTED)))
 		reply = REPLY_APPEND_CONST(reply, "250-STARTTLS\r\n");
 #endif
 	if (optSmtpAuthEnable.value) {
 #ifdef HAVE_OPENSSL_SSL_H
-		if (socket3_is_tls(socketGetFd(sess->client.socket)) || !optSmtpAuthTls.value)
+		if ((tls_get_flags(sess) & TLS_FLAG_STARTED) || !optSmtpAuthTls.value)
 #endif
 			reply = REPLY_APPEND_CONST(reply, "250-AUTH " AUTH_MECHANISMS "\r\n");
 	}
@@ -305,7 +307,7 @@ we force the client to down grade to the older HELO command per RFC 2821.
 	reply = REPLY_APPEND_CONST(reply, "250-ETRN\r\n");
 #endif
 #ifdef FILTER_SIZE
-	reply = REPLY_APPEND_CONST(reply, "250-SIZE\r\n");
+	reply = REPLY_APPEND_CONST(reply, "250-SIZE 0\r\n");
 #endif
 	reply = REPLY_APPEND_CONST(reply, "250 HELP\r\n");
 
@@ -348,102 +350,6 @@ The client has sent HELO or EHLO more than once with different arguments each ti
 	return replySetFmt(sess, SMTPF_CONTINUE, "250 Hello " CLIENT_FORMAT "" ID_MSG(256) "\r\n", CLIENT_INFO(sess), ID_ARG(sess));
 /*{REPLY
 }*/
-}
-
-SmtpfCode
-tlsRcpt(Session *sess, va_list args)
-{
-	ParsePath *rcpt;
-	char *value = NULL, **t;
-	SmtpfCode rc = SMTPF_CONTINUE;
-
-	LOG_TRACE(sess, 1027, tlsRcpt);
-
-	rcpt = va_arg(args, ParsePath *);
-
-	if (accessEmail(sess, ACCESS_TLS_RCPT_TAG, rcpt->address.string, NULL, &value) != ACCESS_NOT_FOUND)
-		;
-	else if (accessEmail(sess, ACCESS_TLS_MAIL_TAG, sess->msg.mail->address.string, NULL, &value) != ACCESS_NOT_FOUND)
-		;
-	else if (accessClient(sess, ACCESS_TLS_CONN_TAG, sess->client.name, sess->client.addr, NULL, &value, 1) != ACCESS_NOT_FOUND)
-		;
-
-	if (value == NULL)
-		return SMTPF_CONTINUE;
-
-	if (TextSensitiveCompare(value, ACCESS_REQUIRE_WORD) == 0
-	&& !socket3_is_tls(socketGetFd(sess->client.socket))) {
-		rc = replySetFmt(sess, SMTPF_REJECT, "530 5.7.0 Must issue a STARTTLS command first" ID_MSG(1024) "\r\n", ID_ARG(sess));
-	}
-
-	else if (TextSensitiveCompare(value, ACCESS_VERIFY_WORD) == 0
-	&& !socket3_is_peer_ok(socketGetFd(sess->client.socket))) {
-		rc = replySetFmt(sess, SMTPF_REJECT, "535 5.7.8 TLS certificate invalid" ID_MSG(1025) "\r\n", ID_ARG(sess));
-	}
-
-	else if (0 < TextSensitiveStartsWith(value, ACCESS_VERIFY_WORD)
-	&& 0 < TextSensitiveStartsWith(value+sizeof (ACCESS_VERIFY_WORD)-1, ":CN=")) {
-		Vector table = TextSplit(value + sizeof (ACCESS_VERIFY_WORD)-1 + sizeof (":CN=")-1, ",", 0);
-
-		for (t = (char **)VectorBase(table); *t != NULL; t++) {
-			if (socket3_is_cn_tls(socketGetFd(sess->client.socket), *t)) {
-				break;
-			}
-		}
-
-		if (*t == NULL) {
-			syslog(LOG_ERR, LOG_MSG(1026) "no CN match: %s", LOG_ARGS(sess), value);
-			rc = replySetFmt(sess, SMTPF_REJECT, "535 5.7.8 TLS certificate invalid" ID_MSG(1025) "\r\n", ID_ARG(sess));
-		}
-
-		VectorDestroy(table);
-	}
-
-	free(value);
-
-	return rc;
-}
-
-int
-cmdStartTLS(Session *sess)
-{
-	if (socket3_is_tls(socketGetFd(sess->client.socket)))
-		return cmdOutOfSequence(sess);
-
-	SENDCLIENT(sess, "220 ready to start TLS\r\n");
-
-	if (socket3_start_tls(socketGetFd(sess->client.socket), 2, optSmtpConnectTimeout.value)) {
-		return replySetFmt(sess, SMTPF_DROP, "550 5.7.5 TLS negotiation failed" ID_MSG(1022) "\r\n", ID_ARG(sess));
-/*{REPLY
-}*/
-	}
-
-	if (verb_info.option.value) {
-		syslog(LOG_INFO, LOG_MSG(1023) "TLS started", LOG_ARGS(sess));
-/*{LOG
-}*/
-	}
-
-	/* Access-Map tags and related words:
-	 *
-	 *	tls-connect:ip	REQUIRE | VERIFY | VERIFY:CN=name,...;XX=...
-	 *	tls-connect:ptr	REQUIRE | VERIFY | VERIFY:CN=name,...;XX=...
-	 *	tls-from:mail	REQUIRE | VERIFY | VERIFY:CN=name,...;XX=...
-	 *	tls-to:mail	REQUIRE | VERIFY (no CN= possible)
-	 *
-	 *	REQUIRE		STARTTLS required
-	 *	VERIFY		STARTTLS required, client certificate validated
-	 *	VERIFY:CN=name	STARTTLS required, client certificate validated,
-	 *			and CN of client certificate must match name.
-	 *
-	 * Possible furture combo-tag variants:
-	 *
-	 * 	tls-connect:ip/ptr:from:mail	...
-	 *	tls-connect:ip/ptr:to:mail	... VERIFY:CN=name,...;XX=...
-	 * 	tls-from:ip/ptr:to:mail		... VERIFY:CN=name,...;XX=...
-	 */
-
-	return replySet(sess, &reply_no_reply);
 }
 
 /* Perform man-in-the-middle AUTH LOGIN dialogue with the client
@@ -601,7 +507,7 @@ See <a href="summary.html#opt_smtp_auth_enable">smtp-auth-enable</a> documentati
 	}
 
 #ifdef HAVE_OPENSSL_SSL_H
-	if (optSmtpAuthTls.value && !socket3_is_tls(socketGetFd(sess->client.socket))) {
+	if (optSmtpAuthTls.value && !(tls_get_flags(sess) & TLS_FLAG_STARTED)) {
 		return replySetFmt(sess, SMTPF_REJECT, "538 5.7.11 Encryption required for requested authentication mechanism" ID_MSG(1020) "\r\n", ID_ARG(sess));
 /*{REPLY
 See <a href="summary.html#opt_smtp_auth_tls">smtp-auth-tls</a> documentation.
@@ -1428,7 +1334,9 @@ getReceivedHeader(Session *sess, char *buffer, size_t size)
 	struct tm local;
 	char stamp[40], *with;
 	time_t now = time(NULL);
-
+#ifdef HAVE_OPENSSL_SSL_H
+	char cipher_info[SOCKET_INFO_STRING_SIZE];
+#endif
 #ifdef FILTER_EMEW
 	EMEW *emew = filterGetContext(sess, emew_context);
 #endif
@@ -1436,17 +1344,28 @@ getReceivedHeader(Session *sess, char *buffer, size_t size)
 	(void) getRFC2821DateTime(&local, stamp, sizeof (stamp));
 
 	/* Specify a Received header with clause. */
-	if (sess->helo_state == stateHelo)
+	if (sess->helo_state == stateHelo) {
 		with = "SMTP";
-	else if (CLIENT_ANY_SET(sess, CLIENT_HAS_AUTH))
+#ifdef HAVE_OPENSSL_SSL_H
+	} else if (tls_get_flags(sess) & TLS_FLAG_STARTED) {
+		if (CLIENT_ANY_SET(sess, CLIENT_HAS_AUTH))
+			with = "ESMTPSA";
+		else
+			with = "ESMTPS";
+#endif
+	} else if (CLIENT_ANY_SET(sess, CLIENT_HAS_AUTH)) {
 		/* RFC 3848 ESMTP and LMTP Transmission Types Registration */
 		with = "ESMTPA";
-	else
+	} else {
 		with = "ESMTP";
+	}
 
+#ifdef HAVE_OPENSSL_SSL_H
+	(void) socket3_get_cipher_tls(socketGetFd(sess->client.socket), cipher_info, sizeof (cipher_info));
+#endif
 	length = snprintf(
 		buffer, size,
-		"Received: from %s (" CLIENT_FORMAT ")\r\n\tby %s (%s [%s]) envelope-from <%s> with %s\r\n\tid %s"
+		"Received: from %s (" CLIENT_FORMAT ")\r\n\tby %s (%s [%s]) envelope-from <%s>\r\n\twith %s (%s) id %s"
 #ifdef FILTER_EMEW
 		" ret-id %s"
 #endif
@@ -1454,7 +1373,7 @@ getReceivedHeader(Session *sess, char *buffer, size_t size)
 		sess->client.helo, CLIENT_INFO(sess),
 		sess->iface->name, sess->iface->name,
 		sess->session->if_addr, sess->msg.mail->address.string,
-		with, sess->msg.id,
+		with, cipher_info, sess->msg.id,
 #ifdef FILTER_EMEW
 		emew_code_strings[emew->result],
 #endif
@@ -2332,7 +2251,7 @@ cmdOption(Session *sess)
 			if (o->usage == NULL)
 				continue;
 
-			if (0 < TextInsensitiveStartsWith(args, o->name))
+			if (TextInsensitiveCompare(args, o->name) == 0)
 				return replySetFmt(sess, SMTPF_REJECT, "501 5.5.4 %s requires restart" ID_MSG(323) "\r\n", o->name, ID_ARG(sess));
 /*{REPLY
 Some options cannot be changed during runtime. Modify the /etc/@PACKAGE_NAME@/@PACKAGE_NAME@.cf options file,
@@ -2719,7 +2638,11 @@ struct command stateEhlo[] = {
 	{ "CACHE", cacheCommand },
 	{ "INFO", infoCommand },
 	{ "XCLIENT", cmdXclient },
+#ifdef HAVE_OPENSSL_SSL_H
 	{ "STARTTLS", cmdStartTLS },
+#else
+	{ "STARTTLS", cmdNotImplemented },
+#endif
 	{ NULL, cmdUnknown }
 };
 

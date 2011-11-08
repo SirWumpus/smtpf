@@ -166,6 +166,8 @@ com/snert/src/@PACKAGE_NAME@/src/summary.c
 com/snert/src/@PACKAGE_NAME@/src/summary.h
 com/snert/src/@PACKAGE_NAME@/src/timelimit.c
 com/snert/src/@PACKAGE_NAME@/src/timelimit.h
+com/snert/src/@PACKAGE_NAME@/src/tls.c
+com/snert/src/@PACKAGE_NAME@/src/tls.h
 com/snert/src/@PACKAGE_NAME@/src/unix.c
 com/snert/src/@PACKAGE_NAME@/src/uribl.c
 com/snert/src/@PACKAGE_NAME@/src/uribl.h

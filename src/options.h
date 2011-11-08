@@ -114,14 +114,6 @@ extern Option optVersion;
 #define optServerQueueSize		optSmtpServerQueue
 #define optServerAcceptTimeout		optSmtpAcceptTimeout
 
-extern Option opt_cert_chain;
-extern Option opt_cert_dir;
-extern Option opt_server_cert;
-extern Option opt_server_key;
-extern Option opt_server_key_pass;
-extern Option opt_server_dh;
-extern Option optSmtpAuthTls;
-
 /***********************************************************************
  ***
  ***********************************************************************/

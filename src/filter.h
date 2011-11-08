@@ -606,6 +606,9 @@ extern void filterClearAllContexts(Session *sess);
 #ifdef FILTER_TIMELIMIT
 # include "timelimit.h"
 #endif
+#ifdef HAVE_OPENSSL_SSL_H
+# include "tls.h"
+#endif
 #ifdef FILTER_URIBL
 # include "uribl.h"
 #endif

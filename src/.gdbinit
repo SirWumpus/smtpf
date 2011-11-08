@@ -13,6 +13,6 @@ set listsize 20
 #b uriblPtrConnect
 #b uriblHeloMail
 #b uriblMailMail
-b cmdEhlo
-b cmdStartTLS
-b replySend
+#b cmdEhlo
+#b cmdStartTLS
+#b replySend

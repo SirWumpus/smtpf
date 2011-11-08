@@ -129,6 +129,14 @@ static const char usage_call_ahead_as_sender[] =
 
 Option optCallAheadAsSender = { "call-ahead-as-sender", "-", usage_call_ahead_as_sender };
 
+static const char usage_call_ahead_command_timeout[] =
+  "SMTP command timeout in seconds for call-aheads. This timeout must\n"
+"# be less than the smtp-command-timeout, if a call-ahead is to have\n"
+"# any chance in completing before the SMTP client times out.\n"
+"#"
+;
+Option optCallAheadCommandTimeout = { "call-ahead-command-timeout", "45", usage_call_ahead_command_timeout };
+
 #define RCPT_TAG		"rcpt:"
 #define DUMB_TAG		"dumb:"
 
@@ -792,6 +800,7 @@ routeCallAhead(Session *sess, const char *host, ParsePath *rcpt)
 
 	conn->route.key = strdup(host);
 	connectionOptions(conn);
+	socketSetTimeout(conn->mx, optCallAheadCommandTimeout.value * UNIT_MILLI);
 
 	/* Get welcome message from MX. */
 	if (mxCommand(sess, conn, NULL, 220)) {

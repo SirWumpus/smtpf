@@ -1494,7 +1494,7 @@ See <a href="summary.html#opt_reject_quoted_at_sign">reject-quoted-at-sign</a>.
 }*/
 	}
 
-	else if ((access = smdbIpMail(sess->access_map, "connect:", sess->client.addr, SMDB_COMBO_TAG_DELIM "to:", path->address.string, NULL, &value)) != ACCESS_NOT_FOUND
+	else if ((access = smdbIpMail(sess->access_map, "connect:", sess->client.addr, SMDB_COMBO_TAG_DELIM "to:", path->address.string, &key, &value)) != ACCESS_NOT_FOUND
 	     || (*sess->client.name != '\0' && (access = smdbDomainMail(sess->access_map, "connect:", sess->client.name, SMDB_COMBO_TAG_DELIM "to:", path->address.string, NULL, &value)) != ACCESS_NOT_FOUND)) {
 		access = accessPattern(sess, sess->client.addr, value, &action);
 		if (access == ACCESS_NOT_FOUND) {
@@ -1559,7 +1559,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 		}
 	}
 
-	else if ((access = smdbMailMail(sess->access_map, "from:", sess->msg.mail->address.string, SMDB_COMBO_TAG_DELIM "to:", path->address.string, NULL, &value)) != ACCESS_NOT_FOUND) {
+	else if ((access = smdbMailMail(sess->access_map, "from:", sess->msg.mail->address.string, SMDB_COMBO_TAG_DELIM "to:", path->address.string, &key, &value)) != ACCESS_NOT_FOUND) {
 		access = accessPattern(sess, sess->msg.mail->address.string, value, &action);
 		if (access == ACCESS_NOT_FOUND) {
 			access = accessPattern(sess, path->address.string, value, &action);
@@ -1749,8 +1749,10 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			}
 			if (CLIENT_NOT_SET(sess, CLIENT_HOLY_TRINITY))
 				statsCount(&stat_helo_wl);
+#ifdef HELO_WHITELIST
 			CLIENT_SET(sess, CLIENT_IS_WHITE);
-			rc = SMTPF_ACCEPT;
+#endif
+			rc = SMTPF_SKIP_REMAINDER;
 			break;
 
 		case ACCESS_REJECT:
