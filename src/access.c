@@ -772,8 +772,8 @@ accessEmail(Session *sess, const char *tag, const char *mail, char **lhs, char *
 	 * lookup white listed and/or black listed addresses.
 	 */
 	access = accessPattern(sess, mail, value, rhs);
-	if (access == ACCESS_NOT_FOUND && lhs != NULL)
-		free(*lhs);
+	if (access == ACCESS_NOT_FOUND)
+		smdb_free_pair(lhs, &value);
 
 	free(value);
 
