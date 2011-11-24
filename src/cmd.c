@@ -245,6 +245,7 @@ The client has sent HELO or EHLO more than once with different arguments each ti
 	(void) TextCopy(sess->client.helo, sizeof (sess->client.helo), sess->input + sizeof ("EHLO ")-1);
 
 	if (!optSmtpEnableEsmtp.value
+	&&  !(tls_get_flags(sess) & TLS_FLAG_ENABLE_EHLO)
 	&& CLIENT_NOT_SET(sess, CLIENT_USUAL_SUSPECTS|CLIENT_IS_GREY|CLIENT_PASSED_GREY)) {
 #ifdef ENABLE_PRUNED_STATS
 		statsCount(&stat_smtp_enable_esmtp);

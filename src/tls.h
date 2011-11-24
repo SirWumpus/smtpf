@@ -21,6 +21,7 @@ extern "C" {
 #define TLS_FLAG_NONE			0x00000020
 #define TLS_FLAG_FAIL			0x00000040
 #define TLS_FLAG_PASS			0x00000080
+#define TLS_FLAG_ENABLE_EHLO		0x00000100
 
 extern Option opt_cert_chain;
 extern Option opt_cert_dir;

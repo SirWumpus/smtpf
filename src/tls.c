@@ -189,6 +189,9 @@ tlsConnect(Session *sess, va_list args)
 	if (accessClient(sess, ACCESS_TLS_CONN_TAG, sess->client.name, sess->client.addr, NULL, &ctx->connect, 1) != ACCESS_NOT_FOUND) {
 		if (TextInsensitiveCompare(ctx->connect, "SKIP") == 0)
 			ctx->flags |= TLS_FLAG_SKIP;
+		else if (TextInsensitiveCompare(ctx->connect, "REQUIRE") == 0
+		     ||  TextInsensitiveStartsWith(ctx->connect, "VERIFY") == 0)
+			ctx->flags |= TLS_FLAG_ENABLE_EHLO;
 	}
 
 	return SMTPF_CONTINUE;
