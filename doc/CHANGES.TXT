@@ -295,6 +295,23 @@ is no set schedule for releases.
    		smtp-auth-tls
    		call-ahead-command-timeout
 
+   +	As part of the STARTTLS support, the following access-map tags
+   	and action words were added:
+
+	tls-connect:ip	REQUIRE | VERIFY | VERIFY:CN=name,...;XX=... | SKIP
+	tls-connect:ptr	REQUIRE | VERIFY | VERIFY:CN=name,...;XX=... | SKIP
+	tls-from:mail	REQUIRE | VERIFY | VERIFY:CN=name,...;XX=...
+	tls-to:mail	REQUIRE | VERIFY | VERIFY:CN=name,...;XX=...
+
+	SKIP		do not offer STARTTLS to the given host(s)
+	REQUIRE		STARTTLS required
+	VERIFY		STARTTLS required, client certificate validated
+	VERIFY:CN=name	STARTTLS required, client certificate validated,
+			and CN of client certificate must match name.
+
+	Note that currently only the CN field of a client certificate is
+	available for verification.
+
    !	Fix OPTN bug that would mis-report options with a common prefix
 	needing a restart, eg. uri-bl needs a restart, while uri-bl-helo
 	does not.
@@ -303,6 +320,20 @@ is no set schedule for releases.
 	tests instead of white listing the connection.
 
    !	Changed filter order; moved msgLimitRcpt() ahead of accessRcpt().
+
+   !	Fixed issue with accessMail() / accessEmail() causing a double
+	free when the RHS value is an empty string.
+
+   !	Fixed mailTestMail() and pdqListAllRcode() logic with respect to
+   	the addition of PDQ_QUERY records made in libsnert 1.75.0.
+
+   -	Call-aheads cache accept and reject results, but not temp.fail.
+	An accept result would have its expire time "touched" as long as
+	there is activity. This has a negative effect if the recipient
+	mail account is deleted, then legit senders and spammers can
+	inadvertently keep the accept result "active" in the cache and
+	generating unknown user bounce messages. The "touching" of call-
+	ahead cache entries has been removed.
 
 --2.4.0--
 

@@ -541,6 +541,23 @@ It can be a pattern list.
 If the special user name <code>OK</code> is used, then the message is not processed by spamd.
 </dd>
 
+<a name="tag_tls"></a>
+<dt><span class="tag">Tls-Connect:</span>ip</dt>
+<dt><span class="tag">Tls-Connect:</span>domain</dt>
+<dd>
+These tags accept the action words SKIP, REQUIRE, or VERIFY (see below).
+The SKIP word has a different meaning here; it indicates that STARTTLS
+extension is <i>not</i> to be offered to the given host(s).
+Note they currently do <i>not</i> support pattern lists.
+</dd>
+
+<dt><span class="tag">Tls-From:</span>mail</dt>
+<dt><span class="tag">Tls-To:</span>mail</dt>
+<dd>
+These tags accept the action words REQUIRE, or VERIFY (see below).
+Note they currently do <i>not</i> support pattern lists.
+</dd>
+
 <a name="tag_to"></a>
 <dt><span class="tag">To:</span>mail</dt>
 <dd>
@@ -611,18 +628,22 @@ The action words supported are:
 <table border="0" cellspacing="0" cellpadding="0" width="100%">
 <tr valign="top"><td width="41%" class="value bdotted tline">OK</td><td width="59%" class="bdotted tline">White list, by-pass one or more tests, except anti-virus scanning</td></tr>
 <tr valign="top"><td width="41%" class="value bdotted">CONTENT</td><td width="59%" class="bdotted">White list as far as, but not including, the content filters;<br/>used only with <span class="tag">Connect:</span> or <span class="tag">Helo:</span>.</td></tr>
-<tr valign="top"><td width="41%" class="value bdotted">DISCARD<span class="value">:"log-comment"</span></td><td width="59%" class="bdotted">Accept and <u>discard</u> message skipping tests; <span class="note">use with care</span>. <br/><span class="value">:"log-comment"</span> is optional</td></tr>
+<tr valign="top"><td width="41%" class="value bdotted">DISCARD<span class="value">:"log-comment"</span></td><td width="59%" class="bdotted">Accept and <u>discard</u> message skipping tests; <span class="note">use with care</span>. The <span class="value">:"log-comment"</span> is optional</td></tr>
 <tr valign="top"><td width="41%" class="value bdotted">IREJECT<span class="value">:"custom-reply"</span></td><td width="59%" class="bdotted">immediate REJECT, ignore <a href="summary.h#opt_smtp_delay_checks">smtp-delay-checks</a>; applies only to <span class="tag">Connect:</span>, <span class="tag">Connect:From:</span>, <span class="tag">From:</span>, and <span class="tag">Helo:</span>. <span class="value">:"custom-reply"</span> is optional</td></tr>
 <!-- DISABLED UNTIL NEXT BUG FIXED
 <tr valign="top"><td width="41%" class="value bdotted">NEXT</td><td width="59%" class="bdotted">Resume lookup, opposite of SKIP</td></tr>
 -->
-<tr valign="top"><td width="41%" class="value bdotted">REJECT<span class="value">:"custom-reply"</span></td><td width="59%" class="bdotted">Black list, either reject or drop. <br/><span class="value">:"custom-reply"</span> is optional</td></tr>
+<tr valign="top"><td width="41%" class="value bdotted">REJECT<span class="value">:"custom-reply"</span></td><td width="59%" class="bdotted">Black list, either reject or drop. The <span class="value">:"custom-reply"</span> is optional</td></tr>
+<tr valign="top"><td width="41%" class="value bdotted">REQUIRE</span></td><td width="59%" class="bdotted">The client is required to establish STARTTLS before the server will accept messages. Used only with <span class="tag">Tls-Connect:</span>, <span class="tag">Tls-From:</span>, and <span class="tag">Tls-To:</span>.</td></tr>
 <tr valign="top"><td width="41%" class="value bdotted">SAVE<span class="value">:"path"</span></td><td width="59%" class="bdotted">Save a copy of message if delivered and save message to <a href="summary.html#opt_save_dir">save-dir</a>, unles the optional <span class="value">:"path"</span> is specified</td></tr>
-<tr valign="top"><td width="41%" class="value bdotted">SKIP</td><td width="59%" class="bdotted">Stop lookup and return no result ie. continue testing</td></tr>
+<tr valign="top"><td width="41%" class="value bdotted">SKIP</td><td width="59%" class="bdotted">Stop lookup and return no result ie. continue testing.<br/>For <span class="tag">Tls-Connect:</span> by-pass the offering of STARTTLS extension.</td></tr>
 <tr valign="top"><td width="41%" class="value bdotted">SPF-PASS</td><td width="59%" class="bdotted">White list sender if SPF returns Pass; used only with <span class="tag">Connect:From:</span> and <span class="tag">From:</span></td></tr>
 <tr valign="top"><td width="41%" class="value bdotted">TAG</td><td width="59%" class="bdotted">If a policy rejection or drop would occur, simply tag the Subject: header and by-pass remaining tests</td></tr>
-<tr valign="top"><td width="41%" class="value bdotted">TEMPFAIL<span class="value">:"custom-reply"</span></td><td width="59%" class="bdotted">Report a temporary failure condition. <br/><span class="value">:"custom-reply"</span> is optional</td></tr>
-<tr valign="top"><td width="41%" class="value bline">TRAP<span class="value">:"path"</span></td><td width="59%" class="bline">Accept and save message, but do not deliver, to <a href="summary.html#opt_trap_dir">trap-dir</a>, unless the optional <span class="value">:"path"</span> is specified</td></tr>
+<tr valign="top"><td width="41%" class="value bdotted">TEMPFAIL<span class="value">:"custom-reply"</span></td><td width="59%" class="bdotted">Report a temporary failure condition. The <span class="value">:"custom-reply"</span> is optional</td></tr>
+<tr valign="top"><td width="41%" class="value bdotted">TRAP<span class="value">:"path"</span></td><td width="59%" class="bdotted">Accept and save message, but do not deliver, to <a href="summary.html#opt_trap_dir">trap-dir</a>, unless the optional <span class="value">:"path"</span> is specified</td></tr>
+<tr valign="top"><td width="41%" class="value bline">VERIFY<span class="value">:"CN=name"</span></td><td width="59%" class="bline">The client is required to establish STARTTLS before the server will accept messages and the client certificate must validated.
+Used only with <span class="tag">Tls-Connect:</span>, <span class="tag">Tls-From:</span>, and <span class="tag">Tls-To:</span>.
+The <span class="value">:CN=name</span> is optional; when specified the CN field of client certificate must match name.</td></tr>
 </table>
 </blockquote>
 
