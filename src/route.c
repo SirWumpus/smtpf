@@ -459,7 +459,7 @@ routeCacheGetRcpt(Session *sess, char *key)
 			syslog(LOG_DEBUG, log_cache_get, LOG_ARGS(sess), row.key_data, row.value_data, FILE_LINENO);
 
 		rc = (int) strtol((char *) row.value_data, NULL, 10);
-
+#ifdef ENABLE_ACCEPT_TOUCH
 		/* Touch the record. */
 		if (rc == SMTPF_ACCEPT)
 			row.expires = time(NULL) + optCacheAcceptTTL.value;
@@ -468,6 +468,7 @@ routeCacheGetRcpt(Session *sess, char *key)
 			syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), row.key_data, row.value_data, FILE_LINENO);
 		if (mccPutRow(mcc, &row) == MCC_ERROR)
 			syslog(LOG_ERR, log_cache_put_error, LOG_ARGS(sess), row.key_data, row.value_data, FILE_LINENO);
+#endif
 	}
 
 #ifdef ENABLE_CACHE_UPDATE_MUTEX
