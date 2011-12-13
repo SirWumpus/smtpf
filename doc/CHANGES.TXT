@@ -280,6 +280,11 @@ is no set schedule for releases.
    !	If a client hits the dns-bl, then then a helo: TRAP rule - the
 	message isn't trapped. Steve F.
 
+--2.5.3--
+
+   *	Requires LibSnert 1.75.7
+
+   !	Skip mail-require-mx for a NULL sender and HELO is an IP address.
 
 --2.5.2--
 
