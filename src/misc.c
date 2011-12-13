@@ -635,13 +635,16 @@ supported.
 		return SMTPF_CONTINUE;
 
 	/* We can not reliably check for MX hosts when mail is from the
-	 * null sender and the HELO argument refers to localhost or LAN
-	 * IP addresses.
+	 * null sender and the HELO argument refers to an IP address.
 	 */
-	if (mail->address.length == 0 && isReservedIP(sess->client.helo, IS_IP_LOCAL|IS_IP_LAN))
-		return SMTPF_CONTINUE;
-
-	domain = 0 < mail->address.length ? mail->domain.string : sess->client.helo;
+	if (mail->address.length == 0) {
+		/*** Q: Should we use the PTR name when available? ***/
+		if (0 < spanIP(sess->client.helo))
+			return SMTPF_CONTINUE;
+		domain = sess->client.helo;
+	} else {
+		domain = mail->domain.string;
+	}
 
 	/* We need the MX records for mail-require-mx and client-is-mx tests. */
 	list = pdqGet(sess->pdq, PDQ_CLASS_IN, PDQ_TYPE_MX, domain, NULL);
