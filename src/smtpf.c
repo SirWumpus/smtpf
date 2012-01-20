@@ -993,7 +993,7 @@ the session "end" log line only.
 
 	if ((code = replySend(sess)) != SMTPF_CONTINUE) {
 		if (verb_info.option.value)
-			syslog(LOG_ERR, LOG_MSG(1028) "banner error code=%d " CLIENT_FORMAT ": %s (%d)", LOG_ARGS(sess), code, CLIENT_INFO(sess), strerror(errno), errno);
+			syslog(LOG_ERR, LOG_MSG(1031) "banner error code=%d " CLIENT_FORMAT ": %s (%d)", LOG_ARGS(sess), code, CLIENT_INFO(sess), strerror(errno), errno);
 	}
 
 	/* Black listed clients get less priority. */

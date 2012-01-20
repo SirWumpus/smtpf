@@ -223,7 +223,7 @@ tlsRcpt(Session *sess, va_list args)
 	SmtpfCode rc = SMTPF_CONTINUE;
 	TLS *ctx = filterGetContext(sess, tls_context);
 
-	LOG_TRACE(sess, 1026, tlsRcpt);
+	LOG_TRACE(sess, 1030, tlsRcpt);
 
 	rcpt = va_arg(args, ParsePath *);
 
