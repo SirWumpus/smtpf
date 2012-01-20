@@ -125,8 +125,8 @@ extern "C" {
 #include "valgrind/valgrind.h"
 #include "valgrind/memcheck.h"
 
-#if LIBSNERT_MAJOR < 1 || LIBSNERT_MINOR < 74
-# error "LibSnert 1.74.0 or better is required"
+#if LIBSNERT_MAJOR < 1 || LIBSNERT_MINOR < 75
+# error "LibSnert 1.75.9 or better is required"
 #endif
 
 /***********************************************************************
@@ -161,6 +161,10 @@ extern void freeThreadData(void);
 /***********************************************************************
  *** Constants
  ***********************************************************************/
+
+#ifndef LINGER_ON_CLOSE
+#define LINGER_ON_CLOSE		2
+#endif
 
 #ifndef SMTP_REJECT_DELAY
 #define SMTP_REJECT_DELAY	1

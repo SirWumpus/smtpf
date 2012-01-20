@@ -338,7 +338,7 @@ session_accept(ServerSession *session)
 	socketFdSetKeepAlive(socketGetFd(session->client), 1, SMTP_COMMAND_TO, 60, 3);
 	socketSetTimeout(session->client, optSmtpCommandTimeout.value);
 	(void) fileSetCloseOnExec(socketGetFd(session->client), 1);
-	(void) socketSetLinger(session->client, 0);
+	(void) socketSetLinger(session->client, LINGER_ON_CLOSE);
 	(void) socketSetNonBlocking(session->client, 1);
 
 	switch (filterRun(data, filter_accept_table)) {
