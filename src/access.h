@@ -20,6 +20,7 @@ typedef enum {
 	ACCESS_REJECT,
 	ACCESS_IREJECT,
 	ACCESS_CONTENT,
+	ACCESS_PROTOCOL,
 	ACCESS_DISCARD,
 	ACCESS_NEXT,
 	ACCESS_OK_AV,
@@ -223,7 +224,8 @@ extern SmtpfCode accessClose(Session *sess, va_list ignore);
  */
 #define ACCESS_OK_WORD			"OK"				/* all */
 #define ACCESS_OK_AV_WORD		"OK+AV"				/* Connect: Helo: From: To: and combos */
-#define ACCESS_CONTENT_WORD		"CONTENT"			/* Connect */
+#define ACCESS_CONTENT_WORD		"CONTENT"			/* Connect: Helo: */
+#define ACCESS_PROTOCOL_WORD		"PROTOCOL"			/* To */
 #define ACCESS_DISCARD_WORD		"DISCARD"			/* all */
 #define ACCESS_IREJECT_WORD		"IREJECT"			/* Connect, Connect:From, From */
 #define ACCESS_NEXT_WORD		"NEXT"				/* all */
@@ -243,6 +245,7 @@ extern SmtpfCode accessClose(Session *sess, va_list ignore);
 #define ACCESS_OK_RE			ACCESS_OK_WORD "(:\"[^\"]*\")?"
 #define ACCESS_OK_AV_RE			"OK\+AV(:\"[^\"]*\")?"
 #define ACCESS_CONTENT_RE		ACCESS_CONTENT_WORD
+#define ACCESS_PROTOCOL_RE		ACCESS_PROTOCOL_WORD
 #define ACCESS_DISCARD_RE		ACCESS_DISCARD_WORD
 #define ACCESS_IREJECT_RE		ACCESS_IREJECT_WORD "(:\"[^\"]*\")?"
 #define ACCESS_NEXT_RE			ACCESS_NEXT_WORD
