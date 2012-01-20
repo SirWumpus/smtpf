@@ -280,6 +280,31 @@ is no set schedule for releases.
    !	If a client hits the dns-bl, then then a helo: TRAP rule - the
 	message isn't trapped. Steve F.
 
+--2.5.4--
+
+   *	Requires LibSnert 1.75.9
+
+   !	Fix minor bug in socket3 API not returning ``from'' IP address
+	for UDP packets received.
+
+   !	Fixed statsNotify() "arv" rejection count calculation. The fail
+   	count is the total DATA count less the successfully accepted
+   	messages.
+
+   +	Add the PROTOCOL action word, which the opposite of CONTENT.
+   	Reject on pre-DATA tests, but ignore post-DATA test, except
+   	anti-virus. Useful for some types of mailing lists.
+
+   !	Fix several instances in access-map lookup functions were the
+   	key in the log message is "(null)".
+
+   !	Fix duplicate log/message numbers.
+
+   !	Added logging of delayed replies.
+
+   !	Set stateRcpt before summaryRecipient() in order to correct
+	reporting of receipient reply.
+
 --2.5.3--
 
    *	Requires LibSnert 1.75.7
