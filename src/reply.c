@@ -73,7 +73,7 @@ const char msg_end[]		= "214 2.0.0 end" ID_MSG(548) CRLF;
 /*{REPLY
 Generic end of a multiline response.
 }*/
-const char msg_proceed[] 	= "250 2.0.0 proceed" ID_NUM(507) CRLF;
+const char msg_proceed[] 	= "250 2.0.0 proceed" ID_NUM(1033) CRLF;
 /*{REPLY
 There is is a delayed rejection/drop response that will be reported
 when the RCPT TO: is sent. See <a href="summary.html#opt_smtp_delay_checks">smtp-delay-checks</a>.
@@ -517,17 +517,18 @@ replySet(Session *sess, Reply *reply)
 	}
 #endif
 	if (optSmtpDelayChecks.value && replyIsDelayed(reply)) {
-		/* Only save the delayed reply if we haven't
-		 * already registered one previously.
+		/* Save only the first delayed reply, discard all
+		 * subsequent delayed replies.
 		 */
 		if (sess->response.delayed == NULL) {
+			if (verb_info.option.value)
+				syslog(LOG_INFO, LOG_MSG(1034) "delayed: %s", LOG_ARGS(sess), reply->string);
 			sess->response.delayed = reply;
 		} else {
 			(*reply->free)(reply);
 		}
 
-		if (MSG_ANY_SET(sess, MSG_TAG)
-		&& sess->response.delayed->code != (SMTPF_DELAY|SMTPF_CONTINUE)) {
+		if (MSG_ANY_SET(sess, MSG_TAG)) {
 			sess->msg.bw_state = SMTPF_ACCEPT;
 			rc = SMTPF_CONTINUE;
 		}
@@ -570,18 +571,22 @@ replyGetReply(Session *sess)
 {
 	Reply *reply;
 
-	/* Immediate replies take precedence over delayed. */
+	/* Immediate replies take precedence over delayed. These
+	 * are typically protocol related instead of policy based.
+	 */
 	if (sess->response.immediate != NULL) {
 		reply = sess->response.immediate;
 	} else if (sess->response.delayed != NULL) {
-		/* A delayed reply is sent in response to RCPT. */
-		if (sess->state == stateRcpt) {
+		/* A delayed reply is sent in response to RCPT,
+		 * unless its to be tagged instead of rejected.
+		 */
+		if (MSG_NOT_SET(sess, MSG_TAG) && sess->state == stateRcpt) {
 			reply = sess->response.delayed;
 		} else {
-			reply = (Reply *) &reply_proceed;
+			reply = &reply_proceed;
 		}
 	} else {
-		reply = (Reply *) &reply_internal;
+		reply = &reply_internal;
 	}
 
 	return reply;
@@ -597,9 +602,11 @@ int
 replySend(Session *sess)
 {
 	Reply *reply;
-	int error, rc = SMTPF_CONTINUE;
+	int error = 0, rc = SMTPF_CONTINUE;
 
-	/* Immediate replies take precedence over delayed. */
+	/* Immediate replies take precedence over delayed. These
+	 * are typically protocol related instead of policy based.
+	 */
 	if (sess->response.immediate != NULL) {
 		reply = sess->response.immediate;
 		sess->response.immediate = NULL;
@@ -610,15 +617,10 @@ replySend(Session *sess)
 		 */
 		error = sendClient(sess, reply->string, reply->length);
 		(*reply->free)(reply);
-
-		if (error) {
-			/* Server I/O error while writing to client. */
-			VALGRIND_PRINTF_BACKTRACE("replySend immediate reply, I/O error, longjmp\n");
-			VALGRIND_DO_LEAK_CHECK;
-			SIGLONGJMP(sess->on_error, SMTPF_DROP);
-		}
 	} else if (sess->response.delayed != NULL) {
-		/* A delayed reply is sent in response to RCPT. */
+		/* A delayed reply is sent in response to RCPT,
+		 * unless its to be tagged instead of rejected.
+		 */
 		if (MSG_NOT_SET(sess, MSG_TAG) && sess->state == stateRcpt) {
 			reply = sess->response.delayed;
 
@@ -642,7 +644,7 @@ replySend(Session *sess)
 				}
 			}
 		} else {
-			reply = (Reply *) &reply_proceed;
+			reply = &reply_proceed;
 		}
 
 		rc = replyGetCode(reply);
@@ -658,14 +660,15 @@ replySend(Session *sess)
 			sess->response.delayed = NULL;
 			(*reply->free)(reply);
 		}
-		if (error) {
-			/* Server I/O error while writing to client. */
-			VALGRIND_PRINTF_BACKTRACE("replySend delayed reply, I/O error, longjmp\n");
-			VALGRIND_DO_LEAK_CHECK;
-			SIGLONGJMP(sess->on_error, SMTPF_DROP);
-		}
 	} else {
 		replyInternalError(sess, FILE_LINENO);
+	}
+
+	if (error) {
+		/* Server I/O error while writing to client. */
+		VALGRIND_PRINTF_BACKTRACE("replySend delayed reply, I/O error, longjmp\n");
+		VALGRIND_DO_LEAK_CHECK;
+		SIGLONGJMP(sess->on_error, SMTPF_DROP);
 	}
 
 	/* Sendmail when it is dropped will defer connections for a
