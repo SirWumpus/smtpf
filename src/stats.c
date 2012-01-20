@@ -872,7 +872,7 @@ statsHttpPost(void)
 	while (0 < (length = socketReadLine(socket, buffer, sizeof (buffer))))
 		;
 error2:
-	socketSetLinger(socket, 0);
+	socketSetLinger(socket, LINGER_ON_CLOSE);
 	socketClose(socket);
 error1:
 	free(uri);
@@ -1484,16 +1484,13 @@ statsNotify(mcc_handle *mcc, unsigned long one, unsigned long five, unsigned lon
 {
 	mcc_row row;
 	char buffer[128];
-	unsigned long processed = 0;
+	unsigned long msg_reject = 0;
 	unsigned long pct_of, pct_max_of, pct_capacity;
 
 	latencySend(mcc);
 
 	PTHREAD_MUTEX_LOCK(&stats_mutex);
-	processed = stat_connect_count.runtime
-		  - stat_admin_commands.runtime
-		  - (stat_grey_tempfail.runtime + stat_grey_accept.runtime)
-		  + stat_msg_count.runtime;
+	msg_reject = stat_msg_count.runtime - stat_msg_accept.runtime;
 	PTHREAD_MUTEX_UNLOCK(&stats_mutex);
 
 	statsSetValue(&stat_open_files, (unsigned long) getOpenFileCount());
@@ -1514,9 +1511,7 @@ statsNotify(mcc_handle *mcc, unsigned long one, unsigned long five, unsigned lon
 		one, five, fifteen,
 		(unsigned long)(row.created - start_time),
 		stat_connect_count.runtime,
-		stat_msg_accept.runtime,
-		processed - stat_msg_accept.runtime,
-		stat_total_kb.runtime,
+		stat_msg_accept.runtime, msg_reject, stat_total_kb.runtime,
 		pct_of, pct_max_of,
 		pct_capacity
 	);
@@ -1528,9 +1523,7 @@ statsNotify(mcc_handle *mcc, unsigned long one, unsigned long five, unsigned lon
 		one, five, fifteen,
 		(unsigned long)(row.created - start_time),
 		stat_connect_count.runtime,
-		stat_msg_accept.runtime,
-		processed - stat_msg_accept.runtime,
-		stat_total_kb.runtime,
+		stat_msg_accept.runtime, msg_reject, stat_total_kb.runtime,
 		pct_of, pct_max_of,
 		pct_capacity
 	);
