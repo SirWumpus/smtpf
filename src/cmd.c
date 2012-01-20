@@ -1030,7 +1030,7 @@ open relay.
 		 * doing an expensive call-ahead, since we already have
 		 * a negative result to report.
 		 */
-		if (replyQuery(sess, 1) == SMTPF_REJECT) {
+		if (replyIsNegative(sess, 1)) {
 			if (verb_rcpt.option.value)
 				syslog(LOG_DEBUG, LOG_MSG(289) "reject reply already queued, skipping call-ahead", LOG_ARGS(sess));
 			/* Force this state in order to report the delayed
@@ -1222,6 +1222,11 @@ unplussed_rcpt:
 		goto error1;
 	}
 
+	/* Enter the RCPT state so that replySend() will
+	 * send delayed replies when necessary.
+	 */
+	sess->state = stateRcpt;
+
 	/* SMTPF_DELAY|SMTPF_CONTINUE is intended to signal that this
 	 * reply should be reported only if there is no delayed message
 	 * waiting. See replySend()
@@ -1231,11 +1236,6 @@ unplussed_rcpt:
 }*/
 	summaryRecipient(sess, rcpt->address.string);
 	sess->msg.rcpt_count++;
-
-	/* Enter the RCPT state so that replySend() will
-	 * send delayed replies when necessary.
-	 */
-	sess->state = stateRcpt;
 
 	return rc;
 error4:
