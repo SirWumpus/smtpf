@@ -155,7 +155,7 @@ Windows binary termination.
 static void
 atExitCleanUpOptions(void)
 {
-	optionFree(optTable, lickeyOptTable, NULL);
+	optionFreeL(optTable, lickeyOptTable, NULL);
 }
 
 void

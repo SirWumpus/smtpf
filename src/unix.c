@@ -119,7 +119,7 @@ See <a href="summary.html#opt_run_pid_file">run-pid-file</a> option.
 static void
 atExitCleanUpOptions(void)
 {
-	optionFree(optTable0, optTable, lickeyOptTable, NULL);
+	optionFreeL(optTable0, optTable, lickeyOptTable, NULL);
 }
 
 void
