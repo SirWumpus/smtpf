@@ -61,16 +61,16 @@ extern const char msg_451_try_again[];
 extern const char msg_250_accepted[];
 extern const char msg_550_rejected[];
 
-extern const Reply reply_ok;
-extern const Reply reply_end;
-extern const Reply reply_closing;
-extern const Reply reply_proceed;
-extern const Reply reply_no_reply;
+extern Reply reply_ok;
+extern Reply reply_end;
+extern Reply reply_closing;
+extern Reply reply_proceed;
+extern Reply reply_no_reply;
 
-extern const Reply reply_unavailable;
-extern const Reply reply_internal;
-extern const Reply reply_resources;
-extern const Reply reply_try_again;
+extern Reply reply_unavailable;
+extern Reply reply_internal;
+extern Reply reply_resources;
+extern Reply reply_try_again;
 
 
 #define REPLY_CONST(c, m)		replyFmt(c, "%s", m)

@@ -71,7 +71,11 @@ extern "C" {
 #endif
 
 #ifndef THREAD_STACK_SIZE
-# define THREAD_STACK_SIZE		(48 * 1024)
+# if __LONG_MAX__ == 2147483647L
+#  define THREAD_STACK_SIZE		(48 * 1024)
+# else
+#  define THREAD_STACK_SIZE		(64 * 1024)
+# endif
 #endif
 #if THREAD_STACK_SIZE < PTHREAD_STACK_MIN
 # undef THREAD_STACK_SIZE

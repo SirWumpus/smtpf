@@ -88,6 +88,7 @@ extern "C" {
 #include <com/snert/lib/io/Log.h>
 #include <com/snert/lib/io/file.h>
 #include <com/snert/lib/io/socket2.h>
+#include <com/snert/lib/io/socket3.h>
 #include <com/snert/lib/mail/siq.h>
 #ifdef OLD_SMTP_ERROR_CODES
 #include <com/snert/lib/mail/smtp.h>
@@ -124,8 +125,8 @@ extern "C" {
 #include "valgrind/valgrind.h"
 #include "valgrind/memcheck.h"
 
-#if LIBSNERT_MAJOR < 1 || LIBSNERT_MINOR < 74
-# error "LibSnert 1.74.0 or better is required"
+#if LIBSNERT_MAJOR < 1 || LIBSNERT_MINOR < 75
+# error "LibSnert 1.75.9 or better is required"
 #endif
 
 /***********************************************************************
@@ -160,6 +161,10 @@ extern void freeThreadData(void);
 /***********************************************************************
  *** Constants
  ***********************************************************************/
+
+#ifndef LINGER_ON_CLOSE
+#define LINGER_ON_CLOSE		2
+#endif
 
 #ifndef SMTP_REJECT_DELAY
 #define SMTP_REJECT_DELAY	1
@@ -431,7 +436,7 @@ typedef struct {
 #define CLIENT_IS_GREY_EXEMPT		0x00100000	/* * Client exempt from grey-listing. */
 #define CLIENT_PASSED_GREY		0x00200000	/* Client has previously passed grey-listing. */
 #define CLIENT_PIPELINING		0x00400000	/* Client sent next command before end of reply. */
-#define CLIENT_SMTP_LOWER_CASE		0x00800000
+#define CLIENT_SMTP_LOWER_CASE		0x00800000	/* * SMTP command contains lower case */
 #define CLIENT_IO_ERROR			0x01000000
 #define CLIENT_RATE_LIMIT		0x02000000
 #define CLIENT_CONCURRENCY_LIMIT	0x04000000
@@ -626,6 +631,9 @@ extern long smtpDataToDaemon(FILE *fp, Socket2 *daemon, long max_out, Vector hea
 
 extern Vector reject_msg;
 extern Vector welcome_msg;
+
+extern SmtpfCode tlsRcpt(Session *sess, va_list args);
+
 
 #ifdef NOT_COMPLETE
 /***********************************************************************

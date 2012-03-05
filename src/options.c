@@ -1,7 +1,7 @@
 /*
  * options.c
  *
- * Copyright 2006 by Anthony Howe. All rights reserved.
+ * Copyright 2006, 2011 by Anthony Howe. All rights reserved.
  */
 
 /***********************************************************************
@@ -484,7 +484,6 @@ optionsRegister0(Session *sess, va_list ignore)
 	optionsRegister(&optVersion, 			1);
 
 	optionsRegister(&optAuthDelayChecks, 		0);
-
 	optionsRegister(&optDnsMaxTimeout, 		0);
 	optionsRegister(&optDnsRoundRobin, 		0);
 
@@ -514,6 +513,7 @@ optionsRegister0(Session *sess, va_list ignore)
 	optionsRegister(&optRFC2821StrictDot, 		0);
 	optionsRegister(&optRFC2821StrictHelo, 		0);
 	optionsRegister(&optCallAheadAsSender,		0);
+	optionsRegister(&optCallAheadCommandTimeout,	0);
 	optionsRegister(&optRouteForwardSelection,	0);
 	optionsRegister(&optRouteMap, 			1);
 	optionsRegister(&optRunGroup, 			1);

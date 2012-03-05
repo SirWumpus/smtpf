@@ -280,9 +280,111 @@ is no set schedule for releases.
    !	If a client hits the dns-bl, then then a helo: TRAP rule - the
 	message isn't trapped. Steve F.
 
+--2.5.4--
+
+   *	Requires LibSnert 1.75.9
+
+   !	Fix minor bug in socket3 API not returning ``from'' IP address
+	for UDP packets received.
+
+   !	Fixed statsNotify() "arv" rejection count calculation. The fail
+   	count is the total DATA count less the successfully accepted
+   	messages.
+
+   +	Add the PROTOCOL action word, which the opposite of CONTENT.
+   	Reject on pre-DATA tests, but ignore post-DATA test, except
+   	anti-virus. Useful for some types of mailing lists.
+
+   !	Fix several instances in access-map lookup functions were the
+   	key in the log message is "(null)".
+
+   !	Fix duplicate log/message numbers.
+
+   !	Added logging of delayed replies.
+
+   !	Set stateRcpt before summaryRecipient() in order to correct
+	reporting of receipient reply.
+
+--2.5.3--
+
+   *	Requires LibSnert 1.75.7
+
+   !	Skip mail-require-mx for a NULL sender and HELO is an IP address.
+
+--2.5.2--
+
+   *	Requires LibSnert 1.75.6
+
+   *	Build number bumped for libsnert changes.
+
+   !	Added STARTTLS to HELP output.
+
+--2.5.1--
+
+   *	Requires LibSnert 1.75.5
+
+   *	Build number bumped for libsnert changes.
+
+   !	Added STARTTLS to help output.
+
+--2.5.0--
+
+   *	Requires LibSnert 1.75.3
+
+   +	Added STARTTLS support:
+
+		tls-cert-chain-file
+   		tls-cert-dir
+   		tls-server-cert
+   		tls-server-key
+   		tls-server-key-pass
+   		tls-server-dh
+   		smtp-auth-tls
+   		call-ahead-command-timeout
+
+   +	As part of the STARTTLS support, the following access-map tags
+   	and action words were added:
+
+	tls-connect:ip	REQUIRE | VERIFY | VERIFY:CN=name,...;XX=... | SKIP
+	tls-connect:ptr	REQUIRE | VERIFY | VERIFY:CN=name,...;XX=... | SKIP
+	tls-from:mail	REQUIRE | VERIFY | VERIFY:CN=name,...;XX=...
+	tls-to:mail	REQUIRE | VERIFY | VERIFY:CN=name,...;XX=...
+
+	SKIP		do not offer STARTTLS to the given host(s)
+	REQUIRE		STARTTLS required
+	VERIFY		STARTTLS required, client certificate validated
+	VERIFY:CN=name	STARTTLS required, client certificate validated,
+			and CN of client certificate must match name.
+
+	Note that currently only the CN field of a client certificate is
+	available for verification.
+
+   !	Fix OPTN bug that would mis-report options with a common prefix
+	needing a restart, eg. uri-bl needs a restart, while uri-bl-helo
+	does not.
+
+   !	Weaken "helo:* OK" entries to simply by-pass subsequent HELO
+	tests instead of white listing the connection.
+
+   !	Changed filter order; moved msgLimitRcpt() ahead of accessRcpt().
+
+   !	Fixed issue with accessMail() / accessEmail() causing a double
+	free when the RHS value is an empty string.
+
+   !	Fixed mailTestMail() and pdqListAllRcode() logic with respect to
+   	the addition of PDQ_QUERY records made in libsnert 1.75.0.
+
+   -	Call-aheads cache accept and reject results, but not temp.fail.
+	An accept result would have its expire time "touched" as long as
+	there is activity. This has a negative effect if the recipient
+	mail account is deleted, then legit senders and spammers can
+	inadvertently keep the accept result "active" in the cache and
+	generating unknown user bounce messages. The "touching" of call-
+	ahead cache entries has been removed.
+
 --2.4.0--
 
-   *	Requires LibSnert 1.75.1
+   *	Requires LibSnert 1.75.2
 
    !	Overhauled to apply PDQ, MIME, and URI API changes in libnsert
 	1.75.0 and obtain latest library fixes. This affects attachments,

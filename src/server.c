@@ -338,7 +338,7 @@ session_accept(ServerSession *session)
 	socketFdSetKeepAlive(socketGetFd(session->client), 1, SMTP_COMMAND_TO, 60, 3);
 	socketSetTimeout(session->client, optSmtpCommandTimeout.value);
 	(void) fileSetCloseOnExec(socketGetFd(session->client), 1);
-	(void) socketSetLinger(session->client, 0);
+	(void) socketSetLinger(session->client, LINGER_ON_CLOSE);
 	(void) socketSetNonBlocking(session->client, 1);
 
 	switch (filterRun(data, filter_accept_table)) {
@@ -523,14 +523,40 @@ Version and copyright notices.
 	if (pthreadInit())
 		goto error0;
 
-	if (serverSignalsInit(&signals))
+	if (socket3_init_tls()) {
+		syslog(LOG_ERR, "socket3_init_tls() failed");
 		goto error1;
+	}
 
-	if (serverInit(&server, optInterfaces.string, SMTP_PORT))
+	if (serverSignalsInit(&signals))
 		goto error2;
 
-	if (server_init(&server))
+#ifdef HAVE_OPENSSL_SSL_H
+	if (*opt_server_key.string != '\0' && *opt_server_cert.string != '\0') {
+		if (socket3_set_ca_certs(opt_cert_dir.string, opt_cert_chain.string)) {
+			syslog(LOG_ERR, "socket3_set_ca_certs() failed");
+			goto error3;
+		}
+		if (socket3_set_cert_key(opt_server_cert.string, opt_server_key.string, opt_server_key_pass.string)) {
+			syslog(LOG_ERR, "socket3_set_cert_key() failed");
+			goto error3;
+		}
+		if (*opt_server_dh.string != '\0' && socket3_set_server_dh(opt_server_dh.string)) {
+			syslog(LOG_ERR, "socket3_set_server_dh() failed");
+			goto error3;
+		}
+	}
+#endif
+	/* NOTE serverInit() calls the old socketInit(), which in
+	 * turn calls the socket3_init(), but only once. So calling
+	 * socket3_init_tls() before will render the subsequent calls
+	 * mute.
+	 */
+	if (serverInit(&server, optInterfaces.string, SMTP_PORT))
 		goto error3;
+
+	if (server_init(&server))
+		goto error4;
 
 	server.hook.worker_create = worker_create;
 	server.hook.worker_free = worker_free;
@@ -542,7 +568,7 @@ Version and copyright notices.
 	serverSetStackSize(&server, THREAD_STACK_SIZE);
 
 	if (serverStart(&server))
-		goto error3;
+		goto error4;
 
 	syslog(LOG_INFO, LOG_NUM(599) "ready");
 /*{LOG
@@ -551,10 +577,12 @@ The server has completed initialisation and is ready to accept connections.
 	signal = serverSignalsLoop(&signals);
 	serverStop(&server, signal == SIGQUIT);
 	rc = EXIT_SUCCESS;
-error3:
+error4:
 	serverFini(&server);
-error2:
+error3:
 	serverSignalsFini(&signals);
+error2:
+	socket3_fini();
 error1:
 	pthreadFini();
 error0:

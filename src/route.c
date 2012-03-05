@@ -129,6 +129,14 @@ static const char usage_call_ahead_as_sender[] =
 
 Option optCallAheadAsSender = { "call-ahead-as-sender", "-", usage_call_ahead_as_sender };
 
+static const char usage_call_ahead_command_timeout[] =
+  "SMTP command timeout in seconds for call-aheads. This timeout must\n"
+"# be less than the smtp-command-timeout, if a call-ahead is to have\n"
+"# any chance in completing before the SMTP client times out.\n"
+"#"
+;
+Option optCallAheadCommandTimeout = { "call-ahead-command-timeout", "45", usage_call_ahead_command_timeout };
+
 #define RCPT_TAG		"rcpt:"
 #define DUMB_TAG		"dumb:"
 
@@ -199,6 +207,7 @@ connectionOptions(Connection *fwd)
 #ifdef DISABLE_NAGLE
 	(void) socketSetNagle(fwd->mx, 0);
 #endif
+	socketSetLinger(fwd->mx, 0);
 	fwd->can_quit = 1;
 }
 
@@ -451,7 +460,7 @@ routeCacheGetRcpt(Session *sess, char *key)
 			syslog(LOG_DEBUG, log_cache_get, LOG_ARGS(sess), row.key_data, row.value_data, FILE_LINENO);
 
 		rc = (int) strtol((char *) row.value_data, NULL, 10);
-
+#ifdef ENABLE_ACCEPT_TOUCH
 		/* Touch the record. */
 		if (rc == SMTPF_ACCEPT)
 			row.expires = time(NULL) + optCacheAcceptTTL.value;
@@ -460,6 +469,7 @@ routeCacheGetRcpt(Session *sess, char *key)
 			syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), row.key_data, row.value_data, FILE_LINENO);
 		if (mccPutRow(mcc, &row) == MCC_ERROR)
 			syslog(LOG_ERR, log_cache_put_error, LOG_ARGS(sess), row.key_data, row.value_data, FILE_LINENO);
+#endif
 	}
 
 #ifdef ENABLE_CACHE_UPDATE_MUTEX
@@ -792,6 +802,7 @@ routeCallAhead(Session *sess, const char *host, ParsePath *rcpt)
 
 	conn->route.key = strdup(host);
 	connectionOptions(conn);
+	socketSetTimeout(conn->mx, optCallAheadCommandTimeout.value * UNIT_MILLI);
 
 	/* Get welcome message from MX. */
 	if (mxCommand(sess, conn, NULL, 220)) {

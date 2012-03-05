@@ -183,6 +183,7 @@ static Verbose verb_access	= { { "access", "-", "" } };
  ***********************************************************************/
 
 const char access_content[]	= ACCESS_CONTENT_WORD;
+const char access_protocol[]	= ACCESS_PROTOCOL_WORD;
 const char access_discard[]	= ACCESS_DISCARD_WORD;
 const char access_ireject[]	= ACCESS_IREJECT_WORD;
 const char access_next[]	= ACCESS_NEXT_WORD;
@@ -204,6 +205,7 @@ EnumStringMapping access_action_mapping[] = {
 	{ ACCESS_REJECT,	access_reject 		},
 	{ ACCESS_IREJECT,	access_ireject 		},
 	{ ACCESS_CONTENT,	access_content 		},
+	{ ACCESS_PROTOCOL,	access_protocol		},
 	{ ACCESS_DISCARD,	access_discard 		},
 	{ ACCESS_NEXT,		access_next 		},
 	{ ACCESS_OK_AV,		access_ok_av		},
@@ -772,8 +774,8 @@ accessEmail(Session *sess, const char *tag, const char *mail, char **lhs, char *
 	 * lookup white listed and/or black listed addresses.
 	 */
 	access = accessPattern(sess, mail, value, rhs);
-	if (access == ACCESS_NOT_FOUND && lhs != NULL)
-		free(*lhs);
+	if (access == ACCESS_NOT_FOUND)
+		smdb_free_pair(lhs, &value);
 
 	free(value);
 
@@ -1145,6 +1147,15 @@ accessMsgAction(Session *sess, const char *value, const char *msg, SmtpfCode cod
 		saveSetTrapDir(sess, msg);
 	}
 
+	else if (strcmp(value, access_protocol) == 0) {
+		/* Opposite of CONTENT. Reject on pre-DATA tests,
+		 * but ignore post-DATA test, except anti-virus.
+		 * Useful for some types of mailing lists.
+		 */
+		code = SMTPF_CONTINUE;
+		MSG_SET(sess, MSG_OK);
+	}
+
 	else if (strcmp(value, access_tag) == 0) {
 		code = SMTPF_CONTINUE;
 		MSG_SET(sess, MSG_TAG);
@@ -1494,8 +1505,8 @@ See <a href="summary.html#opt_reject_quoted_at_sign">reject-quoted-at-sign</a>.
 }*/
 	}
 
-	else if ((access = smdbIpMail(sess->access_map, "connect:", sess->client.addr, SMDB_COMBO_TAG_DELIM "to:", path->address.string, NULL, &value)) != ACCESS_NOT_FOUND
-	     || (*sess->client.name != '\0' && (access = smdbDomainMail(sess->access_map, "connect:", sess->client.name, SMDB_COMBO_TAG_DELIM "to:", path->address.string, NULL, &value)) != ACCESS_NOT_FOUND)) {
+	else if ((access = smdbIpMail(sess->access_map, "connect:", sess->client.addr, SMDB_COMBO_TAG_DELIM "to:", path->address.string, &key, &value)) != ACCESS_NOT_FOUND
+	     || (*sess->client.name != '\0' && (access = smdbDomainMail(sess->access_map, "connect:", sess->client.name, SMDB_COMBO_TAG_DELIM "to:", path->address.string, &key, &value)) != ACCESS_NOT_FOUND)) {
 		access = accessPattern(sess, sess->client.addr, value, &action);
 		if (access == ACCESS_NOT_FOUND) {
 			access = accessPattern(sess, sess->client.name, value, &action);
@@ -1559,7 +1570,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 		}
 	}
 
-	else if ((access = smdbMailMail(sess->access_map, "from:", sess->msg.mail->address.string, SMDB_COMBO_TAG_DELIM "to:", path->address.string, NULL, &value)) != ACCESS_NOT_FOUND) {
+	else if ((access = smdbMailMail(sess->access_map, "from:", sess->msg.mail->address.string, SMDB_COMBO_TAG_DELIM "to:", path->address.string, &key, &value)) != ACCESS_NOT_FOUND) {
 		access = accessPattern(sess, sess->msg.mail->address.string, value, &action);
 		if (access == ACCESS_NOT_FOUND) {
 			access = accessPattern(sess, path->address.string, value, &action);
@@ -1628,7 +1639,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 	 *	tag:account@
 	 *	tag:
 	 */
-	else if ((access = accessEmail(sess, "to:", path->address.string, NULL, &value)) != ACCESS_NOT_FOUND) {
+	else if ((access = accessEmail(sess, "to:", path->address.string, &key, &value)) != ACCESS_NOT_FOUND) {
 		if ((msg = strchr(value, ':')) != NULL)
 			msg++;
 
@@ -1729,7 +1740,7 @@ accessHelo(Session *sess, va_list args)
 
 	helo = va_arg(args, char *);
 
-	if ((access = accessClient(sess, "helo:", helo, NULL, NULL, &value, 1)) != ACCESS_NOT_FOUND) {
+	if ((access = accessClient(sess, "helo:", helo, NULL, &key, &value, 1)) != ACCESS_NOT_FOUND) {
 		if ((msg = strchr(value, ':')) != NULL)
 			msg++;
 
@@ -1749,8 +1760,10 @@ See <a href="access-map.html#access_tags">access-map</a>.
 			}
 			if (CLIENT_NOT_SET(sess, CLIENT_HOLY_TRINITY))
 				statsCount(&stat_helo_wl);
+#ifdef HELO_WHITELIST
 			CLIENT_SET(sess, CLIENT_IS_WHITE);
-			rc = SMTPF_ACCEPT;
+#endif
+			rc = SMTPF_SKIP_REMAINDER;
 			break;
 
 		case ACCESS_REJECT:
@@ -1877,6 +1890,11 @@ accessData(Session *sess, va_list ignore)
 		break;
 	}
 
+	if (MSG_ANY_SET(sess, MSG_OK|MSG_OK_AV)) {
+		LOG_TRACE(sess, 1032, message white listed);
+		return SMTPF_ACCEPT;
+	}
+
 	return SMTPF_CONTINUE;
 }
 
@@ -1984,6 +2002,7 @@ AccessMapping accessTagWordsMap[] =
 		"|" ACCESS_NEXT_WORD
 		"|" ACCESS_SKIP_WORD
 		"|" ACCESS_TAG_WORD
+		"|" ACCESS_PROTOCOL_WORD
 	},
 	{	ACCESS_CONN_RCPT_TAG,
 		    ACCESS_OK_WORD
@@ -2070,6 +2089,18 @@ AccessMapping accessTagWordsMap[] =
 		"|" ACCESS_NEXT_WORD
 		"|" ACCESS_SKIP_WORD
 	},
+	{ 	ACCESS_TLS_CONN_TAG,
+		    ACCESS_REQUIRE_WORD
+		"|" ACCESS_VERIFY_WORD
+	},
+	{ 	ACCESS_TLS_MAIL_TAG,
+		    ACCESS_REQUIRE_WORD
+		"|" ACCESS_VERIFY_WORD
+	},
+	{ 	ACCESS_TLS_RCPT_TAG,
+		    ACCESS_REQUIRE_WORD
+		"|" ACCESS_VERIFY_WORD
+	},
 	{ 	ACCESS_SPAM_TAG,
 		    ".+"
 	},
@@ -2144,6 +2175,15 @@ AccessMapping accessWordTagsMap[] =
 		"|" ACCESS_HELO_TAG
 	},
 	{
+		ACCESS_PROTOCOL_WORD,
+		    ACCESS_CONN_TAG
+		"|" ACCESS_MAIL_TAG
+		"|" ACCESS_RCPT_TAG
+		"|" ACCESS_CONN_MAIL_TAG
+		"|" ACCESS_CONN_RCPT_TAG
+		"|" ACCESS_MAIL_RCPT_TAG
+	},
+	{
 		ACCESS_DISCARD_WORD,
 		    ACCESS_CONN_TAG
 		"|" ACCESS_HELO_TAG
@@ -2184,6 +2224,12 @@ AccessMapping accessWordTagsMap[] =
 		"|" ACCESS_CONN_RCPT_TAG
 		"|" ACCESS_MAIL_RCPT_TAG
 		"|" ACCESS_BODY_TAG
+	},
+	{
+		ACCESS_REQUIRE_WORD,
+		    ACCESS_TLS_CONN_TAG
+		"|" ACCESS_TLS_MAIL_TAG
+		"|" ACCESS_TLS_RCPT_TAG
 	},
 	{
 		ACCESS_SAVE_WORD,
@@ -2258,6 +2304,12 @@ AccessMapping accessWordTagsMap[] =
 	{
 		".+",
 		    ACCESS_SPAM_TAG
+	},
+	{
+		ACCESS_VERIFY_WORD,
+		    ACCESS_TLS_CONN_TAG
+		"|" ACCESS_TLS_MAIL_TAG
+		"|" ACCESS_TLS_RCPT_TAG
 	},
 	{
 		".*",

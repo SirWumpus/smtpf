@@ -1,7 +1,7 @@
 /*
  * options.h
  *
- * Copyright 2006, 2008 by Anthony Howe. All rights reserved.
+ * Copyright 2006, 2011 by Anthony Howe. All rights reserved.
  */
 
 #ifndef __options_h__

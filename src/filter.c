@@ -182,6 +182,9 @@ FilterHandler filter_register_table	[] = {
 #ifdef FILTER_TIMELIMIT
 	FILTER_HANDLER(timeLimitRegister),
 #endif
+#ifdef HAVE_OPENSSL_SSL_H
+	FILTER_HANDLER(tlsRegister),
+#endif
 #ifdef FILTER_URIBL
 	FILTER_HANDLER(uriRegister),
 #endif
@@ -597,6 +600,9 @@ FilterHandler filter_connect_table	[] = {
 #ifdef FILTER_ATTACHMENT
 	FILTER_HANDLER(attachmentConnect),
 #endif
+#ifdef HAVE_OPENSSL_SSL_H
+	FILTER_HANDLER(tlsConnect),
+#endif
 #ifdef FILTER_SIZE
 	FILTER_HANDLER(sizeConnect),
 #endif
@@ -752,6 +758,9 @@ FilterHandler filter_rset_table	[] = {
 #ifdef FILTER_ATTACHMENT
 	FILTER_HANDLER(attachmentRset),
 #endif
+#ifdef HAVE_OPENSSL_SSL_H
+	FILTER_HANDLER(tlsRset),
+#endif
 #ifdef FILTER_GREY
 	FILTER_HANDLER(greyRset),
 #endif
@@ -802,6 +811,9 @@ FilterHandler filter_mail_table	[] = {
 	FILTER_TABLE_BEGIN(mail),
 #ifdef FILTER_ATTACHMENT
 	FILTER_HANDLER(attachmentMail),
+#endif
+#ifdef HAVE_OPENSSL_SSL_H
+	FILTER_HANDLER(tlsMail),
 #endif
 #ifdef FILTER_EMEW
 	FILTER_HANDLER(emewMailRcpt),
@@ -871,11 +883,17 @@ FilterHandler filter_rcpt_table	[] = {
 #ifdef FILTER_ATTACHMENT
 	FILTER_HANDLER(attachmentRcpt),
 #endif
+#ifdef HAVE_OPENSSL_SSL_H
+	FILTER_HANDLER(tlsRcpt),
+#endif
 #ifdef FILTER_TIMELIMIT
 	FILTER_HANDLER(timeLimitRcpt),
 #endif
 #ifdef FILTER_EMEW
 	FILTER_HANDLER(emewMailRcpt),
+#endif
+#ifdef FILTER_MSG_LIMIT
+	FILTER_HANDLER(msgLimitRcpt),
 #endif
 #ifdef FILTER_SIZE
 	FILTER_HANDLER(sizeRcpt),
@@ -904,9 +922,6 @@ FilterHandler filter_rcpt_table	[] = {
 #endif
 #ifdef FILTER_FREEMAIL
 	FILTER_HANDLER(freemailRcpt),
-#endif
-#ifdef FILTER_MSG_LIMIT
-	FILTER_HANDLER(msgLimitRcpt),
 #endif
 #if defined(FILTER_NULL) && !defined(FILTER_NULL_DEFER)
 	FILTER_HANDLER(nullRcpt),
@@ -1286,6 +1301,9 @@ FilterHandler filter_close_table	[] = {
 #endif
 #if defined(FILTER_SPAMD) && !defined(FILTER_SPAMD2)
 	FILTER_HANDLER(spamdClose),
+#endif
+#ifdef HAVE_OPENSSL_SSL_H
+	FILTER_HANDLER(tlsClose),
 #endif
 #ifdef FILTER_URIBL
 	FILTER_HANDLER(uriblClose),

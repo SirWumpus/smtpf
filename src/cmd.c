@@ -1,7 +1,7 @@
 /*
  * cmd.c
  *
- * Copyright 2006, 2010 by Anthony Howe. All rights reserved.
+ * Copyright 2006, 2011 by Anthony Howe. All rights reserved.
  */
 
 /***********************************************************************
@@ -197,8 +197,9 @@ cmdOutOfSequence(Session *sess)
 The specified command was sent out of order with respect to other commands expected before this command.
 For example HELO or EHLO must be issued and accepted before the first MAIL FROM:; a successful MAIL FROM:
 must be sent before any RCPT TO: commands; and there must be at least one successful RCPT TO: before
-the DATA command will be accepted. See RFC 2821 for details. Other SMTP command extensions may impose
-similar sequence restrictions, such as AUTH (RFC 2554) after EHLO and before MAIL FROM:.
+the DATA command will be accepted. See RFC 5321 for details. Other SMTP command extensions may impose
+similar sequence restrictions, such as AUTH (RFC 2554) after EHLO and before MAIL FROM:,
+STARTTLS (RFC 3207) after EHLO and not after a previous STARTTLS.
 }*/
 }
 
@@ -232,7 +233,7 @@ cmdEhlo(Session *sess)
 		return rc;
 	}
 
-	if (*sess->client.helo != '\0' && TextInsensitiveCompare(sess->client.helo, sess->input + sizeof ("HELO ")-1) != 0) {
+	if (*sess->client.helo != '\0' && TextInsensitiveCompare(sess->client.helo, sess->input + sizeof ("EHLO ")-1) != 0) {
 		statsCount(&stat_helo_schizophrenic);
 		CLIENT_SET(sess, CLIENT_IS_SCHIZO);
 		return replySetFmt(sess, SMTPF_DROP, "550 5.7.1 client " CLIENT_FORMAT " is schizophrenic" ID_MSG(252) "\r\n", CLIENT_INFO(sess), ID_ARG(sess));
@@ -244,6 +245,7 @@ The client has sent HELO or EHLO more than once with different arguments each ti
 	(void) TextCopy(sess->client.helo, sizeof (sess->client.helo), sess->input + sizeof ("EHLO ")-1);
 
 	if (!optSmtpEnableEsmtp.value
+	&&  !(tls_get_flags(sess) & TLS_FLAG_ENABLE_EHLO)
 	&& CLIENT_NOT_SET(sess, CLIENT_USUAL_SUSPECTS|CLIENT_IS_GREY|CLIENT_PASSED_GREY)) {
 #ifdef ENABLE_PRUNED_STATS
 		statsCount(&stat_smtp_enable_esmtp);
@@ -282,8 +284,18 @@ we force the client to down grade to the older HELO command per RFC 2821.
 	reply = replyFmt(SMTPF_CONTINUE, "250-Hello " CLIENT_FORMAT "" ID_MSG(254) "\r\n", CLIENT_INFO(sess), ID_ARG(sess));
 /*{REPLY
 }*/
-	if (optSmtpAuthEnable.value)
-		reply = REPLY_APPEND_CONST(reply, "250-AUTH " AUTH_MECHANISMS "\r\n");
+#ifdef HAVE_OPENSSL_SSL_H
+	if (*opt_server_key.string != '\0'
+	&&  *opt_server_cert.string != '\0'
+	&&  !(tls_get_flags(sess) & (TLS_FLAG_SKIP|TLS_FLAG_STARTED)))
+		reply = REPLY_APPEND_CONST(reply, "250-STARTTLS\r\n");
+#endif
+	if (optSmtpAuthEnable.value) {
+#ifdef HAVE_OPENSSL_SSL_H
+		if ((tls_get_flags(sess) & TLS_FLAG_STARTED) || !optSmtpAuthTls.value)
+#endif
+			reply = REPLY_APPEND_CONST(reply, "250-AUTH " AUTH_MECHANISMS "\r\n");
+	}
 
 	reply = REPLY_APPEND_CONST(reply, "250-ENHANCEDSTATUSCODES\r\n");
 	if (optRFC2920Pipelining.value)
@@ -292,14 +304,11 @@ we force the client to down grade to the older HELO command per RFC 2821.
 		reply = REPLY_APPEND_CONST(reply, "250-8BITMIME\r\n");
 	if (optSmtpXclientEnable.value && CLIENT_ANY_SET(sess, CLIENT_USUAL_SUSPECTS))
 		reply = REPLY_APPEND_CONST(reply, "250-XCLIENT ADDR HELO NAME PROTO\r\n");
-#ifdef ENABLE_STARTTLS
-	reply = REPLY_APPEND_CONST(reply, "250-STARTTLS\r\n");
-#endif
 #ifdef ENABLE_ETRN
 	reply = REPLY_APPEND_CONST(reply, "250-ETRN\r\n");
 #endif
 #ifdef FILTER_SIZE
-	reply = REPLY_APPEND_CONST(reply, "250-SIZE\r\n");
+	reply = REPLY_APPEND_CONST(reply, "250-SIZE 0\r\n");
 #endif
 	reply = REPLY_APPEND_CONST(reply, "250 HELP\r\n");
 
@@ -498,6 +507,14 @@ See <a href="summary.html#opt_smtp_auth_enable">smtp-auth-enable</a> documentati
 }*/
 	}
 
+#ifdef HAVE_OPENSSL_SSL_H
+	if (optSmtpAuthTls.value && !(tls_get_flags(sess) & TLS_FLAG_STARTED)) {
+		return replySetFmt(sess, SMTPF_REJECT, "538 5.7.11 Encryption required for requested authentication mechanism" ID_MSG(1020) "\r\n", ID_ARG(sess));
+/*{REPLY
+See <a href="summary.html#opt_smtp_auth_tls">smtp-auth-tls</a> documentation.
+}*/
+	}
+#endif
 	if (CLIENT_ANY_SET(sess, CLIENT_HAS_AUTH)) {
 		(void) replySetFmt(sess, SMTPF_REJECT, "503 5.5.1 already authenticated" ID_MSG(267) "\r\n", ID_ARG(sess));
 /*{REPLY
@@ -1013,7 +1030,7 @@ open relay.
 		 * doing an expensive call-ahead, since we already have
 		 * a negative result to report.
 		 */
-		if (replyQuery(sess, 1) == SMTPF_REJECT) {
+		if (replyIsNegative(sess, 1)) {
 			if (verb_rcpt.option.value)
 				syslog(LOG_DEBUG, LOG_MSG(289) "reject reply already queued, skipping call-ahead", LOG_ARGS(sess));
 			/* Force this state in order to report the delayed
@@ -1205,6 +1222,11 @@ unplussed_rcpt:
 		goto error1;
 	}
 
+	/* Enter the RCPT state so that replySend() will
+	 * send delayed replies when necessary.
+	 */
+	sess->state = stateRcpt;
+
 	/* SMTPF_DELAY|SMTPF_CONTINUE is intended to signal that this
 	 * reply should be reported only if there is no delayed message
 	 * waiting. See replySend()
@@ -1214,11 +1236,6 @@ unplussed_rcpt:
 }*/
 	summaryRecipient(sess, rcpt->address.string);
 	sess->msg.rcpt_count++;
-
-	/* Enter the RCPT state so that replySend() will
-	 * send delayed replies when necessary.
-	 */
-	sess->state = stateRcpt;
 
 	return rc;
 error4:
@@ -1318,7 +1335,9 @@ getReceivedHeader(Session *sess, char *buffer, size_t size)
 	struct tm local;
 	char stamp[40], *with;
 	time_t now = time(NULL);
-
+#ifdef HAVE_OPENSSL_SSL_H
+	char cipher_info[SOCKET_INFO_STRING_SIZE];
+#endif
 #ifdef FILTER_EMEW
 	EMEW *emew = filterGetContext(sess, emew_context);
 #endif
@@ -1326,17 +1345,28 @@ getReceivedHeader(Session *sess, char *buffer, size_t size)
 	(void) getRFC2821DateTime(&local, stamp, sizeof (stamp));
 
 	/* Specify a Received header with clause. */
-	if (sess->helo_state == stateHelo)
+	if (sess->helo_state == stateHelo) {
 		with = "SMTP";
-	else if (CLIENT_ANY_SET(sess, CLIENT_HAS_AUTH))
+#ifdef HAVE_OPENSSL_SSL_H
+	} else if (tls_get_flags(sess) & TLS_FLAG_STARTED) {
+		if (CLIENT_ANY_SET(sess, CLIENT_HAS_AUTH))
+			with = "ESMTPSA";
+		else
+			with = "ESMTPS";
+#endif
+	} else if (CLIENT_ANY_SET(sess, CLIENT_HAS_AUTH)) {
 		/* RFC 3848 ESMTP and LMTP Transmission Types Registration */
 		with = "ESMTPA";
-	else
+	} else {
 		with = "ESMTP";
+	}
 
+#ifdef HAVE_OPENSSL_SSL_H
+	(void) socket3_get_cipher_tls(socketGetFd(sess->client.socket), cipher_info, sizeof (cipher_info));
+#endif
 	length = snprintf(
 		buffer, size,
-		"Received: from %s (" CLIENT_FORMAT ")\r\n\tby %s (%s [%s]) envelope-from <%s> with %s\r\n\tid %s"
+		"Received: from %s (" CLIENT_FORMAT ")\r\n\tby %s (%s [%s]) envelope-from <%s>\r\n\twith %s (%s) id %s"
 #ifdef FILTER_EMEW
 		" ret-id %s"
 #endif
@@ -1344,7 +1374,7 @@ getReceivedHeader(Session *sess, char *buffer, size_t size)
 		sess->client.helo, CLIENT_INFO(sess),
 		sess->iface->name, sess->iface->name,
 		sess->session->if_addr, sess->msg.mail->address.string,
-		with, sess->msg.id,
+		with, cipher_info, sess->msg.id,
 #ifdef FILTER_EMEW
 		emew_code_strings[emew->result],
 #endif
@@ -2186,7 +2216,7 @@ cmdHelp(Session *sess)
 		sess, SMTPF_CONTINUE,
 		"214-2.0.0 ESMTP RFC 1985, 2821, 4954 supported commands:\r\n"
 		"214-2.0.0     AUTH    DATA    EHLO    ETRN    HELO    HELP\r\n"
-		"214-2.0.0     NOOP    MAIL    RCPT    RSET    QUIT\r\n"
+		"214-2.0.0     NOOP    MAIL    RCPT    RSET    QUIT    STARTTLS\r\n"
 		"214-2.0.0\r\n"
 		"214-2.0.0 ESMTP RFC 2821 not implemented:\r\n"
 		"214-2.0.0     EXPN    TURN    VRFY\r\n"
@@ -2222,7 +2252,7 @@ cmdOption(Session *sess)
 			if (o->usage == NULL)
 				continue;
 
-			if (0 < TextInsensitiveStartsWith(args, o->name))
+			if (TextInsensitiveCompare(args, o->name) == 0)
 				return replySetFmt(sess, SMTPF_REJECT, "501 5.5.4 %s requires restart" ID_MSG(323) "\r\n", o->name, ID_ARG(sess));
 /*{REPLY
 Some options cannot be changed during runtime. Modify the /etc/@PACKAGE_NAME@/@PACKAGE_NAME@.cf options file,
@@ -2541,6 +2571,7 @@ struct command state0[] = {
 	{ "CACHE", cacheCommand },
 	{ "INFO", infoCommand },
 	{ "XCLIENT", cmdXclient },
+	{ "STARTTLS", cmdOutOfSequence },
 	{ NULL, cmdUnknown }
 };
 
@@ -2572,6 +2603,7 @@ struct command stateHelo[] = {
 	{ "CACHE", cacheCommand },
 	{ "INFO", infoCommand },
 	{ "XCLIENT", cmdXclient },
+	{ "STARTTLS", cmdOutOfSequence },
 	{ NULL, cmdUnknown }
 };
 
@@ -2607,6 +2639,11 @@ struct command stateEhlo[] = {
 	{ "CACHE", cacheCommand },
 	{ "INFO", infoCommand },
 	{ "XCLIENT", cmdXclient },
+#ifdef HAVE_OPENSSL_SSL_H
+	{ "STARTTLS", cmdStartTLS },
+#else
+	{ "STARTTLS", cmdNotImplemented },
+#endif
 	{ NULL, cmdUnknown }
 };
 
@@ -2638,6 +2675,7 @@ struct command stateMail[] = {
 	{ "CACHE", cmdOutOfSequence },
 	{ "INFO", cmdOutOfSequence },
 	{ "XCLIENT", cmdOutOfSequence },
+	{ "STARTTLS", cmdOutOfSequence },
 	{ NULL, cmdUnknown }
 };
 
@@ -2669,6 +2707,7 @@ struct command stateRcpt[] = {
 	{ "CACHE", cmdOutOfSequence },
 	{ "INFO", cmdOutOfSequence },
 	{ "XCLIENT", cmdOutOfSequence },
+	{ "STARTTLS", cmdOutOfSequence },
 	{ NULL, cmdUnknown }
 };
 
@@ -2705,6 +2744,7 @@ struct command stateSink[] = {
 	{ "CACHE", cmdOutOfSequence },
 	{ "INFO", cmdOutOfSequence },
 	{ "XCLIENT", cmdOutOfSequence },
+	{ "STARTTLS", cmdOutOfSequence },
 	{ NULL, cmdUnknown }
 };
 

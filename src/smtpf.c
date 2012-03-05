@@ -249,8 +249,6 @@ static int
 writeClient(Session *sess, const char *line, long length)
 {
 	long sent, offset, n;
-	SOCKET fd = sess->client.socket->fd;
-
 #ifdef REPORT_NEGATIVES
 	if (verb_smtp.option.value || SMTP_ISS_PERM(line) || SMTP_ISS_TEMP(line)) {
 #else
@@ -335,7 +333,7 @@ See the <a href="access-map.html#access_tags">access-map</a> concerning the
 		&& SMTP_SLOW_REPLY_SIZE + 2 < n)
 			n = SMTP_SLOW_REPLY_SIZE;
 
-		if ((sent = send(fd, line+offset, n, 0)) < 0) {
+		if ((sent = socketWrite(sess->client.socket, (unsigned char *)line+offset, n)) < 0) {
 			UPDATE_ERRNO;
 			if (!ERRNO_EQ_EAGAIN) {
 				if (offset == 0) {
@@ -480,6 +478,14 @@ int
 sendClient(Session *sess, const char *line, size_t length)
 {
 	int rc;
+
+	/* Allow for no reply to be sent. Part of the STARTTLS
+	 * handshake. After the 220 proceed response to STARTTLS
+	 * the TLS handshake is done, after which no banner or
+	 * reply is sent. Thus we should simply ignore the call.
+	 */
+	if (line == NULL || length == 0)
+		return 0;
 
 	/*** Do NOT longjmp() for any errors until after
 	 *** filter_reply_clean_table has been processed
@@ -916,13 +922,14 @@ testOnCommandInit(void)
 void
 sessionProcess(Session *sess)
 {
+	int n;
 	char *p;
 	Command *s;
 	time_t elapsed;
+	SmtpfCode code;
 	TIMER_DECLARE(banner);
-#ifndef OLD_SERVER_MODEL
 	unsigned numbers[2];
-#endif
+
 	if (verb_timers.option.value)
 		TIMER_START(banner);
 	if (0 < SIGSETJMP(sess->on_error, 1))
@@ -934,18 +941,11 @@ sessionProcess(Session *sess)
 	 * assumed that not all connections will require the max
 	 * possible.
 	 */
-#ifdef OLD_SERVER_MODEL
-	if (optRunOpenFileLimit.value <= server.connections * FD_PER_THREAD + FD_OVERHEAD) {
-		errno = EMFILE;
-		replyResourcesError(sess, FILE_LINENO);
-	}
-#else
 	serverNumbers(sess->session->server, numbers);
 	if (optRunOpenFileLimit.value <= numbers[1] * FD_PER_THREAD + FD_OVERHEAD) {
 		errno = EMFILE;
 		replyResourcesError(sess, FILE_LINENO);
 	}
-#endif
 
 	if ((sess->msg.headers = VectorCreate(25)) == NULL)
 		replyResourcesError(sess, FILE_LINENO);
@@ -960,11 +960,7 @@ sessionProcess(Session *sess)
 		syslog(
 			LOG_INFO, LOG_MSG(637) "start " CLIENT_FORMAT " f=\"%s\" th=%u cn=%u cs=%lu",
 			LOG_ARGS(sess), CLIENT_INFO(sess), clientFlags(sess),
-#ifdef OLD_SERVER_MODEL
-			server.threads, server.connections,
-#else
 			numbers[0], numbers[1],
-#endif
 			connections_per_second
 		);
 /*{LOG
@@ -995,7 +991,10 @@ the session "end" log line only.
 		goto error0;
 	}
 
-	(void) replySend(sess);
+	if ((code = replySend(sess)) != SMTPF_CONTINUE) {
+		if (verb_info.option.value)
+			syslog(LOG_ERR, LOG_MSG(1031) "banner error code=%d " CLIENT_FORMAT ": %s (%d)", LOG_ARGS(sess), code, CLIENT_INFO(sess), strerror(errno), errno);
+	}
 
 	/* Black listed clients get less priority. */
 	if (CLIENT_ANY_SET(sess, CLIENT_IS_BLACK))
@@ -1003,17 +1002,8 @@ the session "end" log line only.
 
 	if (SIGSETJMP(sess->on_error, 1) == 0) {
 		while (sess->state != stateQuit && sess->state != NULL) {
-#ifdef OLD_SERVER_MODEL
-#ifdef __WIN32__
-			if (WaitForSingleObject(sess->kill_event, 0) == WAIT_OBJECT_0)
-				break;
-#endif
-#endif
-#ifdef ENABLE_CRLF_CHECKING
 			sess->input_length = socketReadLine2(sess->client.socket, sess->input, sizeof (sess->input), 1);
-#else
-			sess->input_length = socketReadLine2(sess->client.socket, sess->input, sizeof (sess->input), 0);
-#endif
+
 			if (sess->input_length < 0) {
 				if (verb_info.option.value) {
 					syslog(LOG_ERR, LOG_MSG(639) "client " CLIENT_FORMAT " I/O error: %s (%d)", LOG_ARGS(sess), CLIENT_INFO(sess), strerror(errno), errno);
@@ -1069,7 +1059,7 @@ SMTP commands and their arguments can only consist of printable ASCII characters
 
 			/* First entry contains state table name. Skip it. */
 			for (s = &sess->state[1]; s->command != NULL; s++) {
-				if (0 <= TextInsensitiveStartsWith(sess->input, s->command))
+				if (0 < (n = TextInsensitiveStartsWith(sess->input, s->command)) && isspace(sess->input[n]))
 					break;
 			}
 

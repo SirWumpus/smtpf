@@ -462,6 +462,14 @@ instead of the MAIL FROM:<> (null sender). Some down stream mail stores
 reject MAIL FROM:<> or reject a sender at RCPT TO:
 </dd>
 
+<a name="opt_call_ahead_command_timeout"></a>
+<dt><span class="option">call-ahead-command-timeout</span>=<span class="value">45</span></dt>
+<dd>
+SMTP command timeout in seconds for call-aheads. This timeout must
+be less than the <a href="#opt_smtp_command_timeout">smtp-command-timeout</a>, if a call-ahead is to have
+any chance in completing before the SMTP client times out.
+</dd>
+
 <a name="opt_call_back"></a>
 <dt>-<span class="option">call-back</span></dt>
 <dd>
@@ -1780,6 +1788,11 @@ Subject tag to preprend for messages identified as suspect.
 When set, enable SMTP AUTH support when EHLO command is given.
 </dd>
 
+<a name="opt_smtp_auth_tls"></a>
+<dt>+<span class="option">smtp-auth-enable</span></dt>
+<dd>When set true, ESMTP AUTH clear text method are only available over TLS connection.
+</dd>
+
 <a name="opt_smtp_auth_white"></a>
 <dt>-<span class="option">smtp-auth-white</span></dt>
 <dd>
@@ -2171,6 +2184,36 @@ The absolute file path of a text file, containing white space
 separated list of two-level domains (without any leading dot),
 eg. co.uk ac.uk com.au gouv.fr tm.fr. This list will override
 the built-in list.
+</dd>
+
+<a name="opt_tls_cert_chain_file"></a>
+<dt><span class="option">tls-cert-chain-file</span>=<span class="value"></span></dt>
+<dd>The file path for a collection of CA root certificates as a PEM formatted chain file.
+</dd>
+
+<a name="opt_tls_cert_dir"></a>
+<dt><span class="option">tls-cert-dir</span>=<span class="value"></span></dt>
+<dd>The directory path for individual CA certificates in PEM format.
+</dd>
+
+<a name="opt_tls_server_cert"></a>
+<dt><span class="option">tls-server-cert</span>=<span class="value"></span></dt>
+<dd>The file path of the server's public certificate in PEM format.
+</dd>
+
+<a name="opt_tls_server_dh"></a>
+<dt><span class="option">tls-server-dh</span>=<span class="value"></span></dt>
+<dd>The path of an optional Diffie-Hellman parameter file in PEM format.
+</dd>
+
+<a name="opt_tls_server_key"></a>
+<dt><span class="option">tls-server-key</span>=<span class="value"></span></dt>
+<dd>The file path of the server's private key in PEM format.
+</dd>
+
+<a name="opt_tls_server_key_pass"></a>
+<dt><span class="option">tls-server-key-pass</span>=<span class="value"></span></dt>
+<dd>The server key password, if required; otherwise an empty string.
 </dd>
 
 <a name="opt_trap_dir"></a>

@@ -576,26 +576,29 @@ pdqListAllRcode(PDQ_rr *list, PDQ_class class, PDQ_type type, const char *name, 
 	int count, match;
 
 	for (count = match = 0; list != NULL; list = list->next) {
-		if (list->section != PDQ_SECTION_QUERY
-		|| ! (list->type == type
-		||  type == PDQ_TYPE_ANY
-		|| (type == PDQ_TYPE_5A && (list->type == PDQ_TYPE_A || list->type == PDQ_TYPE_AAAA))) )
+		if (list->section != PDQ_SECTION_QUERY)
+			continue;
+		if (class != PDQ_CLASS_ANY && list->class != class)
+			continue;
+		if (type != PDQ_TYPE_ANY && list->type != type)
+			continue;
+		if (type == PDQ_TYPE_5A && list->type != PDQ_TYPE_A && list->type != PDQ_TYPE_AAAA)
 			continue;
 
 		if (name != NULL && TextInsensitiveCompare(list->name.string.value, name) != 0)
 			continue;
 
-		if (class != PDQ_CLASS_ANY && list->class != class)
-			continue;
-
+		/* Count number of queries returned. */
 		count++;
 
 		if (rcode != PDQ_RCODE_ANY && ((PDQ_QUERY *)list)->rcode != rcode)
 			continue;
 
+		/* Count number of queries with expected rcode. */
 		match++;
 	}
 
+	/* Return true if all the queries returned the expected rcode. */
 	return count == match;
 }
 
@@ -632,13 +635,16 @@ supported.
 		return SMTPF_CONTINUE;
 
 	/* We can not reliably check for MX hosts when mail is from the
-	 * null sender and the HELO argument refers to localhost or LAN
-	 * IP addresses.
+	 * null sender and the HELO argument refers to an IP address.
 	 */
-	if (mail->address.length == 0 && isReservedIP(sess->client.helo, IS_IP_LOCAL|IS_IP_LAN))
-		return SMTPF_CONTINUE;
-
-	domain = 0 < mail->address.length ? mail->domain.string : sess->client.helo;
+	if (mail->address.length == 0) {
+		/*** Q: Should we use the PTR name when available? ***/
+		if (0 < spanIP(sess->client.helo))
+			return SMTPF_CONTINUE;
+		domain = sess->client.helo;
+	} else {
+		domain = mail->domain.string;
+	}
 
 	/* We need the MX records for mail-require-mx and client-is-mx tests. */
 	list = pdqGet(sess->pdq, PDQ_CLASS_IN, PDQ_TYPE_MX, domain, NULL);
@@ -720,19 +726,22 @@ have no A/AAAA record. This message is reported if the MX list is empty after pr
 }*/
 		}
 
-		/* Did any of the A/AAAA records have temporary DNS failures? */
-		else if (pdqListAllRcode(list, PDQ_CLASS_IN, PDQ_TYPE_5A, NULL, PDQ_RCODE_SERVER)) {
+		/* Did any of the MX / A / AAAA queries have DNS failures? */
+		else if (!pdqListAllRcode(list, PDQ_CLASS_IN, PDQ_TYPE_ANY, NULL, PDQ_RCODE_OK)) {
 			if (verb_warn.option.value) {
-				syslog(LOG_WARN, LOG_MSG(906) "MX list incomplete", LOG_ARGS(sess));
+				syslog(LOG_WARN, LOG_MSG(906) "MX list incomplete...", LOG_ARGS(sess));
+#ifdef OFF
+				pdqListLog(list);
+#endif
 /*{LOG
-The MX list gather from DNS had one or more A/AAAA records that returned a SERVFAIL result.
+The MX / A / AAAA records gather from DNS failed one or more queries.
 See <a href="summary.html#opt_mail_require_mx">mail-require-mx</a> option.
 }*/
 			}
 
 			rc = replyPushFmt(sess, SMTPF_DELAY|SMTPF_TEMPFAIL, "451 4.1.8 sender <%s> from %s MX lookup error" ID_MSG(907) CRLF, sess->msg.mail->address.string, domain, ID_ARG(sess));
 /*{REPLY
-The MX list gather from DNS had one or more A/AAAA records that returned a SERVFAIL result.
+The MX / A / AAAA records gather from DNS failed one or more queries.
 See <a href="summary.html#opt_mail_require_mx">mail-require-mx</a> option.
 }*/
 		}

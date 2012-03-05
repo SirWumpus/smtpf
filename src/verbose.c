@@ -35,7 +35,7 @@ Verbose verb_debug	= { { "debug",		"-", empty } };
 Verbose verb_db		= { { "db",		"-", empty } };
 Verbose verb_dns	= { { "dns",		"-", empty } };
 Verbose verb_kvm	= { { "kvm",		"-", empty } };
-Verbose verb_socket	= { { "socket-fd",	"-", empty } };
+Verbose verb_socket	= { { "socket",		"-", empty } };
 Verbose verb_subject	= { { "subject",	"-", empty } };
 #ifdef __linux__
 Verbose verb_valgrind	= { { "valgrind",	"-", empty } };
@@ -66,7 +66,7 @@ static const char verbose_usage[] =
 
 static char usage_verbose[1024];
 
-Option optVerbose = { "verbose", "warn,info,smtp-dot", (const char *) usage_verbose };
+Option optVerbose = { "verbose", "warn,info,smtp-dot,tls", (const char *) usage_verbose };
 
 /***********************************************************************
  ***
@@ -146,7 +146,6 @@ verboseReset(void)
 	smdbSetDebug(verb_db.option.value);
 	mccSetDebug(verb_cache.option.value);
 	socketSetDebug(verb_socket.option.value);
-	socket3_set_debug(verb_socket.option.value);
 #ifdef FILTER_SPF
 	spfSetDebug(verb_spf.option.value);
 #endif

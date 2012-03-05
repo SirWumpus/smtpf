@@ -43,7 +43,12 @@ DEFINES 	= -D_VERSION_STRING='"'${MAJOR}'.'${MINOR}'.'${BUILD}'"'
 MD5SUM		= @MD5SUM@
 AUTOCONF	= @AUTOCONF@
 
-LIB_RT		= @HAVE_LIB_RT@
+LIB_RT 		= @HAVE_LIB_RT@
+
+LIB_SEM 	= @HAVE_LIB_SEM@
+LIB_WS2_32	= @HAVE_LIB_WS2_32@
+LIB_IPHLPAPI	= @HAVE_LIB_IPHLPAPI@
+NETWORK_LIBS	= @NETWORK_LIBS@
 
 LIB_DB		= @HAVE_LIB_DB@
 CFLAGS_DB	= @CFLAGS_DB@
@@ -61,9 +66,14 @@ LIB_SQLITE3	= @HAVE_LIB_SQLITE3@
 CFLAGS_SQLITE3	= @CFLAGS_SQLITE3@
 LDFLAGS_SQLITE3	= @LDFLAGS_SQLITE3@
 
-LIBS		= ${LIBS_PREFIX} ${LIB_LUA} ${LIB_DB} ${LIB_SQLITE3} ${LIB_PTHREAD} @LIBS@
-CFLAGS		= ${CFLAGS_PREFIX} ${CFLAGS_SQLITE3} ${CFLAGS_LUA} ${CFLAGS_DB} ${CFLAGS_PTHREAD} @CFLAGS@
-LDFLAGS		= ${LDFLAGS_PREFIX} ${LDFLAGS_SQLITE3} ${LDFLAGS_LUA} ${LDFLAGS_DB} ${LDFLAGS_PTHREAD} @LDFLAGS@
+HAVE_LIBSSL	= @HAVE_LIBSSL@
+HAVE_LIBCRYPTO	= @HAVE_LIBCRYPTO@
+CFLAGS_SSL	= @CFLAGS_SSL@
+LDFLAGS_SSL	= @LDFLAGS_SSL@
+
+LIBS		= ${LIBS_PREFIX} ${LIB_LUA} ${LIB_DB} ${LIB_SQLITE3} ${NETWORK_LIBS} @LIBS@
+CFLAGS		= ${CFLAGS_PREFIX} ${CFLAGS_SQLITE3} ${CFLAGS_LUA} ${CFLAGS_DB} @CFLAGS@
+LDFLAGS		= ${LDFLAGS_PREFIX} ${LDFLAGS_SQLITE3} ${LDFLAGS_LUA} ${LDFLAGS_DB} @LDFLAGS@
 
 ########################################################################
 ### No further configuration beyond this point.
@@ -117,12 +127,12 @@ title :
 MODULE_H = access.h attachment.h avastd.h clamd.h cli.h click.h concurrent.h \
 	ctasd.h digest.h dupmsg.h emew.h freemail.h four21.h fpscand.h grey.h \
 	ixhash.h lua.h misc.h msglimit.h null.h pad.h p0f.h rate.h rbl.h sav.h \
-	save.h savdid.h siq.h size.h spamd2.h spf.h timelimit.h uribl.h
+	save.h savdid.h siq.h size.h spamd2.h spf.h timelimit.h tls.h uribl.h
 
 MODULE_O = access$O attachment$O avastd$O clamd$O cli$O click$O concurrent$O \
 	ctasd$O digest$O dupmsg$O emew$O freemail$O four21$O fpscand$O grey$O \
 	ixhash$O lua$O misc$O msglimit$O null$O pad$O p0f$O rate$O rbl$O sav$O \
-	save$O savdid$O siq$O size$O spamd2$O spf$O timelimit$O uribl$O
+	save$O savdid$O siq$O size$O spamd2$O spf$O timelimit$O tls$O uribl$O
 
 CORE = built$O server$O smtpf$O cache$O cmd$O dsn$O filter$O latency$O mx$O options$O \
        route$O reply$O stats$O summary$O verbose$O
@@ -300,6 +310,9 @@ spf$O : config.h ${TARNAME}.h spf.c
 
 timelimit$O : config.h ${TARNAME}.h timelimit.c
 	${CC} ${CFLAGS} -c timelimit.c
+
+tls$O : config.h ${TARNAME}.h tls.c
+	${CC} ${CFLAGS} -c tls.c
 
 stats$O : config.h ${TARNAME}.h stats.c
 	${CC} ${CFLAGS} -c stats.c

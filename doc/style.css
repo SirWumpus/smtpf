@@ -133,6 +133,7 @@ TD.value, DT.value {
 	border-collapse: collapse;
 	border-bottom: 1px solid;
 	border-color: #999999;
+	padding: 4px 0px 4px 0px;
 }
 .lline {
 	border-collapse: collapse;
@@ -153,6 +154,7 @@ TD.value, DT.value {
 	border-collapse: collapse;
 	border-bottom: 1px dotted;
 	border-color: #cccccc;
+	padding: 4px 0px 4px 0px;
 }
 .ldotted {
 	border-collapse: collapse;
