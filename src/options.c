@@ -316,6 +316,15 @@ static const char usage_smtp_keep_alive_timeout[] =
 Option optSmtpKeepAliveTimeout	= { "smtp-keep-alive-timeout",	"60",		usage_smtp_keep_alive_timeout };
 
 Option optSmtpEnableEsmtp	= { "smtp-enable-esmtp",	"+",		usage_smtp_enable_esmtp };
+
+static const char usage_smtp_helo_schizo[] =
+  "When enable perform EHLO/HELO schizophrenic test. Repeated SMTP\n"
+"# EHLO or HELO commands must use the same argument, otherwise the\n"
+"# command is rejected and connection dropped.\n"
+"#"
+;
+Option optSmtpHeloSchizo	= { "smtp-helo-schizo",		"+",		usage_smtp_helo_schizo };
+
 Option optSmtpRejectFile	= { "smtp-reject-file",		"",		usage_smtp_reject_file };
 Option optSmtpServerQueue	= { "smtp-server-queue",	"20",		usage_smtp_server_queue };
 Option optSmtpSlowReply		= { "smtp-slow-reply",		"-",		usage_smtp_slow_reply };
@@ -540,6 +549,7 @@ optionsRegister0(Session *sess, va_list ignore)
 	optionsRegister(&optSmtpDropUnknown, 		0);
 	optionsRegister(&optSmtpDsnReplyTo, 		0);
 	optionsRegister(&optSmtpEnableEsmtp,		0);
+	optionsRegister(&optSmtpHeloSchizo,		0);
 	optionsRegister(&optSmtpKeepAliveTimeout,	0);
 	optionsRegister(&optRFC16528bitmime,		0);
 	optionsRegister(&optRFC2920Pipelining,		0);

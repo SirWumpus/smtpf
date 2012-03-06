@@ -95,6 +95,7 @@ extern Option optSmtpDropDot;
 extern Option optSmtpDropUnknown;
 extern Option optSmtpDsnReplyTo;
 extern Option optSmtpEnableEsmtp;
+extern Option optSmtpHeloSchizo;
 extern Option optRFC2920Pipelining;
 extern Option optSmtpRejectFile;
 extern Option optSmtpReportHeader;

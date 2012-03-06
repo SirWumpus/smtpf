@@ -233,7 +233,9 @@ cmdEhlo(Session *sess)
 		return rc;
 	}
 
-	if (*sess->client.helo != '\0' && TextInsensitiveCompare(sess->client.helo, sess->input + sizeof ("EHLO ")-1) != 0) {
+	if (optSmtpHeloSchizo.value
+	&& *sess->client.helo != '\0'
+	&& TextInsensitiveCompare(sess->client.helo, sess->input + sizeof ("EHLO ")-1) != 0) {
 		statsCount(&stat_helo_schizophrenic);
 		CLIENT_SET(sess, CLIENT_IS_SCHIZO);
 		return replySetFmt(sess, SMTPF_DROP, "550 5.7.1 client " CLIENT_FORMAT " is schizophrenic" ID_MSG(252) "\r\n", CLIENT_INFO(sess), ID_ARG(sess));
@@ -326,7 +328,9 @@ cmdHelo(Session *sess)
 
 	CLIENT_CLEAR(sess, CLIENT_IS_EHLO_NO_HELO);
 
-	if (*sess->client.helo != '\0' && TextInsensitiveCompare(sess->client.helo, sess->input + sizeof ("HELO ")-1) != 0) {
+	if (optSmtpHeloSchizo.value
+	&& *sess->client.helo != '\0'
+	&& TextInsensitiveCompare(sess->client.helo, sess->input + sizeof ("HELO ")-1) != 0) {
 		statsCount(&stat_helo_schizophrenic);
 		CLIENT_SET(sess, CLIENT_IS_SCHIZO);
 		return replySetFmt(sess, SMTPF_DROP, "550 5.7.1 client " CLIENT_FORMAT " is schizophrenic" ID_MSG(255) "\r\n", CLIENT_INFO(sess), ID_ARG(sess));
