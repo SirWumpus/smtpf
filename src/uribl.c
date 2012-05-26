@@ -156,8 +156,8 @@ static const char usage_mail_bl_max[] =
 Option optMailBlMax		= { "mail-bl-max",	"10",			usage_mail_bl_max };
 
 static const char usage_mail_bl_policy[] =
-  "If the message contains a black listed mail address found by mail-bl\n"
-"# the apply one of the following policies: none, reject, or discard.\n"
+  "If the message contains a black listed mail address found by mail-bl,\n"
+"# then apply one of the following policies: none, reject, or discard.\n"
 "#"
 ;
 Option optMailBlPolicy		= { "mail-bl-policy",	"reject",		usage_mail_bl_policy };

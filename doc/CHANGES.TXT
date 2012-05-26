@@ -281,6 +281,15 @@ is no set schedule for releases.
 	message isn't trapped. Steve F.
 
 
+--2.5.6--
+
+   +	Added msg-limit-report, report-to options. Requested by Nick Stefan.
+
+   !	Fix old bug where some modules having *Optn functions were not
+	initialised properly at startup; specifically those options that
+	convert their option string into a special value. See
+	filter_optn_table.
+
 --2.5.5--
 
    +	Add +smtp-helo-schizo option.

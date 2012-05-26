@@ -23,6 +23,7 @@ extern Option optMsgLimitTags;
 extern Stats stat_message_limit;
 
 extern int msgLimitRegister(Session *sess, va_list ignore);
+extern int msgLimitOptn(Session *null, va_list ignore);
 extern int msgLimitInit(Session *null, va_list ignore);
 extern int msgLimitFini(Session *null, va_list ignore);
 extern int msgLimitConnect(Session *sess, va_list ignore);

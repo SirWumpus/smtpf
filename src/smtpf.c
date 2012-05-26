@@ -89,6 +89,90 @@ rcptFindFirstValid(Session *sess)
 	return NULL;
 }
 
+int
+send_report_v(Session *sess, const char *subject, const char *fmt, va_list args)
+{
+	SMTP2 *smtp;
+	Vector hosts, rcpts;
+	int rc = -1, postmaster_at, flags;
+	char **table, buffer[SMTP_PATH_LENGTH];
+
+	if ((hosts = routeGetLocalHosts()) == NULL)
+		goto error0;
+
+	/* Try to connect to one of the local routes. */
+	smtp = NULL;
+	flags = SMTP_FLAG_LOG | (verb_smtp.option.value ? SMTP_FLAG_DEBUG : 0);
+	for (table = (char **) VectorBase(hosts); *table != NULL; table++) {
+		if ((smtp = smtp2Open(*table, optSmtpConnectTimeout.value, optSmtpCommandTimeout.value, flags)) != NULL)
+			break;
+	}
+
+	if (smtp == NULL || smtp2Mail(smtp, "") != SMTP_OK)
+		goto error1;
+
+	rcpts = TextSplit(opt_report_to.string, OPTION_LIST_DELIMS, 0);
+	if (rcpts == NULL || VectorLength(rcpts) == 0)
+		goto error2;
+
+	postmaster_at = 0;
+	for (table = (char **) VectorBase(rcpts); *table != NULL; table++) {
+		char *rcpt = *table;
+
+		/* Report to sender's postmaster? */
+		if (strcmp(*table, "postmaster@") == 0) {
+			int length;
+
+			if (postmaster_at || sess->msg.mail == NULL)
+				continue;
+			postmaster_at = 1;
+
+			length = snprintf(
+				buffer, sizeof (buffer), "%s%s",
+				*table, sess->msg.mail->domain.string
+			);
+			if (sizeof (buffer) <= length)
+				continue;
+
+			rcpt = buffer;
+		}
+
+		if (smtp2Rcpt(smtp, rcpt) != SMTP_OK)
+			goto error3;
+	}
+
+	TimeStamp(&smtp->start, buffer, sizeof (buffer));
+	(void) smtp2Printf(smtp, "Date: %s" CRLF, buffer);
+	(void) smtp2Printf(smtp, "From: \"%s\" <>" CRLF, _NAME);
+	(void) smtp2Printf(smtp, "Message-ID: <%s@[%s]>" CRLF, smtp->id_string, smtp->local_ip);
+	(void) smtp2Printf(smtp, "Subject: %s" CRLF, subject);
+	(void) smtp2Print(smtp, CRLF, CRLF_LENGTH);
+
+	(void) smtp2PrintfV(smtp, fmt, args);
+	rc = smtp2Dot(smtp) == SMTP_OK;
+error3:
+	VectorDestroy(rcpts);
+error2:
+	smtp2Close(smtp);
+error1:
+	VectorDestroy(hosts);
+error0:
+	return rc;
+}
+
+int
+send_report(Session *sess, const char *subj, const char *fmt, ...)
+{
+	int rc;
+	va_list args;
+
+	va_start(args, fmt);
+	rc = send_report_v(sess, subj, fmt, args);
+	va_end(args);
+
+	return rc;
+}
+
 /***********************************************************************
  *** Header Functions
  ***********************************************************************/

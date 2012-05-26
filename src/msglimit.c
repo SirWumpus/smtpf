@@ -54,6 +54,14 @@ static const char usage_msg_limit_tags[] =
 
 Option optMsgLimitTags 		= { "", NULL, usage_msg_limit_tags };
 
+static const char usage_msg_limit_report[] =
+  "If a message limit is exceeded, apply one of: tempfail, tempfail-report,\n"
+"# report-only, or report-discard. Reports are sent to all the report-to\n"
+"# addresses.\n"
+"#"
+;
+Option opt_msg_limit_report 	= { "msg-limit-report", "tempfail", usage_msg_limit_report };
+
 Stats stat_message_limit	= { STATS_TABLE_MSG, "message-limit" };
 
 typedef struct {
@@ -100,10 +108,28 @@ int
 msgLimitRegister(Session *sess, va_list ignore)
 {
 	optionsRegister(&optMsgLimitTags, 		0);
+	optionsRegister(&opt_msg_limit_report,		0);
 
 	(void) statsRegister(&stat_message_limit);
 
 	msglimit_context = filterRegisterContext(sizeof (MsgLimitContext));
+
+	return SMTPF_CONTINUE;
+}
+
+int
+msgLimitOptn(Session *null, va_list ignore)
+{
+	if (TextInsensitiveCompare(opt_msg_limit_report.string, "report-discard") == 0)
+		opt_msg_limit_report.value = 4;
+	else if (TextInsensitiveCompare(opt_msg_limit_report.string, "report-only") == 0)
+		opt_msg_limit_report.value = 3;
+	else if (TextInsensitiveCompare(opt_msg_limit_report.string, "tempfail-report") == 0)
+		opt_msg_limit_report.value = 2;
+	else if (TextInsensitiveCompare(opt_msg_limit_report.string, "tempfail") == 0)
+		opt_msg_limit_report.value = 1;
+	else
+		opt_msg_limit_report.value = 0;
 
 	return SMTPF_CONTINUE;
 }
@@ -232,6 +258,21 @@ msgLimitReply(Session *sess, MsgLimit *limit, const char *who)
 		}
 
 		statsCount(&stat_message_limit);
+
+		if (2 <= opt_msg_limit_report.value) {
+			(void) send_report(
+				sess, "message limit exceeded",
+				"%s has exceeded %ld message%s per %ld %s%s" CRLF,
+				who, limit->messages, limit->messages == 1 ? "" : "s",
+				units, word, units == 1 ? "" : "s"
+			);
+		}
+
+		if (opt_msg_limit_report.value == 3)
+			return SMTPF_CONTINUE;
+		if (opt_msg_limit_report.value == 4)
+			return SMTPF_DISCARD;
+
 		return replyPushFmt(sess, SMTPF_TEMPFAIL, "451 4.7.1 %s has exceeded %ld message%s per %ld %s%s" ID_MSG(475) "\r\n",
 			who, limit->messages, limit->messages == 1 ? "" : "s",
 			units, word, units == 1 ? "" : "s", ID_ARG(sess)

@@ -184,6 +184,8 @@ serverOptions(int argc, char **argv)
 #endif
 	if (optTestLickey.value)
 		optDaemon.value = 0;
+
+	(void) filterRun(NULL, filter_optn_table, NULL);
 }
 
 int

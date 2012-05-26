@@ -855,6 +855,7 @@ static char host_ip[IPV6_STRING_LENGTH];
 static char host_name[DOMAIN_STRING_LENGTH];
 
 #if ! defined(__MINGW32__)
+#undef syslog
 void
 syslog(int level, const char *fmt, ...)
 {

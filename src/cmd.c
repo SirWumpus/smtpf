@@ -2218,11 +2218,11 @@ cmdHelp(Session *sess)
 
 	return REPLY_PUSH_CONST(
 		sess, SMTPF_CONTINUE,
-		"214-2.0.0 ESMTP RFC 1985, 2821, 4954 supported commands:\r\n"
+		"214-2.0.0 ESMTP RFC 1985, 3207, 4954, 5321 supported commands:\r\n"
 		"214-2.0.0     AUTH    DATA    EHLO    ETRN    HELO    HELP\r\n"
 		"214-2.0.0     NOOP    MAIL    RCPT    RSET    QUIT    STARTTLS\r\n"
 		"214-2.0.0\r\n"
-		"214-2.0.0 ESMTP RFC 2821 not implemented:\r\n"
+		"214-2.0.0 ESMTP RFC 2821, 5321 not implemented:\r\n"
 		"214-2.0.0     EXPN    TURN    VRFY\r\n"
 		"214-2.0.0\r\n"
 		"214-2.0.0 Administration commands:\r\n"

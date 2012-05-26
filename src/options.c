@@ -284,6 +284,15 @@ static const char usage_slow_quit[] =
 Option optSlowQuit		= { "slow-quit",		NULL,		usage_slow_quit };
 #endif
 
+static const char usage_report_to[] =
+  "A list of mail addresses that should receive error reports. Specify\n"
+"# \"postmaster\" for the local administrator, \"postmaster@\" for the\n"
+"# postmaster of the sender's domain, and/or mail addresses of any\n"
+"# other mail administrators. Specify the empty string to skip reports.\n"
+"#"
+;
+Option opt_report_to		= { "report-to",		"postmaster",	usage_report_to };
+
 Option optRestart		= { "restart", 			NULL,		"Terminate an already running instance before starting." };
 Option optRestartIf		= { "restart-if", 		NULL,		"Only restart when there is a previous instance running." };
 Option optRelayReply		= { "relay-reply",		"-",		USAGE_RELAY_REPLY };
@@ -511,6 +520,7 @@ optionsRegister0(Session *sess, va_list ignore)
 	optionsRegister(&optRejectUnknownTLD, 		0);
 	optionsRegister(&optRejectUucpRoute, 		0);
 	optionsRegister(&optRelayReply, 		0);
+	optionsRegister(&opt_report_to,			0);
 	optionsRegister(&optRFC2606SpecialDomains, 	0);
 	optionsRegister(&optRFC2821AngleBrackets,	0);
 	optionsRegister(&optRFC2821CommandLength,	0);

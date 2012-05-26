@@ -413,6 +413,9 @@ FilterHandler filter_optn_table	[] = {
 #ifdef FILTER_CLI
 	FILTER_HANDLER(cliOptn),
 #endif
+#ifdef FILTER_MSG_LIMIT
+	FILTER_HANDLER(msgLimitOptn),
+#endif
 #if defined(FILTER_P0F) && defined(HAVE_P0F_QUERY_H)
 	FILTER_HANDLER(p0fOptn),
 #endif

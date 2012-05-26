@@ -571,6 +571,9 @@ extern int cmdReject(Session *sess);
 extern int getReceivedHeader(Session *sess, char *buffer, size_t size);
 extern void sendDSN(Session *sess, Connection *fwd);
 
+extern int send_report(Session *sess, const char *subj, const char  *fmt, ...);
+extern int send_report_v(Session *sess, const char *subj, const char  *fmt, va_list args);
+
 extern int mxPrint(Session *sess, Connection *relay, const char *line, size_t length);
 extern int mxResponse(Session *sess, Connection *relay);
 extern int mxCommand(Session *sess, Connection *relay, const char *line, int expect);

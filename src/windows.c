@@ -240,6 +240,8 @@ serverOptions(int argc, char **argv)
 
 	if (optTestLickey.value)
 		optDaemon.value = 0;
+
+	(void) filterRun(NULL, filter_optn_table, NULL);
 }
 
 #ifdef ENABLE_CONSOLE

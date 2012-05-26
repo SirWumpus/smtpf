@@ -55,6 +55,7 @@ extern Option optRejectQuotedAtSign;
 extern Option optRejectUnknownTLD;
 extern Option optRejectUucpRoute;
 extern Option optRelayReply;
+extern Option opt_report_to;
 extern Option optRestart;
 extern Option optRestartIf;
 extern Option optRFC16528bitmime;
