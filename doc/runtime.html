@@ -1,0 +1,470 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN">
+<!-- $OpenBSD$ -->
+<html>
+<head>
+<title>
+SnertSoft - smtpf/2.5
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+<meta name="keywords" content="SMTP Filter Proxy, call back, call ahead, grey listing, greylisting, RET, Return Encrypted Tag" />
+<meta name="description" content="smtpf sits in front of one or more mail transfer agents (MTA) on SMTP port 25. It acts as a proxy, filtering and forwarding mail to one or more MTAs, which can be on the same machine or different machines." />
+<link rel="stylesheet" type="text/css" href="./style.css" />
+<script language="JavaScript" type="text/javascript" src="./mailto.js"></script>
+</head>
+
+<body>
+<div align="center">
+<table class="page" cellpadding="0" cellspacing="0" border="0">
+<tr><td>
+
+<a href="http://www.snertsoft.com/">
+<img alt="SnertSoft: We Serve Your Server" src="Img/logo-300x74.png" width="300" height="74" border="0" /></a>
+
+<div align="center">
+<h1 class="title">Barricade MX</h1>
+<h2>
+smtpf/2.5
+<br/><span class="large">&laquo;An SMTP Filtering Proxy&raquo;</span>
+</h2>
+</div>
+
+
+<div class="contents">
+<ol type="A" class="toc">
+<li><a href="manual.shtml">Introduction</a></li>
+<li><a href="license.html">License &amp; Support</a></li>
+<li><a href="install.html">Installation</a></li>
+<li>Configuration</li>
+	<ol type="a">
+	<li><a href="route-map.html">The Route Map</a></li>
+		<ul>
+		<li><a href="route-map.html#route_local_mta">Local MTA</a></li>
+		<li><a href="route-map.html#route_local_route_queue">Local Route</a></li>
+		<li><a href="route-map.html#route_relay">FORWARD &amp; RELAY</a></li>
+			<ul>
+			<li><a href="route-map.html#route_by_domain">by domain</a></li>
+			<li><a href="route-map.html#route_by_mail_address">by mail</a></li>
+			</ul>
+		<li><a href="route-map.html#route_call_ahead">Call-Ahead</a></li>
+			<ul>
+			<li><a href="route-map.html#route_dumb_mx">Accept-Then-Bounce</a></li>
+			</ul>
+		<li><a href="route-map.html#route_auth_support">AUTH Support</a></li>
+		<li><a href="route-map.html#route_etrn_support">ETRN Support</a></li>
+		</ul>
+	<li><a href="access-map.html">The Access Map</a></li>
+		<ul>
+		<li><a href="access-map.html#access_lookups">Lookup Sequences</a></li>
+		<li><a href="access-map.html#access_tags">Tags</a></li>
+		<li><a href="access-map.html#access_about_delay_checks">About Delay Checks</a></li>
+		<li><a href="access-map.html#access_simple_value">Right Hand Side Values</a></li>
+		<li><a href="access-map.html#access_action_words">Action Words</a></li>
+		<li><a href="access-map.html#access_pattern_lists">Pattern Lists</a></li>
+		<li><a href="access-map.html#access_simple_pattern">!Simple Patterns!</a></li>
+		<li><a href="access-map.html#access_regex_pattern">/Regular Expression Patterns/</a></li>
+		</ul>
+
+	<li><a href="smtpf-cf.html">The smtpf.cf File</a></li>
+		<ul>
+		<li><a href="smtpf-cf.html#smtpf_avastd">Avast! AV Support</a></li>
+		<li><a href="smtpf-cf.html#smtpf_cache">Cache Options</a></li>
+		<li><a href="smtpf-cf.html#smtpf_call_back">Call-Backs</a></li>
+		<li><a href="smtpf-cf.html#smtpf_clamd">Clam AV Support</a></li>
+		<li><a href="smtpf-cf.html#smtpf_cli">Command-Line Interface</a></li>
+		<li><a href="smtpf-cf.html#smtpf_client_is_mx">Client IP Address</a></li>
+		<li><a href="smtpf-cf.html#smtpf_concurrent">Concurrency &amp; Rate</a></li>
+		<li><a href="smtpf-cf.html#smtpf_dns_bl">DNS Based Lists</a></li>
+		<li><a href="smtpf-cf.html#smtpf_delay_checks">Delay Checks</a></li>
+		<li><a href="smtpf-cf.html#smtpf_emew">EMEW</a></li>
+		<li><a href="smtpf-cf.html#smtpf_fpscand">F-Prot AV Support</a></li>
+		<li><a href="smtpf-cf.html#smtpf_grey_list">Grey Listing</a></li>
+		<li><a href="smtpf-cf.html#smtpf_grey_content">Grey Content</a></li>
+		<li><a href="smtpf-cf.html#smtpf_helo">SMTP HELO Testing</a></li>
+		<li><a href="smtpf-cf.html#smtpf_interface">Network Interface</a></li>
+		<li><a href="smtpf-cf.html#smtpf_length_limit">Length &amp; Limits</a></li>
+		<li><a href="smtpf-cf.html#smtpf_rfc">RFC Conformance</a></li>
+		<li><a href="smtpf-cf.html#smtpf_run">Run Settings</a></li>
+		<li><a href="smtpf-cf.html#smtpf_server">Server Performance</a></li>
+		<li><a href="smtpf-cf.html#smtpf_siq">SIQ Support</a></li>
+		<li><a href="smtpf-cf.html#smtpf_smtp">SMTP Options</a></li>
+		<li><a href="smtpf-cf.html#smtpf_savdid">Sophos AV Support</a></li>
+		<li><a href="smtpf-cf.html#smtpf_spamd">SpamAssassin Support</a></li>
+		<li><a href="smtpf-cf.html#smtpf_spf">SPF Support</a></li>
+		<li><a href="smtpf-cf.html#smtpf_stats">Statistics</a></li>
+		<li><a href="smtpf-cf.html#smtpf_uri">URI Blacklists</a></li>
+		<li><a href="smtpf-cf.html#smtpf_verbose">Verbose Logging</a></li>
+		</ul>
+	<li><a href="summary.html">Option Summary</a></li>
+	</ol>
+<li>Runtime</li>
+	<ol type="a">
+	<li><a href="runtime.html#command_options">Command Line Options</a></li>
+	<li><a href="runtime.html#runtime_config">Runtime Configuration</a></li>
+	<li><a href="runtime.html#cache_file">The Cache File</a></li>
+		<ul>
+		<li><a href="runtime.html#cache_structure">The Cache Structure</a></li>
+		</ul>
+	<li><a href="runtime.html#stats_file">The Stats File</a></li>
+		<ul>
+		<li><a href="runtime.html#stats_structure">The Stats Structure</a></li>
+		</ul>
+	<li><a href="syslog.html">Log Messages</a></li>
+	<li><a href="reply.html">SMTP Replies</a></li>
+	</ol>
+<li><a class="glossary" href="glossary.html">Glossary</a></li>
+</ol>
+</div>
+
+<a name="command_options"></a>
+<h3>smtpf Command Options</h3>
+
+<dl>
+<dt class="normal">To review the smtpf <a href="summary.html#opt_help">option summary</a>:</dt>
+<dd>
+<blockquote><pre>
+$ smtpf -help
+</pre></blockquote>
+</dd>
+<dt class="normal">To start smtpf:</dt>
+<dd>
+<blockquote><pre>
+# smtpf
+</pre></blockquote>
+</dd>
+<dt class="normal">To <a href="summary.html#opt_quit">stop</a> smtpf:</dt>
+<dd>
+<blockquote><pre>
+# smtpf -quit
+</pre></blockquote>
+</dd>
+<dt class="normal">To <a href="summary.html#opt_restart">restart</a> smtpf:</dt>
+<dd>
+<blockquote><pre>
+# smtpf -restart
+</pre></blockquote>
+</dd>
+
+<dt class="normal">To <a href="summary.html#opt_restart">restart</a> smtpf using a different configuration <a href="summary.html#opt_file">file</a>:</dt>
+<dd>
+<blockquote><pre>
+# smtpf -restart \
+  file=/path/to/alt/smtpf.cf
+</pre></blockquote>
+<p>
+The <a href="summary.html#opt_file">file</a> option when it appears in the
+smtpf.cf does nothing other than document which smtpf.cf
+was read. It's possible to specify one or more options on the command line
+in order to override what appears in smtpf.cf or the hard coded default.
+</p>
+</dd>
+
+<dt class="normal">To <a href="summary.html#opt_restart_if">restart</a> smtpf only if it is currently running:</dt>
+<dd>
+<blockquote><pre>
+# smtpf -restart-if
+</pre></blockquote>
+</dd>
+
+</dl>
+
+<p>
+The command options shown above can be prefixed by either a plus (<code>+</code>) or minus (<code>-</code>) sign
+and both behave the same.
+</p>
+
+
+<a name="runtime_config"></a>
+<h3>Runtime Configuration</h3>
+
+<p>
+Typically if you change the contents of smtpf.cf, you must restart
+smtpf in order for those options to take affect.
+</p>
+
+<blockquote><pre>
+# smtpf +restart
+</pre></blockquote>
+
+<p>
+However many of the smtpf options can be configured during runtime
+by telneting to localhost port 25 and issuing smtpf commands.
+</p>
+
+<blockquote><pre>
+$ telnet 127.0.0.1 25
+</pre></blockquote>
+
+<p>
+For security reasons, these commands only work when the connection comes from localhost.
+They are:
+</p>
+
+<dl>
+<dt><code>CACHE GET</code>key</dt>
+<dt><code>CACHE PUT</code>key value</dt>
+<dt><code>CACHE DELETE</code>key</dt>
+<dd>
+Cache manipulation commands.
+</dd>
+
+<dt><code>CONN</code></dt>
+<dd>
+The <code>CONN</code> command will display a list of all the currently
+active connections showing the session ID, SMTP state, client name and IP,
+session age in seconds, input idle time in seconds, and total number of
+octets sent in messages.
+</dd>
+
+<dt><code>KILL</code> session-id</dt>
+<dd>
+The <code>KILL</code> command will terminate the SMTP client session matching
+the given session-ID. Currently not available for Windows.
+</dd>
+
+<dt><code>OPTN</code></dt>
+<dt><code>OPTN</code> &plusmn;option-name</dt>
+<dt><code>OPTN</code> option-name=value</dt>
+<dd>
+The <code>OPTN</code> command without any argument, will display all the current option settings,
+one per line. If an argument is specified, it is the same as would be specified in the
+smtpf.cf file. Some options cannot be changed at runtime, if they influence
+how smtpf starts up.
+</dd>
+
+<dt><code>STAT</code></dt>
+<dd>
+The <code>STAT</code> command will display the current runtime statistics
+since the last restart, current hour, and last 60 rolling window.
+Each line reflects either a test or checkpoint. The statistics are
+intentionally <i>not</i> documented as they are intended for diagnostics
+and subject to change.
+</dd>
+
+<dt><code>VERB</code></dt>
+<dt><code>VERB</code> &plusmn;verbose-flag ...</dt>
+<dd>
+The <code>VERB</code> command without any argument, will display the current verbose
+logging flags. Sometimes it's useful to turn on and off certain verbose logging flags
+in order to diagnose a problem. For example:
+
+<blockquote><pre>
+VERB +smtp -uri
+</pre></blockquote>
+</dd>
+</dl>
+
+<a name="cache_file"></a>
+<h3>The Cache File</h3>
+
+<p>
+The cache file is an SQLite3 database and can be manipulated using the supplied
+programs <code>sqlite3t</code> (our version build with thread support enabled) and <code>mcc</code>.
+
+Manipulating the cache is particular useful when there are records that may be
+preventing one or more messages to pass. This can occur for example if you
+suddenly white list a sender in the <a href="summary.html#opt_access_map">access-map</a>,
+but mail from that sender is still being blocked,
+because of a cache entry that has not yet expired.
+</p>
+
+<blockquote><pre>
+# sqlite3t /var/db/smtpf/cache.sq3
+</pre></blockquote>
+
+<p>
+Using <code>sqlite3t</code> it is possible to add, remove, or modify cache entries
+using standard SQL commands. How to use <code>sqlite3t</code> and SQL in general
+is beyond the scope of this document and not covered here.
+</p>
+
+<p>
+The <code>mcc</code> provides a simplified means of manipulating the cache
+locally and across machines that listen to multicast or unicast cache broadcasts.
+The short usage summary is displayed with:
+</p>
+
+<blockquote><pre>
+# mcc
+</pre></blockquote>
+
+<p>
+The <code>mcc</code> command reads commands from standard input and writes
+informational messages to standard output. The are four commands: GET, PUT, DELETE
+and QUIT. The GET command reads from the local cache, while the PUT and DELETE
+will update the local cache and broadcast to the multicast group or unicast host
+list. The values for <code>mcc</code> options
+<code>-m</code>, <code>-M</code>, <code>-d</code>, <code>-U</code>, and <code>-s</code> should
+correspond with those specified in smtpf.cf for:
+
+<a href="summary.html#opt_cache_multicast_ip">cache-multicast-ip</a>,
+<a href="summary.html#opt_cache_multicast_port">cache-multicast-port</a>,
+<a href="summary.html#opt_cache_unicast_domain">cache-unicast-domain</a>,
+<a href="summary.html#opt_cache_unicast_port">cache-unicast-port</a>,
+and <a href="summary.html#opt_cache_secret">cache-secret</a>.
+</p>
+
+<blockquote><pre>
+# mcc -m 232.1.2.3:6920 -s your-secret-here /var/db/smtpf/cache.sq3
+</pre></blockquote>
+
+<a name="cache_structure"></a>
+<p>
+The cache's SQL data was designed to fit within the 512 octets of a UDP datagram
+and is defined in SQL as follows (note this is different from the UDP datagram structure
+which is <em>not</em> specified here):
+</p>
+
+<blockquote><pre>
+CREATE TABLE mcc (
+    k VARCHAR(383) PRIMARY KEY,	-- the tagged key
+    d VARCHAR(92),		-- data value
+    h INTEGER DEFAULT 1,	-- hit counter
+    c INTEGER,			-- create timestamp
+    t INTEGER,			-- last touched timestamp
+    e INTEGER			-- expires timestamp, indexed
+);
+</pre></blockquote>
+
+<p>
+Note that the above structure may change without notice.
+When using the <code>sqlite3t</code> command, all columns
+are accessible, while with the <code>mcc</code> PUT command
+only the <code>k</code> and <code>d</code> can be altered
+since the client/server portions of the <code>mcc</code> protocol
+manage the others columns.
+</p>
+
+<p>
+The format of the cache <code>k</code> and <code>d</code> columns
+varies depending on the test. The following is
+a brief summary of the possible formats used for both <code>k</code> and <code>d</code>
+columns in the event they need to be modified manually.
+Note that this information may change without notice.
+</p>
+
+<blockquote>
+<table border="0" cellspacing="0" cellpadding="2" width="100%">
+<tr valign="top">
+	<td class="key tline" width="41%"><span class="tag">click:</span>ip,ptr,mail</td>
+	<td class="tline">ASCII 2 = accept.
+Either ip or ptr is present, never both; similar to the definition
+of the ptr element used in <a href="summary.html#opt_grey_key">grey-key</a>.
+	</td>
+<tr valign="top">
+	<td class="key"><span class="tag">dumb:</span>host</td>
+	<td class="">ASCII 2 = accept, 5 = reject</td>
+</tr>
+<tr valign="top">
+	<td class="key" width="41%"><span class="tag">grey:</span>ip,ptr,helo,mail,rcpt</td>
+	<td class="">ASCII 0 = continue, 4 = temp. fail; optionally followed
+	by a space and two hexdecimal MD5 hashes when using <a href="summary.html#opt_grey_content">+grey-content</a>.
+The key field order remains constant, fields present according to <a href="summary.html#opt_grey_key">grey-key</a>;
+be sure to review how the ip and ptr fields are used.
+	</td>
+</tr>
+<tr valign="top"><td class="key"><span class="tag">msg-limit:</span>client-ip</td><td class="">ASCII integer counter of messages sent</td></tr>
+<tr valign="top"><td class="key"><span class="tag">msg-limit:</span>sender</td><td class="">ASCII integer counter of messages sent</td></tr>
+<tr valign="top"><td class="key"><span class="tag">msg-limit:</span>recipient</td><td class="">ASCII integer counter of messages sent</td></tr>
+<tr valign="top"><td class="key"><span class="tag">rcpt:</span>recipient</td><td class="">ASCII 2 = accept, 5 = reject</td></tr>
+<tr valign="top"><td class="key"><span class="tag">sav:</span>sender-domain</td><td class="">ASCII 2 = accept, 5 = reject</td></tr>
+<tr valign="top"><td class="key"><span class="tag">sav:</span>sender</td><td class="">ASCII 2 = accept, 4 = temp.fail, 5 = reject</td></tr>
+<tr valign="top"><td class="key bline"><span class="tag">siq:</span>client-ip,sender-domain</td><td class="bline">mixed binary &amp; ASCII content</td></tr>
+</table>
+</blockquote>
+
+<br/>
+
+
+<!--
+
+Consider
+
+    document the purpose of kvmap, kvmd, kvmc
+
+    expand on mcc client/server support.
+
+
+-->
+
+<a name="stats_file"></a>
+<h3>The Stats File</h3>
+
+<p>
+The stats file is an SQLite3 database and can be manipulated using the supplied
+programs <code>sqlite3t</code> (our version build with thread support enabled).
+Generally it is not a good idea to manipulating the statistics file, but we
+describe it here for completeness.
+</p>
+
+<blockquote><pre>
+# sqlite3t /var/db/smtpf/stats.sq3
+</pre></blockquote>
+
+<p>
+Using <code>sqlite3t</code> it is possible to add, remove, or modify records
+using standard SQL commands. How to use <code>sqlite3t</code> and SQL in general
+is beyond the scope of this document and not covered here.
+</p>
+
+<a name="stats_structure"></a>
+<p>
+The statistics file uses a generalised key-value-map (KVM) API, which does not take
+advantage of SQL to the fullest. This may change in future releases of smtpf.
+</p>
+
+<blockquote><pre>
+CREATE TABLE kvm (
+    k TEXT PRIMARY KEY, 	-- the key
+    v TEXT 			-- data value
+);
+</pre></blockquote>
+
+<p>
+The format of the <code>k</code> and <code>v</code> columns varies.
+The following is a brief summary of the possible formats used for
+both <code>k</code> and <code>v</code> columns in the event they
+need to be modified manually or consulted by third-party tools.
+Note that this information may change without notice.
+</p>
+
+
+<blockquote>
+<table border="0" cellspacing="0" cellpadding="2" width="100%">
+<tr valign="top">
+	<td class="key tline">YYYYMMDDHH</td>
+	<td class="tline">ASCII space separated list of values corresponding to the field order given by <span class="tag">fields:</span>;
+	start-time and touch-time values are given in hexdecimal, while all other values are decimal.
+	</td>
+</tr>
+<tr valign="top">
+	<td class="key" width="41%"><span class="tag">fields:</span>version</td>
+	<td class="">ASCII space separate list of field names in store order.</td>
+</tr>
+<tr valign="top">
+	<td class="key bline"><span class="tag">route:</span>recipient</td>
+	<td class="bline">ASCII space separated fields; first field in decimal is the day-of-year
+	followed by the last 31 days of hexadecimal triples <code>accept:reject:volume</code> giving
+	message counts and volume in kilobytes. The <span class="tag">route:</span> key used corresponds to those
+	found in the <a href="route-map.html">route-map</a>.
+	</td>
+</tr>
+</table>
+</blockquote>
+
+<p style="text-align: center;">
+-<a href="#"> TOP </a>-
+</p>
+
+<!-- copyright -->
+<p class="copyright" style="text-align: center;">
+<nobr>Copyright 2006, 2012 by SnertSoft. All rights reserved.</nobr>
+<br/><nobr>BarricadeMX trademark &amp; patents pending.</nobr>
+</p>
+<!--end copyright-->
+
+</td></tr>
+</table>
+</div>
+</body>
+</html>
+

@@ -860,6 +860,9 @@ rfc2822Headers(Session *sess, va_list args)
 	if (verb_trace.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(454) "rfc2822Headers", LOG_ARGS(sess));
 
+        if (CLIENT_ANY_SET(sess, CLIENT_USUAL_SUSPECTS))
+                return SMTPF_CONTINUE;
+
 	hdr_found = 0;
 	headers = va_arg(args, Vector);
 	for (i = 0; i < VectorLength(headers); i++) {

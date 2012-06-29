@@ -248,7 +248,7 @@ The client has sent HELO or EHLO more than once with different arguments each ti
 
 	if (!optSmtpEnableEsmtp.value
 	&&  !(tls_get_flags(sess) & TLS_FLAG_ENABLE_EHLO)
-	&& CLIENT_NOT_SET(sess, CLIENT_USUAL_SUSPECTS|CLIENT_IS_GREY|CLIENT_PASSED_GREY)) {
+	&& CLIENT_NOT_SET(sess, CLIENT_USUAL_SUSPECTS|CLIENT_IS_GREY|CLIENT_PASSED_GREY|CLIENT_IS_BLACK|CLIENT_IS_LOCAL_BLACK)) {
 #ifdef ENABLE_PRUNED_STATS
 		statsCount(&stat_smtp_enable_esmtp);
 #endif
@@ -1568,6 +1568,9 @@ forwardCommand(Session *sess, const char *cmd, int expect, long timeout, int *co
 
 	/* Things to test for at final dot.
 	 *
+	 * No foward host:
+	 *  a)  message discarded, generates 250 reply to client.
+	 *
 	 * Single forward host:
 	 *  a)	message accepted generates 250 reply to client.
 	 *  b)	message temp.failed generates 4xy reply to client.
@@ -1583,7 +1586,9 @@ forwardCommand(Session *sess, const char *cmd, int expect, long timeout, int *co
 	 *  e)	some forwards accept the message and at least one
 	 *	times out, 250 reply to client and one or more DSN
 	 */
-	if (sess->msg.fwds->next == NULL) {
+	if (sess->msg.fwds == NULL) {
+		*sent = *count = sess->msg.rcpt_count;
+	} else if (sess->msg.fwds->next == NULL) {
 		/* Only one forward connection. We can
 		 * return a reply instead of a DSN.
 		 */

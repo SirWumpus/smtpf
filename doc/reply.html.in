@@ -1,0 +1,1105 @@
+<a name='120'></a>
+<dt class="message"> 550 5.7.1 host %s [%s] %s #120 </dt>
+<dd class="message">
+There is a <a href="access-map.html#tag_connect"><span class="tag">Connect:</span></a> tag entry for either the
+client name or IP address with a right-hand-side value of REJECT.
+See <a href="access-map.html#access_tags">access-map</a>.
+</dd>
+<a name='853'></a>
+<dt class="message"> 450 4.7.1 host %s [%s] %s #853 </dt>
+<dd class="message">
+There is a <a href="access-map.html#tag_connect"><span class="tag">Connect:</span></a> tag entry for either the
+client name or IP address with a right-hand-side value of TEMPFAIL.
+See <a href="access-map.html#access_tags">access-map</a>.
+</dd>
+<a name='854'></a>
+<dt class="message"> 550 5.7.1 host %s [%s] %s #854 </dt>
+<dd class="message">
+There is a <a href="access-map.html#tag_connect"><span class="tag">Connect:</span></a> tag entry for either the
+client name or IP address with a right-hand-side value of IREJECT.
+See <a href="access-map.html#access_tags">access-map</a>.
+</dd>
+<a name='121'></a>
+<dt class="message"> 550 5.7.1 host %s [%s] from RFC2606 reserved domain #121 </dt>
+<dd class="message">
+See <a href="summary.html#opt_rfc2606_special_domains">rfc2606-special-domains</a>.
+</dd>
+<a name='122'></a>
+<dt class="message"> 550 5.7.1 host %s [%s] from unknown TLD #122 </dt>
+<dd class="message">
+See <a href="summary.html#opt_reject_unknown_tld">reject-unknown-tld</a>.
+</dd>
+<a name='125'></a>
+<dt class="message"> 550 5.7.1 host %s [%s] sender &lt;%s&gt; %s #125 </dt>
+<dd class="message">
+There is a <a href="access-map.html#tag_connect_from"><span class="tag">Connect:From:</span></a> combo tag entry for either the
+client name and sender pair or client IP address and sender pair with a
+right-hand-side value of REJECT.
+See <a href="access-map.html#access_tags">access-map</a>.
+</dd>
+<a name='814'></a>
+<dt class="message"> 450 4.7.1 host %s [%s] sender &lt;%s&gt; %s #814 </dt>
+<dd class="message">
+There is a <a href="access-map.html#tag_connect_from"><span class="tag">Connect:From:</span></a> combo tag entry for either the
+client name and sender pair or client IP address and sender pair with a
+right-hand-side value of TEMPFAIL.
+See <a href="access-map.html#access_tags">access-map</a>.
+</dd>
+<a name='855'></a>
+<dt class="message"> 550 5.7.1 host %s [%s] sender &lt;%s&gt; %s #855 </dt>
+<dd class="message">
+There is a <a href="access-map.html#tag_connect_from"><span class="tag">Connect:From:</span></a> combo tag entry for either the
+client name and sender pair or client IP address and sender pair with a
+right-hand-side value of IREJECT.
+See <a href="access-map.html#access_tags">access-map</a>.
+</dd>
+<a name='127'></a>
+<dt class="message"> 550 5.7.1 sender &lt;%s&gt; %s #127 </dt>
+<dd class="message">
+There is a <a href="access-map.html#tag_from"><span class="tag">From:</span></a> tag entry for
+the sender address or their domain with a right-hand-side value of REJECT.
+See <a href="access-map.html#access_tags">access-map</a>.
+</dd>
+<a name='815'></a>
+<dt class="message"> 450 4.7.1 sender &lt;%s&gt; %s #815 </dt>
+<dd class="message">
+There is a <a href="access-map.html#tag_from"><span class="tag">From:</span></a> tag entry for
+the sender address or their domain with a right-hand-side value of TEMPFAIL.
+See <a href="access-map.html#access_tags">access-map</a>.
+</dd>
+<a name='856'></a>
+<dt class="message"> 550 5.7.1 sender &lt;%s&gt; %s #856 </dt>
+<dd class="message">
+There is a <a href="access-map.html#tag_from"><span class="tag">From:</span></a> tag entry for
+the sender address or their domain with a right-hand-side value of IREJECT.
+See <a href="access-map.html#access_tags">access-map</a>.
+</dd>
+<a name='128'></a>
+<dt class="message"> 550 5.7.1 sender &lt;%s&gt; from RFC2606 reserved domain #128 </dt>
+<dd class="message">
+See <a href="summary.html#opt_rfc2606_special_domains">rfc2606-special-domains</a>.
+</dd>
+<a name='129'></a>
+<dt class="message"> 550 5.7.1 sender &lt;%s&gt; from unknown TLD #129 </dt>
+<dd class="message">
+See <a href="summary.html#opt_reject_unknown_tld">reject-unknown-tld</a>.
+</dd>
+<a name='131'></a>
+<dt class="message"> 550 5.7.1 routed address relaying denied #131 </dt>
+<dd class="message">
+See <a href="summary.html#opt_reject_percent_relay">reject-percent-relay</a>.
+</dd>
+<a name='132'></a>
+<dt class="message"> 550 5.7.1 UUCP addressing denied #132 </dt>
+<dd class="message">
+See <a href="summary.html#opt_reject_uucp_route">reject-uucp-route</a>.
+@PACKAGE_NAME@ currently does nothing special with UUCP paths, so disabling
+this option will have undefined results.
+</dd>
+<a name='133'></a>
+<dt class="message"> 550 5.7.1 special case of at-sign in local-part denied #133 </dt>
+<dd class="message">
+See <a href="summary.html#opt_reject_quoted_at_sign">reject-quoted-at-sign</a>.
+</dd>
+<a name='135'></a>
+<dt class="message"> 550 5.7.1 host %s [%s] recipient &lt;%s&gt; %s #135 </dt>
+<dd class="message">
+There is a <a href="access-map.html#tag_connect_to"><span class="tag">Connect:To:</span></a> combo tag entry for either the
+client name and recipient pair or client IP address and recipient pair with a
+right-hand-side value of REJECT.
+See <a href="access-map.html#access_tags">access-map</a>.
+</dd>
+<a name='816'></a>
+<dt class="message"> 450 4.7.1 host %s [%s] recipient &lt;%s&gt; %s #816 </dt>
+<dd class="message">
+There is a <a href="access-map.html#tag_connect_to"><span class="tag">Connect:To:</span></a> combo tag entry for either the
+client name and recipient pair or client IP address and recipient pair with a
+right-hand-side value of TEMPFAIL.
+See <a href="access-map.html#access_tags">access-map</a>.
+</dd>
+<a name='137'></a>
+<dt class="message"> 550 5.7.1 sender &lt;%s&gt; recipient &lt;%s&gt; %s #137 </dt>
+<dd class="message">
+There is a <a href="access-map.html#tag_from_to"><span class="tag">From:To:</span></a> combo tag entry for a sender
+and recipient pair with a right-hand-side value of REJECT.
+See <a href="access-map.html#access_tags">access-map</a>.
+</dd>
+<a name='817'></a>
+<dt class="message"> 450 4.7.1 sender &lt;%s&gt; recipient &lt;%s&gt; %s #817 </dt>
+<dd class="message">
+There is a <a href="access-map.html#tag_from_to"><span class="tag">From:To:</span></a> combo tag entry for a sender
+and recipient pair with a right-hand-side value of TEMPFAIL.
+See <a href="access-map.html#access_tags">access-map</a>.
+</dd>
+<a name='139'></a>
+<dt class="message"> 550 5.7.1 recipient &lt;%s&gt; %s #139 </dt>
+<dd class="message">
+There is a <a href="access-map.html#tag_to"><span class="tag">To:</span></a> tag entry for sender's
+address with a right-hand-side value of REJECT.
+See <a href="access-map.html#access_map">access-map</a>.
+</dd>
+<a name='818'></a>
+<dt class="message"> 450 4.7.1 recipient &lt;%s&gt; %s #818 </dt>
+<dd class="message">
+There is a <a href="access-map.html#tag_to"><span class="tag">To:</span></a> tag entry for sender's
+address with a right-hand-side value of TEMPFAIL.
+See <a href="access-map.html#access_map">access-map</a>.
+</dd>
+<a name='140'></a>
+<dt class="message"> 550 5.7.1 recipient &lt;%s&gt; from RFC2606 reserved domain #140 </dt>
+<dd class="message">
+See <a href="summary.html#opt_rfc2606_special_domains">rfc2606-special-domains</a>.
+</dd>
+<a name='141'></a>
+<dt class="message"> 550 5.7.1 recipient &lt;%s&gt; from unknown TLD #141 </dt>
+<dd class="message">
+See <a href="summary.html#opt_reject_unknown_tld">reject-unknown-tld</a>.
+</dd>
+<a name='924'></a>
+<dt class="message"> 550 5.7.1 helo %s %s #924 </dt>
+<dd class="message">
+There is a <a href="access-map.html#tag_helo"><span class="tag">Helo:</span></a>
+tag entry for HELO/EHLO argument a right-hand-side value of REJECT.
+See <a href="access-map.html#access_tags">access-map</a>.
+</dd>
+<a name='925'></a>
+<dt class="message"> 450 4.7.1 helo %s %s #925 </dt>
+<dd class="message">
+There is a <a href="access-map.html#tag_helo"><span class="tag">Helo:</span></a>
+tag entry for HELO/EHLO argument a right-hand-side value of TEMPFAIL.
+See <a href="access-map.html#access_tags">access-map</a>.
+</dd>
+<a name='926'></a>
+<dt class="message"> 550 5.7.1 helo %s %s #926 </dt>
+<dd class="message">
+There is a <a href="access-map.html#tag_helo"><span class="tag">Helo:</span></a>
+tag entry for HELO/EHLO argument a right-hand-side value of IREJECT.
+See <a href="access-map.html#access_tags">access-map</a>.
+</dd>
+<a name='826'></a>
+<dt class="message"> 550 5.7.0 message contains blocked content (%s) #826 </dt>
+<dd class="message">
+See
+<a href="summary.html#opt_deny_content">deny-content</a>,
+<a href="summary.html#opt_deny_content_type">deny-content-type</a>,
+<a href="summary.html#opt_deny_content_name">deny-content-name</a>,
+<a href="summary.html#opt_deny_compressed_name">deny-compressed-name</a>, and
+<a href="summary.html#opt_deny_top_content_type">deny-top-content-type</a>,
+options.
+</dd>
+<a name='149'></a>
+<dt class="message"> 451 4.4.0 avastd address error: %s (%d) #149 </dt>
+<a name='150'></a>
+<dt class="message"> 451 4.4.0 avastd open error: %s (%d) #150 </dt>
+<a name='151'></a>
+<dt class="message"> 451 4.4.0 avastd connect error: %s (%d) #151 </dt>
+<a name='153'></a>
+<dt class="message"> 451 4.4.0 avastd read error: %s (%d) #153 </dt>
+<a name='154'></a>
+<dt class="message"> 451 4.4.0 avastd buffer overflow #154 </dt>
+<a name='156'></a>
+<dt class="message"> 451 4.4.0 avastd write error: %s (%d) #156 </dt>
+<a name='158'></a>
+<dt class="message"> 451 4.4.0 avastd read error: %s (%d) #158 </dt>
+<a name='160'></a>
+<dt class="message"> 451 4.4.0 avastd read error: %s (%d) #160 </dt>
+<dd class="message">
+See <a href="summary.html#opt_avastd_socket">avastd-socket</a> and <a href="summary.html#opt_avastd_timeout">avastd-timeout</a>.
+</dd>
+<a name='162'></a>
+<dt class="message"> 550 5.7.1 %s #162 </dt>
+<dd class="message">
+The avastd daemon found a virus or suspicious content in the message.
+See <a href="summary.html#opt_avastd_policy">avastd-policy</a>.
+</dd>
+<a name='178'></a>
+<dt class="message"> 451 4.4.0 clamd address error: %s (%d) #178 </dt>
+<a name='179'></a>
+<dt class="message"> 451 4.4.0 clamd open error: %s (%d) #179 </dt>
+<a name='180'></a>
+<dt class="message"> 451 4.4.0 clamd connect error: %s (%d) #180 </dt>
+<a name='181'></a>
+<dt class="message"> 451 4.4.0 clamd buffer overflow #181)); </dt>
+<a name='183'></a>
+<dt class="message"> 451 4.4.0 clamd write error: %s (%d) #183 </dt>
+<a name='185'></a>
+<dt class="message"> 451 4.4.0 clamd write error: %s (%d) #185 </dt>
+<a name='196'></a>
+<dt class="message"> 451 4.4.0 clamd session write error after %lu bytes #196 </dt>
+<a name='199'></a>
+<dt class="message"> 451 4.4.0 clamd session write error after %lu bytes #199 </dt>
+<a name='943'></a>
+<dt class="message"> 451 4.4.0 clamd session write error after %lu bytes #943 </dt>
+<a name='204'></a>
+<dt class="message"> 451 4.4.0 clamd session read error: %s (%d) #204 </dt>
+<dd class="message">
+See <a href="summary.html#opt_clamd_socket">clamd-socket</a> and <a href="summary.html#opt_clamd_timeout">clamd-timeout</a>.
+</dd>
+<a name='206'></a>
+<dt class="message"> 451 4.4.0 unexpected clamd result: %s #206 </dt>
+<dd class="message">
+The clamd daemon returned an unexpected result. This may be due to
+unexpected changes in the clamd protocol between program updates or data
+corruption over the network (assuming clamd runs on a different machine).
+</dd>
+<a name='208'></a>
+<dt class="message"> 550 5.7.1 %s #208 </dt>
+<dd class="message">
+The clamd daemon found a virus or suspicious content in the message.
+See <a href="summary.html#opt_clamd_policy">clamd-policy</a>.
+</dd>
+<a name='224'></a>
+<dt class="message"> %d %d.7.0 %s #224 </dt>
+<dd class="message">
+The CLI child process standard output and standard error are used for specifying a multiline response.
+See <a href="summary.html#opt_cli_content">cli-content</a> and <a href="summary.html#opt_cli_envelope">cli-envelope</a>.
+</dd>
+<a name='244'></a>
+<dt class="message"> 550 5.7.1 recipient &lt;%s&gt; expired #244 </dt>
+<dd class="message">
+</dd>
+<a name='245'></a>
+<dt class="message"> 550 5.7.1 recipient &lt;%s&gt; invalid #245 </dt>
+<dd class="message">
+</dd>
+<a name='247'></a>
+<dt class="message"> 221 2.0.0 %s closing connection #247 </dt>
+<dd class="message">
+The connected client sent an SMTP QUIT command. The server will now close the connection.
+</dd>
+<a name='248'></a>
+<dt class="message"> 500 5.5.1 %s command unknown #248 </dt>
+<dd class="message">
+An unknown command was sent.
+</dd>
+<a name='249'></a>
+<dt class="message"> 501 5.5.2 %s missing argument #249 </dt>
+<dd class="message">
+The specified command requires one or more arguments.
+</dd>
+<a name='250'></a>
+<dt class="message"> 502 5.5.1 %s not implemented #250 </dt>
+<dd class="message">
+The given command is specified in a known RFC, but not supported.
+</dd>
+<a name='251'></a>
+<dt class="message"> 503 5.5.1 %s out of sequence #251 </dt>
+<dd class="message">
+The specified command was sent out of order with respect to other commands expected before this command.
+For example HELO or EHLO must be issued and accepted before the first MAIL FROM:; a successful MAIL FROM:
+must be sent before any RCPT TO: commands; and there must be at least one successful RCPT TO: before
+the DATA command will be accepted. See RFC 5321 for details. Other SMTP command extensions may impose
+similar sequence restrictions, such as AUTH (RFC 2554) after EHLO and before MAIL FROM:,
+STARTTLS (RFC 3207) after EHLO and not after a previous STARTTLS.
+</dd>
+<a name='252'></a>
+<dt class="message"> 550 5.7.1 client %s [%s] is schizophrenic #252 </dt>
+<dd class="message">
+The client has sent HELO or EHLO more than once with different arguments each time.
+</dd>
+<a name='253'></a>
+<dt class="message"> 502 5.5.1 EHLO not supported #253 </dt>
+<dd class="message">
+When the <a href="summary.html#opt_smtp_enable_esmtp">smtp-enable-esmtp</a> option is off,
+we force the client to down grade to the older HELO command per RFC 2821.
+</dd>
+<a name='254'></a>
+<dt class="message"> 250-Hello %s [%s] #254 </dt>
+<dd class="message">
+</dd>
+<a name='255'></a>
+<dt class="message"> 550 5.7.1 client %s [%s] is schizophrenic #255 </dt>
+<dd class="message">
+The client has sent HELO or EHLO more than once with different arguments each time.
+</dd>
+<a name='256'></a>
+<dt class="message"> 250 Hello %s [%s] #256 </dt>
+<dd class="message">
+</dd>
+<a name='259'></a>
+<dt class="message"> 501 5.5.1 AUTH cancelled #259 </dt>
+<a name='264'></a>
+<dt class="message"> 501 5.5.1 AUTH cancelled #264 </dt>
+<dd class="message">
+</dd>
+<a name='827'></a>
+<dt class="message"> 502 5.5.1 AUTH not supported #827 </dt>
+<dd class="message">
+See <a href="summary.html#opt_smtp_auth_enable">smtp-auth-enable</a> documentation.
+</dd>
+<a name='1020'></a>
+<dt class="message"> 538 5.7.11 Encryption required for requested authentication mechanism #1020 </dt>
+<dd class="message">
+See <a href="summary.html#opt_smtp_auth_tls">smtp-auth-tls</a> documentation.
+</dd>
+<a name='267'></a>
+<dt class="message"> 503 5.5.1 already authenticated #267 </dt>
+<dd class="message">
+RFC 2554 states that once a client successfully authenticates,
+additional AUTH commands are rejected.
+</dd>
+<a name='269'></a>
+<dt class="message"> 504 5.5.4 unknown AUTH mechanism #269 </dt>
+<dd class="message">
+@PACKAGE_NAME@ only supports AUTH PLAIN and AUTH LOGIN mechanisms.
+</dd>
+<a name='274'></a>
+<dt class="message"> 235 2.0.0 authenticated #274 </dt>
+<dd class="message">
+The client has successfully authenticated and their messages will be queued by the local route.
+See <a href="route-map.html#route_local_route_queue">route-map</a> documentation.
+</dd>
+<a name='275'></a>
+<dt class="message"> 535 5.7.0 authentication failed #275 </dt>
+<dd class="message">
+</dd>
+<a name='276'></a>
+<dt class="message"> 458 4.4.0 unable to queue messages for %s #276 </dt>
+<dd class="message">
+SMTP ETRN commands are sent to the local route, which is responsible for queuing.
+See <a href="route-map.html#route_local_route_queue">route-map</a> documentation.
+</dd>
+<a name='277'></a>
+<dt class="message"> %s #277 </dt>
+<dd class="message">
+After an SMTP ETRN command, this is the response relayed from the one of local route servers.
+</dd>
+<a name='279'></a>
+<dt class="message"> 			"%d %s, sender %s #279 </dt>
+<dd class="message">
+The SMTP MAIL FROM: address could not be correctly parsed according to the
+strict application of one or more RFC 2821 grammar rules.
+See
+<a href="summary.html#opt_rfc2821_line_length">rfc2821-line-length</a>,
+<a href="summary.html#opt_rfc2821_local_length">rfc2821-local-length</a>,
+<a href="summary.html#opt_rfc2821_domain_length">rfc2821-domain-length</a>,
+<a href="summary.html#opt_rfc2821_literal_plus">rfc2821-literal-plus</a>,
+<a href="summary.html#opt_rfc2821_strict_dot">rfc2821-strict-dot</a>.
+</dd>
+<a name='944'></a>
+<dt class="message"> 450 4.7.1 more than one sender &lt;%s&gt; domain per session; domain=%s #944 </dt>
+<a name='280'></a>
+<dt class="message"> 501 5.5.2 syntax error #280 </dt>
+<dd class="message">
+The RFC 2821 grammar for the <code>MAIL FROM:</code> command does not allow for white space between
+the <code>FROM:</code> and the &lt;address&gt; argument. When they appear it is typically a virus or
+spamware sign.
+See <a href="summary.html#opt_rfc2821_extra_spaces">rfc2821-extra-spaces</a>.
+</dd>
+<a name='282'></a>
+<dt class="message"> %d %d.1.0 sender &lt;%s&gt; denied #282 </dt>
+<dd class="message">
+The forward host rejected or temporarily failed the sender.
+</dd>
+<a name='283'></a>
+<dt class="message"> 250 2.1.0 sender &lt;%s&gt; accepted #283 </dt>
+<dd class="message">
+</dd>
+<a name='284'></a>
+<dt class="message"> 			"%d %s, recipient %s #284 </dt>
+<dd class="message">
+The SMTP <code>RCPT TO:</code> address could not be correctly parsed according to the
+strict application of one or more RFC 2821 grammar rules.
+See
+<a href="summary.html#opt_rfc2821_line_length">rfc2821-line-length</a>,
+<a href="summary.html#opt_rfc2821_local_length">rfc2821-local-length</a>,
+<a href="summary.html#opt_rfc2821_domain_length">rfc2821-domain-length</a>,
+<a href="summary.html#opt_rfc2821_literal_plus">rfc2821-literal-plus</a>,
+<a href="summary.html#opt_rfc2821_strict_dot">rfc2821-strict-dot</a>.
+</dd>
+<a name='285'></a>
+<dt class="message"> 501 5.5.2 syntax error #285 </dt>
+<dd class="message">
+The RFC 2821 grammar for the <code>RCPT TO:</code> command does not allow for white space between
+the <code>TO:</code> and the &lt;address&gt; argument. When they appear it is typically a virus or
+spamware sign.
+See <a href="summary.html#opt_rfc2821_extra_spaces">rfc2821-extra-spaces</a>.
+</dd>
+<a name='286'></a>
+<dt class="message"> 550 5.7.1 null recipient invalid #286 </dt>
+<dd class="message">
+The SMTP client specified <code>RCPT TO:&lt;&gt;</code>
+</dd>
+<a name='288'></a>
+<dt class="message"> 550 5.7.1 recipient &lt;%s&gt; relaying denied #288 </dt>
+<dd class="message">
+The SMTP client is attempting to relay mail for an unknown recipient domain.
+Domains that @PACKAGE_NAME@ is responsible for is specified in the
+<a href="route-map.html">route-map</a>. Either the domain has not yet been
+added, was removed, or the SMTP client is hoping that the server is an
+open relay.
+</dd>
+<a name='290'></a>
+<dt class="message"> 250 2.1.5 recipient &lt;%s&gt; accepted #290 </dt>
+<dd class="message">
+</dd>
+<a name='292'></a>
+<dt class="message"> 550 5.7.1 recipient &lt;%s&gt; unknown #292 </dt>
+<dd class="message">
+A call-ahead to a down stream host rejected the recipient.
+See <a href="route-map.html#route_call_ahead">route-map</a> about RCPT: attribute.
+</dd>
+<a name='293'></a>
+<dt class="message"> 550 5.7.1 recipient &lt;%s&gt; relaying denied #293 </dt>
+<dd class="message">
+The SMTP client is attempting to relay mail for an unknown recipient domain.
+Domains that @PACKAGE_NAME@ is responsible for is specified in the
+<a href="route-map.html">route-map</a>. Either the domain has not yet been
+added, was removed, or the SMTP client is hoping that the server is an
+open relay.
+</dd>
+<a name='295'></a>
+<dt class="message"> 451 4.0.0 cannot forward mail for &lt;%s&gt; at this time #295 </dt>
+<dd class="message">
+We are responsible for this domain, but had a connection error with the forward host.
+</dd>
+<a name='296'></a>
+<dt class="message"> 550 5.7.1 recipient &lt;%s&gt; relaying denied #296 </dt>
+<dd class="message">
+The SMTP client is attempting to relay mail for an unknown recipient domain.
+Domains that @PACKAGE_NAME@ is responsible for is specified in the
+<a href="route-map.html">route-map</a>. Either the domain has not yet been
+added, was removed, or the SMTP client is hoping that the server is an
+open relay.
+</dd>
+<a name='297'></a>
+<dt class="message"> 250 2.1.5 recipient &lt;%s&gt; accepted #297 </dt>
+<dd class="message">
+</dd>
+<a name='299'></a>
+<dt class="message"> %s #299 </dt>
+<dd class="message">
+See <a href="summary.html#opt_relay_reply">relay-reply</a> option.
+The whole reply from the forward host is relayed to the client.
+</dd>
+<a name='300'></a>
+<dt class="message"> %srecipient &lt;%s&gt; denied #300 </dt>
+<dd class="message">
+See <a href="summary.html#opt_relay_reply">relay-reply</a> option.
+Only the reply codes from the forward host are relayed to the client with a standardise reason.
+</dd>
+<a name='306'></a>
+<dt class="message"> 554 5.7.0 transaction failed #306 </dt>
+<dd class="message">
+While forwarding a message for a single recipient, the forward host
+rejected the message.
+</dd>
+<a name='307'></a>
+<dt class="message"> 451 4.4.0 transaction aborted #307 </dt>
+<dd class="message">
+While forwarding a message for a single recipient, the forward host
+returned a temporary failure of the message.
+</dd>
+<a name='321'></a>
+<dt class="message"> 554 5.5.2 content line too long (%ld); RFC 2821 section 4.5.3.1 #321 </dt>
+<dd class="message">
+See <a href="summary.html#opt_rfc2821_line_length">rfc2821-line-length</a>.
+</dd>
+<a name='927'></a>
+<dt class="message"> 550 5.7.1 missing of end-of-header line #927 </dt>
+<dd class="message">
+See the section on <a href="smtpf-cf.html#smtpf_rfc">RFC conformance</a> and
+<a href="summary.html#opt_rfc2822_missing_eoh">rfc2822-missing-eoh</a> option.
+</dd>
+<a name='982'></a>
+<dt class="message"> 554 5.5.0 no recipients #982 </dt>
+<dd class="message">
+The SMTP transaction attempted to send a DATA command without any valid recipients.
+Either there were no recipients specified or all the RCPT commands were rejected.
+The latter can occur with scripted mail transactions, a typical sign of spam.
+</dd>
+<a name='945'></a>
+<dt class="message"> 550 5.7.0 this message blocked for unspecified reasons #945 </dt>
+<a name='323'></a>
+<dt class="message"> 501 5.5.4 %s requires restart #323 </dt>
+<dd class="message">
+Some options cannot be changed during runtime. Modify the /etc/@PACKAGE_NAME@/@PACKAGE_NAME@.cf options file,
+then restart the @PACKAGE_NAME@ process.
+</dd>
+<a name='324'></a>
+<dt class="message"> 214 2.0.0 killing session %s #324 </dt>
+<dd class="message">
+</dd>
+<a name='325'></a>
+<dt class="message"> 550 5.0.0 session %s killed #325 </dt>
+<dd class="message">
+</dd>
+<a name='326'></a>
+<dt class="message"> 504 5.5.4 session %s not found #326 </dt>
+<dd class="message">
+The session given to KILL was not found. It probably terminated before this command was entered
+or there is a typo in the session ID given.
+</dd>
+<a name='928'></a>
+<dt class="message"> 501 5.5.4 invalid argument %s #928 </dt>
+<a name='329'></a>
+<dt class="message"> 421 4.7.1 client %s [%s] too many concurrent connections, max=%ld #329 </dt>
+<dd class="message">
+See the <a href="access-map.html#access_tags">access-map</a> concerning the
+<a href="access-map.html#tag_concurrent_connect"><span class="tag">Concurrent-Connect:</span></a> tag.
+</dd>
+<a name='950'></a>
+<dt class="message"> 451 4.4.0 ctasd session write error after %lu bytes #950 </dt>
+<a name='953'></a>
+<dt class="message"> 451 4.4.0 ctasd session write error after %lu bytes #953 </dt>
+<a name='960'></a>
+<dt class="message"> 550 5.7.1 %s #960 </dt>
+<a name='961'></a>
+<dt class="message"> 451 4.7.1 message %s cannot be delivered at this time #961 </dt>
+<dd class="message">
+The ctasd daemon found a virus or suspicious content in the message.
+See <a href="summary.html#opt_ctasd_policy">ctasd-policy</a>.
+</dd>
+<a name='870'></a>
+<dt class="message"> 550 5.7.0 message contains blocked MIME part (%s) #870 </dt>
+<a name='340'></a>
+<dt class="message"> 550 5.3.4 duplicate message rejected #340 </dt>
+<a name='357'></a>
+<dt class="message"> 550 5.7.1 DSN or MDN in response to an old message #357 </dt>
+<dd class="message">
+See the <a href="summary.html#opt_emew_ttl">emew-ttl</a> option.
+</dd>
+<a name='358'></a>
+<dt class="message"> 550 5.7.1 DSN or MDN for message that did not originate here #358 </dt>
+<dd class="message">
+See the <a href="summary.html#opt_emew_secret">emew-secret</a> and
+<a href="summary.html#opt_emew_dsn_policy">emew-dsn-policy</a> options.
+</dd>
+<a name='363'></a>
+<dt class="message"> 421 4.4.0 client %s [%s] unknown #363 </dt>
+<dd class="message">
+The Four21 module is experimental and is only present at select test sites.
+See <a href="summary.html#opt_four21_unknown_ip">four21-unknown-ip</a> option.
+<p>
+This is a RFC 2821 conformance test. Check if the connecting client IP
+that has never been seen before. If it has not, then 421 the connection
+and observe if they send a clean QUIT (as specified in RFC 2821),
+pipeline, or disconnect. If the latter two occur, then the IP is auto-blacklisted.
+</p>
+</dd>
+<a name='364'></a>
+<dt class="message"> 554 5.4.0 client %s [%s] "No soup for you!" #364 </dt>
+<dd class="message">
+The Four21 module is experimental and only present at select test sites.
+
+This response (a reference to the Sienfeld Soup Nazi episode) is the
+reply given if the client IP failed the 421 test and was subsequently
+auto-blacklisted.
+
+See <a href="summary.html#opt_four21_unknown_ip">four21-unknown-ip</a> option.
+</dd>
+<a name='367'></a>
+<dt class="message"> 451 4.4.0 fpscand address error: %s (%d) #367 </dt>
+<a name='368'></a>
+<dt class="message"> 451 4.4.0 fpscand open error: %s (%d) #368 </dt>
+<a name='369'></a>
+<dt class="message"> 451 4.4.0 fpscand connect error: %s (%d) #369 </dt>
+<a name='370'></a>
+<dt class="message"> 451 4.4.0 fpscand buffer overflow #370 </dt>
+<a name='372'></a>
+<dt class="message"> 451 4.4.0 fpscand write error: %s (%d) #372 </dt>
+<a name='373'></a>
+<dt class="message"> 451 4.4.0 fpscand read error: %s (%d) #373 </dt>
+<dd class="message">
+See <a href="summary.html#opt_fpscand_socket">fpscand-socket</a> and <a href="summary.html#opt_fpscand_timeout">fpscand-timeout</a>.
+</dd>
+<a name='376'></a>
+<dt class="message"> 550 5.7.1 %s #376 </dt>
+<dd class="message">
+The fpscand daemon found a virus or suspicious content in the message.
+See <a href="summary.html#opt_fpscand_policy">fpscand-policy</a>.
+</dd>
+<a name='921'></a>
+<dt class="message"> 550 5.7.0 client %s [%s] sender &lt;%s&gt; must be sent from %s #921 </dt>
+<a name='388'></a>
+<dt class="message"> 550 5.7.1 %s [%s] failed grey listing #388 </dt>
+<a name='988'></a>
+<dt class="message"> 550 5.7.0 message blocked by %s #988 </dt>
+<dd class="message">
+See <a href="summary.html#opt_ixhash_bl">ixhash-bl</a> option.
+</dd>
+<a name='991'></a>
+<dt class="message"> %d %d.0.0 %s #991 </dt>
+<a name='522'></a>
+<dt class="message"> 421 4.4.5 client %s [%s] connections %ld exceed %ld/60s #522 </dt>
+<dd class="message">
+See the <a href="access-map.html#access_tags">access-map</a> concerning the
+<a href="access-map.html#tag_rate_connect"><span class="tag">Rate-Connect:</span></a> tag.
+</dd>
+<a name='415'></a>
+<dt class="message"> 421 4.4.3 PTR record lookup error for [%s] #415 </dt>
+<a name='416'></a>
+<dt class="message"> 554 5.7.1 reject [%s] missing PTR record #416 </dt>
+<dd class="message">
+See <a href="summary.html#opt_client_is_mx">client-is-mx</a>
+and <a href="summary.html#opt_client_ptr_required">client-ptr-required</a> options.
+</dd>
+<a name='418'></a>
+<dt class="message"> 550 5.7.1 reject IP in client name %s [%s] (1) #418 </dt>
+<dd class="message">
+See <a href="summary.html#opt_client_is_mx">client-is-mx</a>
+and <a href="summary.html#opt_client_ip_in_ptr">client-ip-in-ptr</a> options.
+</dd>
+<a name='423'></a>
+<dt class="message"> 501 5.5.4 invalid HELO %s #423 </dt>
+<dd class="message">
+The HELO or EHLO argument contains include characters in the string.
+The set of valid characters are alpha-numerics, hyphen, underscore, square brackets, and dot.
+There is no option to turn this test off.
+</dd>
+<a name='424'></a>
+<dt class="message"> 550 5.7.0 HELO %s does not match client %s [%s] #424 </dt>
+<dd class="message">
+See <a href="summary.html#opt_helo_ip_mismatch">helo-ip-mismatch</a> option.
+</dd>
+<a name='427'></a>
+<dt class="message"> 550 5.7.0 HELO %s from RFC2606 reserved domain #427 </dt>
+<dd class="message">
+See <a href="summary.html#opt_rfc2606_special_domains">rfc2606-special-domains</a> option.
+</dd>
+<a name='428'></a>
+<dt class="message"> 550 5.7.0 HELO %s argument must be a FQDN or IP-domain literal #428 </dt>
+<dd class="message">
+See <a href="summary.html#opt_rfc2821_strict_helo">rfc2821-strict-helo</a> option.
+</dd>
+<a name='430'></a>
+<dt class="message"> 550 5.7.0 %s [%s] claims to be us "%s" #430 </dt>
+<dd class="message">
+See <a href="summary.html#opt_helo_claims_us">helo-claims-us</a> option.
+</dd>
+<a name='432'></a>
+<dt class="message"> 550 5.7.0 HELO %s equivalent to client IP-in-PTR #432 </dt>
+<dd class="message">
+See <a href="summary.html#opt_helo_is_ptr">helo-is-ptr</a> option.
+</dd>
+<a name='1016'></a>
+<dt class="message"> 555 5.5.4 invalid or unsupported parameters #1016 </dt>
+<dd class="message">
+Sender sent a HELO command indicating the older RFC 822 SMTP
+standard, yet set MAIL FROM: parameters as though RFC 5321 SMTP
+and extensions were in use without knowing what extensions are
+supported.
+</dd>
+<a name='434'></a>
+<dt class="message"> 553 5.1.8 sender &lt;%s&gt; from %s has no MX record #434 </dt>
+<dd class="message">
+See <a href="summary.html#opt_mail_require_mx">mail-require-mx</a> option.
+</dd>
+<a name='436'></a>
+<dt class="message"> 451 4.4.3 sender &lt;%s&gt; from %s MX lookup error #436 </dt>
+<dd class="message">
+See <a href="summary.html#opt_mail_require_mx">mail-require-mx</a> option.
+</dd>
+<a name='439'></a>
+<dt class="message"> 553 5.1.8 sender &lt;%s&gt; from %s MX invalid #439 </dt>
+<dd class="message">
+The MX list gathered from DNS is pruned to remove hosts that resolve to localhost,
+RFC 3330 reserved IP addresses that cannot be reached from the Internet, or
+have no A/AAAA record. This message is reported if the MX list is empty after pruning.
+</dd>
+<a name='907'></a>
+<dt class="message"> 451 4.1.8 sender &lt;%s&gt; from %s MX lookup error #907 </dt>
+<dd class="message">
+The MX / A / AAAA records gather from DNS failed one or more queries.
+See <a href="summary.html#opt_mail_require_mx">mail-require-mx</a> option.
+</dd>
+<a name='1017'></a>
+<dt class="message"> 555 5.5.4 invalid or unsupported parameters #1017 </dt>
+<dd class="message">
+Sender sent a HELO command indicating the older RFC 822 SMTP
+standard, yet set RCPT TO: parameters as though RFC 5321 SMTP
+and extensions were in use without knowing what extensions are
+supported.
+</dd>
+<a name='441'></a>
+<dt class="message"> 550 5.7.1 too many recipients for DSN or MDN #441 </dt>
+<dd class="message">
+See <a href="summary.html#opt_one_rcpt_per_null">one-rcpt-per-null</a> option.
+</dd>
+<a name='456'></a>
+<dt class="message"> 554 5.6.0 message headers must be US-ASCII, found 0x%.2X; RFC 2822 section 2.2 #456 </dt>
+<dd class="message">
+See <a href="summary.html#opt_rfc2822_7bit_headers">rfc2822-7bit-headers</a> option.
+</dd>
+<dt class="message"> Date:", ID_ARG(sess)); </dt>
+<dd class="message">
+See <a href="summary.html#opt_rfc2822_strict_date">rfc2822-strict-date</a> option.
+</dd>
+<dt class="message"> Message-ID:", ID_ARG(sess)); </dt>
+<dd class="message">
+See <a href="summary.html#opt_rfc2822_min_headers">rfc2822-min-headers</a> option.
+The Message-ID is not correctly formatted according to RFC 2822 grammar.
+</dd>
+<dt class="message"> Received:", ID_ARG(sess)); </dt>
+<dt class="message"> Resent-Date:", ID_ARG(sess)); </dt>
+<dd class="message">
+See <a href="summary.html#opt_rfc2822_strict_date">rfc2822-strict-date</a> option.
+</dd>
+<a name='462'></a>
+<dt class="message"> 554 5.6.0 missing RFC 2822 required headers #462 </dt>
+<dd class="message">
+See <a href="summary.html#opt_rfc2822_min_headers">rfc2822-min-headers</a> option.
+</dd>
+<a name='475'></a>
+<dt class="message"> 451 4.7.1 %s has exceeded %ld message%s per %ld %s%s #475 </dt>
+<dd class="message">
+See the <a href="access-map.html#access_tags">access-map</a> concerning the
+<a href="access-map.html#tag_msg_limit"><span class="tag">Msg-Limit-Connect:</span></a>,
+<a href="access-map.html#tag_msg_limit"><span class="tag">Msg-Limit-From:</span></a>,
+<a href="access-map.html#tag_msg_limit"><span class="tag">Msg-Limit-To:</span></a> tags.
+</dd>
+<a name='481'></a>
+<dt class="message"> 451 4.4.2 internal network error for %s #481 </dt>
+<dd class="message">
+An error occurred while sending an SMTP command to a forward host.
+</dd>
+<a name='485'></a>
+<dt class="message"> 451 4.4.2 internal network error for %s #485 </dt>
+<dd class="message">
+An error occurred while reading an SMTP reply from a forward host.
+</dd>
+<a name='485'></a>
+<dt class="message"> 451 4.4.2 internal network error for %s #485 </dt>
+<dd class="message">
+An error occurred while reading an SMTP reply from a forward host.
+</dd>
+<a name='488'></a>
+<dt class="message"> 451 4.4.4 no answer from %s MX #488 </dt>
+<dd class="message">
+While attempting to perfom a call-back, there was
+no answer from any of the MX servers tried.
+See <a href="summary.html#opt_call_back">call-back</a> option.
+</dd>
+<a name='489'></a>
+<dt class="message"> 553 5.4.4 %s does not exist #489 </dt>
+<a name='491'></a>
+<dt class="message"> 451 4.4.3 %s MX lookup error #491 </dt>
+<dd class="message">
+While attempting to perfom a call-back, there was an error
+looking up the MX records of the sender's domain.
+See <a href="summary.html#opt_call_back">call-back</a> option.
+</dd>
+<a name='493'></a>
+<dt class="message"> 550 5.4.4 no acceptable MX for %s #493 </dt>
+<dd class="message">
+While attempting to perfom a call-back,
+the MX list gathered from DNS was pruned to remove hosts that resolve to localhost,
+RFC 3330 reserved IP addresses that cannot be reached from the Internet, or
+have no A/AAAA record. This message is reported if the MX list is empty after pruning.
+See <a href="summary.html#opt_call_back">call-back</a> option.
+</dd>
+<a name='505'></a>
+<dt class="message"> 550 5.7.1 null-sender messages %ld for &lt;%s&gt; exceed %ld/60s #505 </dt>
+<dd class="message">
+See the <a href="access-map.html#access_tags">access-map</a> concerning the
+<a href="access-map.html#tag_null_rate_to"><span class="tag">Null-Rate-To:</span></a> tag.
+</dd>
+<dd class="message">
+The access-map lookups are failing possible because of incorrect local databased
+file permissions; or in the case of a socketmap, the socketmap daemon has stopped.
+Connections are temporarily turned away.
+</dd>
+<a name='522'></a>
+<dt class="message"> 421 4.4.5 client %s [%s] connections %ld exceed %ld/60s #522 </dt>
+<dd class="message">
+See the <a href="access-map.html#access_tags">access-map</a> concerning the
+<a href="access-map.html#tag_rate_connect"><span class="tag">Rate-Connect:</span></a> tag.
+</dd>
+<a name='525'></a>
+<dt class="message"> 550 5.7.0 %s [%s] black listed by %s #525 </dt>
+<a name='873'></a>
+<dt class="message"> 550 5.7.0 IP [%s] in header black listed by %s #873 </dt>
+<a name='547'></a>
+<dt class="message"> 250 2.0.0 OK #547 </dt>
+<dd class="message">
+Generic response that indicates the command was accepted.
+</dd>
+<a name='548'></a>
+<dt class="message"> 214 2.0.0 end #548 </dt>
+<dd class="message">
+Generic end of a multiline response.
+</dd>
+<a name='1033'></a>
+<dt class="message"> 250 2.0.0 proceed #1033 </dt>
+<dd class="message">
+There is is a delayed rejection/drop response that will be reported
+when the RCPT TO: is sent. See <a href="summary.html#opt_smtp_delay_checks">smtp-delay-checks</a>.
+</dd>
+<a name='966'></a>
+<dt class="message"> 421 4.3.2 service temporarily unavailable #966 </dt>
+<dd class="message">
+</dd>
+<a name='549'></a>
+<dt class="message"> 421 4.3.0 internal server error #549 </dt>
+<dd class="message">
+</dd>
+<a name='550'></a>
+<dt class="message"> 451 4.3.0 internal server error #550 </dt>
+<dd class="message">
+</dd>
+<a name='551'></a>
+<dt class="message"> 421 4.3.2 system resources exceeded #551 </dt>
+<dd class="message">
+Some serious condition such as out-of-memory, no more disk space, or similar resource
+related issue has occured. The connected client will be dropped as it is not possible
+to proceed until the condition has been resolved by the destination postmaster.
+</dd>
+<a name='552'></a>
+<dt class="message"> 451 4.7.0 try again later #552 </dt>
+<dd class="message">
+This is a generic response, typicall issued by grey-listing during the
+<a href="summary.html#opt_grey_temp_fail_period">grey-temp-fail-period</a>,
+however other tests such as SIQ support may also issue this response.
+</dd>
+<a name='553'></a>
+<dt class="message"> 450 4.4.5 try again later #553 </dt>
+<dd class="message">
+This is an alternate response issued by <a href="summary.html#opt_grey_content">grey-content</a>
+after the <a href="summary.html#opt_grey_temp_fail_period">grey-temp-fail-period</a> when
+the hashed message content does not match previously saved message hash.
+</dd>
+<a name='554'></a>
+<dt class="message"> 250 2.0.0 message %s accepted #554 </dt>
+<dd class="message">
+The message transaction has reached the final dot to end the message and was accepted for delivery.
+</dd>
+<a name='555'></a>
+<dt class="message"> 550 5.7.1 message %s rejected #555 </dt>
+<dd class="message">
+The message transaction has reached the final dot to end the message and was NOT accepted for delivery.
+</dd>
+<a name='572'></a>
+<dt class="message"> %d %d.7.0 sender &lt;%s&gt; verification failed #572 </dt>
+<dd class="message">
+A call-back to the sender's MX failed to validate their address.
+See <a href="summary.html#opt_call_back">call-back</a> option.
+</dd>
+<a name='832'></a>
+<dt class="message"> 451 4.4.0 savdid address error: %s (%d) #832 </dt>
+<a name='833'></a>
+<dt class="message"> 451 4.4.0 savdid open error: %s (%d) #833 </dt>
+<a name='834'></a>
+<dt class="message"> 451 4.4.0 savdid connect error: %s (%d) #834 </dt>
+<a name='836'></a>
+<dt class="message"> 451 4.4.0 savdid read error: %s (%d) #836 </dt>
+<a name='837'></a>
+<dt class="message"> 451 4.4.0 savdid write error: %s (%d) #837 </dt>
+<a name='839'></a>
+<dt class="message"> 451 4.4.0 savdid read error: %s (%d) #839 </dt>
+<dd class="message">
+See <a href="summary.html#opt_savdid_socket">savdid-socket</a> and <a href="summary.html#opt_savdid_timeout">savdid-timeout</a>.
+</dd>
+<a name='841'></a>
+<dt class="message"> 451 4.4.0 savdid read error: %s (%d) #841 </dt>
+<dd class="message">
+See <a href="summary.html#opt_savdid_socket">savdid-socket</a> and <a href="summary.html#opt_savdid_timeout">savdid-timeout</a>.
+</dd>
+<a name='842'></a>
+<dt class="message"> 451 4.4.0 savdid buffer overflow #842 </dt>
+<a name='844'></a>
+<dt class="message"> 451 4.4.0 savdid write error: %s (%d) #844 </dt>
+<a name='847'></a>
+<dt class="message"> 550 5.7.1 %s #847 </dt>
+<dd class="message">
+The savdid daemon found a virus or suspicious content in the message.
+See <a href="summary.html#opt_savdid_policy">savdid-policy</a>.
+</dd>
+<a name='617'></a>
+<dt class="message"> 550 5.7.1 message rejected, SIQ score %d too low #617 </dt>
+<dd class="message">
+See <a href="summary.html#opt_siq_score_reject">siq-score-reject</a> option.
+</dd>
+<a name='903'></a>
+<dt class="message"> 501 5.5.4 &lt;%s&gt; SIZE exceeds RFC 1870 max. length #903 </dt>
+<a name='901'></a>
+<dt class="message"> 552 5.3.4 &lt;%s&gt; (%lu bytes) exceeded max. message size of %lu bytes #901 </dt>
+<a name='625'></a>
+<dt class="message"> 550 5.3.4 %s [%s] (%lu bytes) exceeded max. message size of %lu bytes #625 </dt>
+<dd class="message">
+See the <a href="access-map.html#access_tags">access-map</a> concerning the
+<a href="access-map.html#tag_length"><span class="tag">Length-Connect:</span></a>,
+<a href="access-map.html#tag_length"><span class="tag">Length-From:</span></a>,
+<a href="access-map.html#tag_length"><span class="tag">Length-To:</span></a> tags.
+</dd>
+<a name='643'></a>
+<dt class="message"> 550 5.3.3 pipelining not allowed #643 </dt>
+<dd class="message">
+See the <a href="access-map.html#access_tags">access-map</a> concerning the
+<a href="access-map.html#tag_connect"><span class="tag">Connect:</span></a> tag.
+</dd>
+<a name='632'></a>
+<dt class="message"> 				sess, SMTPF_CONTINUE, "220 %s %sSMTP #632 </dt>
+<dd class="message">
+A stripped down single line welcome banner sent to only localhost, LAN, and relays.
+</dd>
+<a name='633'></a>
+<dt class="message"> 		SMTPF_CONTINUE, "220%c%s %sSMTP %s #633 </dt>
+<dd class="message">
+The first line of possible a multiline welcome banner.
+</dd>
+<a name='640'></a>
+<dt class="message"> 500 5.5.2 RFC 2821 max. command line length exceeded (%ld) #640 </dt>
+<dd class="message">
+See <a href="summary.html#opt_rfc2821_command_length">rfc2821-command-length</a>.
+</dd>
+<a name='641'></a>
+<dt class="message"> 500 5.5.2 %s [%s] sent non-printable characters in SMTP command #641 </dt>
+<dd class="message">
+SMTP commands and their arguments can only consist of printable ASCII characters.
+</dd>
+<a name='666'></a>
+<dt class="message"> 550 5.7.1 %s #666 </dt>
+<dd class="message">
+See <a href="summary.html#opt_spamd_score_reject">spamd-score-reject</a> option.
+</dd>
+<a name='678'></a>
+<dt class="message"> 550 5.7.1 message was already marked as spam by sender #678) "" CRLF, ID_ARG(sess)); </dt>
+<dd class="message">
+See
+<a href="summary.html#opt_spamd_reject_sender_marked_spam">spamd-reject-sender-marked-spam</a> and
+<a href="summary.html#opt_spamd_score_reject">spamd-score-reject</a> options.
+</dd>
+<a name='679'></a>
+<dt class="message"> 550 5.7.1 message was already marked as spam by sender #679) "" CRLF, ID_ARG(sess)); </dt>
+<dd class="message">
+See <a href="summary.html#opt_spamd_sender_marked_spam">spamd-sender-marked-spam</a> option.
+</dd>
+<a name='693'></a>
+<dt class="message"> 550 5.7.1 %s #693) "" CRLF, sess-&gt;input, ID_ARG(sess)); </dt>
+<dd class="message">
+See <a href="summary.html#opt_spamd_score_reject">spamd-score-reject</a> option.
+</dd>
+<a name='701'></a>
+<dt class="message"> %s HELO %s from %s [%s] SPF result %s; %s #701 </dt>
+<dd class="message">
+See <a href="summary.html#opt_spf_helo_policy">spf-helo-policy</a> option.
+</dd>
+<a name='702'></a>
+<dt class="message"> %s sender &lt;%s&gt; via %s (%s [%s]) SPF result %s; %s #702 </dt>
+<dd class="message">
+See <a href="summary.html#opt_spf_mail_policy">spf-mail-policy</a> option.
+</dd>
+<a name='886'></a>
+<dt class="message"> 550 5.7.1 recipient &lt;%s&gt; black listed #886 </dt>
+<dd class="message">
+A time-limited recipient has expired and was rejected.
+See <a href="smtpf.html#opt_time_limit_delimiters">time-limit-delimiters</a>.
+</dd>
+<a name='1026'></a>
+<dt class="message"> 530 5.7.0 Must issue a STARTTLS command first #1026 </dt>
+<a name='1027'></a>
+<dt class="message"> 535 5.7.8 TLS certificate invalid #1027 </dt>
+<a name='1029'></a>
+<dt class="message"> 535 5.7.8 TLS certificate invalid #1029 </dt>
+<a name='1022'></a>
+<dt class="message"> 550 5.7.5 TLS negotiation failed #1022 </dt>
+<dd class="message">
+</dd>
+<a name='740'></a>
+<dt class="message"> URI host %s in non-existant domain #740 </dt>
+<dd class="message">
+</dd>
+<a name='741'></a>
+<dt class="message"> URI domain %s where NS %s contains IP %s in name #741 </dt>
+<dd class="message">
+See <a href="summary.html#opt_uri_ip_in_ns">uri-ip-in-ns</a>
+and <a href="summary.html#opt_uri_bl_policy">uri-bl-policy</a>
+options.
+</dd>
+<a name='743'></a>
+<dt class="message"> URI domain %s where NS %s in non-existant domain #743 </dt>
+<dd class="message">
+See <a href="summary.html#opt_uri_ns_nxdomain">uri-ns-nxdomain</a>
+and <a href="summary.html#opt_uri_bl_policy">uri-bl-policy</a>
+options.
+</dd>
+<a name='744'></a>
+<dt class="message"> URI domain %s lookup timeout #744 </dt>
+<dd class="message">
+See <a href="summary.html#opt_uri_reject_on_timeout">uri-reject-on-timeout</a>
+and <a href="summary.html#opt_uri_bl_policy">uri-bl-policy</a>
+options.
+</dd>
+<a name='745'></a>
+<dt class="message"> URI domain %s does not exist (%s) #745 </dt>
+<dd class="message">
+See <a href="summary.html#opt_uri_reject_unknown">uri-reject-unknown</a>
+and <a href="summary.html#opt_uri_bl_policy">uri-bl-policy</a>
+options.
+</dd>
+<a name='746'></a>
+<dt class="message"> URI host %s contains IP %s in %s #746 </dt>
+<dd class="message">
+See <a href="summary.html#opt_uri_ip_in_name">uri-ip-in-name</a>
+and <a href="summary.html#opt_uri_bl_policy">uri-bl-policy</a>
+options.
+</dd>
+<a name='748'></a>
+<dt class="message"> URL host %s is missing a PTR #748 </dt>
+<dd class="message">
+See <a href="summary.html#opt_uri_require_ptr">uri-require-ptr</a>
+and <a href="summary.html#opt_uri_bl_policy">uri-bl-policy</a>
+options.
+</dd>
+<a name='762'></a>
+<dt class="message"> black listed %s by %s #762 </dt>
+<dd class="message">
+See
+<a href="summary.html#opt_ns_bl">ns-bl</a>,
+<a href="summary.html#opt_uri_bl">uri-bl</a>,
+<a href="summary.html#opt_uri_dns_bl">uri-dns-bl</a>,
+and <a href="summary.html#opt_uri_bl_policy">uri-bl-policy</a>
+options.
+</dd>
+<a name='940'></a>
+<dt class="message"> 550 5.7.1 rejected mail address, &lt;%s&gt; black listed by %s #940 </dt>
+<a name='763'></a>
+<dt class="message"> URI %s %s #763 </dt>
+<dd class="message">
+See the <a href="access-map.html#access_tags">access-map</a> concerning the
+<a href="access-map.html#tag_body"><span class="tag">Body:</span></a> tag.
+</dd>
+<a name='765'></a>
+<dt class="message"> host is an IP in URL "%s" #765 </dt>
+<dd class="message">
+See <a href="summary.html#opt_uri_require_domain">uri-require-domain</a>
+and <a href="summary.html#opt_uri_bl_policy">uri-bl-policy</a>
+options.
+</dd>
+<a name='766'></a>
+<dt class="message"> broken URL "%s": %s #766 </dt>
+<dd class="message">
+See <a href="summary.html#opt_uri_links_policy">uri-links-policy</a> option.
+</dd>
+<a name='781'></a>
+<dt class="message"> URI per message limit exceeded #781 </dt>
+<dd class="message">
+See <a href="summary.html#opt_uri_max_limit">uri-max-limit</a> option.
+</dd>
+<a name='894'></a>
+<dt class="message"> 550 5.7.1 rejected URI NS, %s #894 </dt>
+<a name='919'></a>
+<dt class="message"> 450 4.7.1 URI %s SOA lookup error #919 </dt>
+<a name='973'></a>
+<dt class="message"> URI %s invalid SOA (%d) #973 </dt>
+<a name='895'></a>
+<dt class="message"> 550 5.7.1 rejected content, %s #895 </dt>
+<a name='790'></a>
+<dt class="message"> 550 5.7.1 rejected client %s [%s], %s #790 </dt>
+<dd class="message">
+See <a href="summary.html#opt_uri_bl_ptr">uri-bl-ptr</a> option.
+</dd>
+<a name='790'></a>
+<dt class="message"> 550 5.7.1 rejected PTR NS, %s #790 </dt>
+<a name='792'></a>
+<dt class="message"> 550 5.7.1 rejected HELO, %s #792 </dt>
+<dd class="message">
+See <a href="summary.html#opt_uri_bl_helo">uri-bl-helo</a> option.
+</dd>
+<a name='794'></a>
+<dt class="message"> 550 5.7.1 rejected MAIL FROM, %s #794 </dt>
+<dd class="message">
+See <a href="summary.html#opt_uri_bl_mail">uri-bl-mail</a> option.
+</dd>
+<a name='900'></a>
+<dt class="message"> 550 5.7.1 rejected MAIL NS, %s #900 </dt>

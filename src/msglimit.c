@@ -20,6 +20,7 @@
 
 #include <limits.h>
 #include <com/snert/lib/mail/smdb.h>
+#include <com/snert/lib/sys/Time.h>
 
 /***********************************************************************
  ***
@@ -65,6 +66,7 @@ Option opt_msg_limit_report 	= { "msg-limit-report", "tempfail", usage_msg_limit
 Stats stat_message_limit	= { STATS_TABLE_MSG, "message-limit" };
 
 typedef struct {
+	time_t expires;
 	long messages;
 	long seconds;
 	int unit;
@@ -197,6 +199,7 @@ msgLimitCacheUpdate(Session *sess, MsgLimit *limit, const char *key)
 	}
 
 	limit->count = ++value;
+	limit->expires = row.expires;
 	row.value_size = (unsigned char ) snprintf((char *) row.value_data, sizeof (row.value_data), "%ld", value);
 
 	if (verb_cache.option.value)
@@ -234,6 +237,7 @@ msgLimitParse(const char *specifier, MsgLimit *limit)
 	case 'm': seconds *= 60;
 	}
 
+	limit->expires = 0;
 	limit->messages = messages;
 	limit->seconds = seconds;
 	limit->unit = unit;
@@ -245,6 +249,7 @@ msgLimitReply(Session *sess, MsgLimit *limit, const char *who)
 {
 	long units;
 	const char *word;
+	char expires[TIME_STAMP_MIN_SIZE];
 
 	if (0 < limit->messages && limit->messages < limit->count) {
 		units = limit->seconds;
@@ -259,12 +264,14 @@ msgLimitReply(Session *sess, MsgLimit *limit, const char *who)
 
 		statsCount(&stat_message_limit);
 
-		if (2 <= opt_msg_limit_report.value) {
+		if (2 <= opt_msg_limit_report.value && limit->count <= limit->messages + 1) {
+			/* Send report only once first time limit is exceeded. */
+			(void) TimeStamp(&limit->expires, expires, sizeof (expires));
 			(void) send_report(
 				sess, "message limit exceeded",
-				"%s has exceeded %ld message%s per %ld %s%s" CRLF,
+				"%s has exceeded %ld message%s per %ld %s%s" CRLF "limit expires %s" CRLF,
 				who, limit->messages, limit->messages == 1 ? "" : "s",
-				units, word, units == 1 ? "" : "s"
+				units, word, units == 1 ? "" : "s", expires
 			);
 		}
 

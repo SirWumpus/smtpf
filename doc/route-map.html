@@ -1,0 +1,394 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN">
+<!-- $OpenBSD$ -->
+<html>
+<head>
+<title>
+SnertSoft - smtpf/2.5
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+<meta name="keywords" content="SMTP Filter Proxy, call back, call ahead, grey listing, greylisting, RET, Return Encrypted Tag" />
+<meta name="description" content="smtpf sits in front of one or more mail transfer agents (MTA) on SMTP port 25. It acts as a proxy, filtering and forwarding mail to one or more MTAs, which can be on the same machine or different machines." />
+<link rel="stylesheet" type="text/css" href="./style.css" />
+<script language="JavaScript" type="text/javascript" src="./mailto.js"></script>
+</head>
+
+<body>
+<div align="center">
+<table class="page" cellpadding="0" cellspacing="0" border="0">
+<tr><td>
+
+<a href="http://www.snertsoft.com/">
+<img alt="SnertSoft: We Serve Your Server" src="Img/logo-300x74.png" width="300" height="74" border="0" /></a>
+
+<div align="center">
+<h1 class="title">Barricade MX</h1>
+<h2>
+smtpf/2.5
+<br/><span class="large">&laquo;An SMTP Filtering Proxy&raquo;</span>
+</h2>
+</div>
+
+
+<div class="contents">
+<ol type="A" class="toc">
+<li><a href="manual.shtml">Introduction</a></li>
+<li><a href="license.html">License &amp; Support</a></li>
+<li><a href="install.html">Installation</a></li>
+<li>Configuration</li>
+	<ol type="a">
+	<li><a href="route-map.html">The Route Map</a></li>
+		<ul>
+		<li><a href="route-map.html#route_local_mta">Local MTA</a></li>
+		<li><a href="route-map.html#route_local_route_queue">Local Route</a></li>
+		<li><a href="route-map.html#route_relay">FORWARD &amp; RELAY</a></li>
+			<ul>
+			<li><a href="route-map.html#route_by_domain">by domain</a></li>
+			<li><a href="route-map.html#route_by_mail_address">by mail</a></li>
+			</ul>
+		<li><a href="route-map.html#route_call_ahead">Call-Ahead</a></li>
+			<ul>
+			<li><a href="route-map.html#route_dumb_mx">Accept-Then-Bounce</a></li>
+			</ul>
+		<li><a href="route-map.html#route_auth_support">AUTH Support</a></li>
+		<li><a href="route-map.html#route_etrn_support">ETRN Support</a></li>
+		</ul>
+	<li><a href="access-map.html">The Access Map</a></li>
+		<ul>
+		<li><a href="access-map.html#access_lookups">Lookup Sequences</a></li>
+		<li><a href="access-map.html#access_tags">Tags</a></li>
+		<li><a href="access-map.html#access_about_delay_checks">About Delay Checks</a></li>
+		<li><a href="access-map.html#access_simple_value">Right Hand Side Values</a></li>
+		<li><a href="access-map.html#access_action_words">Action Words</a></li>
+		<li><a href="access-map.html#access_pattern_lists">Pattern Lists</a></li>
+		<li><a href="access-map.html#access_simple_pattern">!Simple Patterns!</a></li>
+		<li><a href="access-map.html#access_regex_pattern">/Regular Expression Patterns/</a></li>
+		</ul>
+
+	<li><a href="smtpf-cf.html">The smtpf.cf File</a></li>
+		<ul>
+		<li><a href="smtpf-cf.html#smtpf_avastd">Avast! AV Support</a></li>
+		<li><a href="smtpf-cf.html#smtpf_cache">Cache Options</a></li>
+		<li><a href="smtpf-cf.html#smtpf_call_back">Call-Backs</a></li>
+		<li><a href="smtpf-cf.html#smtpf_clamd">Clam AV Support</a></li>
+		<li><a href="smtpf-cf.html#smtpf_cli">Command-Line Interface</a></li>
+		<li><a href="smtpf-cf.html#smtpf_client_is_mx">Client IP Address</a></li>
+		<li><a href="smtpf-cf.html#smtpf_concurrent">Concurrency &amp; Rate</a></li>
+		<li><a href="smtpf-cf.html#smtpf_dns_bl">DNS Based Lists</a></li>
+		<li><a href="smtpf-cf.html#smtpf_delay_checks">Delay Checks</a></li>
+		<li><a href="smtpf-cf.html#smtpf_emew">EMEW</a></li>
+		<li><a href="smtpf-cf.html#smtpf_fpscand">F-Prot AV Support</a></li>
+		<li><a href="smtpf-cf.html#smtpf_grey_list">Grey Listing</a></li>
+		<li><a href="smtpf-cf.html#smtpf_grey_content">Grey Content</a></li>
+		<li><a href="smtpf-cf.html#smtpf_helo">SMTP HELO Testing</a></li>
+		<li><a href="smtpf-cf.html#smtpf_interface">Network Interface</a></li>
+		<li><a href="smtpf-cf.html#smtpf_length_limit">Length &amp; Limits</a></li>
+		<li><a href="smtpf-cf.html#smtpf_rfc">RFC Conformance</a></li>
+		<li><a href="smtpf-cf.html#smtpf_run">Run Settings</a></li>
+		<li><a href="smtpf-cf.html#smtpf_server">Server Performance</a></li>
+		<li><a href="smtpf-cf.html#smtpf_siq">SIQ Support</a></li>
+		<li><a href="smtpf-cf.html#smtpf_smtp">SMTP Options</a></li>
+		<li><a href="smtpf-cf.html#smtpf_savdid">Sophos AV Support</a></li>
+		<li><a href="smtpf-cf.html#smtpf_spamd">SpamAssassin Support</a></li>
+		<li><a href="smtpf-cf.html#smtpf_spf">SPF Support</a></li>
+		<li><a href="smtpf-cf.html#smtpf_stats">Statistics</a></li>
+		<li><a href="smtpf-cf.html#smtpf_uri">URI Blacklists</a></li>
+		<li><a href="smtpf-cf.html#smtpf_verbose">Verbose Logging</a></li>
+		</ul>
+	<li><a href="summary.html">Option Summary</a></li>
+	</ol>
+<li>Runtime</li>
+	<ol type="a">
+	<li><a href="runtime.html#command_options">Command Line Options</a></li>
+	<li><a href="runtime.html#runtime_config">Runtime Configuration</a></li>
+	<li><a href="runtime.html#cache_file">The Cache File</a></li>
+		<ul>
+		<li><a href="runtime.html#cache_structure">The Cache Structure</a></li>
+		</ul>
+	<li><a href="runtime.html#stats_file">The Stats File</a></li>
+		<ul>
+		<li><a href="runtime.html#stats_structure">The Stats Structure</a></li>
+		</ul>
+	<li><a href="syslog.html">Log Messages</a></li>
+	<li><a href="reply.html">SMTP Replies</a></li>
+	</ol>
+<li><a class="glossary" href="glossary.html">Glossary</a></li>
+</ol>
+</div>
+
+
+<a name="route_map"></a>
+<h3>route-map</h3>
+<p>
+smtpf sits in front of one or more mail transfer agents (<a class="glossary" href="glossary.html#term_MTA">MTA</a>) on <a class="glossary" href="glossary.html#term_SMTP">SMTP</a>
+port 25. It acts as a proxy, filtering and forwarding mail to one or
+more MTAs, which can be on the same machine or different machines. To that end
+the file referenced by the <a href="summary.html#opt_route_map">route-map</a> option
+tells smtpf what domains, hosts, or mail addresses you accept mail for,
+where to route them, where to optionally verify users, and/or if to allow relaying.
+</p>
+
+<p>
+The file referenced by the <a href="summary.html#opt_route_map">route-map</a> option
+can be a simple text file, <a href="http://www.sqlite.org/">SQLite3</a> database, or socket-map server. The recommended
+configuration uses an SQLite3 database generated from a <code>route.cf</code> text file.
+This can be done in one of two ways:
+</p>
+
+<blockquote><pre>
+# kvmap -l \
+  "route!sql!/etc/smtpf/route.sq3" \
+  &lt; /etc/smtpf/route.cf
+</pre></blockquote>
+
+<p>
+or simply by using the supplied <code>Makefile</code>
+</p>
+
+<blockquote><pre>
+# cd /etc/smtpf
+# make route.sq3
+</pre></blockquote>
+
+<p>
+If you do not specify the <code>route.sq3</code> explicitly, then the <code>make</code>
+command will build all the configuration files if necessary.
+</p>
+
+<p>
+The <code>route.cf</code> text file consists of lines of key-value pairs.
+Each line consists of a key field separated by white space from the value field,
+which is the remainder of the line. Comments start with a hash (<code>#</code>) on a line by themselves.
+The key lookups are case insensitive, while the values are case sensitive.
+The order in which keys are looked up is outlined by the <a href="summary.html#opt_access_map">access-map</a>
+option.
+</p>
+
+<p>
+The key can be the connecting SMTP client IPv4 or IPv6 address or part thereof,
+the client host name found from a <a class="glossary" href="glossary.html#term_PTR">DNS PTR</a> lookup or part thereof, or a recipient's domain name
+or part thereof for which we accept mail.
+The key is prefixed with a <span class="tag"><span class="tag">route:</span></span> tag.
+Other tags may be added in future releases.
+</p>
+<p>
+The value is a semi-colon (<code>;</code>) separated list of one or more parameters. Currently supported
+parameters are <code>FORWARD:</code>, <code>RCPT:</code>, and <code>RELAY</code> (case sensitive).
+The <code>FORWARD:</code> and <code>RCPT:</code> parameters each specify a comma (<code>,</code>) separated list
+of one or more hosts by IP address or name.
+</p>
+
+<a name="route_local_mta"></a>
+<h4>Local MTA</h4>
+<p>
+When a <em>local MTA</em> operates on the same machine as smtpf, it will have to be
+configured to accept connections on a port other than SMTP port 25,
+which smtpf will be listening on. In our examples, we use local host port 26
+for the local MTA. When specifying IPv6 addresses with a port number, the address
+must appear within square brackets (<code>[</code>, <code>]</code>), for example
+"<code>[2001:0DB8::1234]:26</code>".
+</p>
+<p>
+This example shows all the possible variants for the <em>local route</em> using
+a local MTA on the same machine,
+though the preferred form is <code>route:local</code>. The other variants are
+still supported for backwards compatibility with previous releases.
+</p>
+<blockquote>
+<table border="0" cellspacing="0" cellpadding="0">
+<tr valign="top"><td width="41%" class="key tline"><span class="tag">route:</span>local&nbsp;&nbsp;</td><td width="59%" class="value tline">FORWARD: localhost:26</td></tr>
+<tr valign="top"><td width="41%" class="key"><span class="tag">route:</span>127.0.0.1&nbsp;&nbsp;</td><td width="59%" class="value">FORWARD: 127.0.0.1:26</td></tr>
+<tr valign="top"><td width="41%" class="key bline"><span class="tag">route:</span>::1&nbsp;&nbsp;</td><td width="59%" class="value bline">FORWARD: [::1]:26 </td></tr>
+</table>
+</blockquote>
+
+<a name="route_local_route_queue"></a>
+<h4>Local Route</h4>
+<p>
+The <em>local route</em> is very important in smtpf. It is used for queuing outbound
+messages from a <code>RELAY</code>, queuing messages for SMTP authenticated senders, and
+for processing messages for unqualified recipients, ie. those that have no domain name part
+in the address. The <em>local route</em> can be a list of other hosts machines as shown below.
+Note that the hosts specified in the <em>local route</em> must <em>not</em> use the smtpf
+server as a smart-host, otherwise you can end up with a mail loop.
+</p>
+
+<p>
+This example shows all the possible variants for the <em>local route</em>,
+though the preferred form is <code>route:local</code>. The other variants are
+still supported for backwards compatibility with previous releases.
+</p>
+<blockquote>
+<table border="0" cellspacing="0" cellpadding="0" width="100%">
+<tr valign="top"><td width="41%" class="key tline"><span class="tag">route:</span>local</td><td width="59%" class="value tline">FORWARD: [2001:db8::1]:26, other.host</td></tr>
+<tr valign="top"><td width="41%" class="key"><span class="tag">route:</span>127.0.0.1</td><td width="59%" class="value">FORWARD: 192.0.2.1</td></tr>
+<tr valign="top"><td width="41%" class="key bline"><span class="tag">route:</span>::1</td><td width="59%" class="value bline">FORWARD: 2001:db8::1</td></tr>
+</table>
+</blockquote>
+
+<a name="route_forward"></a>
+<h4>FORWARD &amp; RELAY</h4>
+<p>
+After the <em>local route</em>, the next most important records that must be added to
+the <a href="summary.html#opt_route_map">route-map</a>
+are the recipient domains we will accept mail for. For example:
+</p>
+
+<blockquote>
+<table border="0" cellspacing="0" cellpadding="0" width="100%">
+<tr valign="top"><td width="41%" class="key tline"><span class="tag">route:</span>example.com</td><td width="59%" class="value tline">FORWARD: 127.0.0.1:26, 192.168.0.9</td></tr>
+<tr valign="top"><td width="41%" class="key"><span class="tag">route:</span>snertsoft.com</td><td width="59%" class="value">FORWARD: 192.0.2.1</td></tr>
+<tr valign="top"><td width="41%" class="key bline"><span class="tag">route:</span>info@snertsoft.com</td><td width="59%" class="value bline">FORWARD: 192.0.2.2</td></tr>
+</table>
+</blockquote>
+
+<a name="route_by_domain"></a>
+<p>
+The <code>FORWARD:</code> parameter tells smtpf where to send a message for a recipient
+of that domain. When you specify more than one <code>FORWARD:</code> host, as was done for
+<span class="key"><span class="tag">route:</span>example.com</span> above, then they are tried in left to right order until one of them
+answers (see also <a href="summary.html#opt_route_forward_selection">route-forward-selection</a>). If no host answers, then that recipient will be
+temporarily rejected.
+</p>
+
+<a name="route_by_mail_address"></a>
+<p>
+Note that it is also possible to route individual mail addresses as shown by
+<span class="key"><span class="tag">route:</span>info@snertsoft.com</span> to a different host, instead of
+the default for the domain, <span class="key"><span class="tag">route:</span>snertsoft.com</span>.
+</p>
+
+<a name="route_relay"></a>
+<p>
+When creating a <a href="summary.html#opt_route_map">route-map</a>, it is usually a good
+idea to specify which hosts or subnets from your LAN are allowed to relay. For example:
+</p>
+
+<blockquote>
+<table border="0" cellspacing="0" cellpadding="0" width="100%">
+<tr valign="top"><td width="41%" class="key tline"><span class="tag">route:</span>10.0.0.1</td><td width="59%" class="value tline">RELAY</td></tr>
+<tr valign="top"><td width="41%" class="key"><span class="tag">route:</span>192.168.0</td><td width="59%" class="value">RELAY</td></tr>
+<tr valign="top"><td width="41%" class="key"><span class="tag">route:</span>FE80:0000</td><td width="59%" class="value">RELAY</td></tr>
+<tr valign="top"><td width="41%" class="key bline"><span class="tag">route:</span>example.com</td><td width="59%" class="value bline">FORWARD: 192.168.1.2; RELAY</td></tr>
+</table>
+</blockquote>
+
+<p>
+The <code>RELAY</code> tag should be used sparingly, typically only for your
+LAN and trusted hosts. Any client connection that is marked as a RELAY, will
+have their mail sent to the <em>local route</em> for queuing and white listed
+through many, but not all, of the tests (anti-virus scanning will always be done
+when enabled and if required, EMEW transformation of the Message-Id header).
+</p>
+
+<p>
+When a <code>RELAY</code> connects, all mail is sent to the <em>local route</em>
+for queuing. It is imperative that the SMTP servers handling the <em>local route</em>
+know how to relay their domains correctly, otherwise mail may fail to be delivered.
+</p>
+
+<p>
+The <span class="key"><span class="tag">route:</span>example.com</span> shows an instance
+where inbound mail destined for <span class="key">example.com</span> is forwarded to a specific host
+on the LAN and outbound mail from any host within the <span class="key">example.com</span> domain is
+relayed. The point to note here is that inbound mail route selection is taken based on the domain
+name of the recipient address, while relay selection is based on the
+<a class="glossary" href="glossary.html#term_PTR">DNS PTR</a> record found based on the connected SMTP
+client's IP address. If you do not have reverse DNS entries for your internal hosts, then
+you must specify <code>RELAY</code> entries by IP address or family as shown above.
+</p>
+
+<a name="route_call_ahead"></a>
+<h4>Call-Ahead</h4>
+<p>
+The <code>RCPT:</code> parameter tells smtpf to perform a <em>call-ahead</em>
+to another set of hosts in order to verify if the recipient is valid. This parameter is optional
+and is only recommended when the <code>FORWARD:</code> host is some intermediate MTA,
+such as an anti-virus appliance or gateway machine that has no knowledge of recipients
+for that domain. <code>RCPT:</code> allows you to jump over one or more intermediate
+servers to talk directly with the final mail store.
+
+Accept and reject results from a <em>call-ahead</em> are cached for future use, while
+temporary failure results are not cached at all. Only the expire time of an accept result
+will be touched (see <a href="smtpf-cf.html#smtpf_cache">cache-accept-ttl</a>).
+</p>
+
+<blockquote>
+<table border="0" cellspacing="0" cellpadding="0" width="100%">
+<tr valign="top"><td width="41%" class="key tline"><span class="tag">route:</span>example.net</td><td width="59%" class="value tline">FORWARD: scan.our.domain; RCPT: 192.168.1.2</td></tr>
+<tr valign="top"><td width="41%" class="key bline"><span class="tag">route:</span>example.org</td><td width="59%" class="value bline">FORWARD: scan.our.domain; RCPT: exchange.our.domain</td></tr>
+</table>
+</blockquote>
+
+<a name="route_dumb_mx"></a>
+<p>
+Note that some MTA by default use an <em>accept-then-bounce</em> model and so do not work with
+<em>call-ahead</em> very well, such as default configurations for Microsoft Exchange and Domino servers.
+An <em>accept-then-bounce</em> server will always accept any SMTP RCPT TO: command whether it
+be valid or not. Typically such servers can be configured to verify the RCPT TO: argument
+the moment the command is received (instead of delaying until after the message body) so
+as to provide a more useful and immediate response to the <em>call-ahead</em>.
+</p>
+<p>
+The <em>call-ahead</em> test will perform a false-RCPT test to detect <em>accept-then-bounce</em>
+servers and cache the result. If the server does <em>accept-then-bounce</em>, then future
+<em>call-ahead</em> attempts will be skipped. Alternatively, if an
+<em>accept-then-bounce</em> server cannot be configured otherwise, then do not use the
+<code>RCPT:</code> parameter.
+</p>
+
+<a name="route_auth_support"></a>
+<h4>AUTH Support</h4>
+<p>
+smtpf has support for SMTP <a href="glossary.html#term_AUTH">AUTH PLAIN</a> and
+<a href="glossary.html#term_AUTH">AUTH LOGIN</a> methods. If you need SMTP AUTH
+support, then be sure to enable both <a href="summary.html#opt_smtp_enable_esmtp">smtp-enable-esmtp</a>,
+<a href="summary.html#opt_auth_delay_checks">auth-delay-checks</a>,
+which will postpone some connection and HELO/EHLO tests until a MAIL FROM: is received.
+</p>
+
+<p>
+If the authentication-Id given to the AUTH command is <em>fully qualified</em>, ie. it has the form
+<code>userid@sender.domain</code>, then AUTH command is first proxied to the <code>RCPT:</code> or
+<code>FORWARD:</code> host of the <span class="key"><span class="tag">route:</span>sender.domain</span>; if that fails,
+then the unqualified version of the authentication-Id is tried.
+
+If the authentication-Id is not qualified, ie. is just a simple <code>userid</code>, then the
+AUTH command is proxied to the <code>RCPT:</code> or <code>FORWARD:</code> host of the <em>local route</em>.
+
+<!--
+Otherwise, if the connecting client is a relay, then the AUTH command is simply accepted.
+-->
+</p>
+
+<p>
+All mail sent over an authenticated session is forwarded (queued) to the SMTP host that
+authenticated the credentials. SMTP AUTH support in smtpf is limited and
+it is recommended that a proper <a href="glossary.html#term_MSA">MSA</a> be employed.
+</p>
+
+<a name="route_etrn_support"></a>
+<h4>ETRN Support</h4>
+<p>
+smtpf has support for SMTP ETRN, where ETRN commands are
+simply relayed to the <a href="#route_local_route_queue">local route</a>, which is responsible for queuing.
+If the local route refers to more than one forward host, then those hosts must all share the
+same mail queue, otherwise the behaviour is undefined.
+</p>
+
+<p style="text-align: center;">
+-<a href="#"> TOP </a>-
+</p>
+
+<!-- copyright -->
+<p class="copyright" style="text-align: center;">
+<nobr>Copyright 2006, 2012 by SnertSoft. All rights reserved.</nobr>
+<br/><nobr>BarricadeMX trademark &amp; patents pending.</nobr>
+</p>
+<!--end copyright-->
+
+</td></tr>
+</table>
+</div>
+</body>
+</html>
+

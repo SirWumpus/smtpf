@@ -49,7 +49,7 @@ AC_CONFIG_FILES(doc/license.html)
 AC_CONFIG_FILES(doc/BarricadeMX.html)
 AC_CONFIG_FILES(examples/startup.sh)
 AC_CONFIG_FILES(examples/Makefile)
-AC_CONFIG_FILES(test/makefile)
+dnl AC_CONFIG_FILES(test/makefile)
 AC_CONFIG_FILES(src/config.h.in)
 AC_CONFIG_HEADERS(src/config.h)
 

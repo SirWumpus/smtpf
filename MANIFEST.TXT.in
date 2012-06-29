@@ -2,7 +2,6 @@ com/snert/src/@PACKAGE_NAME@/aclocal.m4
 com/snert/src/@PACKAGE_NAME@/configure
 com/snert/src/@PACKAGE_NAME@/configure.in
 com/snert/src/@PACKAGE_NAME@/doc/CHANGES.TXT
-com/snert/src/@PACKAGE_NAME@/doc/@PACKAGE_VERSION@-RELEASE-NOTES.TXT
 com/snert/src/@PACKAGE_NAME@/doc/Img/logo-300x74.png
 com/snert/src/@PACKAGE_NAME@/doc/Img/mrpixel.gif
 com/snert/src/@PACKAGE_NAME@/doc/Img/bmx-logo-150x57.bmp
@@ -64,7 +63,6 @@ com/snert/src/@PACKAGE_NAME@/examples/extra/bmx-uribl-update.pl
 com/snert/src/@PACKAGE_NAME@/install.sh.in
 com/snert/src/@PACKAGE_NAME@/makefile.in
 com/snert/src/@PACKAGE_NAME@/MANIFEST.TXT.in
-com/snert/src/@PACKAGE_NAME@/test/makefile.in
 com/snert/src/@PACKAGE_NAME@/src/.gdbinit
 com/snert/src/@PACKAGE_NAME@/src/access.c
 com/snert/src/@PACKAGE_NAME@/src/access.h
@@ -188,7 +186,6 @@ com/snert/src/@PACKAGE_NAME@/src/valgrind/valgrind.h
 com/snert/src/@PACKAGE_NAME@/src/valgrind/memcheck.h
 com/snert/src/@PACKAGE_NAME@/src/valgrind/helgrind.h
 com/snert/src/@PACKAGE_NAME@/src/valgrind/callgrind.h
-com/snert/src/@PACKAGE_NAME@/package/Debian
 com/snert/src/@PACKAGE_NAME@/package/FreeBSD/+COMMENT.in
 com/snert/src/@PACKAGE_NAME@/package/FreeBSD/+CONTENTS.in
 com/snert/src/@PACKAGE_NAME@/package/FreeBSD/+DESC.in
@@ -202,4 +199,3 @@ com/snert/src/@PACKAGE_NAME@/package/OpenBSD/+DESC.in
 com/snert/src/@PACKAGE_NAME@/package/OpenBSD/+DISPLAY.in
 com/snert/src/@PACKAGE_NAME@/package/OpenBSD/makefile.in
 com/snert/src/@PACKAGE_NAME@/package/Windows/installer.nsi.in
-com/snert/src/@PACKAGE_NAME@/package/Solaris

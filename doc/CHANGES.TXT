@@ -16,8 +16,6 @@ is no set schedule for releases.
   !!	DSN code should be sent to local queue route instead of
    	direct to MX.
 
-   ?	STARTTLS
-
    ?	AUTH CRAM-MD5 and AUTH DIGEST-MD5
 
    ?	FastCLI aka FastCGI instead of a built in scripting language.
@@ -46,8 +44,6 @@ is no set schedule for releases.
   ??	Support for port 587.
 
    ?	uri-bl-ns, uri-bl-mail-ns: check NS hosts against URIBLs.
-
-  ??	URI support to HTML named entities.
 
    ?	Consider spamd PROCESS support (probably when FastCLI is added)
 
@@ -285,10 +281,19 @@ is no set schedule for releases.
 
    +	Added msg-limit-report, report-to options. Requested by Nick Stefan.
 
+   +	Disable ESMTP support (EHLO, AUTH, STARTTLS) when connection is 
+	blacklisted.
+
    !	Fix old bug where some modules having *Optn functions were not
 	initialised properly at startup; specifically those options that
 	convert their option string into a special value. See
 	filter_optn_table.
+
+   !	Fix old bug where a discard operation could seg.fault because the
+	forward connection was never opened for a discard operation.
+
+   !	RFC tests applied to headers, such as minimum required headers,
+	should be subject to access-map white listing.
 
 --2.5.5--
 

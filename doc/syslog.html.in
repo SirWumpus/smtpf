@@ -1,0 +1,1087 @@
+<a name='100'></a>
+<dt> ERR #100 pattern delimiter error: "%.50s..." </dt>
+<dd>
+Failed to find the end bang (!) delimiter of a <a href="access-map.html#access_simple_pattern">!simple!</a> pattern.
+See <a href="access-map.html">access-map</a> about right-hand-side
+<a href="access-map.html#access_pattern_lists">pattern lists</a>.
+</dd>
+<a name='103'></a>
+<dt> ERR #103 network delimiter error: "%.50s..." </dt>
+<dd>
+Failed to find the end square-bracket (]) delimiter of a <code>[network/cidr]</code> pattern.
+See <a href="access-map.html">access-map</a> about right-hand-side
+<a href="access-map.html#access_pattern_lists">pattern lists</a>.
+</dd>
+<a name='105'></a>
+<dt> ERR #105 network specifier error: "%.50s..." </dt>
+<a name='106'></a>
+<dt> ERR #106 network specifier error, "%.50s..." </dt>
+<dd>
+The <code>network</code> portion of a <code>[network/cidr]</code>
+pattern does not parse to a valid IPv4 or IPv6 address.
+See <a href="access-map.html">access-map</a> about right-hand-side
+<a href="access-map.html#access_pattern_lists">pattern lists</a>.
+</dd>
+<a name='108'></a>
+<dt> ERR #108 regular expression delimiter error: "%.50s..." </dt>
+<dd>
+Failed to find the end slash (/) delimiter of a <a href="access-map.html#access_regex_pattern">/regex/</a> pattern.
+See <a href="access-map.html">access-map</a> about right-hand-side
+<a href="access-map.html#access_pattern_lists">pattern lists</a>.
+</dd>
+<a name='110'></a>
+<dt> ERR #110 regular expression error: %s "%.50s..." </dt>
+<a name='112'></a>
+<dt> ERR #112 regular expression error: %s "%.50s..." </dt>
+<dd>
+There is an error in a <a href="access-map.html#access_regex_pattern">/regex/</a> pattern
+that prevents it from being compiled.
+</dd>
+<a name='115'></a>
+<dt> WARN #115 access-map option disabled </dt>
+<dd>
+The <a href="access-map.html#access_map">access-map</a> option has been
+set to an empty string.
+</dd>
+<a name='116'></a>
+<dt> ERR #116 access-map=%s text method no longer supported  </dt>
+<a name='117'></a>
+<dt> ERR #117 access-map=%s open error </dt>
+<dd>
+The key-value-map specified by the <a href="access-map.html">access-map</a> option could
+not be opened. Check the map type, file path, and file <a href="install.html#unix_permissions">permissions &amp; ownership</a>.
+</dd>
+<a name='119'></a>
+<dt> INFO #119 host %s [%s] %s (%s) </dt>
+<dd>
+There is a <span class="tag">Connect:</span> tag entry for either the
+client name or IP address with a right-hand-side value of OK.
+See <a href="access-map.html#access_map">access-map</a>.
+</dd>
+<a name='974'></a>
+<dt> INFO #974 host %s [%s] %s </dt>
+<dd>
+There is a <a href="access-map.html#tag_connect"><span class="tag">Connect:</span></a> tag entry for either the
+client name or IP address with a right-hand-side value of DISCARD.
+See <a href="access-map.html#access_tags">access-map</a>.
+</dd>
+<a name='975'></a>
+<dt> INFO #975 message %s </dt>
+<dd>
+There is a <a href="access-map.html#access_tags">tag entry</a> with a right-hand-side value of DISCARD.
+See <a href="access-map.html#access_action_words">access-map</a>.
+</dd>
+<a name='124'></a>
+<dt> INFO #124 host %s [%s] sender &lt;%s&gt; %s (%s) </dt>
+<dd>
+There is a <a href="access-map.html#tag_connect_from"><span class="tag">Connect:From:</span></a>
+ combo tag entry for either the client name and sender pair or client IP address and sender pair with a
+right-hand-side value of OK.
+See <a href="access-map.html#access_tags">access-map</a>.
+</dd>
+<a name='126'></a>
+<dt> INFO #126 sender &lt;%s&gt; %s (%s) </dt>
+<dd>
+There is a <a href="access-map.html#tag_from"><span class="tag">From:</span></a> tag entry for
+the sender address or their domain with a right-hand-side value of OK.
+See <a href="access-map.html#access_tags">access-map</a>.
+</dd>
+<a name='134'></a>
+<dt> INFO #134 host %s [%s] recipient &lt;%s&gt; %s (%s) </dt>
+<dd>
+There is a <a href="access-map.html#tag_connect_to"><span class="tag">Connect:To:</span></a> combo tag entry for either the
+client name and recipient pair or client IP address and recipient pair with a
+right-hand-side value of OK.
+See <a href="access-map.html#access_tags">access-map</a>.
+</dd>
+<a name='136'></a>
+<dt> INFO #136 sender &lt;%s&gt; recipient &lt;%s&gt; %s (%s) </dt>
+<dd>
+There is a <a href="access-map.html#tag_from_to"><span class="tag">From:To:</span></a> combo tag entry for a sender
+and recipient pair with a right-hand-side value of OK.
+See <a href="access-map.html#access_tags">access-map</a>.
+</dd>
+<a name='138'></a>
+<dt> INFO #138 recipient &lt;%s&gt; %s (%s) </dt>
+<dd>
+There is a <a href="access-map.html#tag_to"><span class="tag">To:</span></a> tag entry for sender's
+address with a right-hand-side value of OK.
+See <a href="access-map.html#access_map">access-map</a>.
+</dd>
+<a name='923'></a>
+<dt> INFO #923 helo %s %s (%s) </dt>
+<dd>
+There is a <a href="access-map.html#tag_helo"><span class="tag">Helo:</span></a> tag entry for
+HELO/EHLO argument with a right-hand-side value of OK.
+See <a href="access-map.html#access_tags">access-map</a>.
+</dd>
+<a name='976'></a>
+<dt> INFO #976 helo %s %s </dt>
+<dd>
+There is a <a href="access-map.html#tag_helo"><span class="tag">Helo:</span></a>
+tag entry for HELO/EHLO argument a right-hand-side value of DISCARD.
+See <a href="access-map.html#access_tags">access-map</a>.
+</dd>
+<a name='821'></a>
+<dt> INFO #821 %s found content=%s pattern=%s </dt>
+<dd>
+Reported by the deny-content family of options.
+See <a href="summary.html#opt_deny_content">deny-content</a>.
+</dd>
+<a name='161'></a>
+<dt> ERR #161 %s </dt>
+<dd>
+The avastd daemon found a virus or suspicious content in the message.
+See <a href="summary.html#opt_avastd_policy">avastd-policy</a>.
+</dd>
+<a name='163'></a>
+<dt> ERR #163 avastd error: %s </dt>
+<a name='172'></a>
+<dt> ERR #172 cache-path=%s open error: %s (%d) </dt>
+<dd>
+The cache database could not be opened. Check the <code>cache.sq3</code> file <a href="install.html#unix_permissions">permissions &amp; ownership</a>
+</dd>
+<a name='173'></a>
+<dt> ERR #173 cache-sync-mode=%s error </dt>
+<dd>
+An invalid value was specified for this option.
+</dd>
+<a name='176'></a>
+<dt> ERR #176 cache-unicast-hosts error: %s (%d) </dt>
+<a name='177'></a>
+<dt> ERR #177 cache-unicast-hosts error: %s (%d) </dt>
+<dd>
+An error in parsing the option or starting the unicast cache listener thread.
+See <a href="summary.html#opt_cache_unicast_domain">cache-unicast-domain</a> or <a href="summary.html#opt_cache_unicast_hosts">cache-unicast-hosts</a>.
+</dd>
+<a name='202'></a>
+<dt> WARN #202 clamd-max-size=%ld reached </dt>
+<dd>
+The size of the message passed to clamd has been reached.
+No additional data will be passed to clamd.
+See <a href="smtpf-cf.html#smtpf_clamd">clamd-max-size</a>.
+</dd>
+<a name='207'></a>
+<dt> ERR #207 %s </dt>
+<dd>
+The clamd daemon found a virus or suspicious content in the message.
+See <a href="summary.html#opt_clamd_policy">clamd-policy</a>.
+</dd>
+<a name='210'></a>
+<dt> ERR #210 error parsing %s='%s': %s (%d) </dt>
+<dd>
+See <a href="summary.html#opt_cli_content">cli-content</a> and <a href="summary.html#opt_cli_envelope">cli-envelope</a>.
+</dd>
+<a name='212'></a>
+<dt> INFO #212 started %s[%d] %s </dt>
+<dd>
+See <a href="smtpf-cf.html#smtpf_cli">CLI</a> section, and the options
+<a href="summary.html#opt_cli_content">cli-content</a> and <a href="summary.html#opt_cli_envelope">cli-envelope</a>.
+</dd>
+<a name='213'></a>
+<dt> ERR #213 cmdStart(%s) failed: %s (%d) </dt>
+<dd>
+There was a problem invoking the specified command-line.
+Things to check are if the command is on default PATH or specify an absolute path and/or check that options are correct.
+See <a href="summary.html#opt_cli_content">cli-content</a> and <a href="summary.html#opt_cli_envelope">cli-envelope</a>.
+</dd>
+<a name='215'></a>
+<dt> ERR #215 write error to child=%d: %s (%d) </dt>
+<dd>
+There was a problem closing the input stream to the CLI child process.
+See <a href="summary.html#opt_cli_content">cli-content</a> and <a href="summary.html#opt_cli_envelope">cli-envelope</a>.
+</dd>
+<a name='220'></a>
+<dt> ERR #220 %s[%d] terminated on signal=%d%s", </dt>
+<dd>
+The CLI child process terminated on signal, possibly due to a program fault.
+See <a href="summary.html#opt_cli_content">cli-content</a> and <a href="summary.html#opt_cli_envelope">cli-envelope</a>.
+</dd>
+<a name='221'></a>
+<dt> ERR #221 exit status=%d out of range </dt>
+<dd>
+The CLI child process returned an unsupported exit code.
+See <a href="summary.html#opt_cli_content">cli-content</a> and <a href="summary.html#opt_cli_envelope">cli-envelope</a>.
+</dd>
+<a name='222'></a>
+<dt> INFO #222 %s[%d] exit status=%d </dt>
+<dd>
+The CLI child process returned a supported exit code.
+See <a href="summary.html#opt_cli_content">cli-content</a> and <a href="summary.html#opt_cli_envelope">cli-envelope</a>.
+</dd>
+<a name='225'></a>
+<dt> INFO #225 %s </dt>
+<dd>
+The CLI child process standard output and standard error are logged.
+See <a href="summary.html#opt_cli_content">cli-content</a> and <a href="summary.html#opt_cli_envelope">cli-envelope</a>.
+</dd>
+<a name='242'></a>
+<dt> INFO #242 host %s [%s] sender &lt;%s&gt; white listed </dt>
+<dd>
+A cached click white-list entry was found.
+See the <a href="summary.html#opt_click_secret">Click</a> family of options.
+</dd>
+<a name='257'></a>
+<dt> ERR #257 client %s [%s] I/O error: %s (%d) </dt>
+<dd>
+During AUTH LOGIN, there was a client read error while waiting for login name.
+</dd>
+<a name='260'></a>
+<dt> ERR #260 AUTH LOGIN buffer overflow caught </dt>
+<dd>
+During AUTH LOGIN, the login user name given exceeds the size of the decoding buffer.
+</dd>
+<a name='261'></a>
+<dt> ERR #261 login base64 decode error </dt>
+<dd>
+During AUTH LOGIN, the login user name could not be decoded according to Base64 rules.
+</dd>
+<a name='262'></a>
+<dt> ERR #262 client %s [%s] I/O error: %s (%d) </dt>
+<dd>
+During AUTH LOGIN, there was a client read error while waiting for password.
+</dd>
+<a name='265'></a>
+<dt> ERR #265 password base64 decode error </dt>
+<dd>
+During AUTH LOGIN, the password could not be decoded according to Base64 rules.
+</dd>
+<a name='268'></a>
+<dt> ERR #268 AUTH PLAIN buffer overflow caught </dt>
+<dd>
+During AUTH PLAIN, the Base64 argument given exceeds the size of the decoding buffer.
+</dd>
+<a name='270'></a>
+<dt> ERR #270 AUTH base64 decode error </dt>
+<dd>
+The AUTH PLAIN argument could not be decoded according to Base64 rules.
+</dd>
+<a name='272'></a>
+<dt> INFO #272 queuing all messages on %s [%s] </dt>
+<dd>
+All messages from successfully authenticated clients are queued on the local route.
+See <a href="route-map.html#route_local_route_queue">route-map</a> documentation.
+</dd>
+<a name='273'></a>
+<dt> INFO #273 auth-id=&lt;%s&gt; relay=%d </dt>
+<dd>
+</dd>
+<a name='281'></a>
+<dt> WARN #281 filter_mail_table unexpected rc=%d </dt>
+<dd>
+This is an internal error.
+</dd>
+<a name='291'></a>
+<dt> WARN #291 filter_rcpt_table unexpected rc=%d </dt>
+<dd>
+This is an internal error.
+</dd>
+<a name='294'></a>
+<dt> INFO #294 queuing message on %s [%s] for &lt;%s&gt; </dt>
+<dd>
+The message is being sent to the local route.
+See <a href="route-map.html">route-map</a> about the
+<a href="route-map.html#route_local_route_queue">local route</a>
+and <a href="route-map.html#route_auth_support">AUTH support</a>.
+</dd>
+<a name='301'></a>
+<dt> ERR #301 chunk write error size=%ld written=%lu: %s (%d) </dt>
+<dd>
+There was an I/O write error while trying to relay a DATA chunk to a forward host.
+</dd>
+<a name='309'></a>
+<dt> ERR #309 missing temp. file name </dt>
+<a name='310'></a>
+<dt> ERR #310 open error "%s": %s (%d) </dt>
+<a name='311'></a>
+<dt> ERR #311 seek error "%s": %s (%d) </dt>
+<dd>
+An error trying to find and open a temporary message file
+which is to be relayed onto the forward hosts.
+See <a href="summary.html#opt_save_dir">save-dir</a> option.
+</dd>
+<a name='312'></a>
+<dt> ERR #312 DATA rejected by all forward hosts </dt>
+<dd>
+All of the forward hosts for this message rejected the DATA command.
+This message almost never appears. If it does, check if the forward
+hosts have implemented any filtering that rejects at DATA, like
+@PACKAGE_NAME@ does for grey-listing and call-back failures.
+</dd>
+<a name='313'></a>
+<dt> ERR #313 read error "%s": %s (%d) </dt>
+<dd>
+An error while reading from a temporary message file,
+which is to be relayed onto the forward hosts.
+See <a href="summary.html#opt_save_dir">save-dir</a> option.
+</dd>
+<a name='977'></a>
+<dt> ERR #977 %s(%lu) </dt>
+<dd>
+Read error for verb +data.
+See the section <a href="runtime.html#runtime_config">Runtime Configuration</a>
+and <a href="summary.html#opt_verbose">verbose</a> option.
+</dd>
+<a name='978'></a>
+<dt> ERR #978 %s(%lu) </dt>
+<a name='980'></a>
+<dt> ERR #980 %s(%lu) </dt>
+<dd>
+Read error and debug output for verb +data during the stripping of SMTP dot transparency;
+<a href="http://tools.ietf.org/html/rfc5321#section-4.5.2">RFC 5321 section 4.5.2</a>.
+See the section <a href="runtime.html#runtime_config">Runtime Configuration</a>
+and <a href="summary.html#opt_verbose">verbose</a> option.
+</dd>
+<a name='319'></a>
+<dt> ERR #319 client %s [%s] timeout after DOT-LF; message must end with CRLF-DOT-CRLF </dt>
+<dd>
+See <a href="summary.html#opt_rfc2821_strict_dot">rfc2821-strict-dot</a>.
+</dd>
+<a name='320'></a>
+<dt> ERR #320 client %s [%s] I/O error: %s (%d) </dt>
+<dd>
+The client appears to have disconnected. A read error occured in the DATA collection loop.
+</dd>
+<dd>
+Debug output for verb +smtp-data. Note that the logged data lines are truncated at 75 characters.
+See the section <a href="runtime.html#runtime_config">Runtime Configuration</a>
+and <a href="summary.html#opt_verbose">verbose</a> option.
+</dd>
+<a name='929'></a>
+<dt> INFO #929 xclient %s [%s] f="%s" h="%s" </dt>
+<dd>
+STMP XCLIENT command summary.
+</dd>
+<a name='958'></a>
+<dt> INFO #958 ctasd vod=%s spam=%s refid=%s </dt>
+<a name='959'></a>
+<dt> ERR #959 %s </dt>
+<dd>
+The ctasd daemon found a virus or suspicious content in the message.
+See <a href="summary.html#opt_ctasd_policy">ctasd-policy</a>.
+</dd>
+<a name='331'></a>
+<dt> ERR #331 %s rejected message: %s </dt>
+<dd>
+A forward host has rejected a message and a DSN has been sent,
+</dd>
+<a name='337'></a>
+<dt> INFO #337 %s duplicate key=%s previous session=%s </dt>
+<dd>
+@PACKAGE_NAME@ tracks what messages have already been seen and discards any
+message that have prevously been processed. This can occur when the client
+connection disappears between the time we relay the end-of-message to the
+forward host(s) and the client receiving an SMTP reply. When the client
+disconnects, it will assume a 421 response and rety sending the message
+later. Mean while if the forward hosts accepted the message the first time,
+then these retries can result in duplicate messages being received.
+See the <a href="summary.html#opt_dupmsg_ttl">dupmsg-ttl</a> option.
+</dd>
+<a name='346'></a>
+<dt> WARN #346 EMEW Message-ID buffer error or no secret set </dt>
+<dd>
+The buffer used to generate the EMEW Message-ID is too small.
+</dd>
+<a name='375'></a>
+<dt> ERR #375 %s </dt>
+<dd>
+The fpscand daemon found a virus or suspicious content in the message.
+See <a href="summary.html#opt_fpscand_policy">fpscand-policy</a>.
+</dd>
+<a name='908'></a>
+<dt> ERR #908 mcc statement error: %s %s </dt>
+<a name='910'></a>
+<dt> INFO #910 greyGcExpire count=%d </dt>
+<a name='964'></a>
+<dt> INFO #964 grey content hash replaced msg-id=%s key={%s} value={%s} hash=%s </dt>
+<a name='383'></a>
+<dt> ERR #383 greyMakeKey() overflow caught, key={%s} truncated </dt>
+<dd>
+</dd>
+<a name='387'></a>
+<dt> INFO #387 grey listed {%s} for %ld seconds </dt>
+<dd>
+See <a href="summary.html#opt_grey_key">grey-key</a>,
+<a href="summary.html#opt_grey_content">grey-content</a>,
+and <a href="summary.html#opt_grey_temp_fail_period">grey-temp-fail-period</a> options.
+</dd>
+<a name='937'></a>
+<dt> WARN #937 WARNING grey list {%s} rc=%d unexpected, check cache </dt>
+<dd>
+The grey: cache entry has an unexpected value.
+See the section <a href="runtime.html#cache_structure">Cache Structure</a>.
+</dd>
+<a name='393'></a>
+<dt> INFO #393 grey-content message mismatch </dt>
+<dd>
+See <a href="summary.html#opt_grey_content">grey-content</a> option.
+</dd>
+<a name='394'></a>
+<dt> INFO #394 grey-content listed {%s} for %ld seconds </dt>
+<dd>
+See <a href="summary.html#opt_grey_content">grey-content</a>
+and <a href="summary.html#opt_grey_temp_fail_period">grey-temp-fail-period</a> options.
+</dd>
+<dd>
+Debug output for verb +ixhash.
+See the section <a href="runtime.html#runtime_config">Runtime Configuration</a>
+and <a href="summary.html#opt_verbose">verbose</a> option.
+</dd>
+<a name='395'></a>
+<dt> WARN #395 %s-%s license key expires in less than %d day%s </dt>
+<a name='396'></a>
+<dt> ERR #396 license key %s must be set </dt>
+<a name='397'></a>
+<dt> ERR #397 license key date-issued is in the future, please check your system clock </dt>
+<a name='398'></a>
+<dt> ERR #398 license key has expired </dt>
+<a name='399'></a>
+<dt> ERR #399 license key %s error: %s (%d) </dt>
+<a name='400'></a>
+<dt> ERR #400 license key %s mismatch </dt>
+<a name='401'></a>
+<dt> ERR #401 license key invalid </dt>
+<a name='402'></a>
+<dt> ERR #402 license key not for %s/%s </dt>
+<a name='403'></a>
+<dt> ERR #403 license key not for %s </dt>
+<a name='404'></a>
+<dt> ERR #404 invalid license key IP address [%s] </dt>
+<a name='405'></a>
+<dt> ERR #405 lickey syntax error: %s </dt>
+<a name='406'></a>
+<dt> ERR #406 not licensed for IP [%s] </dt>
+<a name='407'></a>
+<dt> ERR #407 IP [%s] not licensed for %ld cores (max. %ld) </dt>
+<a name='408'></a>
+<dt> INFO #408 found valid licensed IP [%s] </dt>
+<a name='409'></a>
+<dt> ERR #409 license key "%s" load error: %s (%d) </dt>
+<a name='410'></a>
+<dt> ERR #410 route count error </dt>
+<a name='411'></a>
+<dt> ERR #411 route-map entries=%lu exceeds license key max-domains=%ld </dt>
+<a name='411'></a>
+<dt> ERR #411 route-map unique-domains=%lu exceeds license key max-domains=%ld </dt>
+<a name='412'></a>
+<dt> ERR #412 %s load error: %s (%d) </dt>
+<dd>
+The <a href="summary.html#opt_lickey_file">lickey-file</a> option is a
+required option and must be the absolute path of the license key file.
+</dd>
+<a name='993'></a>
+<dt> ERR #993 lua load: %s </dt>
+<a name='998'></a>
+<dt> ERR #998 smtp.connect: %s </dt>
+<a name='1001'></a>
+<dt> ERR #1001 smtp.helo: %s </dt>
+<a name='1003'></a>
+<dt> ERR #1003 smtp.mail: %s </dt>
+<a name='1005'></a>
+<dt> ERR #1005 smtp.rcpt: %s </dt>
+<a name='1007'></a>
+<dt> ERR #1007 smtp.data: %s </dt>
+<a name='1011'></a>
+<dt> ERR #1011 smtp.dot: %s </dt>
+<a name='1013'></a>
+<dt> ERR #1013 smtp.rset: %s </dt>
+<a name='1015'></a>
+<dt> ERR #1015 smtp.close: %s </dt>
+<dd>
+Experimental module using Lua to script additional tests by creating a @PACKAGE_NAME@.lua script.
+This module is undocumented and currently not provided in production code.
+</dd>
+<a name='429'></a>
+<dt> WARN #429 %s [%s] HELO %s is not FQDN </dt>
+<dd>
+See <a href="summary.html#opt_rfc2821_strict_helo">rfc2821-strict-helo</a> option.
+</dd>
+<a name='435'></a>
+<dt> ERR #435 MX %s error %s </dt>
+<dd>
+The MX record is always fetched and verified regardless of the setting
+of <a href="summary.html#opt_client_is_mx">client-is-mx</a> and
+<a href="summary.html#opt_mail_require_mx">mail-require-mx</a> options.
+</dd>
+<a name='437'></a>
+<dt> INFO #437) CLIENT_FORMAT " is MX for %s </dt>
+<dd>
+See <a href="summary.html#opt_client_is_mx">client-is-mx</a> option.
+</dd>
+<a name='438'></a>
+<dt> WARN #438 empty MX list after pruning </dt>
+<dd>
+The MX list gathered from DNS is pruned to remove hosts that resolve to localhost,
+RFC 3330 reserved IP addresses that cannot be reached from the Internet, or
+have no A/AAAA record. This message is reported if the MX list is empty after pruning.
+</dd>
+<a name='906'></a>
+<dt> WARN #906 MX list incomplete... </dt>
+<dd>
+The MX / A / AAAA records gather from DNS failed one or more queries.
+See <a href="summary.html#opt_mail_require_mx">mail-require-mx</a> option.
+</dd>
+<a name='465'></a>
+<dt> ERR #465 domain %s does not exist </dt>
+<dd>
+The top level domain is unknown.
+</dd>
+<a name='467'></a>
+<dt> ERR #467 domain %s does not exist </dt>
+<a name='468'></a>
+<dt> ERR #468 SOA for %s lookup error: %s </dt>
+<a name='469'></a>
+<dt> ERR #469 SOA for %s does not exist </dt>
+<dd>
+Part of the experimental is-nxdomain family of tests.
+Reject a domain if the host and none of its parent domains
+upto, but not including, the TLD have an SOA. Temp. fail
+if there was a DNS lookup error. Otherwise continue if
+the host name or any of its parent domains have an SOA before
+the TLD is reached.
+</dd>
+<a name='480'></a>
+<dt> ERR #480 %s write error: %s (%d) </dt>
+<a name='482'></a>
+<dt> ERR #482 %s write error: %s (%d) </dt>
+<dd>
+An error occurred while sending an SMTP command to a forward host.
+</dd>
+<a name='484'></a>
+<dt> ERR #484 %s read error: %s (%d) </dt>
+<a name='486'></a>
+<dt> ERR #486 %s read error: %s (%d) </dt>
+<dd>
+An error occurred while reading an SMTP reply from a forward host.
+</dd>
+<a name='490'></a>
+<dt> ERR #490 MX %s error %s </dt>
+<dd>
+While attempting to perfom a call-back, there was an error
+looking up the MX records of the sender's domain.
+See <a href="summary.html#opt_call_back">call-back</a> option.
+</dd>
+<a name='506'></a>
+<dt> ERR #506 p0f address error: %s (%d) </dt>
+<a name='507'></a>
+<dt> ERR #507 p0f open error: %s (%d) </dt>
+<a name='508'></a>
+<dt> ERR #508 p0f connection error: %s (%d) </dt>
+<a name='510'></a>
+<dt> ERR #510 p0f write error: %s (%d) </dt>
+<a name='511'></a>
+<dt> ERR #511 p0f timeout error: %s (%d) </dt>
+<a name='512'></a>
+<dt> ERR #512 p0f read error: %s (%d) </dt>
+<a name='515'></a>
+<dt> ERR #515 p0f magic number error </dt>
+<a name='516'></a>
+<dt> ERR #516 p0f query error (%d) </dt>
+<a name='517'></a>
+<dt> INFO #517 p0f %s </dt>
+<dd>
+See <a href="summary.html#opt_p0f_socket">p0f-socket</a>
+and <a href="summary.html#opt_p0f_timeout">p0f-timeout</a>options.
+</dd>
+<a name='519'></a>
+<dt> ERR #519 %lu connections exceeds %ld per second </dt>
+<dd>
+See the <a href="summary.html#opt_rate_throttle">rate-throttle</a> option.
+</dd>
+<a name='523'></a>
+<dt> INFO #523 %s found %s %s </dt>
+<dd>
+See <a href="summary.html#opt_dns_bl">dns-bl</a>,
+<a href="summary.html#opt_dns_gl">dns-gl</a>,
+<a href="summary.html#opt_dns_wl">dns-wl</a>,
+<a href="summary.html#opt_ns_bl">ns-bl</a>,
+<a href="summary.html#opt_uri_bl">uri-bl</a>,
+and
+<a href="summary.html#opt_uri_dnl_bl">uri-dns-bl</a>
+options.
+</dd>
+<a name='537'></a>
+<dt> ERR #537 init error %s(%lu) %s: %s (%d) </dt>
+<dd>
+A generic initialisation error reporting file and line number where it occured.
+</dd>
+<a name='538'></a>
+<dt> ERR #538 out of memory %s(%lu) </dt>
+<dd>
+A generic out of memory error reporting file and line number where it occured.
+</dd>
+<a name='539'></a>
+<dt> ERR #539 internal error %s(%lu) %s: %s (%d) </dt>
+<dd>
+A generic internal error reporting file and line number where it occured
+and some extra context. Not expected to occur outside of code development.
+</dd>
+<a name='540'></a>
+<dt> INFO #540 pipeline input=%ld:%s </dt>
+<dd>
+Log any premature input from the connected client.
+</dd>
+<a name='965'></a>
+<dt> ERR #965 buffer overflow %s(%lu) size=%lu length=%lu </dt>
+<dd>
+A buffer overflow check failed reporting file and line number where it occured.
+Not expected to occur outside of code development.
+</dd>
+<a name='542'></a>
+<dt> ERR #542 cache get error key={%s} %s(%lu) </dt>
+<dd>
+A generic error where a module could not get a cache record for unspecified reasons.
+This is not the same as record not found.
+</dd>
+<a name='544'></a>
+<dt> ERR #544 cache put error key={%s} value={%s} %s(%lu) </dt>
+<dd>
+A generic error where a module failed to update a cache record for unspecified reasons.
+</dd>
+<a name='546'></a>
+<dt> ERR #546 cache delete error key={%s} %s(%lu) </dt>
+<dd>
+A generic error where a module failed to delete a cache record for unspecified reasons.
+</dd>
+<a name='556'></a>
+<dt> ERR #556 resources error %s(%lu): %s (%d) </dt>
+<dd>
+A runtime error reporting file and line number.
+Check the process status and ulimit settings.
+Typically the only solution is to restart the process.
+</dd>
+<a name='1034'></a>
+<dt> INFO #1034 delayed: %s </dt>
+<a name='1018'></a>
+<dt> ERR #1018 route-map=%s open error: %s (%d) </dt>
+<dd>
+See the section <a href="route-map.html">Route-Map</a> and
+<a href="summary.html#opt_route_map">route-map</a> option.
+</dd>
+<a name='557'></a>
+<dt> INFO #557 route domains=%lu addresses=%lu accounts=%lu unique-domains=%lu </dt>
+<dd>
+A summary of route types found in the route-map, used for
+<em>max-domains</em> license control.
+The domain, addresses, and accounts refer to records in the
+<a href="route-map.html">route-map</a> of the form
+<span class="key"><span class="tag">route:</span>some.domain</span>,
+<span class="key"><span class="tag">route:</span>user@some.domain</span>,
+and
+<span class="key"><span class="tag">route:</span>user@</span> respectively.
+
+<p>
+The license key field <em>max-domains</em> is a bit of a misnomer.
+It should have been called <em>max-routes</em>, but it is
+easier for people to think in terms of domains and in the
+majority of cases routing is by-domain only.
+</p>
+<p>
+However, our logic counts all <span class="tag">route:</span> records,
+regardless of type, towards the license's <em>max-domains</em>, since
+the same amount of work is necessary to route by-domain as by-address or
+by-account.
+</dd>
+<a name='558'></a>
+<dt> INFO #558 call-ahead host=%s rcpt=&lt;%s&gt; rc=%d reply="%s" </dt>
+<dd>
+A summary of call-ahead results.
+</dd>
+<a name='566'></a>
+<dt> ERR #566 localhost route required </dt>
+<a name='567'></a>
+<dt> ERR #567 localhost route requires FORWARD definition </dt>
+<dd>
+The <a href="route-map.html#route_local_route_queue">local route</a> is not defined
+and is required for correct operation.
+See <a href="route-map.html">route-map</a> documentation.
+</dd>
+<a name='568'></a>
+<dt> ERR #568 mail loop from %s [%s] in localhost route </dt>
+<dd>
+When the mail is coming from one of our smart hosts then we
+would like to relay outbound, not forward inbound, otherwise
+we end up in a loop.
+</dd>
+<a name='570'></a>
+<dt> INFO #570 smtp-strict-relay client %s [%s] sender &lt;%s&gt; denied", </dt>
+<dd>
+See <a href="summary.html#opt_smtp_strict_relay">smtp-strict-relay</a> options.
+</dd>
+<dd>
+See <a href="summary.html#opt_rfc2821_strict_greeting">rfc2821-strict-greeting</a> option.
+</dd>
+<a name='830'></a>
+<dt> ERR #830 %s </dt>
+<dd>
+See <a href="summary.html#opt_uri_call_back_greeting">uri-call-back-greeting</a> option.
+</dd>
+<a name='573'></a>
+<dt> INFO #573 call-back mail=&lt;%s&gt; rc=%d reply="%s" </dt>
+<dd>
+A summary of call-back results.
+</dd>
+<a name='846'></a>
+<dt> ERR #846 %s </dt>
+<dd>
+The savdid daemon found a virus or suspicious content in the message.
+See <a href="summary.html#opt_savdid_policy">savdid-policy</a>.
+</dd>
+<a name='574'></a>
+<dt> ERR #574 save-dir must be defined </dt>
+<a name='577'></a>
+<dt> ERR #577 delete error "%s": %s (%d) </dt>
+<a name='579'></a>
+<dt> ERR #579 temp. file name "%s": %s (%d) </dt>
+<a name='580'></a>
+<dt> ERR #580 create error "%s": %s (%d) </dt>
+<dd>
+See <a href="summary.html#opt_save_data">save-data</a>,
+<a href="summary.html#opt_save_dir">save-dir</a> option.
+In addition, the
+<a href="summary.html#opt_avastd_socket">avastd-socket</a>,
+<a href="summary.html#opt_fpscand_socket">fpscand-socket</a>,
+and <a href="summary.html#opt_spamd_socket">spamd-socket</a>
+options also rely on the
+<a href="summary.html#opt_save_dir">save-dir</a>
+option being defined in order to function.
+</dd>
+<a name='876'></a>
+<dt> ERR #876 hard link(%s, %s) failed: %s (%d) </dt>
+<a name='877'></a>
+<dt> ERR #877 hard link(%s, %s) failed: %s (%d) </dt>
+<a name='813'></a>
+<dt> ERR #813 lint option requires special license key </dt>
+<dd>
+The <a href="summary.html#opt_lint">lint</a> option requires a special license key
+offered only for special partnership deals and is not generally available to customers.
+</dd>
+<a name='732'></a>
+<dt> INFO #732 terminated </dt>
+<a name='598'></a>
+<dt> ERR #598 create "%s" failed: %s (%d) </dt>
+<a name='905'></a>
+<dt> ERR #905 lock "%s" failed: %s (%d) </dt>
+<dd>
+See <a href="summary.html#opt_run_pid_file">run-pid-file</a> option.
+</dd>
+<dd>
+The SMTP service is ready to accept connections.
+</dd>
+<a name='604'></a>
+<dt> INFO #604 @PACKAGE_NAME@ @PACKAGE_VERSION@ @package_copyright@ </dt>
+<a name='605'></a>
+<dt> INFO #605 LibSnert %s %s </dt>
+<a name='606'></a>
+<dt> INFO #606 SQLite %s Public Domain by D. Richard Hipp </dt>
+<a name='1019'></a>
+<dt> INFO #1019 %s %s </dt>
+<a name='904'></a>
+<dt> INFO #904 Built on %s </dt>
+<dd>
+Version and copyright notices.
+</dd>
+<a name='599'></a>
+<dt> INFO #599 ready </dt>
+<dd>
+The server has completed initialisation and is ready to accept connections.
+</dd>
+<a name='608'></a>
+<dt> ERR #608 siq-score-discard number must -1 to disable, or 0..99 </dt>
+<a name='609'></a>
+<dt> ERR #609 siq-score-reject number must -1 to disable, or 0..99 </dt>
+<a name='610'></a>
+<dt> ERR #610 siq-score-tag number must -1 to disable, or 0..99 </dt>
+<a name='615'></a>
+<dt> INFO #615 siq score=%d confidence=%d ttl=%u text='%.83s' </dt>
+<a name='616'></a>
+<dt> ERR #616 %s </dt>
+<a name='618'></a>
+<dt> INFO #618 siq-score=%d less than %ld, discarding message </dt>
+<dd>
+See <a href="summary.html#opt_siq_score_reject">siq-score-reject</a>,
+<a href="summary.html#opt_siq_score_tag">siq-score-tag</a>, and
+<a href="summary.html#opt_siq_servers">siq-servers</a> options.
+</dd>
+<a name='628'></a>
+<dt> ERR #628 server I/O error: %s (%d) </dt>
+<dd>
+While trying to send a reply back to the client, the server had an I/O error.
+Typical cause is "broken pipe", ie. the connection with the client was lost,
+most likely due to the client voluntarily dropping the connection. A lot of
+spamware reacts on the first digit of the response, dropping the connection
+as soon as it gets a 4xy or 5xy indication and ignoring the rest.
+<p>
+Sometimes the client might disconnect during the welcome banner, because
+of an option like <a href="summary.html#opt_smtp_slow_reply">smtp-slow-reply</a>
+which impose delays. A lot of spamware is impatient and will drop the
+connection as a result.
+</p>
+</dd>
+<a name='635'></a>
+<dt> INFO #635 client [%s] has CNAME/PTR delegation %s", </dt>
+<dd>
+</dd>
+<a name='637'></a>
+<dt> INFO #637 start %s [%s] f="%s" th=%u cn=%u cs=%lu", </dt>
+<dd>
+The start of the session after the client IP checks, but before the welcome banner.
+When the <a href="summary.html#opt_verbose">verbose</a> option is set to an
+empty string (terse mode), then the information found here is available in
+the session "end" log line only.
+</dd>
+<a name='1031'></a>
+<dt> ERR #1031 banner error code=%d %s [%s]: %s (%d) </dt>
+<a name='639'></a>
+<dt> ERR #639 client %s [%s] I/O error: %s (%d) </dt>
+<dd>
+The client appears to have disconnected. A read error occured in the SMTP command loop.
+Similar to "server I/O error" in nature.
+<p>
+Typical cause is "broken pipe", ie. the connection with the client was lost,
+most likely due to the client voluntarily dropping the connection. A lot of
+spamware reacts to the last response they receive, dropping the connection
+if they get a 4xy or 5xy reply.
+</p>
+<p>
+Sometimes the client disconnects during the welcome banner, because
+of an option like <a href="summary.html#opt_smtp_slow_reply">smtp-slow-reply</a>
+which imposes delays. A lot of spamware is impatient and will drop the
+connection as a result.
+</p>
+</dd>
+<a name='644'></a>
+<dt> INFO #644 dropping %s [%s] after %d errors </dt>
+<dd>
+See <a href="summary.html#opt_smtp_drop_after">smtp-drop-after</a> option.
+</dd>
+<a name='646'></a>
+<dt> ERR #646 spamd connect error "%s": %s (%d) </dt>
+<a name='649'></a>
+<dt> ERR #649 spamd write error: %s (%d) </dt>
+<a name='656'></a>
+<dt> WARN #656 spamd-max-size=%ld reached </dt>
+<a name='657'></a>
+<dt> ERR #657 spamd write error after %lu bytes </dt>
+<a name='659'></a>
+<dt> ERR #659 spamd read error: %s (%d) </dt>
+<a name='661'></a>
+<dt> ERR #661 spamd error: %s </dt>
+<a name='663'></a>
+<dt> ERR #663 spamd parse error: %s </dt>
+<a name='664'></a>
+<dt> ERR #664 spamd read error: %s (%d) </dt>
+<a name='667'></a>
+<dt> ERR #667 %s </dt>
+<a name='668'></a>
+<dt> INFO #668 %s </dt>
+<dd>
+Assorted spamd errors from the 1.0 version of the spamd module.
+</dd>
+<a name='670'></a>
+<dt> INFO #670 spamd disabled this message </dt>
+<a name='671'></a>
+<dt> ERR #671 spamd connect error "%s": %s (%d) </dt>
+<a name='675'></a>
+<dt> ERR #675 spamd write error: %s (%d) </dt>
+<dd>
+An I/O error trying to connect or send to spamd.
+See <a href="summary.html#opt_spamd_socket">spamd-socket</a> option.
+</dd>
+<a name='682'></a>
+<dt> ERR #682 spamd open error "%s": %s (%d) </dt>
+<dd>
+An error trying to open a temporary message file to forward to spamd.
+See <a href="summary.html#opt_save_dir">save-dir</a> option.
+</dd>
+<a name='684'></a>
+<dt> WARN #684 spamd-max-size=%ld reached </dt>
+<dd>
+The size of the message passed to spamd have been reached.
+No additional data will be passed to spamd.
+See <a href="smtpf-cf.html#smtpf_spamd">spamd-max-size</a>.
+</dd>
+<a name='685'></a>
+<dt> ERR #685 spamd read error: %s (%d) </dt>
+<dd>
+An I/O error while reading from spamd.
+See <a href="summary.html#opt_spamd_socket">spamd-socket</a> option.
+</dd>
+<a name='687'></a>
+<dt> ERR #687 spamd parse error: %s </dt>
+<a name='689'></a>
+<dt> ERR #689 spamd parse error: %s </dt>
+<dd>
+The response from spamd does not match the current supported protocol.
+</dd>
+<a name='690'></a>
+<dt> ERR #690 spamd read error: %s (%d) </dt>
+<dd>
+An I/O error while reading from spamd.
+See <a href="summary.html#opt_spamd_socket">spamd-socket</a> option.
+</dd>
+<a name='692'></a>
+<dt> INFO #692 spamd %s [%s] %s </dt>
+<dd>
+A summary of the spamd score for a message.
+</dd>
+<a name='706'></a>
+<dt> ERR #706 stats-map get key={%s} failed </dt>
+<a name='708'></a>
+<dt> ERR #708 stats-map key={%s} value={%s} truncated </dt>
+<a name='710'></a>
+<dt> ERR #710 statsSave() field name buffer overflow caught </dt>
+<a name='711'></a>
+<dt> ERR #711 statsSave() buffer overflow caught </dt>
+<a name='878'></a>
+<dt> ERR #878 stats-http-post request buffer overflow </dt>
+<a name='879'></a>
+<dt> ERR #879 stats-http-post error: %s </dt>
+<a name='714'></a>
+<dt> ERR #714 stats-map=%s open error: %s (%d) </dt>
+<dd>
+See <a href="summary.html#opt_stats_map">stats-map</a> option.
+</dd>
+<a name='715'></a>
+<dt> INFO #715 hourly %s was=%lu now=%lu </dt>
+<a name='716'></a>
+<dt> INFO #716 runtime %s was=%lu now=%lu </dt>
+<dd>
+Logging of change in high water marks.
+See <a hrfe="runtime.html#runtime_config">STAT</a> command.
+</dd>
+<a name='880'></a>
+<dt> INFO #880 hourly %s was=%lu now=%lu </dt>
+<a name='881'></a>
+<dt> INFO #881 runtime %s was=%lu now=%lu </dt>
+<dd>
+Not used at this time.
+</dd>
+<a name='717'></a>
+<dt> INFO #717 sender %s tid=%s f="%s" spf-mail=%s spf-helo=%s x="%s" </dt>
+<dd>
+The start of a message transaction. This line gives a summary of sender highlights.
+It cannot be suppressed.
+The fields are: f= flags, spf-mail= SPF result for the MAIL FROM: argument,
+spf-helo= SPF result for the HELO argument, and x= SMTP response.
+</dd>
+<a name='718'></a>
+<dt> INFO #718 recipient %s tid=%s f="%s" x="%s" </dt>
+<dd>
+This line gives a summary of recipient highlights.
+It cannot be suppressed.
+The fields are: f= flags and x= SMTP response.
+</dd>
+<a name='719'></a>
+<dt> INFO #719 data tid=%s f="%s" x="%s" </dt>
+<dd>
+The start of message content.
+It cannot be suppressed.
+The fields are: x= SMTP response.
+</dd>
+<a name='851'></a>
+<dt> WARN #851 removed previous instance of header "%s" </dt>
+<dd>
+</dd>
+<a name='720'></a>
+<dt> INFO #720 message tid=%s f="%s" b=%lu r=%u/%u m=%s R=%d %sx="%s"", </dt>
+<dd>
+The end of a message transaction. This line gives a summary of message highlights.
+It cannot be suppressed.
+The fields are: f= flags, b= bytes sent for the message, r= RCPT TO: count,
+m= @PACKAGE_NAME@ message-id, s= the subject header, and x= SMTP response.
+</dd>
+<a name='721'></a>
+<dt> INFO #721 end i=%s p="%s" f="%s" h="%s" m=%u/%u b=%lu R=%d t=%lu l="%s"%s </dt>
+<dd>
+The end of a connected client's session. This line gives a summary of client information.
+It cannot be suppressed.
+The fields are:
+i= connected client IP,
+p= client PTR name,
+f= session flags,
+h= HELO argument,
+m= total foward / message count,
+b= total bytes sent,
+R= total reject count,
+t= session time in seconds,
+l= last reject or temp. fail reply sent to client,
+and
+p0f= p0f information if available.
+</dd>
+<a name='1028'></a>
+<dt> ERR #1028 no CN match: %s </dt>
+<a name='1021'></a>
+<dt> ERR #1021 TLS negotiation %s </dt>
+<dd>
+</dd>
+<a name='1023'></a>
+<dt> INFO #1023 started %s </dt>
+<a name='1024'></a>
+<dt> INFO #1024 issuer=%s </dt>
+<a name='1025'></a>
+<dt> INFO #1025 subject=%s </dt>
+<dd>
+</dd>
+<a name='726'></a>
+<dt> ERR #726 sigaltstack() failed, size=%lu: %s (%d) </dt>
+<dd>
+A fatal initialisation error occured while setting up signal handlers.
+</dd>
+<a name='731'></a>
+<dt> ERR #731 unlink("%s"): %s (%d) </dt>
+<dd>
+During process termination, the process pid file could not be removed.
+See <a href="summary.html#opt_run_pid_file">run-pid-file</a> option.
+</dd>
+<a name='733'></a>
+<dt> ERR #733 no previous instance running: %s (%d) </dt>
+<dd>
+Generated when <a href="summary.html#opt_restart_if">restart-if</a> action was issued
+and no previous instance could be found to restart, in which case the process will
+not start.
+</dd>
+<a name='968'></a>
+<dt> ERR #968 waiting for pid=%d </dt>
+<a name='969'></a>
+<dt> ERR #969 force kill of pid=%d </dt>
+<a name='970'></a>
+<dt> ERR #970 previous instance pid=%d </dt>
+<a name='735'></a>
+<dt> ERR #735 fork failed: %s (%d) </dt>
+<a name='736'></a>
+<dt> ERR #736 set process group ID failed: %s (%d) </dt>
+<dd>
+A fatal initialisation error while trying to become a <em>daemon</em>
+(background) process by detatching from the controlling terminal.
+The <a href="summary.html#opt_daemon">-daemon</a> option can be used to
+run @PACKAGE_NAME@ as a foreground application.
+</dd>
+<a name='738'></a>
+<dt> WARN #738 %s increased to %ld </dt>
+<dd>
+See <a href="summary.html#opt_run_open_file_limit">run-open-file-limit</a> option.
+</dd>
+<a name='764'></a>
+<dt> INFO #764 URI %s %s </dt>
+<dd>
+See the <a href="access-map.html#access_tags">access-map</a> concerning the
+<a href="access-map.html#tag_body"><span class="tag">Body:</span></a> tag.
+</dd>
+<a name='785'></a>
+<dt> ERR #785 discarded: %s </dt>
+<dd>
+See <a href="summary.html#opt_uri_bl_policy">uri-bl-policy</a> option.
+</dd>
+<a name='795'></a>
+<dt> ERR #795 verbose word list too long </dt>
+<a name='802'></a>
+<dt> INFO #802 terminated </dt>
+<dd>
+Windows binary termination.
+</dd>
+<a name='807'></a>
+<dt> ERR #807 %s quit error %d </dt>
+<dd>
+Windows binary had a problem with &plusmn;quit command.
+</dd>

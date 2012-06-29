@@ -1,0 +1,135 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN">
+<!-- $OpenBSD$ -->
+<html>
+<head>
+<title>
+SnertSoft - @PACKAGE_NAME@/@PACKAGE_VERSION@
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+<meta name="keywords" content="SMTP Filter Proxy, call back, call ahead, grey listing, greylisting, RET, Return Encrypted Tag" />
+<meta name="description" content="@PACKAGE_NAME@ sits in front of one or more mail transfer agents (MTA) on SMTP port 25. It acts as a proxy, filtering and forwarding mail to one or more MTAs, which can be on the same machine or different machines." />
+<link rel="stylesheet" type="text/css" href="./style.css" />
+<script language="JavaScript" type="text/javascript" src="./mailto.js"></script>
+</head>
+
+<body>
+<div align="center">
+<table class="page" cellpadding="0" cellspacing="0" border="0">
+<tr><td>
+
+<a href="http://www.snertsoft.com/">
+<img alt="SnertSoft: We Serve Your Server" src="Img/logo-300x74.png" width="300" height="74" border="0" /></a>
+
+<div align="center">
+<h1 class="title">Barricade MX</h1>
+<h2>
+@package_string@
+<br/><span class="large">&laquo;An SMTP Filtering Proxy&raquo;</span>
+</h2>
+</div>
+
+
+<br/>
+
+<div class="contents">
+<ol type="A" class="toc">
+<li><a href="manual.shtml">Introduction</a></li>
+<li><a href="license.html">License &amp; Support</a></li>
+<li><a href="install.html">Installation</a></li>
+<li>Configuration</li>
+	<ol type="a">
+	<li><a href="route-map.html">The Route Map</a></li>
+		<ul>
+		<li><a href="route-map.html#route_local_mta">Local MTA</a></li>
+		<li><a href="route-map.html#route_local_route_queue">Local Route</a></li>
+		<li><a href="route-map.html#route_relay">FORWARD &amp; RELAY</a></li>
+			<ul>
+			<li><a href="route-map.html#route_by_domain">by domain</a></li>
+			<li><a href="route-map.html#route_by_mail_address">by mail</a></li>
+			</ul>
+		<li><a href="route-map.html#route_call_ahead">Call-Ahead</a></li>
+			<ul>
+			<li><a href="route-map.html#route_dumb_mx">Accept-Then-Bounce</a></li>
+			</ul>
+		<li><a href="route-map.html#route_auth_support">AUTH Support</a></li>
+		<li><a href="route-map.html#route_etrn_support">ETRN Support</a></li>
+		</ul>
+	<li><a href="access-map.html">The Access Map</a></li>
+		<ul>
+		<li><a href="access-map.html#access_lookups">Lookup Sequences</a></li>
+		<li><a href="access-map.html#access_tags">Tags</a></li>
+		<li><a href="access-map.html#access_about_delay_checks">About Delay Checks</a></li>
+		<li><a href="access-map.html#access_simple_value">Right Hand Side Values</a></li>
+		<li><a href="access-map.html#access_action_words">Action Words</a></li>
+		<li><a href="access-map.html#access_pattern_lists">Pattern Lists</a></li>
+		<li><a href="access-map.html#access_simple_pattern">!Simple Patterns!</a></li>
+		<li><a href="access-map.html#access_regex_pattern">/Regular Expression Patterns/</a></li>
+		</ul>
+
+	<li><a href="@PACKAGE_NAME@-cf.html">The @PACKAGE_NAME@.cf File</a></li>
+		<ul>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_avastd">Avast! AV Support</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_cache">Cache Options</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_call_back">Call-Backs</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_clamd">Clam AV Support</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_cli">Command-Line Interface</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_client_is_mx">Client IP Address</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_concurrent">Concurrency &amp; Rate</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_dns_bl">DNS Based Lists</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_delay_checks">Delay Checks</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_emew">EMEW</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_fpscand">F-Prot AV Support</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_grey_list">Grey Listing</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_grey_content">Grey Content</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_helo">SMTP HELO Testing</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_interface">Network Interface</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_length_limit">Length &amp; Limits</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_rfc">RFC Conformance</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_run">Run Settings</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_server">Server Performance</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_siq">SIQ Support</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_smtp">SMTP Options</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_spamd">SpamAssassin Support</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_spf">SPF Support</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_stats">Statistics</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_uri">URI Blacklists</a></li>
+		<li><a href="@PACKAGE_NAME@-cf.html#smtpf_verbose">Verbose Logging</a></li>
+		</ul>
+	<li><a href="summary.html">Option Summary</a></li>
+	</ol>
+<li>Runtime</li>
+	<ol type="a">
+	<li><a href="runtime.html#command_options">Command Line Options</a></li>
+	<li><a href="runtime.html#runtime_config">Runtime Configuration</a></li>
+	<li><a href="runtime.html#cache_file">The Cache File</a></li>
+		<ul>
+		<li><a href="runtime.html#cache_structure">The Cache Structure</a></li>
+		</ul>
+	<li><a href="runtime.html#stats_file">The Stats File</a></li>
+		<ul>
+		<li><a href="runtime.html#stats_structure">The Stats Structure</a></li>
+		</ul>
+	<li><a href="syslog.html">Log Messages</a></li>
+	<li><a href="reply.html">SMTP Replies</a></li>
+	</ol>
+<li><a class="glossary" href="glossary.html">Glossary</a></li>
+</ol>
+</div>
+
+<a name="Logging"></a>
+<h3>Mail Log Messages</h3>
+
+<p>
+The default <a href="summary.html#opt_verbose">verbose</a> logging level for @PACKAGE_NAME@ is to display all warnings and informational
+messages. Error messages are always reported. The debugging log messages are not explained.
+Each log message has a timestamp when the message was generated,
+the @PACKAGE_NAME@ process name and ID, the session ID of the current connected SMTP
+client, followed by the message number and text of the message.
+</p>
+
+<p>
+Below is a list of log messages in numerical order, with a brief explination and/or a
+link to the documentation where the options responsible are explained in more detail.
+</p>
+
+<dl>
