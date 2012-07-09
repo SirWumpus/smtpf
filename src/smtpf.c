@@ -108,7 +108,7 @@ send_report_v(Session *sess, const char *subject, const char *fmt, va_list args)
 			break;
 	}
 
-	if (smtp == NULL || smtp2Mail(smtp, "") != SMTP_OK)
+	if (smtp == NULL || smtp2Mail(smtp, NULL) != SMTP_OK)
 		goto error1;
 
 	rcpts = TextSplit(opt_report_to.string, OPTION_LIST_DELIMS, 0);
