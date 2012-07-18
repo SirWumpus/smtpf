@@ -15,6 +15,10 @@
 #define MAX_LINEAR_PROBE	24
 #endif
 
+#ifndef RATE_421_DELAY
+#define RATE_421_DELAY		15
+#endif
+
 /***********************************************************************
  *** Leave this header alone. Its generated from the configure script.
  ***********************************************************************/
@@ -65,6 +69,13 @@ static const char usage_rate_throttle[] =
 Option optRateTag		= { "",				NULL,	usage_rate_tag };
 Option optRateDrop		= { "rate-drop",		"+",	usage_rate_drop };
 Option optRateThrottle		= { "rate-throttle",		"20",	usage_rate_throttle };
+
+static const char usage_rate_421_delay[] =
+  "A delay imposed before returning the 421 busy response, in palce of\n"
+"# the welcome banner, in order to deter woodpecker clients.\n"
+"#"
+;
+Option opt_rate_421_delay	= { "rate-421-delay",		QUOTE(RATE_421_DELAY),	usage_rate_421_delay };
 
 Stats stat_rate_client		= { STATS_TABLE_CONNECT, "rate-client" };
 Stats stat_rate_throttle	= { STATS_TABLE_CONNECT, "rate-throttle" };
@@ -140,6 +151,7 @@ rateRegister(Session *sess, va_list ignore)
 	optionsRegister(&optRateTag, 			0);
 	optionsRegister(&optRateDrop,			0);
 	optionsRegister(&optRateThrottle, 		0);
+	optionsRegister(&opt_rate_421_delay, 		0);
 
 	(void) statsRegister(&stat_rate_client);
 	(void) statsRegister(&stat_rate_throttle);
@@ -316,13 +328,14 @@ Connections are temporarily turned away.
 		if (client_limit < client_rate) {
 			if (verb_rate.option.value)
 				syslog(LOG_DEBUG, LOG_MSG(521) "client " CLIENT_FORMAT " connections %ld exceed %ld/60s", LOG_ARGS(sess), CLIENT_INFO(sess), client_rate, client_limit);
-			rc = replyPushFmt(sess, optRateDrop.value ? SMTPF_DROP : SMTPF_TEMPFAIL, "421 4.4.5 client " CLIENT_FORMAT " connections %ld exceed %ld/60s" ID_MSG(522) "\r\n", CLIENT_INFO(sess), client_rate, client_limit, ID_ARG(sess));
+			rc = replyPushFmt(sess, optRateDrop.value ? SMTPF_DROP : SMTPF_TEMPFAIL, /* was 421 4.4.5 */ "421 4.3.2 client " CLIENT_FORMAT " connections %ld exceed %ld/60s" ID_MSG(522) "\r\n", CLIENT_INFO(sess), client_rate, client_limit, ID_ARG(sess));
 /*{REPLY
 See the <a href="access-map.html#access_tags">access-map</a> concerning the
 <a href="access-map.html#tag_rate_connect"><span class="tag">Rate-Connect:</span></a> tag.
 }*/
 			CLIENT_SET(sess, CLIENT_RATE_LIMIT);
 			statsCount(&stat_rate_client);
+			(void) sleep(opt_rate_421_delay.value);
 			if (!optRateDrop.value)
 				sess->state = stateSink;
 		}

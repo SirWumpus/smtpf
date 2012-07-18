@@ -18,6 +18,7 @@ extern "C" {
 extern Option optRateTag;
 extern Option optRateDrop;
 extern Option optRateThrottle;
+extern Option opt_rate_421_delay;
 
 extern Stats stat_rate_client;
 extern Stats stat_rate_throttle;

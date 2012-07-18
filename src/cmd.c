@@ -177,6 +177,13 @@ The specified command requires one or more arguments.
 }
 
 int
+cmdUnavailable(Session *sess)
+{
+	MSG_SET(sess, MSG_POLICY);
+	return replyPushFmt(sess, SMTPF_TEMPFAIL, msg_421_unavailable, ID_ARG(sess));
+}
+
+int
 cmdNotImplemented(Session *sess)
 {
 	MSG_SET(sess, MSG_POLICY);
@@ -2727,34 +2734,8 @@ struct command stateData[] = {
 
 struct command stateSink[] = {
 	{ "SINK", cmdUnknown },		/* First entry is state name. */
-#ifdef ENABLE_TEST_ON_COMMAND
-	{ "FAIL", cmdUnknown },
-#endif
-	{ "AUTH", cmdOutOfSequence },
-	{ "DATA", cmdOutOfSequence },
-	{ "EHLO", cmdOutOfSequence },
-	{ "HELO", cmdOutOfSequence },
-	{ "HELP", cmdOutOfSequence },
-	{ "MAIL", cmdOutOfSequence },
-	{ "NOOP", cmdNoop },
 	{ "QUIT", cmdQuit },
-	{ "RCPT", cmdOutOfSequence },
-	{ "RSET", cmdOutOfSequence },
-	{ "VRFY", cmdOutOfSequence },
-	{ "EXPN", cmdOutOfSequence },
-	{ "TURN", cmdOutOfSequence },
-	{ "ETRN", cmdOutOfSequence },
-	{ "CONN", cmdOutOfSequence },
-	{ "STAT", cmdOutOfSequence },
-	{ "VERB", cmdOutOfSequence },
-	{ "OPTN", cmdOutOfSequence },
-	{ "LKEY", cmdOutOfSequence },
-	{ "KILL", cmdOutOfSequence },
-	{ "CACHE", cmdOutOfSequence },
-	{ "INFO", cmdOutOfSequence },
-	{ "XCLIENT", cmdOutOfSequence },
-	{ "STARTTLS", cmdOutOfSequence },
-	{ NULL, cmdUnknown }
+	{ NULL, cmdUnavailable }
 };
 
 struct command stateQuit[] = {

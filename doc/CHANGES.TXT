@@ -277,7 +277,22 @@ is no set schedule for releases.
 	message isn't trapped. Steve F.
 
 
+--2.5.7--
+
+   !	Change sink state replies to return a 421 4.3.2 unavailble message
+	instead of command out of sequence. For consistency, the extended
+	reply codes for rate-drop from 4.4.5 to 4.3.2 and concurrent-drop 
+	from 4.7.1 to 4.3.2.
+
+   +    Add rate-421-delay and concurrent-421-delay options to impose a
+        delay before sending the 421 busy in place of the welcome
+        banner. Its been observed for +rate-drop, that some SMTP clients
+        "woodpecker", in that if they get a 421 and the connection drops,
+        then they reconnect immediately. Reported by Steve Freegard.
+
 --2.5.6--
+
+   *	Requires libsnert 1.75.17
 
    +	Added msg-limit-report, report-to options. Requested by Nick Stefan.
 
