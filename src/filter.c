@@ -535,9 +535,6 @@ FilterHandler filter_reply_clean_table[] = {
  */
 FilterHandler filter_drop_table	[] = {
 	FILTER_TABLE_BEGIN(drop),
-#ifdef FILTER_AUTO
-	FILTER_HANDLER(autoDrop),
-#endif
 	FILTER_TABLE_END
 };
 
@@ -634,9 +631,6 @@ FilterHandler filter_connect_table	[] = {
 #ifdef FILTER_RBL
 	FILTER_HANDLER(dnswlConnect),
 	FILTER_HANDLER(dnsglConnect),
-#endif
-#ifdef FILTER_AUTO
-	FILTER_HANDLER(autoConnect),
 #endif
 #ifdef FILTER_FOUR21
 	FILTER_HANDLER(four21Connect),

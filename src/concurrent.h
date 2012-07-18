@@ -17,6 +17,7 @@ extern "C" {
 
 extern Option optConcurrentTag;
 extern Option optConcurrentDrop;
+extern Option opt_concurrent_421_delay;
 
 extern int concurrentRegister(Session *null, va_list ignore);
 extern int concurrentInit(Session *null, va_list ignore);

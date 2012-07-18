@@ -15,6 +15,10 @@
 #define MAX_LINEAR_PROBE	24
 #endif
 
+#ifndef CONCURRENT_421_DELAY
+#define CONCURRENT_421_DELAY	15
+#endif
+
 /***********************************************************************
  *** Leave this header alone. Its generated from the configure script.
  ***********************************************************************/
@@ -59,6 +63,13 @@ static const char usage_concurrent_drop[] =
 
 Option optConcurrentDrop	= { "concurrent-drop",		"+",	usage_concurrent_drop };
 
+static const char usage_concurrent_421_delay[] =
+  "A delay imposed before returning the 421 busy response, in palce of\n"
+"# the welcome banner, in order to deter woodpecker clients.\n"
+"#"
+;
+Option opt_concurrent_421_delay	= { "concurrent-421-delay",	"0",	usage_concurrent_421_delay };
+
 typedef struct {
 	unsigned char ipv6[IPV6_BYTE_LENGTH];
 	int count;
@@ -97,6 +108,7 @@ concurrentRegister(Session *null, va_list ignore)
 {
 	optionsRegister(&optConcurrentTag, 		0);
 	optionsRegister(&optConcurrentDrop,		0);
+	optionsRegister(&opt_concurrent_421_delay,	0);
 
 	(void) statsRegister(&stat_concurrent);
 
@@ -191,11 +203,12 @@ concurrentConnect(Session *sess, va_list ignore)
 		free(value);
 
 		if (concurrentCacheUpdate(sess, 1)) {
-			int rc = replyPushFmt(sess, optConcurrentDrop.value ? SMTPF_DROP : SMTPF_TEMPFAIL, "421 4.7.1 client " CLIENT_FORMAT " too many concurrent connections, max=%ld" ID_MSG(329) "\r\n", CLIENT_INFO(sess), sess->max_concurrent, ID_ARG(sess));
+			int rc = replyPushFmt(sess, optConcurrentDrop.value ? SMTPF_DROP : SMTPF_TEMPFAIL, /* was 421 4.7.1 */ "421 4.3.2 client " CLIENT_FORMAT " too many concurrent connections, max=%ld" ID_MSG(329) "\r\n", CLIENT_INFO(sess), sess->max_concurrent, ID_ARG(sess));
 /*{REPLY
 See the <a href="access-map.html#access_tags">access-map</a> concerning the
 <a href="access-map.html#tag_concurrent_connect"><span class="tag">Concurrent-Connect:</span></a> tag.
 }*/
+			(void) sleep(opt_concurrent_421_delay.value);
 			if (!optConcurrentDrop.value)
 				sess->state = stateSink;
 			return rc;
