@@ -118,28 +118,25 @@ dupmsgRset(Session *sess, va_list ignore)
 
 	if (smtpf_code != SMTPF_UNKNOWN && first_rcpt != NULL) {
 		MEMSET(&row, 0, sizeof (row));
-		row.hits = 0;
-		row.created = time(NULL);
-		row.expires = row.created + optDupMsgTTL.value;
-		row.key_size = snprintf(
-			(char *) row.key_data, sizeof (row.key_data), DUPMSG_CACHE_TAG "%s,%s",
-			ctx->digest_string, first_rcpt->address.string
-		);
-		row.value_size = snprintf((char *) row.value_data, sizeof (row.value_data), "%d %s", smtpf_code, sess->long_id);
+		row.ttl = optDupMsgTTL.value;
+		row.expires = time(NULL) + row.ttl;
+
+		mccSetKey(&row, DUPMSG_CACHE_TAG "%s,%s", ctx->digest_string, first_rcpt->address.string);
+		mccSetValue(&row, "%d %s", smtpf_code, sess->long_id);
 
 		if (verb_dupmsg.option.value) {
 			syslog(
-				LOG_DEBUG, LOG_MSG(334) "key=%s msg-id=%s IO-error=%s smtp-code=%d smtpf-code=%s",
-				LOG_ARGS(sess), row.key_data, TextEmpty(ctx->original_msg_id),
+				LOG_DEBUG, LOG_MSG(334) "key=" MCC_FMT_K " msg-id=%s IO-error=%s smtp-code=%d smtpf-code=%s",
+				LOG_ARGS(sess), MCC_FMT_K_ARG(&row), TextEmpty(ctx->original_msg_id),
 				CLIENT_ANY_SET(sess, CLIENT_IO_ERROR) ? "yes" : "no",
 				ctx->smtp_code, SMTPF_CODE_NAME(smtpf_code)
 			);
 		}
 
 		if (verb_cache.option.value)
-			syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), row.key_data, row.value_data, FILE_LINENO);
+			syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), LOG_CACHE_PUT(&row), FILE_LINENO);
 		if (mccPutRow(mcc, &row) == MCC_ERROR)
-			syslog(LOG_ERR, log_cache_put_error, LOG_ARGS(sess), row.key_data, row.value_data, FILE_LINENO);
+			syslog(LOG_ERR, log_cache_put_error, LOG_ARGS(sess), LOG_CACHE_PUT_ERROR(&row), FILE_LINENO);
 
 		statsCount(&stat_dupmsg_cached);
 	}
@@ -237,25 +234,25 @@ dupmsgDot(Session *sess, va_list ignore)
 
 	rc = SMTPF_CONTINUE;
 	MEMSET(&row, 0, sizeof (row));
-	row.key_size = snprintf(
-		(char *) row.key_data, sizeof (row.key_data), DUPMSG_CACHE_TAG "%s,%s",
-		ctx->digest_string, first_rcpt->address.string
-	);
+	mccSetKey(&row, DUPMSG_CACHE_TAG "%s,%s", ctx->digest_string, first_rcpt->address.string);
 
 	/* Have we seen this message / recipient pair before? */
 	if (mccGetRow(mcc, &row) == MCC_OK) {
-		row.value_data[row.value_size] = '\0';
 		if (verb_cache.option.value)
-			syslog(LOG_DEBUG, log_cache_get, LOG_ARGS(sess), row.key_data, row.value_data, FILE_LINENO);
+			syslog(LOG_DEBUG, log_cache_get, LOG_ARGS(sess), LOG_CACHE_GET(&row), FILE_LINENO);
 
 		/* We've seen this message before. Discard this message
 		 * to avoid sending a duplicate to the recipients. Or
 		 * reject this message if dupmsg-track-all is set.
 		 */
-		rc = row.value_data[0] - '0';
+		rc = *MCC_PTR_V(&row) - '0';
 
 		if (verb_info.option.value) {
-			syslog(LOG_INFO, LOG_MSG(337) "%s duplicate key=%s previous session=%s", LOG_ARGS(sess), SMTPF_CODE_NAME(rc), row.key_data, row.value_data+2);
+			syslog(
+				LOG_INFO, LOG_MSG(337) "%s duplicate key=" MCC_FMT_K " previous session=" MCC_FMT_V, 
+				LOG_ARGS(sess), SMTPF_CODE_NAME(rc), MCC_FMT_K_ARG(&row), 
+				MCC_GET_V_SIZE(&row)-2, MCC_PTR_V(&row)+2
+			);
 /*{LOG
 @PACKAGE_NAME@ tracks what messages have already been seen and discards any
 message that have prevously been processed. This can occur when the client

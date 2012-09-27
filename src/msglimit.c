@@ -170,42 +170,38 @@ msgLimitCacheUpdate(Session *sess, MsgLimit *limit, const char *key)
 	now = time(NULL);
 	limit->count = -1;
 	MEMSET(&row, 0, sizeof (row));
-	row.key_size = snprintf((char *) row.key_data, sizeof (row.key_data), MSG_LIMIT_CACHE_TAG "%s", key);
-	TextLower((char *) row.key_data, -1);
+	mccSetKey(&row, MSG_LIMIT_CACHE_TAG "%s", key);
+	TextLower(MCC_PTR_K(&row), MCC_GET_K_SIZE(&row));
 
 	switch (mccGetRow(mcc, &row)) {
 	case MCC_OK:
-		row.key_data[row.key_size] = '\0';
-		row.value_data[row.value_size] = '\0';
 		if (verb_cache.option.value)
-			syslog(LOG_DEBUG, log_cache_get, LOG_ARGS(sess), row.key_data, row.value_data, FILE_LINENO);
-		row.value_data[row.value_size] = '\0';
-		value = strtol((char *) row.value_data, NULL, 10);
+			syslog(LOG_DEBUG, log_cache_get, LOG_ARGS(sess), LOG_CACHE_GET(&row), FILE_LINENO);
+		MCC_PTR_V(&row)[MCC_GET_V_SIZE(&row)] = '\0';
+		value = strtol(MCC_PTR_V(&row), NULL, 10);
 		break;
 	case MCC_ERROR:
-		syslog(LOG_ERR, log_cache_get_error, LOG_ARGS(sess), row.key_data, FILE_LINENO);
+		syslog(LOG_ERR, log_cache_get_error, LOG_ARGS(sess), LOG_CACHE_GET_ERROR(&row), FILE_LINENO);
 		goto error1;
-	default:
+	case MCC_NOT_FOUND:
 		/* We've not seen seen this tuple before. */
 		row.expires = 0;
-		row.created = now;
-		row.hits = 0;
-		value = 0;
 	}
 
 	if (row.expires <= now) {
-		row.expires = now + limit->seconds;
 		value = 0;
+		row.ttl = limit->seconds;
+		row.expires = now + row.ttl;
 	}
 
 	limit->count = ++value;
 	limit->expires = row.expires;
-	row.value_size = (unsigned char ) snprintf((char *) row.value_data, sizeof (row.value_data), "%ld", value);
+	mccSetValue(&row, "%ld", value);
 
 	if (verb_cache.option.value)
-		syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), row.key_data, row.value_data, FILE_LINENO);
+		syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), LOG_CACHE_PUT(&row), FILE_LINENO);
 	if (mccPutRow(mcc, &row) == MCC_ERROR)
-		syslog(LOG_ERR, log_cache_put_error, LOG_ARGS(sess), row.key_data, row.value_data, FILE_LINENO);
+		syslog(LOG_ERR, log_cache_put_error, LOG_ARGS(sess), LOG_CACHE_PUT_ERROR(&row), FILE_LINENO);
 error1:
 	PTHREAD_MUTEX_UNLOCK(&msglimit_mutex);
 }

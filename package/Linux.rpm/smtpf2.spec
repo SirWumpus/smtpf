@@ -6,14 +6,13 @@
 %define profiling 0
 %endif
 
-
-# Libnsert version to use
-%define libver 1.69.24
+# libsnert version to use
+%define libver 1.75.14
 
 Name: smtpf
 Summary: SMTP Filtering Proxy for Anti-Spam/Anti-Virus protection
-Version: 2.2
-Release: 2
+Version: 2.5
+Release: 5
 Vendor: Fort Systems Ltd.
 Packager: Steve Freegard <steve.freegard@fsl.com>
 License: propritary
@@ -24,16 +23,19 @@ Source1: smtpf-%{version}.%{release}.tar.gz
 Source2: p0f.tgz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 BuildRequires: gcc gcc-c++ tcl-devel libpcap
-Requires: /sbin/chkconfig, /sbin/service, /usr/sbin/useradd, /usr/sbin/groupadd, /usr/sbin/groupdel, /usr/sbin/userdel
+Requires: /sbin/chkconfig, /sbin/service, /usr/sbin/useradd, /usr/sbin/groupadd, /usr/sbin/groupdel, /usr/sbin/userd
+el
 Provides: smtpf
 Obsoletes: smtpf smtpf-debug
 AutoReqProv: no
 # Patch0: smtpf-uribl-shortcut.patch
+# Patch0: smtpf-remove-routecount.diff
 
 %description
 smtpf sits in front of one or more mail transfer agents (MTA) on SMTP port 25. It acts as a proxy, filtering and forwarding mail to one or more MTAs, which can be on the same machine or different machines.
 
-smtpf supports a variety of well blended anti-spam filtering techniques that can be individually enabled or disabled according to the rigours of the postmaster's local filtering policy.
+smtpf supports a variety of well blended anti-spam filtering techniques that can be individually enabled or disabled
+ according to the rigours of the postmaster's local filtering policy.
 
 %prep
 # Delete any old directories from previous runs
@@ -60,7 +62,7 @@ cd ../com
 %endif 
 # Build libsnert
 cd snert/src/lib
-FLAGS="--without-db --enable-fcntl-locks --enable-pdq"
+FLAGS="--without-db --enable-fcntl-locks"
 BITS=`uname -m | grep "64"` ||:
 if [ -n "$BITS" ];
 then
@@ -76,15 +78,17 @@ fi
 %else
  %configure $FLAGS
 %endif
-make
+make build-tools 1> /dev/null
 # Build smtpf
-cd ../smtpf-%{version}
+#cd ../smtpf-%{version}
+cd ../smtpf
 %configure --with-p0f=$RPM_BUILD_DIR/p0f
-make
+make 1> /dev/null
 
 %install
 rm -rf $RPM_BUILD_ROOT
-cd snert/src/smtpf-%{version}
+#cd snert/src/smtpf-%{version}
+cd snert/src/smtpf
 #cd snert/src/smtpf-2.0
 make DESTDIR=$RPM_BUILD_ROOT install
 
@@ -93,8 +97,12 @@ touch $RPM_BUILD_ROOT/etc/smtpf/access.sq3
 touch $RPM_BUILD_ROOT/etc/smtpf/route.sq3
 touch $RPM_BUILD_ROOT/var/cache/smtpf/stats.sq3
 touch $RPM_BUILD_ROOT/var/cache/smtpf/cache.sq3
+mkdir -p $RPM_BUILD_ROOT/etc/mail/spamassassin
+touch $RPM_BUILD_ROOT/etc/mail/spamassassin/barricademx.cf
+touch $RPM_BUILD_ROOT/etc/mail/spamassassin/barricademx.pm
 
 # Create empty smtpf.cf file
+chmod +x $RPM_BUILD_ROOT/usr/sbin/smtpf
 $RPM_BUILD_ROOT/usr/sbin/smtpf file=/dev/null +help > $RPM_BUILD_ROOT/etc/smtpf/smtpf.cf || :
 
 # Copy Perl utility script
@@ -105,14 +113,12 @@ mv $RPM_BUILD_ROOT/usr/share/examples/smtpf/extra/bmx-antiphishingreply-update.p
 
 # Move this
 mv $RPM_BUILD_ROOT/usr/share/examples/smtpf/spamassassin/barricademx.cf $RPM_BUILD_ROOT/usr/share/examples/smtpf
-# Nuke these
-rm $RPM_BUILD_ROOT/usr/share/examples/smtpf/spamassassin/smf.cf
-rm $RPM_BUILD_ROOT/usr/share/examples/smtpf/spamassassin/smf.pm
-
+mv $RPM_BUILD_ROOT/usr/share/examples/smtpf/spamassassin/barricademx.pm $RPM_BUILD_ROOT/usr/share/examples/smtpf
 
 %pre
 # Create user if missing
 mkdir -p /var/tmp > /dev/null 2>&1 ||:
+mkdir -p /var/run/smtpf > /dev/null 2>&1 ||:
 /usr/sbin/useradd -s /sbin/nologin -r -d /var/tmp smtpf > /dev/null 2>&1 || :
 # Check for 1.x upgrade
 if [ -x /usr/sbin/smtpf ]; then
@@ -145,6 +151,15 @@ if [ "$1" -gt 1 ]; then
   grep -E '^cache-path=' /etc/smtpf/smtpf.cf | xargs rm -f
   rm -f /etc/smtpf/v1-upgrade
  else
+  # Migrate run-work-dir
+  PIDFILE=`grep -E '^run-pid-file=' /etc/smtpf/smtpf.cf | cut -d= -f2`
+  if [ "$PIDFILE" == '/var/run/smtpf.pid' ] && [ -d '/var/run/smtpf' ]; then
+   /usr/sbin/smtpf run-pid-file=/var/run/smtpf/smtpf.pid +help > /etc/smtpf/smtpf.cf.new
+   mv /etc/smtpf/smtpf.cf.new /etc/smtpf/smtpf.cf
+   if [ -e "$PIDFILE"  ]; then
+    mv $PIDFILE /var/run/smtpf/smtpf.pid
+   fi
+  fi
   # Build a new smtpf.cf file
   make -C/etc/smtpf newconfig > /dev/null 2>&1
  fi
@@ -171,20 +186,22 @@ if [ $1 -eq 0 ]; then
 fi
 
 %triggerin -- fsl-spamassassin, spamassassin
+# Always copy the lastest version of the SA rules
+%{__cp} -f /usr/share/examples/smtpf/barricademx.cf /etc/mail/spamassassin/
+%{__cp} -f /usr/share/examples/smtpf/barricademx.pm /etc/mail/spamassassin/
+
 # Only run on first installation of this package
 if [ "$2" = "1" ]; then
- echo "smtpf install trigger: spamassassin" 
- # Install BarricadeMX rules for SpamAssassin
- cp /usr/share/examples/smtpf/barricademx.cf /etc/mail/spamassassin/
+ echo "smtpf install trigger ($1:$2): spamassassin" 
  # Enable SA if it is disabled and MailScanner is not installed
- if [ ! -e "/usr/sbin/MailScanner" ]; then
+ if [ ! -e "/usr/sbin/MailScanner" ] && [ ! -e "/opt/Fortress/engine/bin/MailScanner" ]; then
   %{__perl} -pi - /etc/smtpf/smtpf.cf << 'EOF'
 s+^spamd-socket=$+spamd-socket=127.0.0.1:783+i;
 EOF
   # Start SpamAssassin
   /sbin/chkconfig --add spamassassin 2>&1 > /dev/null || :
   /sbin/chkconfig spamassassin on || :
-  /sbin/service spamassassin start  > /dev/null 2>&1 ||:
+  /sbin/service spamassassin restart  > /dev/null 2>&1 ||:
  else 
   echo "Not enabling spamassassin in smtpf.cf as MailScanner is installed."
  fi
@@ -207,7 +224,7 @@ if [ "$2" = "1" ]; then
  # Add clamav to the smtpf group so that clamd can read temp files
  /usr/sbin/usermod -a -G smtpf clamav
  # Enable clamd only if MailScanner is not installed
- if [ ! -e "/usr/sbin/MailScanner" ]; then
+ if [ ! -e "/usr/sbin/MailScanner" ] && [ ! -e "/opt/Fortress/engine/bin/MailScanner" ]; then
   %{__perl} -pi - /etc/smtpf/smtpf.cf << 'EOF'
 s!^clamd-socket=$!clamd-socket=SCAN!;
 EOF
@@ -249,7 +266,8 @@ if [ "$2" = "1" ]; then
  echo "smtpf install trigger: sendmail-cf"
  %{__perl} -pi - /etc/mail/sendmail.mc << 'EOF'
 s+^DAEMON_OPTIONS\(\`Port=smtp, Name=MTA\'\)dnl+DAEMON_OPTIONS\(\`Port=26,Addr=127.0.0.1,Name=MTA\'\)dnl+;
-s+^DAEMON_OPTIONS\(\`Port=smtp,Addr=127.0.0.1, Name=MTA\'\)dnl+DAEMON_OPTIONS\(\`Port=26,Addr=127.0.0.1,Name=MTA\'\)dnl+;
+s+^DAEMON_OPTIONS\(\`Port=smtp,Addr=127.0.0.1, Name=MTA\'\)dnl+DAEMON_OPTIONS\(\`Port=26,Addr=127.0.0.1,Name=MTA\'\)
+dnl+;
 EOF
  make -C/etc/mail > /dev/null 2>&1
  if [ -e "/etc/init.d/MailScanner" ]; then
@@ -268,6 +286,8 @@ rm -rf $RPM_BUILD_DIR/com $RPM_BUILD_DIR/org
 rm -rf $RPM_BUILD_ROOT
 
 %files
+%ghost %config /etc/mail/spamassassin/barricademx.cf
+%ghost %config /etc/mail/spamassassin/barricademx.pm
 %attr(2770,root,smtpf) %dir /etc/smtpf
 %attr(444,root,smtpf) /etc/smtpf/Makefile
 %attr(444,root,smtpf) /etc/smtpf/dump.mk
@@ -277,6 +297,7 @@ rm -rf $RPM_BUILD_ROOT
 %attr(664,root,smtpf) /etc/smtpf/access-defaults.cf
 %attr(555,root,root) /usr/bin/sqlite3t
 %attr(555,root,root) /usr/bin/uri
+%attr(555,root,root) /usr/bin/pdq
 %attr(555,root,root) /usr/bin/spf
 %attr(555,root,root) /usr/bin/show
 %attr(555,root,root) /usr/sbin/kvmap
@@ -297,10 +318,13 @@ rm -rf $RPM_BUILD_ROOT
 %attr(664,root,smtpf) %ghost /etc/smtpf/access.sq3
 %attr(664,root,smtpf) %ghost /etc/smtpf/route.sq3
 %attr(6770,smtpf,smtpf) %dir /var/cache/smtpf
+%attr(6770,smtpf,smtpf) %dir /var/run/smtpf
 %attr(664,smtpf,smtpf) %ghost /var/cache/smtpf/stats.sq3
 %attr(664,smtpf,smtpf) %ghost /var/cache/smtpf/cache.sq3
 
 %changelog
+* Thu Jan 11 2009 Steve Freegard <steve.freegard@fsl.com>
+- Added new barricademx.pm helper for spamd
 * Fri Jan 1 2009 Steve Freegard <steve.freegard@fsl.com>
 - Disabled sync-on-write for /var/log/maillog for extra performance
 - Added triggers for Sendmail, Clamd, SpamAssassin and MailScanner

@@ -57,8 +57,8 @@ typedef struct {
 	signed char score_domain;		/*  +4 */
 	signed char confidence;			/*  +5 */
 	unsigned short ttl;			/*  +6 */
-	char text[MCC_MAX_VALUE_SIZE-8];	/*  +8 */
-						/*  +MCC_MAX_VALUE_SIZE */
+	char text[82];				/*  +8 */
+						/*  +90 */
 } SIQ_compact;
 
 static Vector servers;
@@ -158,8 +158,8 @@ siqData(Session *sess, va_list ignore)
 		return SMTPF_CONTINUE;
 
 	MEMSET(&cached, 0, sizeof (cached));
-	cached.key_size = (unsigned short) snprintf((char *) cached.key_data, sizeof (cached.key_data), SIQ_CACHE_TAG "%s,%s", sess->client.addr, sess->msg.mail->domain.string);
-	TextLower((char *) cached.key_data, -1);
+	mccSetKey(&cached, SIQ_CACHE_TAG "%s,%s", sess->client.addr, sess->msg.mail->domain.string);
+	TextLower(MCC_PTR_K(&cached), MCC_GET_K_SIZE(&cached));
 
 	/* Look for a locally cached copy. */
 	if (mccGetRow(mcc, &cached) != MCC_OK) {
@@ -170,9 +170,8 @@ siqData(Session *sess, va_list ignore)
 			sess->msg.mail->domain.string, (char **) VectorBase(servers)
 		);
 
-		cached.hits = 0;
-		cached.created = time(NULL);
-		cached.expires = cached.created + siq_ctx->ttl;
+		cached.ttl = siq_ctx->ttl;
+		cached.expires = time(NULL) + cached.ttl;
 
 		siq_ctx->flags = 0;
 		if (siq.hl)
@@ -191,16 +190,16 @@ siqData(Session *sess, va_list ignore)
 		if (sizeof (siq_ctx->text) <= length)
 			length = sizeof (siq_ctx->text) - 1;
 
-		cached.value_size = (unsigned char) (sizeof (*siq_ctx) - sizeof (siq_ctx->text) + length);
-		memcpy(cached.value_data, siq_ctx, cached.value_size);
+		MCC_SET_V_SIZE(&cached, sizeof (*siq_ctx) - sizeof (siq_ctx->text) + length);
+		(void) memcpy(MCC_PTR_V(&cached), siq_ctx, MCC_GET_V_SIZE(&cached));
 
 		if (verb_cache.option.value)
-			syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), cached.key_data, "(mixed)", FILE_LINENO);
+			syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), LOG_CACHE_PUT(&cached), "(mixed)", FILE_LINENO);
 		if (mccPutRow(mcc, &cached) == MCC_ERROR)
-			syslog(LOG_ERR, log_cache_put_error, LOG_ARGS(sess), cached.key_data, "(mixed)", FILE_LINENO);
+			syslog(LOG_ERR, log_cache_put_error, LOG_ARGS(sess), LOG_CACHE_PUT_ERROR(&cached), "(mixed)", FILE_LINENO);
 	} else {
 		if (verb_cache.option.value)
-			syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), cached.key_data, "(mixed)", FILE_LINENO);
+			syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), LOG_CACHE_PUT(&cached), "(mixed)", FILE_LINENO);
 		statsCount(&stat_siq_query_cache);
 	}
 

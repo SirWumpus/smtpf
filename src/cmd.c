@@ -2096,7 +2096,7 @@ if (MSG_NOT_SET(sess, MSG_TAG) && !(optSaveData.value & 2))
 	/* Check final state of message filters BEFORE sending final dot. */
 	rc = filterRun(sess, filter_dot_table);
 	if (MSG_ANY_SET(sess, MSG_TRAP)) {
-		rc = replySetFmt(sess, SMTPF_REJECT, "550 5.7.0 this message blocked for unspecified reasons" ID_MSG(945) CRLF, ID_ARG(sess));
+		rc = replySetFmt(sess, SMTPF_REJECT, "550 5.7.0 this message was blocked" ID_MSG(945) CRLF, ID_ARG(sess));
 		statsCount(&stat_msg_trap);
 	}
 

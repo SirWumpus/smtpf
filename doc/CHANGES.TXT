@@ -276,6 +276,12 @@ is no set schedule for releases.
    !	If a client hits the dns-bl, then then a helo: TRAP rule - the
 	message isn't trapped. Steve F.
 
+--2.6.0--
+
+   *	Requires libsnert 1.75.18.
+
+   !	Updated to use MCC2 API, the broadcast-only protocol, to improve
+	performance.
 
 --2.5.7--
 

@@ -40,12 +40,20 @@ extern const char log_oom[];
 extern const char log_internal[];
 extern const char log_overflow[];
 extern const char log_pipeline[];
+
 extern const char log_cache_get[];
 extern const char log_cache_put[];
 extern const char log_cache_delete[];
 extern const char log_cache_get_error[];
 extern const char log_cache_put_error[];
 extern const char log_cache_delete_error[];
+
+#define LOG_CACHE_GET(p)		MCC_FMT_K_ARG(p), MCC_FMT_V_ARG(p)
+#define LOG_CACHE_PUT(p)		LOG_CACHE_GET(p)
+#define LOG_CACHE_DELETE(p)		MCC_FMT_K_ARG(p)
+#define LOG_CACHE_GET_ERROR(p)		LOG_CACHE_DELETE(p)
+#define LOG_CACHE_PUT_ERROR(p)		LOG_CACHE_PUT(p)
+#define LOG_CACHE_DELETE_ERROR(p)	LOG_CACHE_DELETE(p)
 
 extern const char msg_ok[];
 extern const char msg_end[];

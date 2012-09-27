@@ -160,7 +160,7 @@ clickInit(Session *null, va_list ignore)
 int
 clickMail(Session *sess, va_list args)
 {
-	int rc;
+	int rc, length;
 	mcc_row row;
 	ParsePath *mail;
 	mcc_handle *mcc = SESS_GET_MCC(sess);
@@ -173,15 +173,18 @@ clickMail(Session *sess, va_list args)
 	if (*optClickUrl.string == '\0' || mail->address.length <= 0)
 		return SMTPF_CONTINUE;
 
-	row.key_size = clickMakeKey(sess, mail, (char *) row.key_data, sizeof (row.key_data));
+	length = clickMakeKey(sess, mail, MCC_PTR_K(&row), MCC_DATA_SIZE);
+	MCC_SET_K_SIZE(&row, length);
 
 	if (mccGetRow(mcc, &row) == MCC_OK) {
-		row.value_data[row.value_size] = '\0';
 		if (verb_cache.option.value)
-			syslog(LOG_DEBUG, log_cache_get, LOG_ARGS(sess), row.key_data, row.value_data, FILE_LINENO);
+			syslog(LOG_DEBUG, log_cache_get, LOG_ARGS(sess), LOG_CACHE_GET(&row), FILE_LINENO);
 
-		rc = row.value_data[0] - '0';
-		row.expires = time(NULL) + cacheGetTTL(rc);
+		/* Touch */
+		rc = *MCC_PTR_V(&row) - '0';
+		row.ttl = cacheGetTTL(rc);
+		row.expires = time(NULL) + row.ttl;
+
 		sess->msg.bw_state = rc;
 
 		if (rc == SMTPF_ACCEPT) {
@@ -204,9 +207,9 @@ See the <a href="summary.html#opt_click_secret">Click</a> family of options.
 		}
 
 		if (verb_cache.option.value)
-			syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), row.key_data, row.value_data, FILE_LINENO);
+			syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), LOG_CACHE_PUT(&row), FILE_LINENO);
 		if (mccPutRow(mcc, &row) == MCC_ERROR)
-			syslog(LOG_ERR, log_cache_put_error, LOG_ARGS(sess), row.key_data, row.value_data, FILE_LINENO);
+			syslog(LOG_ERR, log_cache_put_error, LOG_ARGS(sess), LOG_CACHE_PUT_ERROR(&row), FILE_LINENO);
 	}
 
 	return rc;
@@ -215,6 +218,7 @@ See the <a href="summary.html#opt_click_secret">Click</a> family of options.
 int
 clickRcpt(Session *sess, va_list args)
 {
+	int length;
 	time_t when;
 	mcc_row row;
 	ParsePath *rcpt;
@@ -245,8 +249,9 @@ clickRcpt(Session *sess, va_list args)
 
 	/* Build the cache key and local-part hash. */
 	MEMSET(&row, 0, sizeof (row));
-	row.key_size = clickMakeKey(sess, sess->msg.mail, (char *) row.key_data, sizeof (row.key_data));
-	(void) clickMakeHash(sess, when, (char *) row.key_data, row.key_size, buffer, sizeof (buffer));
+	length = clickMakeKey(sess, sess->msg.mail, MCC_PTR_K(&row), MCC_DATA_SIZE);
+	(void) clickMakeHash(sess, when, MCC_PTR_K(&row), length, buffer, sizeof (buffer));
+	MCC_SET_K_SIZE(&row, length);
 
 	/* Validate the hash. Note that we check against address.string
 	 * which has maintained the case of the original address, while
@@ -263,17 +268,16 @@ clickRcpt(Session *sess, va_list args)
 	 * Add a white list entry to the cache.
 	 */
 	statsCount(&stat_click_pass);
-	row.created = time(NULL);
-	row.expires = row.created + cacheGetTTL(SMTPF_ACCEPT);
-	row.value_data[0] = SMTPF_ACCEPT + '0';
-	row.value_data[1] = '\0';
-	row.value_size = 1;
-	row.hits = 0;
+	row.ttl = cacheGetTTL(SMTPF_ACCEPT);
+	row.expires = time(NULL) + row.ttl;
+
+	*MCC_PTR_V(&row) = SMTPF_ACCEPT + '0';
+	MCC_SET_V_SIZE(&row, 1);
 
 	if (verb_cache.option.value)
-		syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), row.key_data, row.value_data, FILE_LINENO);
+		syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), LOG_CACHE_PUT(&row), FILE_LINENO);
 	if (mccPutRow(mcc, &row) == MCC_ERROR)
-		syslog(LOG_ERR, log_cache_put_error, LOG_ARGS(sess), row.key_data, row.value_data, FILE_LINENO);
+		syslog(LOG_ERR, log_cache_put_error, LOG_ARGS(sess), LOG_CACHE_PUT_ERROR(&row), FILE_LINENO);
 
 	/* Discard messages addressed to the special recipient. */
 	MSG_SET(sess, MSG_DISCARD);
@@ -337,8 +341,10 @@ clickReplyLog(Session *sess, va_list args)
 
 	/* Generate the hash used for the local-part. */
 	now = time(NULL);
-	row.key_size = clickMakeKey(sess, sess->msg.mail, (char *) row.key_data, sizeof (row.key_data));
-	(void) clickMakeHash(sess, now, (char *) row.key_data, row.key_size, sess->reply, sizeof (sess->reply));
+	len = clickMakeKey(sess, sess->msg.mail, MCC_PTR_K(&row), MCC_DATA_SIZE);
+	(void) clickMakeHash(sess, now, MCC_PTR_K(&row), len, sess->reply, sizeof (sess->reply));
+	MCC_PTR_K(&row)[len] = '\0';
+	MCC_SET_K_SIZE(&row, len);
 
 	/*** We're assuming the rejection message is a single
 	 *** line terminated by CRLF.
@@ -362,15 +368,15 @@ clickReplyLog(Session *sess, va_list args)
 		 * to present some form of CAPTCHA to validate the sender
 		 * before white listing.
 		 */
-		if ((c_arg = (unsigned char *) clickUrlEncode((const char *) row.key_data)) == NULL)
-			c_arg = row.key_data;
+		if ((c_arg = (unsigned char *) clickUrlEncode(MCC_PTR_K(&row))) == NULL)
+			c_arg = MCC_PTR_K(&row);
 		len = snprintf(
 			click->reply+(*reply_length-2), sizeof (click->reply)-(*reply_length-2),
 			CLICK_HTTP_FORMAT, optClickUrl.string,
 			sess->reply + sizeof (CLICK_STRING)-1,
 			c_arg
 		);
-		if (c_arg != row.key_data)
+		if (c_arg != MCC_PTR_K(&row))
 			free(c_arg);
 		break;
 	default:

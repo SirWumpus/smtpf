@@ -160,6 +160,7 @@ body:mac.com				OK
 body:macromedia.com			OK
 body:mail.com				OK
 body:mail.ru				OK
+body:mailchimp.com                      OK
 body:mailscanner.info			OK
 body:marketwatch.com			OK
 body:mcafee.com				OK
@@ -228,6 +229,7 @@ body:suntrust.com			OK
 body:surbl.org				OK
 body:symantec.com			OK
 body:sympatico.ca			OK
+body:t.co				OK
 body:t-online.de			OK
 body:tails.nl				OK
 body:telus.net				OK
@@ -257,6 +259,7 @@ body:weatherbug.com			OK
 body:web.de				OK
 body:webshots.com			OK
 body:webtv.net				OK
+body:wpmudev.org                        OK    
 body:wsj.com				OK
 body:xing.com				OK
 body:xing.de				OK

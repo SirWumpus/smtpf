@@ -898,6 +898,7 @@ checkClientIP(Session *sess)
 
 #ifdef FILTER_GREY
 {
+	int length;
 	mcc_row row;
 	mcc_handle *mcc = ((Worker *) sess->session->worker->data)->mcc;
 
@@ -906,12 +907,17 @@ checkClientIP(Session *sess)
 	 * tests and controls such as smtp-greet-pause or smtp-slow-reply.
 	 */
 	sess->msg.spf_mail = SPF_NONE;
-	row.key_size = greyMakeKey(sess, optGreyKey.value & ~(GREY_TUPLE_HELO|GREY_TUPLE_MAIL|GREY_TUPLE_RCPT), NULL, (char *) row.key_data, sizeof (row.key_data));
+
+	length = greyMakeKey(
+		sess, optGreyKey.value & (GREY_TUPLE_IP|GREY_TUPLE_PTR|GREY_TUPLE_PTRN), 
+		NULL, MCC_PTR_K(&row), MCC_DATA_SIZE
+	);
+	MCC_SET_K_SIZE(&row, length);
+
 	if (mccGetRow(mcc, &row) == MCC_OK) {
-		row.value_data[row.value_size] = '\0';
 		if (verb_cache.option.value)
-			syslog(LOG_DEBUG, log_cache_get, LOG_ARGS(sess), row.key_data, row.value_data, FILE_LINENO);
-		if (row.value_data[0] == SMTPF_CONTINUE+'0')
+			syslog(LOG_DEBUG, log_cache_get, LOG_ARGS(sess), LOG_CACHE_GET(&row), FILE_LINENO);
+		if (*MCC_PTR_V(&row) == SMTPF_CONTINUE+'0')
 			CLIENT_SET(sess, CLIENT_PASSED_GREY);
 	}
 }
@@ -1037,8 +1043,10 @@ sessionProcess(Session *sess)
 
 	checkClientIP(sess);
 
-	if (routeKnownClientName(sess))
+	if (routeKnownClientName(sess)) {
 		CLIENT_SET(sess, CLIENT_IS_RELAY);
+		statsCount(&stat_connect_relay);
+	}
 
 	if (verb_info.option.value) {
 		syslog(

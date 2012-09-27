@@ -105,6 +105,7 @@ savInit(Session *null, va_list ignore)
 int
 savData(Session *sess, va_list ignore)
 {
+	int code;
 	URI *uri;
 	long span;
 	int offset;
@@ -134,22 +135,22 @@ savData(Session *sess, va_list ignore)
 
 	/* Does the sender's domain blindly accept all recipients? */
 	MEMSET(&domain, 0, sizeof (domain));
-	domain.key_size = (unsigned short) snprintf((char *) domain.key_data, sizeof (domain.key_data), SAV_CACHE_TAG "%s", sess->msg.mail->domain.string);
+	mccSetKey(&domain, SAV_CACHE_TAG "%s", sess->msg.mail->domain.string);
 
 	if ((domain_cached = mccGetRow(mcc, &domain)) == MCC_OK) {
-		domain.key_data[domain.key_size] = '\0';
-		domain.value_data[domain.value_size] = '\0';
 		if (verb_cache.option.value)
-			syslog(LOG_DEBUG, log_cache_get, LOG_ARGS(sess), domain.key_data, domain.value_data, FILE_LINENO);
+			syslog(LOG_DEBUG, log_cache_get, LOG_ARGS(sess), LOG_CACHE_GET(&domain), FILE_LINENO);
 
+		/* Touch */
+		domain.ttl = cacheGetTTL(*MCC_PTR_V(&domain) - '0');
+		domain.expires = time(NULL) + domain.ttl;
+	
 		if (verb_cache.option.value)
-			syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), domain.key_data, domain.value_data, FILE_LINENO);
+			syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), LOG_CACHE_PUT(&domain), FILE_LINENO);
 		if (mccPutRow(mcc, &domain) == MCC_ERROR)
-			syslog(LOG_ERR, log_cache_put_error, LOG_ARGS(sess), domain.key_data, domain.value_data, FILE_LINENO);
+			syslog(LOG_ERR, log_cache_put_error, LOG_ARGS(sess), LOG_CACHE_PUT_ERROR(&domain), FILE_LINENO);
 
-		domain.value_data[domain.value_size] = '\0';
-
-		if (SMTP_ISS_OK(domain.value_data)) {
+		if (SMTP_ISS_OK(MCC_PTR_V(&domain))) {
 			(void) TextCopy(sess->reply, sizeof (sess->reply), "dumb mail host, skipping");
 			statsCount(&stat_call_back_skip);
 			goto error1;
@@ -162,23 +163,25 @@ savData(Session *sess, va_list ignore)
 	}
 
 	/* Have we previously seen this sender? */
-	sender.key_size = (unsigned short) snprintf((char *) sender.key_data, sizeof (sender.key_data), SAV_CACHE_TAG "%s", sess->msg.mail->address.string);
-	TextLower((char *) sender.key_data, -1);
+	mccSetKey(&sender, SAV_CACHE_TAG "%s", sess->msg.mail->address.string);
+	TextLower(MCC_PTR_K(&sender), MCC_GET_K_SIZE(&sender));
 
 	if (mccGetRow(mcc, &sender) == MCC_OK) {
-		sender.value_data[sender.value_size] = '\0';
 		if (verb_cache.option.value)
-			syslog(LOG_DEBUG, log_cache_get, LOG_ARGS(sess), sender.key_data, sender.value_data, FILE_LINENO);
+			syslog(LOG_DEBUG, log_cache_get, LOG_ARGS(sess), LOG_CACHE_GET(&sender), FILE_LINENO);
 
+		/* Touch */
+		rc = *MCC_PTR_V(&sender) - '0';
+		sender.ttl = cacheGetTTL(rc);
+		sender.expires = time(NULL) + sender.ttl;
+	
 		if (verb_cache.option.value)
-			syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), sender.key_data, sender.value_data, FILE_LINENO);
+			syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), LOG_CACHE_PUT(&sender), FILE_LINENO);
 		if (mccPutRow(mcc, &sender) == MCC_ERROR)
-			syslog(LOG_ERR, log_cache_put_error, LOG_ARGS(sess), sender.key_data, sender.value_data, FILE_LINENO);
+			syslog(LOG_ERR, log_cache_put_error, LOG_ARGS(sess), LOG_CACHE_PUT_ERROR(&sender), FILE_LINENO);
 
 		statsCount(&stat_call_back_cache);
-		sender.value_data[sender.value_size] = '\0';
 
-		rc = sender.value_data[0] - '0';
 		if (optCallBackPassGrey.value && rc == SMTPF_CONTINUE)
 			rc = SMTPF_SKIP_NEXT;
 
@@ -256,11 +259,7 @@ See <a href="summary.html#opt_uri_call_back_greeting">uri-call-back-greeting</a>
 		rc = optCallBackPassGrey.value ? SMTPF_SKIP_NEXT : SMTPF_CONTINUE;
 	}
 
-	sender.hits = 0;
-	sender.created = time(NULL);
-	sender.value_data[0] = rc + '0';
-	sender.value_data[1] = '\0';
-	sender.value_size = 1;
+	mccSetValue(&sender, "%c", rc+'0');
 
 	/* If the sender address was accepted and domain's MX status
 	 * hasn't been cached, then perform the false address test.
@@ -312,9 +311,9 @@ See <a href="summary.html#opt_uri_call_back_greeting">uri-call-back-greeting</a>
 #ifdef CALL_BACK_RSET
 skip_false_rcpt:
 #endif
-			domain.value_data[0] = SMTPF_REJECT + '0';
+			code = SMTPF_REJECT;
 		} else {
-			domain.value_data[0] = sess->smtp_code / 100 + '0';
+			code = sess->smtp_code / 100;
 		}
 
 		if (SMTP_IS_TEMP(sess->smtp_code)) {
@@ -324,21 +323,19 @@ skip_false_rcpt:
 			 * throughput on our end.
 			 */
 			(void) TextCopy(sess->reply, sizeof (sess->reply), "dumb mail host inconclusive");
-			sender.value_data[0] = SMTPF_TEMPFAIL + '0';
+			mccSetValue(&sender, "%d", SMTPF_TEMPFAIL);
 			rc = SMTPF_TEMPFAIL;
 		} else {
-			domain.hits = 0;
-			domain.value_size = 1;
-			domain.value_data[1] = '\0';
-			domain.created = time(NULL);
-			sender.expires = domain.created + cacheGetTTL(sess->smtp_code / 100);
+			domain.ttl = cacheGetTTL(sess->smtp_code / 100);
+			domain.expires = time(NULL) + cacheGetTTL(sess->smtp_code / 100);
 
-			domain.key_size = (unsigned short) snprintf((char *) domain.key_data, sizeof (domain.key_data), SAV_CACHE_TAG "%s", sess->msg.mail->domain.string);
+			mccSetKey(&domain, SAV_CACHE_TAG "%s", sess->msg.mail->domain.string);
+			mccSetValue(&domain, "%d", code);
 
 			if (verb_cache.option.value)
-				syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), domain.key_data, domain.value_data, FILE_LINENO);
+				syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), LOG_CACHE_PUT(&domain), FILE_LINENO);
 			if (mccPutRow(mcc, &domain) == MCC_ERROR)
-				syslog(LOG_ERR, log_cache_put_error, LOG_ARGS(sess), domain.key_data, domain.value_data, FILE_LINENO);
+				syslog(LOG_ERR, log_cache_put_error, LOG_ARGS(sess), LOG_CACHE_PUT_ERROR(&domain), FILE_LINENO);
 
 			if (SMTP_IS_OK(sess->smtp_code)) {
 				(void) TextCopy(sess->reply, sizeof (sess->reply), "dumb mail host found");
@@ -347,18 +344,17 @@ skip_false_rcpt:
 			} else {
 				(void) TextCopy(sess->reply, sizeof (sess->reply), "not a dumb mail host");
 			}
-
-			/* rc = sender.value_data[0] - '0'; */
 		}
 	}
 
 	/* Cache the sender call-back result. */
-	sender.expires = sender.created + cacheGetTTL(rc);
+	sender.ttl = cacheGetTTL(rc);
+	sender.expires = time(NULL) + sender.ttl;
 
 	if (verb_cache.option.value)
-		syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), sender.key_data, sender.value_data, FILE_LINENO);
+		syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), LOG_CACHE_PUT(&sender), FILE_LINENO);
 	if (mccPutRow(mcc, &sender) == MCC_ERROR)
-		syslog(LOG_ERR, log_cache_put_error, LOG_ARGS(sess), sender.key_data, sender.value_data, FILE_LINENO);
+		syslog(LOG_ERR, log_cache_put_error, LOG_ARGS(sess), LOG_CACHE_PUT_ERROR(&sender), FILE_LINENO);
 error3:
 	if (rc == SMTPF_REJECT || rc == SMTPF_TEMPFAIL) {
 		statsCount(rc == SMTPF_REJECT ? &stat_call_back_reject : &stat_call_back_tempfail);

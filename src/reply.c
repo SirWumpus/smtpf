@@ -48,19 +48,19 @@ A buffer overflow check failed reporting file and line number where it occured.
 Not expected to occur outside of code development.
 }*/
 
-const char log_cache_get[] = /* LOG_DEBUG */ LOG_MSG(541) "cache get key={%s} value={%s} %s(%lu)";
-const char log_cache_get_error[] = /* LOG_ERR */ LOG_MSG(542) "cache get error key={%s} %s(%lu)";
+const char log_cache_get[] = /* LOG_DEBUG */ LOG_MSG(541) "cache get key={" MCC_FMT_K "} value={" MCC_FMT_V "} %s(%lu)";
+const char log_cache_get_error[] = /* LOG_ERR */ LOG_MSG(542) "cache get error key={" MCC_FMT_K "} %s(%lu)";
 /*{LOG
 A generic error where a module could not get a cache record for unspecified reasons.
 This is not the same as record not found.
 }*/
-const char log_cache_put[] = /* LOG_DEBUG */ LOG_MSG(543) "cache put key={%s} value={%s} %s(%lu)";
-const char log_cache_put_error[] = /* LOG_ERR */ LOG_MSG(544) "cache put error key={%s} value={%s} %s(%lu)";
+const char log_cache_put[] = /* LOG_DEBUG */ LOG_MSG(543) "cache put key={" MCC_FMT_K "} value={" MCC_FMT_V "} %s(%lu)";
+const char log_cache_put_error[] = /* LOG_ERR */ LOG_MSG(544) "cache put error key={" MCC_FMT_K "} value={" MCC_FMT_V "} %s(%lu)";
 /*{LOG
 A generic error where a module failed to update a cache record for unspecified reasons.
 }*/
-const char log_cache_delete[] = /* LOG_DEBUG */ LOG_MSG(545) "cache delete key={%s} %s(%lu)";
-const char log_cache_delete_error[] = /* LOG_ERR */ LOG_MSG(546) "cache delete error key={%s} %s(%lu)";
+const char log_cache_delete[] = /* LOG_DEBUG */ LOG_MSG(545) "cache delete key={" MCC_FMT_K "} %s(%lu)";
+const char log_cache_delete_error[] = /* LOG_ERR */ LOG_MSG(546) "cache delete error key={" MCC_FMT_K "} %s(%lu)";
 /*{LOG
 A generic error where a module failed to delete a cache record for unspecified reasons.
 }*/
@@ -418,7 +418,7 @@ replySendLintReport(Session *sess, const char *report_rcpt)
 	Vector hosts;
 	char **table;
 	Connection *fwd;
-	char timestamp[40];
+	char timestamp[TIME_STAMP_MIN_SIZE];
 
 	if (sess->lint_replies == NULL)
 		return;

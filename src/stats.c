@@ -1482,6 +1482,7 @@ Not used at this time.
 void
 statsNotify(mcc_handle *mcc, unsigned long one, unsigned long five, unsigned long fifteen)
 {
+	time_t now;
 	mcc_row row;
 	char buffer[128];
 	unsigned long msg_reject = 0;
@@ -1501,15 +1502,16 @@ statsNotify(mcc_handle *mcc, unsigned long one, unsigned long five, unsigned lon
 	pct_max_of = stat_high_open_files.runtime * 100 / optRunOpenFileLimit.value;
 	pct_capacity = (queueLength(&server.workers) * FD_PER_THREAD + FD_OVERHEAD) * 100 / optRunOpenFileLimit.value;
 
-	row.hits = 0;
-	row.created = row.touched = time(NULL);
-	row.expires = row.created + optCacheGcInterval.value;
-	row.key_size = TextCopy((char *) row.key_data, sizeof (row.key_data), "__loadavg");
-	row.value_size = snprintf(
-		(char *) row.value_data, sizeof (row.value_data),
+	(void) time(&now);
+	row.ttl = optCacheGcInterval.value;
+	row.expires = now + row.ttl;
+
+	mccSetKey(&row, "__loadavg");
+	mccSetValue(
+		&row, 
 		"%lu,%lu,%lu %lu %lu %lu/%lu/%lu %lu/%lu %lu",
 		one, five, fifteen,
-		(unsigned long)(row.created - start_time),
+		(unsigned long)(now - start_time),
 		stat_connect_count.runtime,
 		stat_msg_accept.runtime, msg_reject, stat_total_kb.runtime,
 		pct_of, pct_max_of,
@@ -1521,7 +1523,7 @@ statsNotify(mcc_handle *mcc, unsigned long one, unsigned long five, unsigned lon
 	(void) snprintf(
 		buffer, sizeof (buffer), "la=%lu,%lu,%lu ut=%lu tc=%lu arv=%lu/%lu/%lu of=%lu/%lu cap=%lu",
 		one, five, fifteen,
-		(unsigned long)(row.created - start_time),
+		(unsigned long)(now - start_time),
 		stat_connect_count.runtime,
 		stat_msg_accept.runtime, msg_reject, stat_total_kb.runtime,
 		pct_of, pct_max_of,
@@ -1582,12 +1584,12 @@ statsCommand(Session *sess)
 	int i, j;
 	Stats **base;
 	Reply *reply;
-	char stamp[40];
 	struct tm local;
 	unsigned long counter;
 	sqlite3_int64 mem_use;
 	const char *type, *units;
 	unsigned long age, d, h, m, s;
+	char stamp[TIME_STAMP_MIN_SIZE];
 	static const char hourly[] = "hourly";
 	static const char window[] = "window";
 	static const char runtime[] = "runtime";

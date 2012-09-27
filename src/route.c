@@ -451,24 +451,24 @@ routeCacheGetRcpt(Session *sess, char *key)
 	PTHREAD_MUTEX_LOCK(&route_mutex);
 #endif
 	MEMSET(&row, 0, sizeof (row));
-	row.key_size = snprintf((char *) row.key_data, sizeof (row.key_data), RCPT_TAG "%s", key);
-	TextLower((char *) row.key_data, -1);
+	mccSetKey(&row,  RCPT_TAG "%s", key);
+	TextLower(MCC_PTR_K(&row), MCC_GET_K_SIZE(&row));
 
 	if (mccGetRow(mcc, &row) == MCC_OK) {
-		row.value_data[row.value_size] = '\0';
 		if (verb_cache.option.value)
-			syslog(LOG_DEBUG, log_cache_get, LOG_ARGS(sess), row.key_data, row.value_data, FILE_LINENO);
-
-		rc = (int) strtol((char *) row.value_data, NULL, 10);
+			syslog(LOG_DEBUG, log_cache_get, LOG_ARGS(sess), LOG_CACHE_GET(&row), FILE_LINENO);
+		rc = *MCC_PTR_V(&row) - '0';
 #ifdef ENABLE_ACCEPT_TOUCH
 		/* Touch the record. */
-		if (rc == SMTPF_ACCEPT)
-			row.expires = time(NULL) + optCacheAcceptTTL.value;
+		if (rc == SMTPF_ACCEPT) {
+			row.ttl = optCacheAcceptTTL.value;
+			row.expires = time(NULL) + row.ttl;
+		}
 
 		if (verb_cache.option.value)
-			syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), row.key_data, row.value_data, FILE_LINENO);
+			syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), LOG_CACHE_PUT(&row), FILE_LINENO);
 		if (mccPutRow(mcc, &row) == MCC_ERROR)
-			syslog(LOG_ERR, log_cache_put_error, LOG_ARGS(sess), row.key_data, row.value_data, FILE_LINENO);
+			syslog(LOG_ERR, log_cache_put_error, LOG_ARGS(sess), LOG_CACHE_PUT_ERROR(&row), FILE_LINENO);
 #endif
 	}
 
@@ -485,17 +485,17 @@ routeCacheAddRcpt(Session *sess, char *key, SmtpfCode smtpf_code)
 	mcc_handle *mcc = SESS_GET_MCC(sess);
 
 	MEMSET(&row, 0, sizeof (row));
-	row.hits = 0;
-	row.created = time(NULL);
-	row.expires = row.created + cacheGetTTL(smtpf_code);
-	row.key_size = snprintf((char *) row.key_data, sizeof (row.key_data), RCPT_TAG "%s", key);
-	row.value_size = (unsigned char) snprintf((char *) row.value_data, sizeof (row.value_data), "%d", smtpf_code);
-	TextLower((char *) row.key_data, -1);
+	row.ttl = cacheGetTTL(smtpf_code);
+	row.expires = time(NULL) + row.ttl;
+
+	mccSetKey(&row,  RCPT_TAG "%s", key);
+	TextLower(MCC_PTR_K(&row), MCC_GET_K_SIZE(&row));
+	mccSetValue(&row, "%d", smtpf_code);
 
 	if (verb_cache.option.value)
-		syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), row.key_data, row.value_data, FILE_LINENO);
+		syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), LOG_CACHE_PUT(&row), FILE_LINENO);
 	if (mccPutRow(mcc, &row) == MCC_ERROR)
-		syslog(LOG_ERR, log_cache_put_error, LOG_ARGS(sess), row.key_data, row.value_data, FILE_LINENO);
+		syslog(LOG_ERR, log_cache_put_error, LOG_ARGS(sess), LOG_CACHE_PUT_ERROR(&row), FILE_LINENO);
 }
 
 #ifdef ENABLE_CACHE_UPDATE_MUTEX
@@ -755,6 +755,7 @@ routeCallAhead(Session *sess, const char *host, ParsePath *rcpt)
 	SmtpfCode rc;
 	Connection *conn;
 #ifdef ENABLE_FALSE_RCPT_TEST
+	int code;
 	long length;
 	mcc_row dumb_host;
 	int dumb_host_cached;
@@ -767,21 +768,24 @@ routeCallAhead(Session *sess, const char *host, ParsePath *rcpt)
 #ifdef ENABLE_FALSE_RCPT_TEST
 	/* Does the recipient's route blindly accept all recipients? */
 	MEMSET(&dumb_host, 0, sizeof (dumb_host));
-	dumb_host.key_size = (unsigned short) snprintf((char *) dumb_host.key_data, sizeof (dumb_host.key_data), DUMB_TAG "%s,%s", host, rcpt->domain.string);
+	mccSetKey(&dumb_host, DUMB_TAG "%s,%s", host, rcpt->domain.string);
 
 	if ((dumb_host_cached = mccGetRow(mcc, &dumb_host)) == MCC_OK) {
-		dumb_host.value_data[dumb_host.value_size] = '\0';
 		if (verb_cache.option.value)
-			syslog(LOG_DEBUG, log_cache_get, LOG_ARGS(sess), dumb_host.key_data, dumb_host.value_data, FILE_LINENO);
+			syslog(LOG_DEBUG, log_cache_get, LOG_ARGS(sess), LOG_CACHE_GET(&dumb_host), FILE_LINENO);
+
+		/* Touch */
+		dumb_host.ttl = cacheGetTTL(*MCC_PTR_V(&dumb_host) - '0');
+		dumb_host.expires = time(NULL) + dumb_host.ttl;
 
 		if (verb_cache.option.value)
-			syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), dumb_host.key_data, dumb_host.value_data, FILE_LINENO);
+			syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), LOG_CACHE_PUT(&dumb_host), FILE_LINENO);
 		if (mccPutRow(mcc, &dumb_host) == MCC_ERROR)
-			syslog(LOG_ERR, log_cache_put_error, LOG_ARGS(sess), dumb_host.key_data, dumb_host.value_data, FILE_LINENO);
+			syslog(LOG_ERR, log_cache_put_error, LOG_ARGS(sess), LOG_CACHE_PUT_ERROR(&dumb_host), FILE_LINENO);
 
-		dumb_host.value_data[dumb_host.value_size] = '\0';
+		MCC_PTR_V(&dumb_host)[MCC_GET_V_SIZE(&dumb_host)] = '\0';
 
-		if (SMTP_ISS_OK(dumb_host.value_data)) {
+		if (SMTP_ISS_OK(MCC_PTR_V(&dumb_host))) {
 			(void) TextCopy(sess->reply, sizeof (sess->reply), "dumb mail host, skipping");
 			rc = SMTPF_ACCEPT;
 			goto error0;
@@ -883,9 +887,9 @@ unplussed_rcpt:
 #else
 		if (SMTP_IS_ERROR(conn->smtp_code)) {
 #endif
-			dumb_host.value_data[0] = SMTPF_REJECT + '0';
+			code = SMTPF_REJECT;
 		} else {
-			dumb_host.value_data[0] = conn->smtp_code / 100 + '0';
+			code = conn->smtp_code / 100;
 		}
 
 		if (SMTP_IS_TEMP(conn->smtp_code)) {
@@ -896,18 +900,16 @@ unplussed_rcpt:
 			rc = SMTPF_TEMPFAIL;
 			goto error2;
 		} else {
-			dumb_host.hits = 0;
-			dumb_host.value_size = 1;
-			dumb_host.value_data[1] = '\0';
-			dumb_host.created = time(NULL);
-			dumb_host.expires = dumb_host.created + cacheGetTTL(dumb_host.value_data[0] - '0');
+			dumb_host.ttl = cacheGetTTL(code);
+			dumb_host.expires = time(NULL) + dumb_host.ttl;
 
-			dumb_host.key_size = (unsigned short) snprintf((char *) dumb_host.key_data, sizeof (dumb_host.key_data), DUMB_TAG "%s,%s", host, rcpt->domain.string);
+			mccSetKey(&dumb_host, DUMB_TAG "%s,%s", host, rcpt->domain.string);
+			mccSetValue(&dumb_host, "%d", code);
 
 			if (verb_cache.option.value)
-				syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), dumb_host.key_data, dumb_host.value_data, FILE_LINENO);
+				syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), LOG_CACHE_PUT(&dumb_host), FILE_LINENO);
 			if (mccPutRow(mcc, &dumb_host) == MCC_ERROR)
-				syslog(LOG_ERR, log_cache_put_error, LOG_ARGS(sess), dumb_host.key_data, dumb_host.value_data, FILE_LINENO);
+				syslog(LOG_ERR, log_cache_put_error, LOG_ARGS(sess), LOG_CACHE_PUT_ERROR(&dumb_host), FILE_LINENO);
 
 			if (SMTP_IS_OK(conn->smtp_code)) {
 				(void) TextCopy(sess->reply, sizeof (sess->reply), "dumb mail host found");

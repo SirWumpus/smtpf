@@ -140,6 +140,21 @@ Option optCacheUnicastDomain	= { "cache-unicast-domain",	"",			usage_cache_unica
 Option optCacheUnicastHosts	= { "cache-unicast-hosts",	"",			usage_cache_unicast_hosts };
 Option optCacheUnicastPort	= { "cache-unicast-port",	QUOTE(CACHE_UNICAST_PORT),	"The listener port for unicast cache updates." };
 
+static const char usage_cache_hosts[] =
+  "The Multicast & Unicast Cache facility broadcasts UDP packets to one\n"   
+"# or more multicast group IPs and/or unicast hosts. Specify a list of\n"
+"# host names, IPv4, and/or IPv6 addresses. Specify the empty string to\n"
+"# disable.\n"
+"#"
+;
+Option opt_cache_hosts		= { "cache-hosts",		"",			usage_cache_hosts };
+
+static const char usage_cache_port[] =
+  "The listener port for Multicast & Unicast Cache UDP broadcasts.\n"
+"#"
+;
+Option opt_cache_port		= { "cache-port",		QUOTE(CACHE_PORT),	usage_cache_port };
+
 /***********************************************************************
  ***
  ***********************************************************************/
@@ -262,8 +277,8 @@ cacheRegister(Session *null, va_list ignore)
 
 	optionsRegister(&optCacheAcceptTTL, 0);
 	optionsRegister(&optCacheGcInterval, 0);
-	optionsRegister(&optCacheMulticastIp, 1);
-	optionsRegister(&optCacheMulticastPort, 1);
+	optionsRegister(&opt_cache_hosts, 1);
+	optionsRegister(&opt_cache_port, 1);
 	optionsRegister(&optCacheMulticastTTL, 1);
 #ifdef NO_LONGER_USED
 	optionsRegister(&optCacheOnCorrupt, 1);
@@ -275,8 +290,6 @@ cacheRegister(Session *null, va_list ignore)
 	optionsRegister(&optCacheSyncMode, 1);
 #endif
 	optionsRegister(&optCacheTempFailTTL, 0);
-	optionsRegister(&optCacheUnicastHosts, 1);
-	optionsRegister(&optCacheUnicastPort, 1);
 
 	return SMTPF_CONTINUE;
 }
@@ -286,8 +299,8 @@ cache_loadavg_process(mcc_context *mcc, mcc_key_hook *hook, const char *ip, mcc_
 {
 	char buffer[128], *uptime, *clients, *arv, *of, *cap;
 
-	row->value_data[row->value_size] = '\0';
-	uptime = strchr((char *) row->value_data, ' ');
+	MCC_PTR_V(row)[MCC_GET_V_SIZE(row)] = '\0';
+	uptime = strchr((char *) MCC_PTR_V(row), ' ');
 	*uptime++ = '\0';
 	clients = strchr(uptime, ' ');
 	*clients++ = '\0';
@@ -307,9 +320,8 @@ cache_loadavg_process(mcc_context *mcc, mcc_key_hook *hook, const char *ip, mcc_
 
 	(void) snprintf(
 		buffer, sizeof (buffer),
-		"la=%s ut=%s tc=%s arv=%s of=%s cap=%s td=%ld",
-		row->value_data, uptime, clients, arv, of, cap,
-		(long) (time(NULL) - (time_t) row->touched)
+		"la=" MCC_FMT_V " ut=%s tc=%s arv=%s of=%s cap=%s",
+		MCC_FMT_V_ARG(row), uptime, clients, arv, of, cap
 	);
 
 	mccNotesUpdate(ip, "la=", buffer);
@@ -382,33 +394,29 @@ An invalid value was specified for this option.
 	if (*optCacheSecret.string != '\0')
 		(void) mccSetSecret(optCacheSecret.string);
 
-	if (*optCacheMulticastIp.string != '\0') {
-		if (mccStartMulticast(optCacheMulticastIp.string, optCacheMulticastPort.value))
-			exit(1);
-		if (mccSetMulticastTTL(optCacheMulticastTTL.value))
-			exit(1);
-	}
-
-	if (*optCacheUnicastHosts.string != '\0') {
+	if (*opt_cache_hosts.string != '\0') {
 		Vector unicast_list;
 
-		if ((unicast_list = TextSplit(optCacheUnicastHosts.string, OPTION_LIST_DELIMS, 0)) == NULL) {
-			syslog(LOG_ERR, LOG_NUM(176) "cache-unicast-hosts error: %s (%d)", strerror(errno), errno);
+		if ((unicast_list = TextSplit(opt_cache_hosts.string, OPTION_LIST_DELIMS, 0)) == NULL) {
+			syslog(LOG_ERR, LOG_NUM(176) "cache-hosts error: %s (%d)", strerror(errno), errno);
 /*{NEXT}*/
 			exit(1);
 		}
 
-		if (mccStartUnicast((const char **) VectorBase(unicast_list), optCacheUnicastPort.value)) {
-			syslog(LOG_ERR, LOG_NUM(177) "cache-unicast-hosts error: %s (%d)", strerror(errno), errno);
+		if (mccStartListener((const char **) VectorBase(unicast_list), opt_cache_port.value)) {
+			syslog(LOG_ERR, LOG_NUM(177) "cache-hosts error: %s (%d)", strerror(errno), errno);
 /*{LOG
-An error in parsing the option or starting the unicast cache listener thread.
-See <a href="summary.html#opt_cache_unicast_domain">cache-unicast-domain</a> or <a href="summary.html#opt_cache_unicast_hosts">cache-unicast-hosts</a>.
+An error in parsing the option or starting the cache listener thread.
+See <a href="summary.html#opt_cache_hosts">cache-hosts</a>.
 }*/
 			VectorDestroy(unicast_list);
 			exit(1);
 		}
 
 		VectorDestroy(unicast_list);
+
+		if (mccSetMulticastTTL(optCacheMulticastTTL.value))
+			exit(1);
 	}
 }
 
@@ -451,7 +459,7 @@ cacheCommand(Session *sess)
 	char *cmd, *key, *value;
 	mcc_active_host **cache;
 	mcc_row old_row, new_row;
-	char cstamp[40], tstamp[40], estamp[40];
+	char cstamp[TIME_STAMP_MIN_SIZE], estamp[TIME_STAMP_MIN_SIZE];
 	mcc_handle *mcc = ((Worker *) sess->session->worker->data)->mcc;
 
 	if (CLIENT_NOT_SET(sess, CLIENT_IS_LOCALHOST))
@@ -476,15 +484,13 @@ cacheCommand(Session *sess)
 	key_len = strcspn(key, " ");
 	value_len = strspn(key + key_len, " ");
 	key[key_len] = '\0';
-	new_row.key_size = TextCopy((char *) new_row.key_data, sizeof (new_row.key_data), key);
+
+	mccSetKey(&new_row, "%s", key);
 
 	/* Find start and length of value. */
 	value = key + key_len + value_len;
-	if (*value != '\0') {
-		value_len = strlen(value);
-		value[value_len] = '\0';
-		new_row.value_size = TextCopy((char *) new_row.value_data, sizeof (new_row.value_data), value);
-	}
+	if (*value != '\0') 
+		mccSetValue(&new_row, "%s", value);
 
 	switch (toupper(*cmd)) {
 	default:
@@ -539,16 +545,12 @@ cacheCommand(Session *sess)
 	case 'G': /* GET */
 	case 'P': /* PUT */
 	case 'D': /* DELETE */
-		switch (mccGetKey(mcc, new_row.key_data, new_row.key_size, &old_row)) {
+		switch (mccGetKey(mcc, MCC_PTR_K(&new_row), MCC_GET_K_SIZE(&new_row), &old_row)) {
 		case MCC_OK:
-			old_row.key_data[old_row.key_size] = '\0';
-			old_row.value_data[old_row.value_size] = '\0';
-
 			/* Create a blank reply. */
 			reply = replyMsg(SMTPF_CONTINUE, "", 0);
 
 			cacheGetTime(&old_row.created, cstamp, sizeof (cstamp));
-			cacheGetTime(&old_row.touched, tstamp, sizeof (tstamp));
 			cacheGetTime(&old_row.expires, estamp, sizeof (estamp));
 
 			/* Append a reply that might be longer than
@@ -559,11 +561,9 @@ cacheCommand(Session *sess)
 			 */
 			reply = replyAppendFmt(
 				reply,
-				"211 2.0.0 k=\"%s\" d=\"%s\" h=%lu c=0x%lx (%s) t=0x%lx (%s) e=0x%lx (%s)\r\n",
-				old_row.key_data, old_row.value_data,
-				old_row.hits,
+				"211 2.0.0 k=\"%.*s\" d=\"%.*s\" t=%lu c=0x%lx (%s) e=0x%lx (%s)\r\n",
+				LOG_CACHE_GET(&old_row), old_row.ttl, 
 				(long) old_row.created, cstamp,
-				(long) old_row.touched, tstamp,
 				(long) old_row.expires, estamp
 			);
 			break;
@@ -576,20 +576,15 @@ cacheCommand(Session *sess)
 			reply = replyFmt(SMTPF_CONTINUE, "210 2.0.0 key not found\r\n");
 			if (toupper(*cmd) == 'G')
 				goto error0;
-
-			old_row.hits = 0;
-			old_row.created = time(NULL);
-			old_row.touched = old_row.created;
 		}
 		break;
 	}
 
 	switch (toupper(*cmd)) {
 	case 'P': /* PUT */
-		new_row.hits = old_row.hits;
+		new_row.ttl = cacheGetTTL(*MCC_PTR_V(&new_row)-'0');
+		new_row.expires = time(NULL) + new_row.ttl;
 		new_row.created = old_row.created;
-		new_row.touched = old_row.touched;
-		new_row.expires = new_row.touched + cacheGetTTL(*new_row.value_data-'0');
 
 		switch (mccPutRow(mcc, &new_row)) {
 		case MCC_OK:
@@ -599,7 +594,6 @@ cacheCommand(Session *sess)
 			reply = replyMsg(SMTPF_CONTINUE, "", 0);
 
 			cacheGetTime(&new_row.created, cstamp, sizeof (cstamp));
-			cacheGetTime(&new_row.touched, tstamp, sizeof (tstamp));
 			cacheGetTime(&new_row.expires, estamp, sizeof (estamp));
 
 			/* Append a reply that might be longer than
@@ -610,11 +604,9 @@ cacheCommand(Session *sess)
 			 */
 			reply = replyFmt(
 				SMTPF_CONTINUE,
-				"211 2.0.0 k=\"%s\" d=\"%s\" h=%lu c=0x%lx (%s) t=0x%lx (%s) e=0x%lx (%s)\r\n",
-				new_row.key_data, new_row.value_data,
-				new_row.hits,
+				"211 2.0.0 k=\"%.*s\" d=\"%.*s\" t=%lu c=0x%lx (%s) e=0x%lx (%s)\r\n",
+				LOG_CACHE_GET(&new_row), new_row.ttl, 
 				(long) new_row.created, cstamp,
-				(long) new_row.touched, tstamp,
 				(long) new_row.expires, estamp
 			);
 			break;

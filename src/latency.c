@@ -35,7 +35,7 @@ static void
 latencyClient(mcc_context *mcc, mcc_key_hook *hook, const char *ip, mcc_row *row)
 {
 	/* Convert __lc to __lr and broadcast. */
-	row->key_data[3] = 'r';
+	MCC_PTR_K(row)[3] = 'r';
 	mccSend(mcc, row, MCC_CMD_OTHER);
 }
 
@@ -56,7 +56,7 @@ latencyReply(mcc_context *mcc, mcc_key_hook *hook, const char *ip, mcc_row *row)
 	CLOCK now = { 0, 0 };
 
 	CLOCK_GET(&now);
-	CLOCK_SUB(&now, (CLOCK *) row->value_data);
+	CLOCK_SUB(&now, (CLOCK *) MCC_PTR_V(row));
 	(void) snprintf(buffer, sizeof (buffer), LATENCY_FIELD CLOCK_FMT, CLOCK_FMT_DOT(now));
 	mccNotesUpdate(ip, LATENCY_FIELD, buffer);
 }
@@ -74,13 +74,14 @@ latencySend(mcc_context *mcc)
 	mcc_row row;
 
 	if (latency_host != NULL) {
-		row.hits = 0;
-		row.created = row.touched = time(NULL);
-		row.expires = row.created + optCacheGcInterval.value;
-		row.key_size = TextCopy((char *) row.key_data, sizeof (row.key_data), latency_host);
+		row.ttl = optCacheGcInterval.value;
+		row.expires = time(NULL) + row.ttl;
 
-		row.value_size = sizeof (CLOCK);
-		CLOCK_GET((CLOCK *) row.value_data);
+		mccSetKey(&row, "%s", latency_host);
+		
+		CLOCK_GET((CLOCK *) MCC_PTR_V(&row));
+		MCC_SET_V_SIZE(&row, sizeof (CLOCK));
+
 		mccSend(mcc, &row, MCC_CMD_OTHER);
 	}
 }

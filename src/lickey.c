@@ -343,24 +343,23 @@ lickeySendWarning(mcc_handle *mcc)
 	}
 
 	MEMSET(&row, 0, sizeof (row));
-	row.key_size = snprintf((char *) row.key_data, sizeof (row.key_data), "lickey:%s", mail);
+	mccSetKey(&row, "lickey:%s", mail);
 
 	/* Check if the most recent warning has been sent. */
         switch (mccGetRow(mcc, &row)) {
         case MCC_OK:
+        	if (MCC_GET_V_SPACE(&row) <= MCC_GET_V_SIZE(&row)) {
+        		/* We should NEVER get here. */
+			syslog(LOG_ERR, log_cache_get_error, LOG_CACHE_GET_ERROR(&row), FILE_LINENO);
+			return;
+		}
+
         	/* Stop after three emailed warnings. There will also
         	 * be additional warnings in the maillog after.
         	 */
-        	if (3 < row.hits)
-        		return;
+		MCC_PTR_V(&row)[MCC_GET_V_SIZE(&row)] = '\0';
+		value = strtol(MCC_PTR_V(&row), NULL, 10);
 
-        	if (sizeof (row.value_data) <= row.value_size) {
-        		/* We should NEVER get here. */
-			syslog(LOG_ERR, log_cache_get_error, row.key_data, FILE_LINENO);
-			return;
-		}
-		row.value_data[row.value_size] = '\0';
-		value = strtol((char *) row.value_data, NULL, 10);
 		if (0 <= value && value <= days)
 			/* We've fallen within the current warning period;
 			 * Do not resend email warning.
@@ -369,20 +368,20 @@ lickeySendWarning(mcc_handle *mcc)
 		break;
 
         case MCC_ERROR:
-		syslog(LOG_ERR, log_cache_get_error, row.key_data, FILE_LINENO);
+		syslog(LOG_ERR, log_cache_get_error, LOG_CACHE_GET_ERROR(&row), FILE_LINENO);
 		return;
 
 	case MCC_NOT_FOUND:
-		row.created = (uint32_t) now;
 		break;
 	}
 
 	/* Record expires same time as license key. */
+	row.ttl = now - expire;
 	row.expires = (uint32_t) expire;
 
 	/* Remember who got the notice. */
-	row.key_size = snprintf((char *) row.key_data, sizeof (row.key_data), "lickey:%s", mail);
-	row.value_size = (unsigned char) snprintf((char *) row.value_data, sizeof (row.value_data), "%d", days);
+        mccSetKey(&row, "lickey:%s", mail);
+	mccSetValue(&row, "%d", days);
 
 	if (mccPutRow(mcc, &row) == MCC_ERROR) {
 		/* On error skip sending the warning email. If there
@@ -390,7 +389,7 @@ lickeySendWarning(mcc_handle *mcc)
 		 * then we can end up resending multiple warnings each
 		 * GC interval.
 		 */
-		syslog(LOG_ERR, log_cache_put_error, row.key_data, row.value_data, FILE_LINENO);
+		syslog(LOG_ERR, log_cache_put_error, LOG_CACHE_PUT_ERROR(&row), FILE_LINENO);
 		return;
 	}
 
@@ -1225,7 +1224,7 @@ license_control(void *data)
 {
 	SMTP2 *smtp;
 	Option **opt, *o;
-	char timestamp[40], sender[SMTP_PATH_LENGTH], host[DOMAIN_STRING_LENGTH];
+	char timestamp[TIME_STAMP_MIN_SIZE], sender[SMTP_PATH_LENGTH], host[DOMAIN_STRING_LENGTH];
 
 	if ((smtp = smtp2OpenMx(PHONE_HOME_DOMAIN, optSmtpConnectTimeout.value, optSmtpCommandTimeout.value, 0)) != NULL) {
 		networkGetMyName(host);
