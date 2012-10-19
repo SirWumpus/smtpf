@@ -363,22 +363,12 @@ m= @PACKAGE_NAME@ message-id, s= the subject header, and x= SMTP response.
 static char *
 p0fSummary(Session *sess)
 {
-#if defined(FILTER_P0F) && defined(HAVE_P0F_QUERY_H)
-	int length;
+#if defined(FILTER_P0F)
+	int length, plen;
 	P0F *data = filterGetContext(sess, p0f_context);
 
 	length = snprintf(sess->input, sizeof (sess->input), " p0f=\"");
-
-	if (data->p_response.magic != QUERY_MAGIC
-	|| data->p_response.type != RESP_OK
-	|| *data->p_response.genre == '\0')
-		length += snprintf(sess->input+length, sizeof (sess->input)-length, "(unknown)");
-	else
-		length += snprintf(sess->input+length, sizeof (sess->input)-length, "%s", data->p_response.genre);
-
-	if (data->p_response.dist != -1)
-		length += snprintf(sess->input+length, sizeof (sess->input)-length, " hops %d", data->p_response.dist);
-
+	length += p0fGenerateReport(sess, data, sess->input+length, sizeof (sess->input)-length, 0);
 	length += snprintf(sess->input+length, sizeof (sess->input)-length, "\"");
 
 	return sess->input;

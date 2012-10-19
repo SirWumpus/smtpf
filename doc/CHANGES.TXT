@@ -283,6 +283,8 @@ is no set schedule for releases.
    !	Updated to use MCC2 API, the broadcast-only protocol, to improve
 	performance.
 
+   !	Update support for p0f 3.06b or better.
+
 --2.5.7--
 
    !	Change sink state replies to return a 421 4.3.2 unavailble message

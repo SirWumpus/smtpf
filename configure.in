@@ -143,10 +143,18 @@ AC_ARG_WITH(p0f,
 	]
 )
 AC_SUBST(with_p0f)
-if test -d "${with_p0f}" ; then
+AS_IF([test -d ${with_p0f:-undef}],[
 	CFLAGS="-I${with_p0f} ${CFLAGS}"
-	AC_CHECK_HEADERS([p0f-query.h])
-fi
+	AC_CHECK_HEADERS([p0f-query.h api.h])
+	AC_CHECK_DECLS([QUERY_MAGIC, P0F_QUERY_MAGIC],[],[],[
+AC_INCLUDES_DEFAULT
+#if defined HAVE_API_H
+# include <api.h>
+#elif defined HAVE_P0F_QUERY_H
+# include <p0f-query.h>
+#endif
+	])
+])
 
 AC_ARG_WITH(lua,
 	[AC_HELP_STRING([--with-lua],[enable LUA scripting support (experimental)])],

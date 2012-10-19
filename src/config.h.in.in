@@ -235,7 +235,14 @@ extern "C" {
 #undef FILTER_TIMELIMIT
 #undef FILTER_URIBL
 
+/* p0f-2.0.8 */
+#undef HAVE_TYPES_H
 #undef HAVE_P0F_QUERY_H
+#undef HAVE_DECL_QUERY_MAGIC
+
+/* p0f-3.05b */
+#undef HAVE_API_H
+#undef HAVE_DECL_P0F_QUERY_MAGIC
 
 #ifdef  __cplusplus
 }

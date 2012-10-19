@@ -157,7 +157,7 @@ FilterHandler filter_register_table	[] = {
 #ifdef FILTER_PAD
 	FILTER_HANDLER(padRegister),
 #endif
-#if defined(FILTER_P0F) && defined(HAVE_P0F_QUERY_H)
+#if defined(FILTER_P0F)
 	FILTER_HANDLER(p0fRegister),
 #endif
 	FILTER_HANDLER(rateRegister),
@@ -264,7 +264,7 @@ FilterHandler filter_init_table	[] = {
 #ifdef FILTER_NULL
 	FILTER_HANDLER(nullInit),
 #endif
-#if defined(FILTER_P0F) && defined(HAVE_P0F_QUERY_H)
+#if defined(FILTER_P0F)
 	FILTER_HANDLER(p0fInit),
 #endif
 #ifdef FILTER_SAV
@@ -334,7 +334,7 @@ FilterHandler filter_fini_table	[] = {
 #ifdef FILTER_NULL
 	FILTER_HANDLER(nullFini),
 #endif
-#if defined(FILTER_P0F) && defined(HAVE_P0F_QUERY_H)
+#if defined(FILTER_P0F)
 	FILTER_HANDLER(p0fFini),
 #endif
 #ifdef FILTER_SIQ
@@ -416,7 +416,7 @@ FilterHandler filter_optn_table	[] = {
 #ifdef FILTER_MSG_LIMIT
 	FILTER_HANDLER(msgLimitOptn),
 #endif
-#if defined(FILTER_P0F) && defined(HAVE_P0F_QUERY_H)
+#if defined(FILTER_P0F)
 	FILTER_HANDLER(p0fOptn),
 #endif
 #ifdef FILTER_PAD
@@ -590,7 +590,7 @@ FilterHandler filter_connect_table	[] = {
 #ifdef FILTER_LUA
 	FILTER_HANDLER(luaConnect0),
 #endif
-#if defined(FILTER_P0F) && defined(HAVE_P0F_QUERY_H)
+#if defined(FILTER_P0F)
 	FILTER_HANDLER(p0fConnect),
 #endif
 	/* These have to be called now in the event we return
@@ -1049,7 +1049,7 @@ FilterHandler filter_headers_table	[] = {
 #ifdef FILTER_DUPMSG
 	FILTER_HANDLER(dupmsgHeaders),
 #endif
-#if defined(FILTER_P0F) && defined(HAVE_P0F_QUERY_H)
+#if defined(FILTER_P0F)
 	FILTER_HANDLER(p0fHeaders),
 #endif
 #ifdef FILTER_GREY

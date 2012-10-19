@@ -52,6 +52,7 @@ body:localdomain			OK
 #body:163.com				REJECT
 #body:2o7.net				REJECT
 #body:4at1.com				REJECT
+body:2checkout.com			OK
 body:about.com				OK
 body:adelphia.net			OK
 body:adobe.com				OK
@@ -123,6 +124,7 @@ body:excite.com				OK
 body:exct.net				OK
 body:eset.com				OK
 body:f-secure.com			OK
+body:facebook.com			OK
 #body:flowgo.com			REJECT
 body:free.fr				OK
 body:freebsd.org			OK
@@ -244,6 +246,7 @@ body:tom.com				OK
 body:tone.co.nz				OK
 body:topica.com				OK
 body:tux.org				OK
+body:twitter.com			OK
 body:uol.com.br				OK
 body:uribl.com				OK
 body:ups.com				OK
@@ -259,6 +262,7 @@ body:weatherbug.com			OK
 body:web.de				OK
 body:webshots.com			OK
 body:webtv.net				OK
+body:wpmu.org				OK
 body:wpmudev.org                        OK    
 body:wsj.com				OK
 body:xing.com				OK
