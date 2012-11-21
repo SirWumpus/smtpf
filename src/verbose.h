@@ -52,8 +52,6 @@ extern Verbose verb_rset;
 
 /* Verbose SMTP client. */
 extern Verbose verb_smtp;
-extern Verbose verb_smtp_data;
-extern Verbose verb_smtp_dot;
 
 extern Option optVerbose;
 

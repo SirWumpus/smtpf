@@ -73,7 +73,7 @@ A forward host has rejected a message and a DSN has been sent,
 	if (smtp2Rcpt(smtp, sess->msg.mail->address.string) != SMTP_OK)
 		goto error1;
 
-	if (verb_smtp.option.value)
+	if (1 < verb_smtp.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(332) "generating DSN to <%s>", LOG_ARGS(sess), sess->msg.mail->address.string);
 
 	TimeStamp(&smtp->start, sess->input, sizeof (sess->input));

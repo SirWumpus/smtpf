@@ -1128,7 +1128,7 @@ routeForward(Session *sess, ParsePath *rcpt, Connection *fwd)
 		if (!ordered)
 			VectorRemove(fwd_list, i);
 
-		if (verb_smtp.option.value)
+		if (1 < verb_smtp.option.value)
 			syslog(LOG_DEBUG, LOG_MSG(560) "rcpt=%s connecting forward=%s index=%d ...", LOG_ARGS(sess), rcpt->address.string, host, i);
 
 		if ((fwd->mx = socketConnect(host, SMTP_PORT, optSmtpConnectTimeout.value)) != NULL) {
@@ -1140,7 +1140,7 @@ routeForward(Session *sess, ParsePath *rcpt, Connection *fwd)
 				continue;
 			}
 
-			if (verb_smtp.option.value)
+			if (1 < verb_smtp.option.value)
 				syslog(LOG_DEBUG, LOG_MSG(561) "rcpt=%s forward=%s ready", LOG_ARGS(sess), rcpt->address.string, host);
 			fwd->mx_host = strdup(host);
 			rc = ROUTE_OK;
@@ -1223,7 +1223,7 @@ routeKnownAuth(Session *sess, const char *auth, int *can_queue)
 				continue;
 			}
 
-			if (verb_smtp.option.value)
+			if (1 < verb_smtp.option.value)
 				syslog(LOG_DEBUG, LOG_MSG(564) "auth=%s forward=%s ready", LOG_ARGS(sess), auth, host);
 			fwd->mx_host = host;
 			return fwd;
@@ -1313,7 +1313,7 @@ we end up in a loop.
 				continue;
 			}
 
-			if (verb_smtp.option.value && rcpt != NULL)
+			if (1 < verb_smtp.option.value && rcpt != NULL)
 				syslog(LOG_DEBUG, LOG_MSG(569) "rcpt=%s forward=%s ready", LOG_ARGS(sess), rcpt->address.string, host);
 			fwd->mx_host = host;
 			host = NULL;

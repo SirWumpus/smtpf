@@ -102,7 +102,7 @@ send_report_v(Session *sess, const char *subject, const char *fmt, va_list args)
 
 	/* Try to connect to one of the local routes. */
 	smtp = NULL;
-	flags = SMTP_FLAG_LOG | (verb_smtp.option.value ? SMTP_FLAG_DEBUG : 0);
+	flags = SMTP_FLAG_LOG | (1 < verb_smtp.option.value ? SMTP_FLAG_DEBUG : 0);
 	for (table = (char **) VectorBase(hosts); *table != NULL; table++) {
 		if ((smtp = smtp2Open(*table, optSmtpConnectTimeout.value, optSmtpCommandTimeout.value, flags)) != NULL)
 			break;
@@ -334,9 +334,9 @@ writeClient(Session *sess, const char *line, long length)
 {
 	long sent, offset, n;
 #ifdef REPORT_NEGATIVES
-	if (verb_smtp.option.value || SMTP_ISS_PERM(line) || SMTP_ISS_TEMP(line)) {
+	if (1 < verb_smtp.option.value || SMTP_ISS_PERM(line) || SMTP_ISS_TEMP(line)) {
 #else
-	if (verb_smtp.option.value) {
+	if (1 < verb_smtp.option.value) {
 #endif
 		/* Display last line of multiline response. */
 		int offset = strlrcspn(line, length-1, "\n");
@@ -1146,7 +1146,7 @@ SMTP commands and their arguments can only consist of printable ASCII characters
 				break;
 			}
 
-			if (verb_smtp.option.value)
+			if (1 < verb_smtp.option.value)
 				syslog(LOG_DEBUG, LOG_MSG(642) "> %ld:%s", LOG_ARGS(sess), sess->input_length, sess->input);
 
 			/* First entry contains state table name. Skip it. */

@@ -239,7 +239,7 @@ lickeyMailWarning(void *data)
 	flags = SMTP_FLAG_TRY_ALL;
 	if (verb_info.option.value)
 		flags |= SMTP_FLAG_LOG;
-	if (verb_smtp.option.value)
+	if (1 < verb_smtp.option.value)
 		flags |= SMTP_FLAG_DEBUG;
 
 	if ((mail = mailOpen(optSmtpConnectTimeout.value, optSmtpCommandTimeout.value, flags)) == NULL)

@@ -25,7 +25,7 @@
 int
 mxPrint(Session *sess, Connection *relay, const char *line, size_t length)
 {
-	if (verb_smtp.option.value
+	if (1 < verb_smtp.option.value
 #ifdef FILTER_SAV
 	|| verb_sav.option.value
 #endif
@@ -65,7 +65,7 @@ An error occurred while reading an SMTP reply from a forward host.
 }*/
 	} else {
 		for (ln = relay->reply; *ln != NULL; ln++) {
-			if (verb_smtp.option.value
+			if (1 < verb_smtp.option.value
 #ifdef FILTER_SAV
 			|| verb_sav.option.value
 #endif
@@ -156,7 +156,7 @@ See <a href="summary.html#opt_call_back">call-back</a> option.
 
 	/* Is the MX/A/AAAA list empty?  */
 	if (list == NULL) {
-		if (verb_smtp.option.value
+		if (1 < verb_smtp.option.value
 #ifdef FILTER_SAV
 		|| verb_sav.option.value
 #endif
@@ -197,7 +197,7 @@ See <a href="summary.html#opt_call_back">call-back</a> option.
 			continue;
 		}
 
-		if (verb_smtp.option.value
+		if (1 < verb_smtp.option.value
 #ifdef FILTER_SAV
 		|| verb_sav.option.value
 #endif
@@ -205,7 +205,7 @@ See <a href="summary.html#opt_call_back">call-back</a> option.
 			syslog(LOG_DEBUG, LOG_MSG(494) "%s trying MX %d %s ...", LOG_ARGS(sess), domain, ((PDQ_MX *) rr)->preference, ((PDQ_MX *) rr)->host.string.value);
 
 		if (socketOpenClient(((PDQ_MX *) rr)->host.string.value, SMTP_PORT, optSmtpConnectTimeout.value, NULL, &socket) == 0) {
-			if (verb_smtp.option.value
+			if (1 < verb_smtp.option.value
 #ifdef FILTER_SAV
 			|| verb_sav.option.value
 #endif

@@ -53,8 +53,6 @@ Verbose verb_rset	= { { "rset",		"-", empty } };
 
 /* Verbose SMTP client. */
 Verbose verb_smtp	= { { "smtp",		"-", empty } };
-Verbose verb_smtp_data	= { { "smtp-data",	"-", empty } };
-Verbose verb_smtp_dot	= { { "smtp-dot",	"-", empty } };
 
 static const char verbose_usage[] =
   "Verbose logging to mail log. Specify one or more comma separated words:"
@@ -206,8 +204,6 @@ verboseRegister0(Session *null, va_list ignore)
 	verboseRegister(&verb_rset);
 
 	verboseRegister(&verb_smtp);
-	verboseRegister(&verb_smtp_data);
-	verboseRegister(&verb_smtp_dot);
 
 	optionsRegister(&optVerbose, 0);
 

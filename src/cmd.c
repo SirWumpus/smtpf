@@ -404,7 +404,7 @@ During AUTH LOGIN, there was a client read error while waiting for login name.
 			goto error0;
 		}
 
-		if (verb_smtp.option.value)
+		if (1 < verb_smtp.option.value)
 			syslog(LOG_DEBUG, LOG_MSG(258) "> %s", LOG_ARGS(sess), buffer);
 
 		if (*buffer == '*') {
@@ -459,7 +459,7 @@ During AUTH LOGIN, there was a client read error while waiting for password.
 		goto error0;
 	}
 
-	if (verb_smtp.option.value)
+	if (1 < verb_smtp.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(263) "> %s", LOG_ARGS(sess), buffer);
 
 	if (*buffer == '*') {
@@ -1482,7 +1482,7 @@ There was an I/O write error while trying to relay a DATA chunk to a forward hos
 		}
 	}
 
-	if (verb_smtp_data.option.value)
+	if (2 < verb_smtp.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(302) "chunk size=%lu relays=%d sent=%d fail=%d", LOG_ARGS(sess), size, count, sent, count - sent);
 }
 
@@ -1518,13 +1518,13 @@ forwardCommand(Session *sess, const char *cmd, int expect, long timeout, int *co
 		}
 
 		if (fwd->smtp_code != SMTP_ERROR_IO) {
-			if (verb_smtp.option.value)
+			if (1 < verb_smtp.option.value)
 				syslog(LOG_DEBUG, LOG_MSG(303) "%s time-taken=%ld time-left=%ld", LOG_ARGS(sess), fwd->route.key, time_taken, timeout - time_taken);
 			socketSetTimeout(fwd->mx, timeout - time_taken);
 			(void) mxResponse(sess, fwd);
 			socketSetTimeout(fwd->mx, optSmtpCommandTimeout.value);
 
-			if (verb_smtp_dot.option.value && *cmd == '.' && fwd->reply != NULL)
+			if (0 < verb_smtp.option.value && *cmd == '.' && fwd->reply != NULL)
 				syslog(LOG_DEBUG, LOG_MSG(304) "%s << %s", LOG_ARGS(sess), fwd->route.key, *fwd->reply);
 
 			if (fwd->smtp_code == expect)
@@ -1545,7 +1545,7 @@ forwardCommand(Session *sess, const char *cmd, int expect, long timeout, int *co
 		}
 	}
 
-	if (verb_smtp.option.value)
+	if (1 < verb_smtp.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(305) "overall time-taken=%ld time-left=%ld", LOG_ARGS(sess), time_taken, timeout - time_taken);
 
 	/* Things to test for at final dot.
@@ -1784,7 +1784,7 @@ The client appears to have disconnected. A read error occured in the DATA collec
 			SIGLONGJMP(sess->on_error, SMTPF_DROP);
 		}
 
-		if (verb_smtp_data.option.value) {
+		if (2 < verb_smtp.option.value) {
 			if (leading_dot_removed)
 				syslog(LOG_DEBUG, LOG_MSG(981) "line %ld:.%.75s", LOG_ARGS(sess), length+1, chunk+offset);
 /*{NEXT}*/

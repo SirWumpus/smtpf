@@ -949,7 +949,7 @@ See <a href="summary.html#opt_rfc2822_strict_date">rfc2822-strict-date</a> optio
 	&& ((hdr_found & (HDR_FROM_LIST|HDR_SENDER)) == HDR_FROM_LIST
 	 || (hdr_found & (HDR_DATE|HDR_FROM|HDR_MESSAGE_ID)) != (HDR_DATE|HDR_FROM|HDR_MESSAGE_ID))) {
 		statsCount(&stat_rfc2822_min_headers);
-		if (verb_smtp.option.value)
+		if (1 < verb_smtp.option.value)
 			syslog(
 				LOG_DEBUG, LOG_MSG(461) "missing headers (0x%x)%s%s%s%s", LOG_ARGS(sess),
 				hdr_found,
