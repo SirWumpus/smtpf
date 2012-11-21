@@ -1,7 +1,7 @@
 /*
  * cmd.c
  *
- * Copyright 2006, 2011 by Anthony Howe. All rights reserved.
+ * Copyright 2006, 2012 by Anthony Howe. All rights reserved.
  */
 
 /***********************************************************************
@@ -1250,11 +1250,7 @@ unplussed_rcpt:
 
 	return rc;
 error4:
-#ifdef OLD_SMTP_ERROR_CODES
-	if (!(fwd->smtp_error & SMTP_ERROR_IO_MASK)) {
-#else
 	if (fwd->smtp_code != SMTP_ERROR_IO) {
-#endif
 		(void) TextCopy((char *) sess->msg.chunk0, sizeof (sess->msg.chunk0), sess->reply);
 		(void) mxCommand(sess, fwd, "QUIT\r\n", 221);
 		(void) TextCopy(sess->reply, sizeof (sess->reply), (char *) sess->msg.chunk0);
@@ -1470,11 +1466,7 @@ forwardChunk(Session *sess, unsigned char *chunk, long size)
 	sent = count = 0;
 
 	for (fwd = sess->msg.fwds; fwd != NULL; fwd = fwd->next, count++) {
-# ifdef OLD_SMTP_ERROR_CODES
-		if (fwd->smtp_error & SMTP_ERROR_IO_MASK)
-# else
 		if (fwd->smtp_code == SMTP_ERROR_IO)
-# endif
 			continue;
 
 		if ((written = chunkBufferForward(fwd->mx, chunk, size)) < size) {
@@ -1483,11 +1475,7 @@ forwardChunk(Session *sess, unsigned char *chunk, long size)
 /*{LOG
 There was an I/O write error while trying to relay a DATA chunk to a forward host.
 }*/
-#ifdef OLD_SMTP_ERROR_CODES
-			fwd->smtp_error = SMTP_ERROR_WRITE;
-#else
 			fwd->smtp_code = SMTP_ERROR_IO;
-#endif
 		} else {
 			sent++;
 			fwd->length += written;
@@ -1520,25 +1508,16 @@ forwardCommand(Session *sess, const char *cmd, int expect, long timeout, int *co
 		if (fwd->rcpt_count == 0)
 			continue;
 
-#ifdef OLD_SMTP_ERROR_CODES
-		if (!(fwd->smtp_error & SMTP_ERROR_IO_MASK)) {
-			if (mxPrint(sess, fwd, cmd, strlen(cmd)) == SMTP_ERROR_OK) {
-#else
 		if (fwd->smtp_code != SMTP_ERROR_IO) {
 			(void) mxPrint(sess, fwd, cmd, strlen(cmd));
 			if (SMTP_IS_OK(fwd->smtp_code)) {
-#endif
 				fwd->time_of_last_command = start;
 			} else {
 				connectionClose(fwd);
 			}
 		}
 
-#ifdef OLD_SMTP_ERROR_CODES
-		if (!(fwd->smtp_error & SMTP_ERROR_IO_MASK)) {
-#else
 		if (fwd->smtp_code != SMTP_ERROR_IO) {
-#endif
 			if (verb_smtp.option.value)
 				syslog(LOG_DEBUG, LOG_MSG(303) "%s time-taken=%ld time-left=%ld", LOG_ARGS(sess), fwd->route.key, time_taken, timeout - time_taken);
 			socketSetTimeout(fwd->mx, timeout - time_taken);
@@ -1555,11 +1534,7 @@ forwardCommand(Session *sess, const char *cmd, int expect, long timeout, int *co
 			 * 354, or DOT sent and any result returned.
    			 */
 			fwd->can_quit = (*cmd == 'D' && fwd->smtp_code != expect)
-#ifdef OLD_SMTP_ERROR_CODES
-				|| (*cmd == '.' && !(fwd->smtp_error & SMTP_ERROR_IO_MASK));
-#else
 				|| (*cmd == '.' && fwd->smtp_code != SMTP_ERROR_IO);
-#endif
 
 			/* Be sure to handle system clock updates that
 			 * might alter the time drastically.
@@ -1607,11 +1582,7 @@ forwardCommand(Session *sess, const char *cmd, int expect, long timeout, int *co
 While forwarding a message for a single recipient, the forward host
 rejected the message.
 }*/
-#ifdef OLD_SMTP_ERROR_CODES
-		else if (SMTP_IS_TEMP(fwd->smtp_code) || (fwd->smtp_error & SMTP_ERROR_IO_MASK))
-#else
 		else if (SMTP_IS_TEMP(fwd->smtp_code) || fwd->smtp_code == SMTP_ERROR_IO)
-#endif
 			return replySetFmt(sess, SMTPF_TEMPFAIL, "451 4.4.0 transaction aborted" ID_MSG(307) "\r\n", ID_ARG(sess));
 /*{REPLY
 While forwarding a message for a single recipient, the forward host
@@ -1622,11 +1593,7 @@ returned a temporary failure of the message.
 		 * Send DSN for those that failed.
 		 */
 		for (fwd = sess->msg.fwds; fwd != NULL; fwd = fwd->next) {
-#ifdef OLD_SMTP_ERROR_CODES
-			if (fwd->smtp_error != SMTP_ERROR_OK || (*cmd == '.' && fwd->smtp_code != expect)) {
-#else
 			if (!SMTP_IS_OK(fwd->smtp_code) || (*cmd == '.' && fwd->smtp_code != expect)) {
-#endif
 				sendDSN(sess, fwd);
 			}
 		}
@@ -1684,14 +1651,14 @@ See <a href="summary.html#opt_save_dir">save-dir</a> option.
 
 	/* Did all the relays rejected the DATA command? */
 	if (sent == 0) {
-		syslog(LOG_ERR, LOG_MSG(312) "DATA rejected by all forward hosts", LOG_ARGS(sess));
+		syslog(LOG_ERR, LOG_MSG(312) "DATA failed by all forward hosts", LOG_ARGS(sess));
 /*{LOG
 All of the forward hosts for this message rejected the DATA command.
 This message almost never appears. If it does, check if the forward
 hosts have implemented any filtering that rejects at DATA, like
 @PACKAGE_NAME@ does for grey-listing and call-back failures.
 }*/
-		rc = replySetFmt(sess, SMTPF_REJECT, msg_550_rejected, sess->msg.id, ID_ARG(sess));
+		rc = replySetFmt(sess, SMTPF_REJECT, msg_421_unavailable, sess->msg.id, ID_ARG(sess));
 		goto error1;
 	}
 
@@ -1810,11 +1777,8 @@ The client appears to have disconnected. A read error occured in the DATA collec
 			}
 
 			CLIENT_SET(sess, CLIENT_IO_ERROR);
-#ifdef OLD_SMTP_ERROR_CODES
-			sess->smtp_error = SMTP_ERROR_READ;
-#else
 			sess->smtp_code = SMTP_ERROR_IO;
-#endif
+
 			VALGRIND_PRINTF("readClientData longjmp: %s (%d)\n", strerror(errno), errno);
 			VALGRIND_DO_LEAK_CHECK;
 			SIGLONGJMP(sess->on_error, SMTPF_DROP);
