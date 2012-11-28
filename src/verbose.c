@@ -26,7 +26,6 @@ static Verbose *verb_list;
 static const char empty[] = "";
 
 /* Verbose levels */
-Verbose verb_warn	= { { "warn",		"+", empty } };
 Verbose verb_info	= { { "info",		"+", empty } };
 Verbose verb_trace	= { { "trace",		"-", empty } };
 Verbose verb_debug	= { { "debug",		"-", empty } };
@@ -181,7 +180,6 @@ verboseRegister0(Session *null, va_list ignore)
 	verb_list = NULL;
 	(void) TextCopy(usage_verbose, sizeof (usage_verbose), verbose_usage);
 
-	verboseRegister(&verb_warn);
 	verboseRegister(&verb_info);
 	verboseRegister(&verb_trace);
 	verboseRegister(&verb_debug);

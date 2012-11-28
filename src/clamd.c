@@ -360,14 +360,12 @@ clamdContent(Session *sess, va_list args)
 		if (verb_clamd.option.value)
 			syslog(LOG_DEBUG, LOG_MSG(201) "clamd >> (EOF)", LOG_ARGS(sess));
 
-		if (verb_warn.option.value) {
-			syslog(LOG_WARN, LOG_MSG(202) "clamd-max-size=%ld reached", LOG_ARGS(sess), optClamdMaxSize.value);
+		syslog(LOG_WARN, LOG_MSG(202) "clamd-max-size=%ld reached", LOG_ARGS(sess), optClamdMaxSize.value);
 /*{LOG
 The size of the message passed to clamd has been reached.
 No additional data will be passed to clamd.
 See <a href="smtpf-cf.html#smtpf_clamd">clamd-max-size</a>.
 }*/
-		}
 	}
 
 	return SMTPF_CONTINUE;

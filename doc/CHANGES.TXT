@@ -285,6 +285,11 @@ is no set schedule for releases.
 
    !	Update support for p0f 3.06b or better.
 
+   -	Removed verbose=warn; warnings are always enabled, since by definition
+	they should be infrequent conditions. 
+
+   !	Fixed HELO/EHLO response for RFC 5321 section 4.1.1.1. 
+
 --2.5.7--
 
    !	Change sink state replies to return a 421 4.3.2 unavailble message

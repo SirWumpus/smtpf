@@ -461,7 +461,7 @@ See <a href="summary.html#opt_save_dir">save-dir</a> option.
 			syslog(LOG_DEBUG, LOG_MSG(683) "spamd >> (wrote %ld bytes)", LOG_ARGS(sess), length);
 	}
 
-	if (optSpamdMaxSize.value <= size && verb_warn.option.value) {
+	if (optSpamdMaxSize.value <= size) {
 		syslog(LOG_WARN, LOG_MSG(684) "spamd-max-size=%ld reached", LOG_ARGS(sess), optSpamdMaxSize.value);
 /*{LOG
 The size of the message passed to spamd have been reached.

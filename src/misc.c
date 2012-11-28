@@ -461,12 +461,10 @@ See <a href="summary.html#opt_rfc2821_strict_helo">rfc2821-strict-helo</a> optio
 		}
 
 		/* Report that one of our hosts we're responsible for is misconfigured. */
-		if (verb_warn.option.value) {
-			syslog(LOG_WARN, LOG_MSG(429) "" CLIENT_FORMAT " HELO %s is not FQDN", LOG_ARGS(sess), CLIENT_INFO(sess), sess->client.helo);
+		syslog(LOG_WARN, LOG_MSG(429) "" CLIENT_FORMAT " HELO %s is not FQDN", LOG_ARGS(sess), CLIENT_INFO(sess), sess->client.helo);
 /*{LOG
 See <a href="summary.html#opt_rfc2821_strict_helo">rfc2821-strict-helo</a> option.
 }*/
-		}
 	}
 
 	/* When the HELO argument claims to be from a domain we are
@@ -639,7 +637,7 @@ supported.
 	 */
 	if (mail->address.length == 0) {
 		/*** Q: Should we use the PTR name when available? ***/
-		if (0 < spanIP(sess->client.helo))
+		if (0 < spanIP((unsigned char *)sess->client.helo))
 			return SMTPF_CONTINUE;
 		domain = sess->client.helo;
 	} else {
@@ -709,14 +707,12 @@ See <a href="summary.html#opt_client_is_mx">client-is-mx</a> option.
 	if (optMailRequireMx.value && 0 < mail->address.length) {
 		/* Is the MX/A/AAAA list empty?  */
 		if (list == NULL) {
-			if (verb_warn.option.value) {
-				syslog(LOG_WARN, LOG_MSG(438) "empty MX list after pruning", LOG_ARGS(sess));
+			syslog(LOG_WARN, LOG_MSG(438) "empty MX list after pruning", LOG_ARGS(sess));
 /*{LOG
 The MX list gathered from DNS is pruned to remove hosts that resolve to localhost,
 RFC 3330 reserved IP addresses that cannot be reached from the Internet, or
 have no A/AAAA record. This message is reported if the MX list is empty after pruning.
 }*/
-			}
 
 			rc = replyPushFmt(sess, SMTPF_DELAY|SMTPF_REJECT, "553 5.1.8 sender <%s> from %s MX invalid" ID_MSG(439) CRLF, sess->msg.mail->address.string, domain, ID_ARG(sess));
 /*{REPLY
@@ -728,16 +724,11 @@ have no A/AAAA record. This message is reported if the MX list is empty after pr
 
 		/* Did any of the MX / A / AAAA queries have DNS failures? */
 		else if (!pdqListAllRcode(list, PDQ_CLASS_IN, PDQ_TYPE_ANY, NULL, PDQ_RCODE_OK)) {
-			if (verb_warn.option.value) {
-				syslog(LOG_WARN, LOG_MSG(906) "MX list incomplete...", LOG_ARGS(sess));
-#ifdef OFF
-				pdqListLog(list);
-#endif
+			syslog(LOG_WARN, LOG_MSG(906) "MX list incomplete...", LOG_ARGS(sess));
 /*{LOG
 The MX / A / AAAA records gather from DNS failed one or more queries.
 See <a href="summary.html#opt_mail_require_mx">mail-require-mx</a> option.
 }*/
-			}
 
 			rc = replyPushFmt(sess, SMTPF_DELAY|SMTPF_TEMPFAIL, "451 4.1.8 sender <%s> from %s MX lookup error" ID_MSG(907) CRLF, sess->msg.mail->address.string, domain, ID_ARG(sess));
 /*{REPLY

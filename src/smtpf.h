@@ -202,7 +202,7 @@ extern void freeThreadData(void);
 #define CLIENT_FORMAT		"%s%s[%s]"
 #define CLIENT_INFO(s)		(s)->client.name, (*(s)->client.name == '\0' ? "" : " "), (s)->client.addr
 
-#define ID_FMT			" (%s)"
+#define ID_FMT			" %s"
 #define ID_NUM(n)		" #" #n
 #define ID_MSG(n)		ID_NUM(n) ID_FMT
 #define ID_ARG(s)		(s)->session->id_log

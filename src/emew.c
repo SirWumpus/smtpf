@@ -813,12 +813,10 @@ emewHeader(Session *sess, Vector headers)
 
 	/* Generate the EMEW. */
 	if ((length = emew3Set(sess, msgid, sess->input, sizeof (sess->input))) == 0) {
-		if (verb_warn.option.value) {
-			syslog(LOG_WARN, LOG_MSG(346) "EMEW Message-ID buffer error or no secret set", LOG_ARGS(sess));
+		syslog(LOG_WARN, LOG_MSG(346) "EMEW Message-ID buffer error or no secret set", LOG_ARGS(sess));
 /*{LOG
 The buffer used to generate the EMEW Message-ID is too small.
 }*/
-		}
 		return SMTPF_CONTINUE;
 	}
 

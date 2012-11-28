@@ -290,7 +290,7 @@ we force the client to down grade to the older HELO command per RFC 2821.
 	/* We have to feed a reasonable EHLO response, because some mail
 	 * clients will abort if STARTTLS and AUTH are not supported.
 	 */
-	reply = replyFmt(SMTPF_CONTINUE, "250-Hello " CLIENT_FORMAT "" ID_MSG(254) "\r\n", CLIENT_INFO(sess), ID_ARG(sess));
+	reply = replyFmt(SMTPF_CONTINUE, "250-%s Hello " CLIENT_FORMAT "" ID_MSG(254) "\r\n", sess->iface->name, CLIENT_INFO(sess), ID_ARG(sess));
 /*{REPLY
 }*/
 #ifdef HAVE_OPENSSL_SSL_H
@@ -359,7 +359,7 @@ The client has sent HELO or EHLO more than once with different arguments each ti
 
 	sess->state = sess->helo_state = stateHelo;
 
-	return replySetFmt(sess, SMTPF_CONTINUE, "250 Hello " CLIENT_FORMAT "" ID_MSG(256) "\r\n", CLIENT_INFO(sess), ID_ARG(sess));
+	return replySetFmt(sess, SMTPF_CONTINUE, "250 %s Hello " CLIENT_FORMAT "" ID_MSG(256) "\r\n", sess->iface->name, CLIENT_INFO(sess), ID_ARG(sess));
 /*{REPLY
 }*/
 }
@@ -852,7 +852,9 @@ See <a href="summary.html#opt_rfc2821_extra_spaces">rfc2821-extra-spaces</a>.
 
 	params_list = TextSplit(params, " \t", 0);
 	for (table = (const char **) VectorBase(params_list); *table != NULL; table++) {
-		if (TextInsensitiveCompare(*table, "BODY=8BITMIME") == 0)
+		if (TextInsensitiveCompare(*table, "BODY=7BIT") == 0)
+			MAIL_CLEAR(sess, MAIL_IS_8BITMIME|MAIL_IS_BINARYMIME);
+		else if (TextInsensitiveCompare(*table, "BODY=8BITMIME") == 0)
 			MAIL_SET(sess, MAIL_IS_8BITMIME);
 		else if (TextInsensitiveCompare(*table, "BODY=BINARYMIME") == 0)
 			MAIL_SET(sess, MAIL_IS_BINARYMIME);

@@ -248,8 +248,7 @@ spamdContent(Session *sess, va_list args)
 		if (verb_spamd.option.value)
 			syslog(LOG_DEBUG, LOG_MSG(655) "spamd >> (EOF)", LOG_ARGS(sess));
 		socketShutdown(spamd->socket, SHUT_WR);
-		if (verb_warn.option.value)
-			syslog(LOG_WARN, LOG_MSG(656) "spamd-max-size=%ld reached", LOG_ARGS(sess), optSpamdMaxSize.value);
+		syslog(LOG_WARN, LOG_MSG(656) "spamd-max-size=%ld reached", LOG_ARGS(sess), optSpamdMaxSize.value);
 	}
 
 	return SMTPF_CONTINUE;
