@@ -272,10 +272,13 @@ verboseCommand(Session *sess)
 	reply = REPLY_CONST(SMTPF_CONTINUE, "214-2.0.0");
 
 	for (v = verb_list; v != NULL; v = v->next) {
-		if (LINE_WRAP <= reply->length % LINE_WRAP + strlen(v->option.name) + 2)
+		if (LINE_WRAP <= reply->length % LINE_WRAP + strlen(v->option.name) + 3)
 			reply = REPLY_APPEND_CONST(reply, "\r\n214-2.0.0");
 
-		reply = replyAppendFmt(reply, " %c%s", v->option.value != 0 ? '+' : '-', v->option.name);
+		if (1 < v->option.value)
+			reply = replyAppendFmt(reply, " %s=%ld", v->option.name, v->option.value);
+		else
+			reply = replyAppendFmt(reply, " %c%s", v->option.value != 0 ? '+' : '-', v->option.name);
 	}
 
 	reply = REPLY_APPEND_CONST(reply, "\r\n214 2.0.0 End.\r\n");

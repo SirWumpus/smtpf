@@ -141,7 +141,7 @@ Option optCacheUnicastHosts	= { "cache-unicast-hosts",	"",			usage_cache_unicast
 Option optCacheUnicastPort	= { "cache-unicast-port",	QUOTE(CACHE_UNICAST_PORT),	"The listener port for unicast cache updates." };
 
 static const char usage_cache_hosts[] =
-  "The Multicast & Unicast Cache facility broadcasts UDP packets to one\n"   
+  "The Multicast & Unicast Cache facility broadcasts UDP packets to one\n"
 "# or more multicast group IPs and/or unicast hosts. Specify a list of\n"
 "# host names, IPv4, and/or IPv6 addresses. Specify the empty string to\n"
 "# disable.\n"
@@ -437,7 +437,7 @@ cacheGc(Session *null, va_list args)
 }
 
 void
-cacheGetTime(uint32_t *seconds, char *buffer, size_t size)
+cacheGetTime(time_t *seconds, char *buffer, size_t size)
 {
 	struct tm local;
 	time_t timestamp;
@@ -489,7 +489,7 @@ cacheCommand(Session *sess)
 
 	/* Find start and length of value. */
 	value = key + key_len + value_len;
-	if (*value != '\0') 
+	if (*value != '\0')
 		mccSetValue(&new_row, "%s", value);
 
 	switch (toupper(*cmd)) {
@@ -562,7 +562,7 @@ cacheCommand(Session *sess)
 			reply = replyAppendFmt(
 				reply,
 				"211 2.0.0 k=\"%.*s\" d=\"%.*s\" t=%lu c=0x%lx (%s) e=0x%lx (%s)\r\n",
-				LOG_CACHE_GET(&old_row), old_row.ttl, 
+				LOG_CACHE_GET(&old_row), old_row.ttl,
 				(long) old_row.created, cstamp,
 				(long) old_row.expires, estamp
 			);
@@ -605,7 +605,7 @@ cacheCommand(Session *sess)
 			reply = replyFmt(
 				SMTPF_CONTINUE,
 				"211 2.0.0 k=\"%.*s\" d=\"%.*s\" t=%lu c=0x%lx (%s) e=0x%lx (%s)\r\n",
-				LOG_CACHE_GET(&new_row), new_row.ttl, 
+				LOG_CACHE_GET(&new_row), new_row.ttl,
 				(long) new_row.created, cstamp,
 				(long) new_row.expires, estamp
 			);
