@@ -364,7 +364,7 @@ static char *
 p0fSummary(Session *sess)
 {
 #if defined(FILTER_P0F)
-	int length, plen;
+	int length;
 	P0F *data = filterGetContext(sess, p0f_context);
 
 	length = snprintf(sess->input, sizeof (sess->input), " p0f=\"");
