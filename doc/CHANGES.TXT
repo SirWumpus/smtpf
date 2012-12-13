@@ -276,6 +276,10 @@ is no set schedule for releases.
    !	If a client hits the dns-bl, then then a helo: TRAP rule - the
 	message isn't trapped. Steve F.
 
+   !	msg-limit-from:  appears not to take effect when the connected host is
+	listed on a dns-gl (try list.dnswl.org). Steve F. I suspect you'll get
+	the same behaviour with 'connect:gmail.com   CONTENT'
+
 --2.6.0--
 
    *	Requires libsnert 1.75.18.
@@ -285,18 +289,23 @@ is no set schedule for releases.
 
    !	Update support for p0f 3.06b or better.
 
-   -	Removed verbose=warn; warnings are always enabled, since by definition
-	they should be infrequent conditions. 
+   -	Removed verbose=warn; warnings are always enabled, since by
+	definition they should be infrequent conditions.
 
-   !	Fixed HELO/EHLO response for RFC 5321 section 4.1.1.1. 
+   !	Fixed HELO/EHLO response for RFC 5321 section 4.1.1.1.
 
    !	VERB output now shows options on/off or level if greater than 1.
+
+   !	Change smtp-delay-checks default to set, +smtp-delay-checks.
+
+   !	Fix bug with action word and custom-reply message not being
+	applied for some action words. Reported by Steven Freegard.
 
 --2.5.7--
 
    !	Change sink state replies to return a 421 4.3.2 unavailble message
 	instead of command out of sequence. For consistency, the extended
-	reply codes for rate-drop from 4.4.5 to 4.3.2 and concurrent-drop 
+	reply codes for rate-drop from 4.4.5 to 4.3.2 and concurrent-drop
 	from 4.7.1 to 4.3.2.
 
    +    Add rate-421-delay and concurrent-421-delay options to impose a
@@ -311,7 +320,7 @@ is no set schedule for releases.
 
    +	Added msg-limit-report, report-to options. Requested by Nick Stefan.
 
-   +	Disable ESMTP support (EHLO, AUTH, STARTTLS) when connection is 
+   +	Disable ESMTP support (EHLO, AUTH, STARTTLS) when connection is
 	blacklisted.
 
    !	Fix old bug where some modules having *Optn functions were not

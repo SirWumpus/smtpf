@@ -23,6 +23,10 @@
 
 #include <com/snert/lib/mail/tlds.h>
 
+#ifndef STRLEN
+#define STRLEN(s)		(sizeof (s)-1)
+#endif
+
 /***********************************************************************
  ***
  ***********************************************************************/
@@ -201,35 +205,36 @@ const char access_trap[]	= ACCESS_TRAP_WORD;
 const char access_unknown[]	= "?";
 
 EnumStringMapping access_action_mapping[] = {
-	{ ACCESS_OK,		access_ok 		},
-	{ ACCESS_REJECT,	access_reject 		},
-	{ ACCESS_IREJECT,	access_ireject 		},
-	{ ACCESS_CONTENT,	access_content 		},
-	{ ACCESS_PROTOCOL,	access_protocol		},
-	{ ACCESS_DISCARD,	access_discard 		},
-	{ ACCESS_NEXT,		access_next 		},
-	{ ACCESS_OK_AV,		access_ok_av		},
-	{ ACCESS_POLICY_OK,	access_policy_ok	},
-	{ ACCESS_POLICY_PASS,	access_policy_pass	},
-	{ ACCESS_SAVE,		access_save 		},
-	{ ACCESS_SKIP,		access_skip		},
-	{ ACCESS_SPF_PASS,	access_spf_pass		},
-	{ ACCESS_TAG,		access_tag		},
-	{ ACCESS_TEMPFAIL,	access_tempfail		},
-	{ ACCESS_TRAP,		access_trap		},
-	{ ACCESS_UNKNOWN,	NULL			},
+	{ ACCESS_OK,		access_ok, 		STRLEN(access_ok) 		},
+	{ ACCESS_REJECT,	access_reject, 		STRLEN(access_reject) 		},
+	{ ACCESS_IREJECT,	access_ireject, 	STRLEN(access_ireject) 		},
+	{ ACCESS_CONTENT,	access_content, 	STRLEN(access_content) 		},
+	{ ACCESS_PROTOCOL,	access_protocol,	STRLEN(access_protocol)		},
+	{ ACCESS_DISCARD,	access_discard, 	STRLEN(access_discard) 		},
+	{ ACCESS_NEXT,		access_next, 		STRLEN(access_next) 		},
+	{ ACCESS_OK_AV,		access_ok_av,		STRLEN(access_ok_av)		},
+	{ ACCESS_POLICY_OK,	access_policy_ok,	STRLEN(access_policy_ok)	},
+	{ ACCESS_POLICY_PASS,	access_policy_pass,	STRLEN(access_policy_pass)	},
+	{ ACCESS_SAVE,		access_save, 		STRLEN(access_save) 		},
+	{ ACCESS_SKIP,		access_skip,		STRLEN(access_skip)		},
+	{ ACCESS_SPF_PASS,	access_spf_pass,	STRLEN(access_spf_pass)		},
+	{ ACCESS_TAG,		access_tag,		STRLEN(access_tag)		},
+	{ ACCESS_TEMPFAIL,	access_tempfail,	STRLEN(access_tempfail)		},
+	{ ACCESS_TRAP,		access_trap,		STRLEN(access_trap)		},
+	{ ACCESS_UNKNOWN,	NULL,			0				}
 };
 
 AccessCode
 access_word_to_code(const char *name)
 {
+	long length;
 	EnumStringMapping *map;
 
 	if (name == NULL)
 		return ACCESS_NOT_FOUND;
 
 	for (map = access_action_mapping; map->name != NULL; map++) {
-		if (TextSensitiveCompare(name, map->name) == 0)
+		if ((length = TextSensitiveStartsWith(name, map->name)) == map->length)
 			return map->code;
 	}
 

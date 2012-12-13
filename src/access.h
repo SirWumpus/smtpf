@@ -41,6 +41,7 @@ typedef enum {
 typedef struct {
 	const int code;
 	const char *name;
+	size_t length;
 } EnumStringMapping;
 
 extern AccessCode access_word_to_code(const char *word);
