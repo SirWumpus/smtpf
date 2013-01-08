@@ -197,7 +197,11 @@ concurrentConnect(Session *sess, va_list ignore)
 	if (verb_trace.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(328) "concurrentConnect()", LOG_ARGS(sess));
 
-	if (CLIENT_NOT_SET(sess, CLIENT_HOLY_TRINITY)
+	/* This used to be CLIENT_HOLY_TRINITY (LOCALHOST, LAN, RELAYS), 
+	 * but you do not want your local connections to overload your 
+	 * system just the same as your outside connections.
+	 */
+	if (CLIENT_NOT_SET(sess, CLIENT_IS_LOCALHOST)
 	&& accessClient(sess, ACCESS_TAG, sess->client.name, sess->client.addr, NULL, &value, 1) != ACCESS_NOT_FOUND) {
 		sess->max_concurrent = strtol(value, NULL, 10);
 		free(value);

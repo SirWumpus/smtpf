@@ -276,9 +276,19 @@ is no set schedule for releases.
    !	If a client hits the dns-bl, then then a helo: TRAP rule - the
 	message isn't trapped. Steve F.
 
-   !	msg-limit-from:  appears not to take effect when the connected host is
-	listed on a dns-gl (try list.dnswl.org). Steve F. I suspect you'll get
-	the same behaviour with 'connect:gmail.com   CONTENT'
+   !	msg-limit-from:  appears not to take effect when the connected
+	host is listed on a dns-gl (try list.dnswl.org). Steve F. I
+	suspect you'll get the same behaviour with 'connect:gmail.com
+	CONTENT'
+
+   +	Support AUTH LOGIN $value, see RFC 4954 section 4. Also support
+	the other less commoon AUTH PLAIN when the argument waits for a
+	334 reply. Reported by Steve Freegard.
+
+		AUTH PLAIN
+		334
+		$base64_argument
+		$result
 
 --2.6.0--
 
@@ -300,6 +310,8 @@ is no set schedule for releases.
 
    !	Fix bug with action word and custom-reply message not being
 	applied for some action words. Reported by Steven Freegard.
+
+  !	LAN and relays no longer excluded from rate and concurrency limits.
 
 --2.5.7--
 

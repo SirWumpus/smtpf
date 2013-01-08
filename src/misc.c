@@ -471,14 +471,8 @@ See <a href="summary.html#opt_rfc2821_strict_helo">rfc2821-strict-helo</a> optio
 	 * responsible for and the connection is not a relay and is
 	 * not a server from a domain we're responsible for, then
 	 * the client is falsely "claiming to be us".
-	 */
-#ifdef OLD
-	if (optHeloClaimsUs.value
-	&& CLIENT_NOT_SET(sess, CLIENT_HOLY_TRINITY)
-	&& (CLIENT_ANY_SET(sess, CLIENT_IS_FORGED) || !routeKnownDomain(sess, sess->client.name))
-	&& routeKnownDomain(sess, sess->client.helo)) {
-#else
-	/* This works when combined with the CLIENT_IS_HELO_HOSTNAME
+	 * 
+	 * This works when combined with the CLIENT_IS_HELO_HOSTNAME
 	 * check / grey-list change that allowed us to use the HELO
 	 * arg as the client.name when there was no PTR.
    	 *
@@ -490,7 +484,6 @@ See <a href="summary.html#opt_rfc2821_strict_helo">rfc2821-strict-helo</a> optio
 	if (optHeloClaimsUs.value
 	&& CLIENT_NOT_SET(sess, CLIENT_HOLY_TRINITY)
 	&& routeKnownDomain(sess, sess->client.helo) && !routeKnownDomain(sess, sess->client.name)) {
-#endif
 		statsCount(&stat_helo_claims_us);
 		return replyPushFmt(sess, SMTPF_DELAY|SMTPF_SESSION|SMTPF_DROP, "550 5.7.0 " CLIENT_FORMAT " claims to be us \"%s\"" ID_MSG(430) CRLF, CLIENT_INFO(sess), sess->client.helo, ID_ARG(sess));
 /*{REPLY
@@ -529,12 +522,7 @@ heloIsPtr(Session *sess)
 	 * on "dynamic" or residential ADSL.
 	 */
 	if (optHeloIsPtr.value
-#ifdef OLD
-	&& CLIENT_ANY_SET(sess, CLIENT_IS_IP_IN_PTR)
-	&& CLIENT_NOT_SET(sess, CLIENT_HOLY_TRINITY|CLIENT_IS_MX)
-#else
 	&& CLIENT_IS_SET(sess, CLIENT_HOLY_TRINITY|CLIENT_IS_MX|CLIENT_IS_IP_IN_PTR, CLIENT_IS_IP_IN_PTR)
-#endif
 	&& TextInsensitiveCompare(sess->client.name, sess->client.helo) == 0
 #ifdef FILTER_SPF
 	&& sess->msg.spf_mail != SPF_PASS

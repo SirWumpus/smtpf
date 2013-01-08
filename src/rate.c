@@ -260,7 +260,11 @@ rateConnect(Session *sess, va_list ignore)
 
 	LOG_TRACE(sess, 520, rateConnect);
 
-	if (CLIENT_ANY_SET(sess, CLIENT_HOLY_TRINITY))
+	/* This used to be CLIENT_HOLY_TRINITY (LOCALHOST, LAN, RELAYS), 
+	 * but you do not want your local connections to overload your 
+	 * system just the same as your outside connections.
+	 */
+	if (CLIENT_ANY_SET(sess, CLIENT_IS_LOCALHOST))
 		return SMTPF_CONTINUE;
 
 	/* Find the client specific connection rate limit. */

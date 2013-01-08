@@ -406,7 +406,7 @@ p0fHeaders(Session *sess, va_list args)
 	char *hdr;
 	P0F *data = filterGetContext(sess, p0f_context);
 
-	if (*optP0fSocket.string != '\0' && CLIENT_NOT_SET(sess, CLIENT_HOLY_TRINITY)) {
+	if (*optP0fSocket.string != '\0' && CLIENT_NOT_SET(sess, CLIENT_IS_LOCALHOST)) {
 		(void) p0fGenerateReport(sess, data, sess->input, sizeof (sess->input), 1);
 		if ((hdr = strdup(sess->input)) != NULL && VectorAdd(sess->msg.headers, hdr))
 			free(hdr);
