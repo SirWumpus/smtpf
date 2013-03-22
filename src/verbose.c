@@ -50,7 +50,7 @@ Verbose verb_data	= { { "data",		"-", empty } };
 Verbose verb_noop	= { { "noop",		"-", empty } };
 Verbose verb_rset	= { { "rset",		"-", empty } };
 
-/* Verbose SMTP client. */
+/* Verbose SMTP protocol 0 = off, 1 = dot, 2 = dialogue, 3 = debug */
 Verbose verb_smtp	= { { "smtp",		"-", empty } };
 
 static const char verbose_usage[] =

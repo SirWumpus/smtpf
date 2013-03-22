@@ -364,6 +364,21 @@ The client has sent HELO or EHLO more than once with different arguments each ti
 }*/
 }
 
+int
+cmdReadLine(Session *sess, const char *prompt, char *buffer, size_t size)
+{
+	long length;
+
+	SENDCLIENT(sess, prompt);
+	if (!socketHasInput(sess->client.socket, optSmtpCommandTimeout.value)) 
+		return -1;
+	if ((length = socketReadLine(sess->client.socket, buffer, size)) < 0)
+		return -1;
+	if (1 < verb_smtp.option.value)
+		syslog(LOG_DEBUG, LOG_MSG(258) "> %ld:%s", LOG_ARGS(sess), length, buffer);
+	return 0;
+}
+
 /* Perform man-in-the-middle AUTH LOGIN dialogue with the client
  * and convert the AUTH LOGIN into an AUTH PLAIN (see RFC 2595).
  *
@@ -389,38 +404,22 @@ cmdAuthLogin(Session *sess)
 	auth_length = 0;
 
 	/* Read the login name from the client. */
-	if (sess->input[sizeof ("AUTH LOGIN")-1] == '\0') {
-		SENDCLIENT(sess, "334 VXNlcm5hbWU6\r\n");
-
-		if (!socketHasInput(sess->client.socket, optSmtpCommandTimeout.value)) {
-			goto error0;
-		}
-
-		if ((buffer_length = socketReadLine(sess->client.socket, buffer, sizeof (buffer))) < 0) {
+	if (sess->input_length == STRLEN("AUTH LOGIN")) {
+		if (cmdReadLine(sess, "334 VXNlcm5hbWU6\r\n", buffer, sizeof (buffer))) {
 			syslog(LOG_ERR, LOG_MSG(257) "client " CLIENT_FORMAT " I/O error: %s (%d)", LOG_ARGS(sess), CLIENT_INFO(sess), strerror(errno), errno);
 /*{LOG
 During AUTH LOGIN, there was a client read error while waiting for login name.
 }*/
 			goto error0;
 		}
-
-		if (1 < verb_smtp.option.value)
-			syslog(LOG_DEBUG, LOG_MSG(258) "> %s", LOG_ARGS(sess), buffer);
-
-		if (*buffer == '*') {
+		if (*buffer == '*') 
 			goto error0;
-#ifdef HMMM
-			SENDCLIENT(sess, "501 5.5.1 AUTH cancelled" ID_MSG(259) "\r\n", ID_ARG(sess));
-/*{NEXT}*/
-			return SMTPF_REJECT;
-#endif
-		}
 	} else {
-		buffer_length = TextCopy(buffer, sizeof (buffer), sess->input+sizeof ("AUTH LOGIN ")-1);
+		buffer_length = TextCopy(buffer, sizeof (buffer), sess->input+STRLEN("AUTH LOGIN "));
 		if (sizeof (buffer) <= buffer_length) {
-			syslog(LOG_ERR, LOG_MSG(260) "AUTH LOGIN buffer overflow caught", LOG_ARGS(sess));
+			syslog(LOG_ERR, LOG_MSG(260) "AUTH LOGIN buffer overflow", LOG_ARGS(sess));
 /*{LOG
-During AUTH LOGIN, the login user name given exceeds the size of the decoding buffer.
+AUTH LOGIN user name given exceeds the size of the decoding buffer.
 }*/
 			goto error0;
 		}
@@ -434,7 +433,7 @@ During AUTH LOGIN, the login user name given exceeds the size of the decoding bu
 	if (b64DecodeBuffer(&b64, buffer, buffer_length, (unsigned char *) sess->input, sizeof (sess->input), (size_t *) &sess->input_length)) {
 		syslog(LOG_ERR, LOG_MSG(261) "login base64 decode error", LOG_ARGS(sess));
 /*{LOG
-During AUTH LOGIN, the login user name could not be decoded according to Base64 rules.
+The AUTH LOGIN user name could not be Base64 decoded.
 }*/
 		goto error0;
 	}
@@ -444,40 +443,22 @@ During AUTH LOGIN, the login user name could not be decoded according to Base64 
 
 	pass = sess->input + sess->input_length;
 
-	/* Read the password from the client. */
-	SENDCLIENT(sess, "334 UGFzc3dvcmQ6\r\n");
-
-	if (!socketHasInput(sess->client.socket, optSmtpCommandTimeout.value)) {
-		goto error0;
-	}
-
-	if ((buffer_length = socketReadLine(sess->client.socket, buffer, sizeof (buffer))) < 0) {
+	if (cmdReadLine(sess, "334 UGFzc3dvcmQ6\r\n", buffer, sizeof (buffer))) {
 		syslog(LOG_ERR, LOG_MSG(262) "client " CLIENT_FORMAT " I/O error: %s (%d)", LOG_ARGS(sess), CLIENT_INFO(sess), strerror(errno), errno);
 /*{LOG
 During AUTH LOGIN, there was a client read error while waiting for password.
 }*/
 		goto error0;
 	}
-
-	if (1 < verb_smtp.option.value)
-		syslog(LOG_DEBUG, LOG_MSG(263) "> %s", LOG_ARGS(sess), buffer);
-
-	if (*buffer == '*') {
+	if (*buffer == '*') 
 		goto error0;
-#ifdef HMMM
-		SENDCLIENT(sess, "501 5.5.1 AUTH cancelled" ID_MSG(264) "\r\n", ID_ARG(sess));
-/*{REPLY
-}*/
-		return SMTPF_REJECT;
-#endif
-	}
 
 	b64Reset(&b64);
 
 	if (b64DecodeBuffer(&b64, buffer, buffer_length, (unsigned char *) sess->input, sizeof (sess->input), (size_t *) &sess->input_length)) {
 		syslog(LOG_ERR, LOG_MSG(265) "password base64 decode error", LOG_ARGS(sess));
 /*{LOG
-During AUTH LOGIN, the password could not be decoded according to Base64 rules.
+AUTH LOGIN password could not be Base64 decoded.
 }*/
 		goto error0;
 	}
@@ -544,7 +525,7 @@ additional AUTH commands are rejected.
 		 */
 		if ((auth_length = cmdAuthLogin(sess)) == 0)
 			goto error2;
-	} else if (TextMatch(sess->input, "AUTH PLAIN *",  sess->input_length, 1)) {
+	} else if (TextMatch(sess->input, "AUTH PLAIN*",  sess->input_length, 1)) {
 		/* Save this for possible use in cmdRcpt(). */
 		auth_length = TextCopy(sess->client.auth, sizeof (sess->client.auth), sess->input);
 		if (sizeof (sess->client.auth) <= auth_length) {
@@ -1788,10 +1769,10 @@ The client appears to have disconnected. A read error occured in the DATA collec
 
 		if (2 < verb_smtp.option.value) {
 			if (leading_dot_removed)
-				syslog(LOG_DEBUG, LOG_MSG(981) "line %ld:.%.75s", LOG_ARGS(sess), length+1, chunk+offset);
+				syslog(LOG_DEBUG, LOG_MSG(981) "line %ld:.%.100s", LOG_ARGS(sess), length+1, chunk+offset);
 /*{NEXT}*/
 			else
-				syslog(LOG_DEBUG, LOG_MSG(318) "line %ld:%.75s", LOG_ARGS(sess), length, chunk+offset);
+				syslog(LOG_DEBUG, LOG_MSG(318) "line %ld:%.100s", LOG_ARGS(sess), length, chunk+offset);
 /*{LOG
 Debug output for verb +smtp-data. Note that the logged data lines are truncated at 75 characters.
 See the section <a href="runtime.html#runtime_config">Runtime Configuration</a>
