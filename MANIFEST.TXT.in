@@ -152,8 +152,6 @@ com/snert/src/@PACKAGE_NAME@/src/size.c
 com/snert/src/@PACKAGE_NAME@/src/size.h
 com/snert/src/@PACKAGE_NAME@/src/smtpf.c
 com/snert/src/@PACKAGE_NAME@/src/smtpf.h
-com/snert/src/@PACKAGE_NAME@/src/spamd.c
-com/snert/src/@PACKAGE_NAME@/src/spamd.h
 com/snert/src/@PACKAGE_NAME@/src/spamd2.c
 com/snert/src/@PACKAGE_NAME@/src/spamd2.h
 com/snert/src/@PACKAGE_NAME@/src/spf.c
