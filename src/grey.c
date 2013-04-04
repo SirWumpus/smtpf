@@ -552,7 +552,7 @@ greyCacheUpdate(Session *sess, Grey *grey, char *key, long *delay, int at_dot)
 			id_row.ttl = cacheGetTTL(rc);
 			id_row.expires = now + id_row.ttl;
 
-			length = snprintf(MCC_PTR_K(&id_row), MCC_DATA_SIZE, "grey-msgid:%s", sess->msg.msg_id);
+			length = snprintf((char *)MCC_PTR_K(&id_row), MCC_DATA_SIZE, "grey-msgid:%s", sess->msg.msg_id);
 			while (isspace(MCC_PTR_K(&id_row)[length-1]))
 				length--;
 			MCC_SET_K_SIZE(&id_row, length);
@@ -585,13 +585,13 @@ greyCacheUpdate(Session *sess, Grey *grey, char *key, long *delay, int at_dot)
 			/* Check if this is the first or last message seen. */
 			if (at_dot
 			&& MCC_GET_V_SIZE(&row) == 67
-			&& strncmp(MCC_PTR_V(&row)+2, grey->digest, 32) != 0
-			&& strncmp(MCC_PTR_V(&row)+35, grey->digest, 32) != 0
+			&& strncmp((char *)MCC_PTR_V(&row)+2, grey->digest, 32) != 0
+			&& strncmp((char *)MCC_PTR_V(&row)+35, grey->digest, 32) != 0
 			) {
 				/* Exchange is a piece of crap. See note above. */
 				if (sess->msg.msg_id != NULL) {
 					MEMSET(&id_row, 0, sizeof (id_row));
-					length = snprintf(MCC_PTR_K(&id_row), MCC_DATA_SIZE, "grey-msgid:%s", sess->msg.msg_id);
+					length = snprintf((char *)MCC_PTR_K(&id_row), MCC_DATA_SIZE, "grey-msgid:%s", sess->msg.msg_id);
 					while (isspace(MCC_PTR_K(&id_row)[length-1]))
 						length--;
 					MCC_SET_K_SIZE(&id_row, length);
@@ -853,7 +853,7 @@ greyRcpt(Session *sess, va_list args)
 	else {
 		PTHREAD_MUTEX_LOCK(&grey_mutex);
 		rcpt = va_arg(args, ParsePath *);
-		length = greyMakeKey(sess, optGreyKey.value, rcpt, MCC_PTR_K(&row), MCC_DATA_SIZE);
+		length = greyMakeKey(sess, optGreyKey.value, rcpt, (char *)MCC_PTR_K(&row), MCC_DATA_SIZE);
 		MCC_SET_K_SIZE(&row, length);
 
 		/* Does the temp. fail key exist? */
@@ -1106,7 +1106,7 @@ greyDot(Session *sess, va_list ignore)
 			if (optGreyKey.value & GREY_TUPLE_RCPT) {
 				for (fwd = sess->msg.fwds; fwd != NULL; fwd = fwd->next) {
 					for (rcpt = fwd->rcpts; rcpt != NULL; rcpt = rcpt->next) {
-						length = greyMakeKey(sess, optGreyKey.value, rcpt->rcpt, MCC_PTR_K(&row), MCC_DATA_SIZE);
+						length = greyMakeKey(sess, optGreyKey.value, rcpt->rcpt, (char *)MCC_PTR_K(&row), MCC_DATA_SIZE);
 						MCC_SET_K_SIZE(&row, length);
 
 						/* Does the temp. fail key exist? */
@@ -1119,7 +1119,7 @@ greyDot(Session *sess, va_list ignore)
 					}
 				}
 			} else {
-				length = greyMakeKey(sess, optGreyKey.value, NULL, MCC_PTR_K(&row), MCC_DATA_SIZE);
+				length = greyMakeKey(sess, optGreyKey.value, NULL, (char *)MCC_PTR_K(&row), MCC_DATA_SIZE);
 				MCC_SET_K_SIZE(&row, length);
 
 				/* Does the temp. fail key exist? */

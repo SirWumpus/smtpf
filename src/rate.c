@@ -91,7 +91,7 @@ typedef struct {
 
 typedef struct {
 	RateInterval intervals[RATE_INTERVALS];
-	unsigned char ipv6[IPV6_BYTE_LENGTH];
+	unsigned char ipv6[IPV6_BYTE_SIZE];
 	time_t touched;
 } RateHash;
 

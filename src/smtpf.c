@@ -909,7 +909,7 @@ checkClientIP(Session *sess)
 
 	length = greyMakeKey(
 		sess, optGreyKey.value & (GREY_TUPLE_IP|GREY_TUPLE_PTR|GREY_TUPLE_PTRN), 
-		NULL, MCC_PTR_K(&row), MCC_DATA_SIZE
+		NULL, (char *) MCC_PTR_K(&row), MCC_DATA_SIZE
 	);
 	MCC_SET_K_SIZE(&row, length);
 

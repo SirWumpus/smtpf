@@ -629,7 +629,7 @@ uriblTestURI(Session *sess, URI *uri, int post_data)
 	if (uri == NULL || ctx->policy != '\0')
 		return SMTPF_CONTINUE;
 
-	if (uri->host == NULL || (indexValidTLD(uri->host) <= 0 && spanIP(uri->host) <= 0))
+	if (uri->host == NULL || (indexValidTLD(uri->host) <= 0 && spanIP((unsigned char *)uri->host) <= 0))
 		goto ignore0;
 
 	/* Session cache for previously tested hosts/domains. */
@@ -645,7 +645,7 @@ uriblTestURI(Session *sess, URI *uri, int post_data)
 	ctx->distinct_uri_tested++;
 
 	/* Be sure to apply the correct access lookup. */
-	if (0 < spanIP(uri->host)) {
+	if (0 < spanIP((unsigned char *)uri->host)) {
 		access = accessClient(sess, "body:", NULL, body_tag = uri->host, NULL, &value, 1);
 	} else if (uriGetSchemePort(uri) == 25) {
 		access = accessEmail(sess, "body:", body_tag = uri->uriDecoded, NULL, &value);
@@ -681,7 +681,7 @@ See the <a href="access-map.html#access_tags">access-map</a> concerning the
 		break;
 	}
 
-	if (post_data && optUriRequireDomain.value && uri->schemeInfo != NULL && 0 < spanIP(uri->host)) {
+	if (post_data && optUriRequireDomain.value && uri->schemeInfo != NULL && 0 < spanIP((unsigned char *)uri->host)) {
 		snprintf(sess->msg.reject, sizeof (sess->msg.reject), "host is an IP in URL \"%s\"" ID_NUM(765), uri->uriDecoded);
 /*{REPLY
 See <a href="summary.html#opt_uri_require_domain">uri-require-domain</a>
@@ -1019,7 +1019,7 @@ uriblCheckUri(Session *sess, URI *uri)
 	Uribl *ctx = filterGetContext(sess, uribl_context);
 
 	if (uri != NULL && uri->host != NULL
-	&& (0 < indexValidTLD(uri->host) || 0 < spanIP(uri->host))
+	&& (0 < indexValidTLD(uri->host) || 0 < spanIP((unsigned char *)uri->host))
 	) {
 		if (1 < verb_uri.option.value)
 			syslog(LOG_DEBUG, LOG_MSG(892) "uriDecoded=%s uriHost=%s", LOG_ARGS(sess), uri->uriDecoded, uri->host);

@@ -71,7 +71,7 @@ static const char usage_concurrent_421_delay[] =
 Option opt_concurrent_421_delay	= { "concurrent-421-delay",	"0",	usage_concurrent_421_delay };
 
 typedef struct {
-	unsigned char ipv6[IPV6_BYTE_LENGTH];
+	unsigned char ipv6[IPV6_BYTE_SIZE];
 	int count;
 } ConcurrentHash;
 

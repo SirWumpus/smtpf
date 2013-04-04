@@ -310,7 +310,7 @@ accessPattern(Session *sess, const char *hay, char *pins, char **actionp)
 	long cidr, length;
 	int is_hay_ip, match;
 	char *action, *pin, *next_pin;
-	unsigned char net[IPV6_BYTE_LENGTH], ipv6[IPV6_BYTE_LENGTH];
+	unsigned char net[IPV6_BYTE_SIZE], ipv6[IPV6_BYTE_SIZE];
 
 	access = ACCESS_NOT_FOUND;
 

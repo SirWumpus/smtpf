@@ -164,7 +164,7 @@ savData(Session *sess, va_list ignore)
 
 	/* Have we previously seen this sender? */
 	mccSetKey(&sender, SAV_CACHE_TAG "%s", sess->msg.mail->address.string);
-	TextLower(MCC_PTR_K(&sender), MCC_GET_K_SIZE(&sender));
+	TextLower((char *)MCC_PTR_K(&sender), MCC_GET_K_SIZE(&sender));
 
 	if (mccGetRow(mcc, &sender) == MCC_OK) {
 		if (verb_cache.option.value)

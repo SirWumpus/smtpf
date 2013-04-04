@@ -452,7 +452,7 @@ routeCacheGetRcpt(Session *sess, char *key)
 #endif
 	MEMSET(&row, 0, sizeof (row));
 	mccSetKey(&row,  RCPT_TAG "%s", key);
-	TextLower(MCC_PTR_K(&row), MCC_GET_K_SIZE(&row));
+	TextLower((char *) MCC_PTR_K(&row), MCC_GET_K_SIZE(&row));
 
 	if (mccGetRow(mcc, &row) == MCC_OK) {
 		if (verb_cache.option.value)
@@ -489,7 +489,7 @@ routeCacheAddRcpt(Session *sess, char *key, SmtpfCode smtpf_code)
 	row.expires = time(NULL) + row.ttl;
 
 	mccSetKey(&row,  RCPT_TAG "%s", key);
-	TextLower(MCC_PTR_K(&row), MCC_GET_K_SIZE(&row));
+	TextLower((char *) MCC_PTR_K(&row), MCC_GET_K_SIZE(&row));
 	mccSetValue(&row, "%d", smtpf_code);
 
 	if (verb_cache.option.value)

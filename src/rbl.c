@@ -129,7 +129,7 @@ rblCheckString(Session *sess, const char *value)
 	const char *list_name = NULL;
 
 	for ( ; *value != '\0'; value++) {
-		if (0 < (span = spanIP(value))) {
+		if (0 < (span = spanIP((unsigned char *)value))) {
 			memcpy(ip, value, span);
 			ip[span] = '\0';
 

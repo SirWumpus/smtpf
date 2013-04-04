@@ -231,7 +231,7 @@ lickeyMailWarning(void *data)
 	Mail *mail;
 	int days, flags;
 	Option **opt, *o;
-	char timestamp[32], sender[SMTP_PATH_LENGTH],  host[DOMAIN_STRING_LENGTH];
+	char timestamp[32], sender[SMTP_PATH_LENGTH],  host[DOMAIN_SIZE];
 
 	/* This is a NO-NO, but I'm too lazy to allocate memory for an int. */
 	days = (int) data;
@@ -358,7 +358,7 @@ lickeySendWarning(mcc_handle *mcc)
         	 * be additional warnings in the maillog after.
         	 */
 		MCC_PTR_V(&row)[MCC_GET_V_SIZE(&row)] = '\0';
-		value = strtol(MCC_PTR_V(&row), NULL, 10);
+		value = strtol((char *)MCC_PTR_V(&row), NULL, 10);
 
 		if (0 <= value && value <= days)
 			/* We've fallen within the current warning period;
@@ -546,7 +546,7 @@ lickeyIsValid(const char *ip)
 	long cores;
 	md5_state_t md5;
 	const char *their_digest, *word;
-	unsigned char our_digest[16], their_ip[IPV6_BYTE_LENGTH], our_ip[IPV6_BYTE_LENGTH];
+	unsigned char our_digest[16], their_ip[IPV6_BYTE_SIZE], our_ip[IPV6_BYTE_SIZE];
 
 	/* Check if the key has been tampered with. */
 	md5_init(&md5);
@@ -746,7 +746,7 @@ lickeyInit(Vector interfaces)
 {
 	long i;
 	BoundIp *bind_if;
-	char ip[IPV6_STRING_LENGTH];
+	char ip[IPV6_STRING_SIZE];
 
 	if (interfaces == NULL) {
 		/* Interfaces have to "ready" before we can check
@@ -851,7 +851,7 @@ LIBSNERT_COPYRIGHT "\n"
 ;
 
 static char host_ip[IPV6_STRING_LENGTH];
-static char host_name[DOMAIN_STRING_LENGTH];
+static char host_name[DOMAIN_SIZE];
 
 #if ! defined(__MINGW32__)
 #undef syslog
@@ -1224,7 +1224,7 @@ license_control(void *data)
 {
 	SMTP2 *smtp;
 	Option **opt, *o;
-	char timestamp[TIME_STAMP_MIN_SIZE], sender[SMTP_PATH_LENGTH], host[DOMAIN_STRING_LENGTH];
+	char timestamp[TIME_STAMP_MIN_SIZE], sender[SMTP_PATH_LENGTH], host[DOMAIN_SIZE];
 
 	if ((smtp = smtp2OpenMx(PHONE_HOME_DOMAIN, optSmtpConnectTimeout.value, optSmtpCommandTimeout.value, 0)) != NULL) {
 		networkGetMyName(host);

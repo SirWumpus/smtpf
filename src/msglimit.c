@@ -171,14 +171,14 @@ msgLimitCacheUpdate(Session *sess, MsgLimit *limit, const char *key)
 	limit->count = -1;
 	MEMSET(&row, 0, sizeof (row));
 	mccSetKey(&row, MSG_LIMIT_CACHE_TAG "%s", key);
-	TextLower(MCC_PTR_K(&row), MCC_GET_K_SIZE(&row));
+	TextLower((char *)MCC_PTR_K(&row), MCC_GET_K_SIZE(&row));
 
 	switch (mccGetRow(mcc, &row)) {
 	case MCC_OK:
 		if (verb_cache.option.value)
 			syslog(LOG_DEBUG, log_cache_get, LOG_ARGS(sess), LOG_CACHE_GET(&row), FILE_LINENO);
 		MCC_PTR_V(&row)[MCC_GET_V_SIZE(&row)] = '\0';
-		value = strtol(MCC_PTR_V(&row), NULL, 10);
+		value = strtol((char *)MCC_PTR_V(&row), NULL, 10);
 		break;
 	case MCC_ERROR:
 		syslog(LOG_ERR, log_cache_get_error, LOG_ARGS(sess), LOG_CACHE_GET_ERROR(&row), FILE_LINENO);

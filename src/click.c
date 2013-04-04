@@ -173,7 +173,7 @@ clickMail(Session *sess, va_list args)
 	if (*optClickUrl.string == '\0' || mail->address.length <= 0)
 		return SMTPF_CONTINUE;
 
-	length = clickMakeKey(sess, mail, MCC_PTR_K(&row), MCC_DATA_SIZE);
+	length = clickMakeKey(sess, mail, (char *)MCC_PTR_K(&row), MCC_DATA_SIZE);
 	MCC_SET_K_SIZE(&row, length);
 
 	if (mccGetRow(mcc, &row) == MCC_OK) {
@@ -249,8 +249,8 @@ clickRcpt(Session *sess, va_list args)
 
 	/* Build the cache key and local-part hash. */
 	MEMSET(&row, 0, sizeof (row));
-	length = clickMakeKey(sess, sess->msg.mail, MCC_PTR_K(&row), MCC_DATA_SIZE);
-	(void) clickMakeHash(sess, when, MCC_PTR_K(&row), length, buffer, sizeof (buffer));
+	length = clickMakeKey(sess, sess->msg.mail, (char *)MCC_PTR_K(&row), MCC_DATA_SIZE);
+	(void) clickMakeHash(sess, when, (char *)MCC_PTR_K(&row), length, buffer, sizeof (buffer));
 	MCC_SET_K_SIZE(&row, length);
 
 	/* Validate the hash. Note that we check against address.string
@@ -341,8 +341,8 @@ clickReplyLog(Session *sess, va_list args)
 
 	/* Generate the hash used for the local-part. */
 	now = time(NULL);
-	len = clickMakeKey(sess, sess->msg.mail, MCC_PTR_K(&row), MCC_DATA_SIZE);
-	(void) clickMakeHash(sess, now, MCC_PTR_K(&row), len, sess->reply, sizeof (sess->reply));
+	len = clickMakeKey(sess, sess->msg.mail, (char *)MCC_PTR_K(&row), MCC_DATA_SIZE);
+	(void) clickMakeHash(sess, now, (char *)MCC_PTR_K(&row), len, sess->reply, sizeof (sess->reply));
 	MCC_PTR_K(&row)[len] = '\0';
 	MCC_SET_K_SIZE(&row, len);
 
@@ -368,7 +368,7 @@ clickReplyLog(Session *sess, va_list args)
 		 * to present some form of CAPTCHA to validate the sender
 		 * before white listing.
 		 */
-		if ((c_arg = (unsigned char *) clickUrlEncode(MCC_PTR_K(&row))) == NULL)
+		if ((c_arg = (unsigned char *) clickUrlEncode((char *)MCC_PTR_K(&row))) == NULL)
 			c_arg = MCC_PTR_K(&row);
 		len = snprintf(
 			click->reply+(*reply_length-2), sizeof (click->reply)-(*reply_length-2),

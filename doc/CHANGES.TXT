@@ -290,6 +290,14 @@ is no set schedule for releases.
 		$base64_argument
 		$result
 
+--2.6.1--
+
+   *	Requires libsnert 1.75.21.
+
+   !	Fix compliler warnings. 
+
+   !	Rename several macros based on libsnert 1.75.21 change.
+
 --2.6.0--
 
    *	Requires libsnert 1.75.18.

@@ -174,6 +174,11 @@ extern void freeThreadData(void);
 #define OPTION_LIST_DELIMS	";, "
 #endif
 
+/* Length of a static string. */
+#ifndef STRLEN       
+#define STRLEN(ss)      	(sizeof (ss)-1)
+#endif
+
 #ifdef HAVE_RAND_R
 #define RANDOM_NUMBER(max)	((int)((double)(max) * (double) rand_r(&rand_seed) / (RAND_MAX+1.0)))
 #else
@@ -264,7 +269,7 @@ typedef struct relay {
 	struct relay *next;
 	long cidr;
 	const char *domain;
-	unsigned char network[IPV6_BYTE_LENGTH];
+	unsigned char network[IPV6_BYTE_SIZE];
 } Relay;
 
 typedef struct command {
@@ -304,7 +309,7 @@ typedef struct connection {
 #endif
 	int smtp_code;
 	int can_quit;
-	char mx_ip[IPV6_STRING_LENGTH];
+	char mx_ip[IPV6_STRING_SIZE];
 	char *mx_host;
 	char **reply;
 	Socket2 *mx;
@@ -480,7 +485,7 @@ typedef struct {
 	char auth[SMTP_TEXT_LINE_LENGTH+1];
 	char helo[SMTP_COMMAND_LINE_LENGTH+1];
 	char sender_domain[SMTP_DOMAIN_LENGTH+1];
-	unsigned char ipv6[IPV6_BYTE_LENGTH];
+	unsigned char ipv6[IPV6_BYTE_SIZE];
 } Client;
 
 typedef struct {
