@@ -600,9 +600,7 @@ extern void filterClearAllContexts(Session *sess);
 #if !defined(FILTER_SPAMD) && defined(FILTER_SPAMD2)
 # include "spamd2.h"
 #endif
-#ifdef FILTER_SPF
 # include "spf.h"
-#endif
 #ifdef FILTER_TIMELIMIT
 # include "timelimit.h"
 #endif
