@@ -298,6 +298,9 @@ is no set schedule for releases.
 
    !	Rename several macros based on libsnert 1.75.21 change.
 
+   !	Fix p0f3 compilation issues and disable p0f summary when p0f-socket
+	is disabled.
+
 --2.6.0--
 
    *	Requires libsnert 1.75.18.

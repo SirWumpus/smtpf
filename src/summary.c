@@ -365,16 +365,17 @@ p0fSummary(Session *sess)
 {
 #if defined(FILTER_P0F)
 	int length;
-	P0F *data = filterGetContext(sess, p0f_context);
+	P0F *data;
 
-	length = snprintf(sess->input, sizeof (sess->input), " p0f=\"");
-	length += p0fGenerateReport(sess, data, sess->input+length, sizeof (sess->input)-length, 0);
-	length += snprintf(sess->input+length, sizeof (sess->input)-length, "\"");
-
-	return sess->input;
-#else
-	return "";
+	if (0 < optP0fSocket.length) {
+		data = filterGetContext(sess, p0f_context);
+		length = snprintf(sess->input, sizeof (sess->input), " p0f=\"");
+		length += p0fGenerateReport(sess, data, sess->input+length, sizeof (sess->input)-length, 0);
+		length += snprintf(sess->input+length, sizeof (sess->input)-length, "\"");
+		return sess->input;
+	}
 #endif
+	return "";
 }
 
 void

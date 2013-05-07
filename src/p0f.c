@@ -132,7 +132,6 @@ int
 p0fGenerateReport(Session *sess, P0F *data, char *buf, size_t size, int is_hdr)
 {
 	int length = 0;
-	char timestamp[TIME_STAMP_MIN_SIZE];
 
 	if (is_hdr)
 	        length = snprintf(buf, size, "%s: " CLIENT_FORMAT " %s", optP0fReportHeader.string, CLIENT_INFO(sess), CLIENT_ANY_SET(sess, CLIENT_IS_FORGED) ? "(forged) " : "");
@@ -140,6 +139,7 @@ p0fGenerateReport(Session *sess, P0F *data, char *buf, size_t size, int is_hdr)
 #if defined P0F_QUERY_MAGIC
 {
 	struct tm when;
+	char timestamp[TIME_STAMP_MIN_SIZE];
 
 	if (*data->p_response.os_name == '\0') {
 		length += snprintf(buf+length, size-length, "? ?");
