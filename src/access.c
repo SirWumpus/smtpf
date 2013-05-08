@@ -1805,7 +1805,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 
 		default:
 			if (0 < TextSensitiveStartsWith(value, access_ireject)) {
-				rc = replyPushFmt(sess, SMTPF_DROP, "550 5.7.1 helo %s %s" ID_MSG(926) "\r\n", helo, msg == NULL ? "black listed" : msg, ID_ARG(sess));
+				rc = replyPushFmt(sess, SMTPF_REJECT, "550 5.7.1 helo %s %s" ID_MSG(926) "\r\n", helo, msg == NULL ? "black listed" : msg, ID_ARG(sess));
 /*{REPLY
 There is a <a href="access-map.html#tag_helo"><span class="tag">Helo:</span></a>
 tag entry for HELO/EHLO argument a right-hand-side value of IREJECT.

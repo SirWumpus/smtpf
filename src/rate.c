@@ -273,7 +273,7 @@ rateConnect(Session *sess, va_list ignore)
 		return SMTPF_CONTINUE;
 
 	case ACCESS_TEMPFAIL:
-		return replyPushFmt(sess, SMTPF_DROP, msg_421_unavailable, ID_ARG(sess));
+		return replyPushFmt(sess, optRateDrop.value ? SMTPF_DROP : SMTPF_TEMPFAIL, msg_421_unavailable, ID_ARG(sess));
 /*{REPLY
 The access-map lookups are failing possible because of incorrect local databased
 file permissions; or in the case of a socketmap, the socketmap daemon has stopped.

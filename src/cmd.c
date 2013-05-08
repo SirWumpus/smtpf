@@ -245,7 +245,7 @@ cmdEhlo(Session *sess)
 	&& TextInsensitiveCompare(sess->client.helo, sess->input + sizeof ("EHLO ")-1) != 0) {
 		statsCount(&stat_helo_schizophrenic);
 		CLIENT_SET(sess, CLIENT_IS_SCHIZO);
-		return replySetFmt(sess, SMTPF_DROP, "550 5.7.1 client " CLIENT_FORMAT " is schizophrenic" ID_MSG(252) "\r\n", CLIENT_INFO(sess), ID_ARG(sess));
+		return replySetFmt(sess, 1 < optSmtpHeloSchizo.value ? SMTPF_DROP : SMTPF_REJECT, "550 5.7.1 client " CLIENT_FORMAT " is schizophrenic" ID_MSG(252) "\r\n", CLIENT_INFO(sess), ID_ARG(sess));
 /*{REPLY
 The client has sent HELO or EHLO more than once with different arguments each time.
 }*/
@@ -340,7 +340,7 @@ cmdHelo(Session *sess)
 	&& TextInsensitiveCompare(sess->client.helo, sess->input + sizeof ("HELO ")-1) != 0) {
 		statsCount(&stat_helo_schizophrenic);
 		CLIENT_SET(sess, CLIENT_IS_SCHIZO);
-		return replySetFmt(sess, SMTPF_DROP, "550 5.7.1 client " CLIENT_FORMAT " is schizophrenic" ID_MSG(255) "\r\n", CLIENT_INFO(sess), ID_ARG(sess));
+		return replySetFmt(sess, 1 < optSmtpHeloSchizo.value ? SMTPF_DROP : SMTPF_REJECT, "550 5.7.1 client " CLIENT_FORMAT " is schizophrenic" ID_MSG(255) "\r\n", CLIENT_INFO(sess), ID_ARG(sess));
 /*{REPLY
 The client has sent HELO or EHLO more than once with different arguments each time.
 }*/
@@ -1784,7 +1784,7 @@ and <a href="summary.html#opt_verbose">verbose</a> option.
 		sess->msg.length += length;
 
 		if (optRFC2821LineLength.value && SMTP_TEXT_LINE_LENGTH < length) {
-			rc = replySetFmt(sess, SMTPF_DROP, "554 5.5.2 content line too long (%ld); RFC 2821 section 4.5.3.1" ID_MSG(321) "\r\n", length, ID_ARG(sess));
+			rc = replySetFmt(sess, 1 < optRFC2821LineLength.value ? SMTPF_DROP : SMTPF_REJECT, "554 5.5.2 content line too long (%ld); RFC 2821 section 4.5.3.1" ID_MSG(321) "\r\n", length, ID_ARG(sess));
 /*{REPLY
 See <a href="summary.html#opt_rfc2821_line_length">rfc2821-line-length</a>.
 }*/

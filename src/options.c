@@ -327,12 +327,12 @@ Option optSmtpKeepAliveTimeout	= { "smtp-keep-alive-timeout",	"60",		usage_smtp_
 Option optSmtpEnableEsmtp	= { "smtp-enable-esmtp",	"+",		usage_smtp_enable_esmtp };
 
 static const char usage_smtp_helo_schizo[] =
-  "When enable perform EHLO/HELO schizophrenic test. Repeated SMTP\n"
+  "When set, perform EHLO/HELO schizophrenic test. Repeated SMTP\n"
 "# EHLO or HELO commands must use the same argument, otherwise the\n"
-"# command is rejected and connection dropped.\n"
+"# command is rejected (1) or connection dropped (2).\n"
 "#"
 ;
-Option optSmtpHeloSchizo	= { "smtp-helo-schizo",		"+",		usage_smtp_helo_schizo };
+Option optSmtpHeloSchizo	= { "smtp-helo-schizo",		"1",		usage_smtp_helo_schizo };
 
 Option optSmtpRejectFile	= { "smtp-reject-file",		"",		usage_smtp_reject_file };
 Option optSmtpServerQueue	= { "smtp-server-queue",	"20",		usage_smtp_server_queue };
@@ -396,7 +396,7 @@ static const char usage_rfc2821_extra_spaces[] =
 Option optRFC2821ExtraSpaces	= { "rfc2821-extra-spaces",	"-", 		usage_rfc2821_extra_spaces };
 
 Option optRFC2821CommandLength	= { "rfc2821-command-length", 	"-", 		"Strict RFC 2821 command line length limit." };
-Option optRFC2821LineLength	= { "rfc2821-line-length", 	"-", 		"Strict RFC 2821 data line length limit." };
+Option optRFC2821LineLength	= { "rfc2821-line-length", 	"-", 		"Strict RFC 2821 data line length limit. Enable to reject, set 2 to drop." };
 Option optRFC2821LocalLength	= { "rfc2821-local-length", 	"-", 		"Strict RFC 2821 local-part length limit." };
 Option optRFC2821DomainLength	= { "rfc2821-domain-length", 	"-", 		"Strict RFC 2821 domain name length limit." };
 Option optRFC2821LiteralPlus	= { "rfc2821-literal-plus", 	"-", 		"Treat plus-sign as itself; not a sendmail plussed address." };

@@ -68,7 +68,7 @@ static const char usage_concurrent_421_delay[] =
 "# the welcome banner, in order to deter woodpecker clients.\n"
 "#"
 ;
-Option opt_concurrent_421_delay	= { "concurrent-421-delay",	"0",	usage_concurrent_421_delay };
+Option opt_concurrent_421_delay	= { "concurrent-421-delay",	QUOTE(CONCURRENT_421_DELAY),	usage_concurrent_421_delay };
 
 typedef struct {
 	unsigned char ipv6[IPV6_BYTE_SIZE];

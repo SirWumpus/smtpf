@@ -128,6 +128,7 @@ Option *lickeyTable[] = {
 /* Keep original usage messages for license keys.
  */
 static Option optRFC2821Syntax = { "rfc2821-syntax", "+", "Strict RFC 2821 grammar for mail addresses." };
+static Option optRFC2821LineLength_orig = { "rfc2821-line-length", "-", "Strict RFC 2821 data line length limit." };
 extern Option optInterfaceIp;
 extern Option optInterfaceName;
 
@@ -178,7 +179,7 @@ Option *lickeyOptTable[] = {
 	&optRestart,
 	&optRFC2606SpecialDomains,
 	&optRFC2821DomainLength,
-	&optRFC2821LineLength,
+	&optRFC2821LineLength_orig,
 	&optRFC2821LiteralPlus,
 	&optRFC2821LocalLength,
 	&optRFC2821StrictDot,

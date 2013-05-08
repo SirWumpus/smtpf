@@ -1071,13 +1071,14 @@ the session "end" log line only.
  	switch (filterRun(sess, filter_connect_table)) {
 	default:
 		(void) welcome(sess);
-		/*@fallthrough@*/
+		break;
 
+ 	case SMTPF_REJECT:
 	case SMTPF_TEMPFAIL:
+		sess->state = stateSink;
 		break;
 
  	case SMTPF_DROP:
- 	case SMTPF_REJECT:
 		(void) replySend(sess);
 		goto error0;
 	}

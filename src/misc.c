@@ -324,7 +324,7 @@ heloSyntaxHelo(Session *sess, va_list ignore)
 		default:
 			if (!isalnum(*h)) {
 				statsCount(&stat_bogus_helo);
-				return replyPushFmt(sess, SMTPF_DROP, "501 5.5.4 invalid HELO %s" ID_MSG(423) CRLF, sess->client.helo, ID_ARG(sess));
+				return replyPushFmt(sess, SMTPF_REJECT, "501 5.5.4 invalid HELO %s" ID_MSG(423) CRLF, sess->client.helo, ID_ARG(sess));
 /*{REPLY
 The HELO or EHLO argument contains include characters in the string.
 The set of valid characters are alpha-numerics, hyphen, underscore, square brackets, and dot.

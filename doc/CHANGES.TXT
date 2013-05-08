@@ -290,11 +290,25 @@ is no set schedule for releases.
 		$base64_argument
 		$result
 
+
+--2.6.2--
+
+   !    On some high load systems, dropping the connection leaves closed
+	sockets in TIME_WAIT state. Applied some changes to reject and
+	wait for QUIT, instead of dropping a connection.
+
+	~ HELO black listing from drop to reject;
+	~ smtp-helo-schizo=1 rejects, 2 drops;
+	~ invalid HELO argument rejects instead of drop;
+	~ concurrent-421-delay default now 15s;
+	~ rfc2821-line-length=1 rejects, 2 drops;
+	~ Rejected connections goto sink state, instead of dropping.
+
 --2.6.1--
 
    *	Requires libsnert 1.75.21.
 
-   !	Fix compliler warnings. 
+   !	Fix compliler warnings.
 
    !	Rename several macros based on libsnert 1.75.21 change.
 
