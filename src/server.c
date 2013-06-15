@@ -335,13 +335,13 @@ session_accept(ServerSession *session)
 		return -1;
 	}
 
-	socketFdSetKeepAlive(socketGetFd(session->client), 1, SMTP_COMMAND_TO, 60, 3);
+//	socketFdSetAlive(socketGetFd(session->client), 1, SMTP_COMMAND_TO, 60, 3);
 	socketSetTimeout(session->client, optSmtpCommandTimeout.value);
 	(void) fileSetCloseOnExec(socketGetFd(session->client), 1);
 	(void) socketSetLinger(session->client, LINGER_ON_CLOSE);
 	(void) socketSetNonBlocking(session->client, 1);
 
-	switch (filterRun(data, filter_accept_table)) {
+	switch ((unsigned)filterRun(data, filter_accept_table)) {
 	case SMTPF_DROP:
 	case SMTPF_REJECT:
 	case SMTPF_TEMPFAIL:

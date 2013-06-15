@@ -1444,7 +1444,7 @@ filterRun(Session *sess, FilterHandler table[], ...)
 				syslog(LOG_DEBUG, LOG_MSG(361) "filter-table=%s handler=%s time-elapsed=" TIMER_FORMAT, sess == NULL ? SESSION_ID_ZERO : LOG_ARGS(sess), table_name, table->name, TIMER_FORMAT_ARG(diff_mark));
 		}
 
-		switch (rc) {
+		switch ((unsigned)rc) {
 		case SMTPF_CONTINUE:
 			break;
 

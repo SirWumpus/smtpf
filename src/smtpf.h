@@ -163,7 +163,7 @@ extern void freeThreadData(void);
  ***********************************************************************/
 
 #ifndef LINGER_ON_CLOSE
-#define LINGER_ON_CLOSE		2
+#define LINGER_ON_CLOSE		1
 #endif
 
 #ifndef SMTP_REJECT_DELAY
@@ -175,7 +175,7 @@ extern void freeThreadData(void);
 #endif
 
 /* Length of a static string. */
-#ifndef STRLEN       
+#ifndef STRLEN
 #define STRLEN(ss)      	(sizeof (ss)-1)
 #endif
 
@@ -204,8 +204,8 @@ extern void freeThreadData(void);
 #define LOG_TRACE0(n, f)	if (verb_trace.option.value) syslog(LOG_DEBUG, LOG_NUM(n) #f)
 #define LOG_TRACE(s, n, f)	if (verb_trace.option.value) syslog(LOG_DEBUG, LOG_MSG(n) #f, LOG_ARGS(s))
 
-#define CLIENT_FORMAT		"%s%s[%s]"
-#define CLIENT_INFO(s)		(s)->client.name, (*(s)->client.name == '\0' ? "" : " "), (s)->client.addr
+#define CLIENT_FORMAT		"%s%s[%s]:%u"
+#define CLIENT_INFO(s)		(s)->client.name, (*(s)->client.name == '\0' ? "" : " "), (s)->client.addr, (s)->client.port
 
 #define ID_FMT			" %s"
 #define ID_NUM(n)		" #" #n
@@ -480,6 +480,7 @@ typedef struct {
 	unsigned long max_size;
 	Connection *fwd_to_queue;
 	const char *spf_helo_error;
+	unsigned port;
 	char addr[SOCKET_ADDRESS_STRING_SIZE];
 	char name[SMTP_DOMAIN_LENGTH+1];
 	char auth[SMTP_TEXT_LINE_LENGTH+1];

@@ -260,8 +260,8 @@ rateConnect(Session *sess, va_list ignore)
 
 	LOG_TRACE(sess, 520, rateConnect);
 
-	/* This used to be CLIENT_HOLY_TRINITY (LOCALHOST, LAN, RELAYS), 
-	 * but you do not want your local connections to overload your 
+	/* This used to be CLIENT_HOLY_TRINITY (LOCALHOST, LAN, RELAYS),
+	 * but you do not want your local connections to overload your
 	 * system just the same as your outside connections.
 	 */
 	if (CLIENT_ANY_SET(sess, CLIENT_IS_LOCALHOST))
@@ -275,7 +275,7 @@ rateConnect(Session *sess, va_list ignore)
 	case ACCESS_TEMPFAIL:
 		return replyPushFmt(sess, optRateDrop.value ? SMTPF_DROP : SMTPF_TEMPFAIL, msg_421_unavailable, ID_ARG(sess));
 /*{REPLY
-The access-map lookups are failing possible because of incorrect local databased
+The access-map lookups are failing possible because of incorrect local database
 file permissions; or in the case of a socketmap, the socketmap daemon has stopped.
 Connections are temporarily turned away.
 }*/
