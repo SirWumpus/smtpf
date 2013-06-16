@@ -394,6 +394,7 @@ session_process(ServerSession *session)
 	/* Server model transition code... */
 	sess->client.socket = session->client;
 
+	sess->client.port = socketAddressGetPort(&session->client->address);
 	memcpy(sess->client.ipv6, session->ipv6, sizeof (sess->client.ipv6));
 	TextCopy(sess->client.addr, sizeof (sess->client.addr), session->address);
 

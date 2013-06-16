@@ -873,6 +873,7 @@ statsHttpPost(void)
 		;
 error2:
 	socketSetLinger(socket, LINGER_ON_CLOSE);
+	socketShutdown(socket, SHUT_WR);
 	socketClose(socket);
 error1:
 	free(uri);
@@ -1508,7 +1509,7 @@ statsNotify(mcc_handle *mcc, unsigned long one, unsigned long five, unsigned lon
 
 	mccSetKey(&row, "__loadavg");
 	mccSetValue(
-		&row, 
+		&row,
 		"%lu,%lu,%lu %lu %lu %lu/%lu/%lu %lu/%lu %lu",
 		one, five, fifteen,
 		(unsigned long)(now - start_time),

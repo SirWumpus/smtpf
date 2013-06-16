@@ -908,7 +908,7 @@ checkClientIP(Session *sess)
 	sess->msg.spf_mail = SPF_NONE;
 
 	length = greyMakeKey(
-		sess, optGreyKey.value & (GREY_TUPLE_IP|GREY_TUPLE_PTR|GREY_TUPLE_PTRN), 
+		sess, optGreyKey.value & (GREY_TUPLE_IP|GREY_TUPLE_PTR|GREY_TUPLE_PTRN),
 		NULL, (char *) MCC_PTR_K(&row), MCC_DATA_SIZE
 	);
 	MCC_SET_K_SIZE(&row, length);
@@ -1079,6 +1079,7 @@ the session "end" log line only.
 		break;
 
  	case SMTPF_DROP:
+		socketSetLinger(sess->client.socket, 0);
 		(void) replySend(sess);
 		goto error0;
 	}
@@ -1119,6 +1120,7 @@ connection as a result.
 				CLIENT_SET(sess, CLIENT_IO_ERROR);
 				if (errno != 0)
 					statsCount((errno == ETIMEDOUT) ? &stat_client_timeout : &stat_client_io_error);
+				socketSetLinger(sess->client.socket, 0);
 				break;
 			}
 
@@ -1134,6 +1136,7 @@ connection as a result.
 See <a href="summary.html#opt_rfc2821_command_length">rfc2821-command-length</a>.
 }*/
 				statsCount(&stat_rfc2821_command_length);
+				socketSetLinger(sess->client.socket, 0);
 				break;
 			}
 
@@ -1143,6 +1146,7 @@ See <a href="summary.html#opt_rfc2821_command_length">rfc2821-command-length</a>
 SMTP commands and their arguments can only consist of printable ASCII characters.
 }*/
 				statsCount(&stat_smtp_command_non_ascii);
+				socketSetLinger(sess->client.socket, 0);
 				break;
 			}
 
@@ -1166,6 +1170,7 @@ SMTP commands and their arguments can only consist of printable ASCII characters
 			 * pipelining having been set in writeClient.
 			 */
 			if (replyIsNegative(sess, 0) && s->function != cmdData) {
+				socketSetLinger(sess->client.socket, 0);
 				(void) replySend(sess);
 				break;
 			}
@@ -1188,6 +1193,7 @@ SMTP commands and their arguments can only consist of printable ASCII characters
 
 			if (replySend(sess) == SMTPF_DROP || sess->msg.smtpf_code == SMTPF_DROP) {
 				(void) filterRun(sess, filter_drop_table);
+				socketSetLinger(sess->client.socket, 0);
 				break;
 			}
 
@@ -1199,6 +1205,7 @@ See <a href="summary.html#opt_smtp_drop_after">smtp-drop-after</a> option.
 }*/
 				}
 				(void) filterRun(sess, filter_drop_table);
+				socketSetLinger(sess->client.socket, 0);
 				statsCount(&stat_smtp_drop_after);
 				break;
 			}

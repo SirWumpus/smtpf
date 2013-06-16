@@ -207,7 +207,7 @@ connectionOptions(Connection *fwd)
 #ifdef DISABLE_NAGLE
 	(void) socketSetNagle(fwd->mx, 0);
 #endif
-	socketSetLinger(fwd->mx, 0);
+//	socketSetLinger(fwd->mx, 0);
 	fwd->can_quit = 1;
 }
 
