@@ -119,6 +119,8 @@ cmdQuit(Session *sess)
 	sess->state = stateQuit;
 	statsCount(&stat_clean_quit);
 	CLIENT_SET(sess, CLIENT_HAS_QUIT);
+	/* Client sent QUIT, so we can do a normal socket close. */
+	(void) socketSetLinger(sess->client.socket, LINGER_ON_CLOSE);
 
 	return replySetFmt(sess, SMTPF_CONTINUE, "221 2.0.0 %s closing connection" ID_MSG(247) "\r\n", sess->iface->name, ID_ARG(sess));
 /*{REPLY
@@ -370,7 +372,7 @@ cmdReadLine(Session *sess, const char *prompt, char *buffer, size_t size)
 	long length;
 
 	SENDCLIENT(sess, prompt);
-	if (!socketHasInput(sess->client.socket, optSmtpCommandTimeout.value)) 
+	if (!socketHasInput(sess->client.socket, optSmtpCommandTimeout.value))
 		return -1;
 	if ((length = socketReadLine(sess->client.socket, buffer, size)) < 0)
 		return -1;
@@ -412,7 +414,7 @@ During AUTH LOGIN, there was a client read error while waiting for login name.
 }*/
 			goto error0;
 		}
-		if (*buffer == '*') 
+		if (*buffer == '*')
 			goto error0;
 	} else {
 		buffer_length = TextCopy(buffer, sizeof (buffer), sess->input+STRLEN("AUTH LOGIN "));
@@ -450,7 +452,7 @@ During AUTH LOGIN, there was a client read error while waiting for password.
 }*/
 		goto error0;
 	}
-	if (*buffer == '*') 
+	if (*buffer == '*')
 		goto error0;
 
 	b64Reset(&b64);

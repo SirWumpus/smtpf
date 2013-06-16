@@ -1079,14 +1079,13 @@ the session "end" log line only.
 		break;
 
  	case SMTPF_DROP:
-		socketSetLinger(sess->client.socket, 0);
 		(void) replySend(sess);
 		goto error0;
 	}
 
 	if ((code = replySend(sess)) != SMTPF_CONTINUE) {
 		if (verb_info.option.value)
-			syslog(LOG_ERR, LOG_MSG(1031) "banner error code=%d " CLIENT_FORMAT ": %s (%d)", LOG_ARGS(sess), code, CLIENT_INFO(sess), strerror(errno), errno);
+			syslog(LOG_ERR, LOG_MSG(1031) "banner code=%d " CLIENT_FORMAT ": %s (%d)", LOG_ARGS(sess), code, CLIENT_INFO(sess), strerror(errno), errno);
 	}
 
 	/* Black listed clients get less priority. */
@@ -1120,7 +1119,6 @@ connection as a result.
 				CLIENT_SET(sess, CLIENT_IO_ERROR);
 				if (errno != 0)
 					statsCount((errno == ETIMEDOUT) ? &stat_client_timeout : &stat_client_io_error);
-				socketSetLinger(sess->client.socket, 0);
 				break;
 			}
 
@@ -1136,7 +1134,6 @@ connection as a result.
 See <a href="summary.html#opt_rfc2821_command_length">rfc2821-command-length</a>.
 }*/
 				statsCount(&stat_rfc2821_command_length);
-				socketSetLinger(sess->client.socket, 0);
 				break;
 			}
 
@@ -1146,7 +1143,6 @@ See <a href="summary.html#opt_rfc2821_command_length">rfc2821-command-length</a>
 SMTP commands and their arguments can only consist of printable ASCII characters.
 }*/
 				statsCount(&stat_smtp_command_non_ascii);
-				socketSetLinger(sess->client.socket, 0);
 				break;
 			}
 
@@ -1170,7 +1166,6 @@ SMTP commands and their arguments can only consist of printable ASCII characters
 			 * pipelining having been set in writeClient.
 			 */
 			if (replyIsNegative(sess, 0) && s->function != cmdData) {
-				socketSetLinger(sess->client.socket, 0);
 				(void) replySend(sess);
 				break;
 			}
@@ -1193,7 +1188,6 @@ SMTP commands and their arguments can only consist of printable ASCII characters
 
 			if (replySend(sess) == SMTPF_DROP || sess->msg.smtpf_code == SMTPF_DROP) {
 				(void) filterRun(sess, filter_drop_table);
-				socketSetLinger(sess->client.socket, 0);
 				break;
 			}
 
@@ -1205,7 +1199,6 @@ See <a href="summary.html#opt_smtp_drop_after">smtp-drop-after</a> option.
 }*/
 				}
 				(void) filterRun(sess, filter_drop_table);
-				socketSetLinger(sess->client.socket, 0);
 				statsCount(&stat_smtp_drop_after);
 				break;
 			}

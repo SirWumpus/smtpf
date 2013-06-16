@@ -163,7 +163,7 @@ extern void freeThreadData(void);
  ***********************************************************************/
 
 #ifndef LINGER_ON_CLOSE
-#define LINGER_ON_CLOSE		2
+#define LINGER_ON_CLOSE		3
 #endif
 
 #ifndef SMTP_REJECT_DELAY
