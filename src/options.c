@@ -417,6 +417,20 @@ optionsSort(const void *_a, const void *_b)
 {
 	const char *a, *b;
 
+#ifdef NOPE
+	/* NULL pointers sort towards the end of a list. This may seem
+	 * odd, but consider a NULL terminated array of pointers to char,
+	 * like argv. You can iterate over the array stopping at the
+	 * NULL. Sorting NULL to the end allows us to continue using
+	 * that iteration technique.
+	 */
+	if (*_a == NULL && *_b != NULL)
+		return 1;
+	if (*_a != NULL && *_b == NULL)
+		return -1;
+	if (*_a == *_b)
+		return 0;
+#endif
 	a = (*(Option **) _a)->name;
 	if (*a == '_')
 		a++;

@@ -1,13 +1,11 @@
 /*
  * smtpf.h
  *
- * Copyright 2006 by Anthony Howe. All rights reserved.
+ * Copyright 2006, 2013 by Anthony Howe. All rights reserved.
  */
 
 #ifndef __smtpf_h__
 #define __smtpf_h__			1
-
-#undef OLD_SMTP_ERROR_CODES
 
 /***********************************************************************
  *** No configuration below this point.
@@ -90,11 +88,7 @@ extern "C" {
 #include <com/snert/lib/io/socket2.h>
 #include <com/snert/lib/io/socket3.h>
 #include <com/snert/lib/mail/siq.h>
-#ifdef OLD_SMTP_ERROR_CODES
-#include <com/snert/lib/mail/smtp.h>
-#else
 #include <com/snert/lib/mail/smtp2.h>
-#endif
 #include <com/snert/lib/mail/smdb.h>
 #include <com/snert/lib/mail/limits.h>
 #include <com/snert/lib/mail/parsePath.h>
@@ -149,14 +143,7 @@ extern void freeThreadData(void);
 #undef DISABLE_NAGLE
 #define USE_PTHREAD_CANCEL
 
-#ifdef __unix__
-# define cliFdCloseOnExec(fd, close_on_exec)	(void) fileSetCloseOnExec(fd, 1)
-#else
-# ifdef __WIN32__
-#  undef FILTER_CLI
-# endif
-# define cliFdCloseOnExec(fd, close_on_exec)
-#endif
+#define cliFdCloseOnExec	fileSetCloseOnExec
 
 /***********************************************************************
  *** Constants
@@ -304,9 +291,6 @@ typedef struct connection {
 	unsigned rcpt_count;
 	time_t time_of_last_command;
 	unsigned long length;
-#ifdef OLD_SMTP_ERROR_CODES
-	int smtp_error;
-#endif
 	int smtp_code;
 	int can_quit;
 	char mx_ip[IPV6_STRING_SIZE];
@@ -517,9 +501,6 @@ struct smtpf {
 	} response;
 	JMP_BUF on_error;
 	int smtp_code;
-#ifdef OLD_SMTP_ERROR_CODES
-	int smtp_error;
-#endif
 #ifdef ENABLE_LINT
 	Reply *lint_replies;
 #endif

@@ -379,11 +379,7 @@ statsRoute(Session *sess, int smtpf_code)
 		 * will have been sent explaining failure to
 		 * deliver.
 		 */
-#ifdef OLD_SMTP_ERROR_CODES
-		if (fwd->rcpt_count == 0 || (fwd->smtp_error & SMTP_ERROR_IO_MASK)) {
-#else
 		if (fwd->rcpt_count == 0 || fwd->smtp_code == SMTP_ERROR_IO) {
-#endif
 			statsRouteUpdate(sess, fwd->route.key, SMTPF_REJECT);
 			continue;
 		}

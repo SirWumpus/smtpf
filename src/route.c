@@ -882,11 +882,7 @@ unplussed_rcpt:
 		 * sappi.com (mxlogic.net) drop the connection following the
 		 * second MAIL FROM: command after a bad RCPT TO: command.
 		 */
-#ifdef OLD_SMTP_ERROR_CODES
-		if (conn->smtp_error & SMTP_ERROR_IO_MASK) {
-#else
 		if (SMTP_IS_ERROR(conn->smtp_code)) {
-#endif
 			code = SMTPF_REJECT;
 		} else {
 			code = conn->smtp_code / 100;
@@ -927,11 +923,7 @@ error2:
 	 * If +relay-reply, then we'll want report negative replies.
 	 */
 	(void) TextCopy(sess->input, sizeof (sess->input), sess->reply);
-#ifdef OLD_SMTP_ERROR_CODES
-	if (!(conn->smtp_error & SMTP_ERROR_IO_MASK))
-#else
 	if (conn->smtp_code != SMTP_ERROR_IO)
-#endif
 		(void) mxCommand(sess, conn, "QUIT\r\n", 221);
 	(void) TextCopy(sess->reply, sizeof (sess->reply), sess->input);
 error1:

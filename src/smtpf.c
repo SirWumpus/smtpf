@@ -625,11 +625,7 @@ sessionReset(Session *sess)
 			continue;
 		}
 
-#ifdef OLD_SMTP_ERROR_CODES
-		if (fwd->can_quit && !(fwd->smtp_error & SMTP_ERROR_IO_MASK))
-#else
 		if (fwd->can_quit && fwd->smtp_code != SMTP_ERROR_IO)
-#endif
 			(void) mxCommand(sess, fwd, "QUIT\r\n", 221);
 
 		connectionFree(fwd);
@@ -744,11 +740,7 @@ keepAlive(Session *sess)
 	sent = count = 0;
 
 	for (fwd = sess->msg.fwds; fwd != NULL; fwd = fwd->next) {
-#ifdef OLD_SMTP_ERROR_CODES
-		if (!(fwd->smtp_error & SMTP_ERROR_IO) && fwd->time_of_last_command + optSmtpKeepAliveTimeout.value <= now) {
-#else
 		if (fwd->smtp_code != SMTP_ERROR_IO && fwd->time_of_last_command + optSmtpKeepAliveTimeout.value <= now) {
-#endif
 			count++;
 			fwd->time_of_last_command = now;
 			socketSetTimeout(fwd->mx, KEEP_ALIVE_TIMEOUT_MS);
@@ -760,11 +752,7 @@ keepAlive(Session *sess)
 	}
 
 	for (fwd = sess->msg.fwds; fwd != NULL; fwd = fwd->next) {
-#ifdef OLD_SMTP_ERROR_CODES
-		if (fwd->can_quit && !(fwd->smtp_error & SMTP_ERROR_IO) && socketGetTimeout(fwd->mx) == KEEP_ALIVE_TIMEOUT_MS) {
-#else
 		if (fwd->can_quit && fwd->smtp_code != SMTP_ERROR_IO && socketGetTimeout(fwd->mx) == KEEP_ALIVE_TIMEOUT_MS) {
-#endif
 			(void) mxResponse(sess, fwd);
 			if (fwd->smtp_code == 250)
 				sent++;
@@ -1219,11 +1207,7 @@ See <a href="summary.html#opt_smtp_drop_after">smtp-drop-after</a> option.
 	sessionReset(sess);
 
 	if (sess->client.fwd_to_queue != NULL) {
-#ifdef OLD_SMTP_ERROR_CODES
-		if (sess->client.fwd_to_queue->can_quit && !(sess->client.fwd_to_queue->smtp_error & SMTP_ERROR_IO_MASK))
-#else
 		if (sess->client.fwd_to_queue->can_quit && sess->client.fwd_to_queue->smtp_code != SMTP_ERROR_IO)
-#endif
 			(void) mxCommand(sess, sess->client.fwd_to_queue, "QUIT\r\n", 221);
 		connectionFree(sess->client.fwd_to_queue);
 	}

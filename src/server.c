@@ -311,9 +311,6 @@ session_create(ServerSession *session)
 	sess->max_concurrent = -1;
 
 	sess->smtp_code = 0;
-#ifdef OLD_SMTP_ERROR_CODES
-	sess->smtp_error = 0;
-#endif
 
 	sess->msg.id[0] = '\0';
 	sess->msg.headers = NULL;

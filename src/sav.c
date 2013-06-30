@@ -144,7 +144,7 @@ savData(Session *sess, va_list ignore)
 		/* Touch */
 		domain.ttl = cacheGetTTL(*MCC_PTR_V(&domain) - '0');
 		domain.expires = time(NULL) + domain.ttl;
-	
+
 		if (verb_cache.option.value)
 			syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), LOG_CACHE_PUT(&domain), FILE_LINENO);
 		if (mccPutRow(mcc, &domain) == MCC_ERROR)
@@ -174,7 +174,7 @@ savData(Session *sess, va_list ignore)
 		rc = *MCC_PTR_V(&sender) - '0';
 		sender.ttl = cacheGetTTL(rc);
 		sender.expires = time(NULL) + sender.ttl;
-	
+
 		if (verb_cache.option.value)
 			syslog(LOG_DEBUG, log_cache_put, LOG_ARGS(sess), LOG_CACHE_PUT(&sender), FILE_LINENO);
 		if (mccPutRow(mcc, &sender) == MCC_ERROR)
@@ -303,11 +303,7 @@ See <a href="summary.html#opt_uri_call_back_greeting">uri-call-back-greeting</a>
 		 * second MAIL FROM: command after a bad RCPT TO: command.
 		 */
 
-#ifdef OLD_SMTP_ERROR_CODES
-		if (sess->smtp_error & SMTP_ERROR_IO_MASK) {
-#else
 		if (SMTP_IS_ERROR(sess->smtp_code)) {
-#endif
 #ifdef CALL_BACK_RSET
 skip_false_rcpt:
 #endif
