@@ -26,6 +26,7 @@ Vector optionTableRestart;
 extern void optionsRegister(Option *option, int requires_restart);
 extern int optionsRegister0(Session *sess, va_list ignore);
 extern int optionsRegister1(Session *sess, va_list ignore);
+extern void options_at_exit(void);
 
 extern Option optFile0;
 extern Option *optTable0[];

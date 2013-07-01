@@ -1386,6 +1386,13 @@ filterClearAllContexts(Session *sess)
 }
 
 void
+filter_at_exit(void)
+{
+	free(filter_context_sizeof);
+	filter_context_sizeof = NULL;
+}
+
+void
 filterRegister(void)
 {
 	/* Windows calls filterRegister twice, once for the service start or

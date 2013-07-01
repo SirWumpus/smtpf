@@ -63,7 +63,7 @@ static const char verbose_usage[] =
 
 static char usage_verbose[1024];
 
-Option optVerbose = { "verbose", "warn,info,smtp-dot,tls", (const char *) usage_verbose };
+Option optVerbose = { "verbose", "info,smtp=1,tls", (const char *) usage_verbose };
 
 /***********************************************************************
  ***
@@ -209,6 +209,15 @@ verboseRegister0(Session *null, va_list ignore)
 }
 
 void
+verbose_at_exit(void)
+{
+	Verbose *v;
+
+	for (v = verb_list; v != NULL; v = v->next)
+		optionResetOption(&v->option);
+}
+
+void
 verboseInit(const char *s)
 {
 	Verbose *v;
@@ -239,21 +248,6 @@ verboseInit(const char *s)
 
 	verboseParse(s);
 }
-
-#ifdef NOT_USED
-void
-verbose(int ignore, const char *fmt, ...)
-{
-	va_list args;
-
-	va_start(args, fmt);
-	if (logFile == NULL)
-		vsyslog(LOG_INFO, fmt, args);
-	else
-		LogV(LOG_INFO, fmt, args);
-	va_end(args);
-}
-#endif
 
 int
 verboseCommand(Session *sess)

@@ -1037,6 +1037,12 @@ statsDumpList(void)
 	}
 }
 
+void
+stats_at_exit(void)
+{
+	VectorDestroy(stats);
+}
+
 int
 statsRegister0(Session *sess, va_list ignore)
 {

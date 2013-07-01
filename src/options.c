@@ -477,6 +477,15 @@ optionsRegister(Option *option, int requires_restart)
 	}
 }
 
+void
+options_at_exit(void)
+{
+	optionFreeL((Option **) VectorBase(optionTableRestart), NULL);
+	optionFreeL((Option **) VectorBase(optionTable), NULL);
+	VectorDestroy(optionTableRestart);
+	VectorDestroy(optionTable);
+}
+
 int
 optionsRegister0(Session *sess, va_list ignore)
 {

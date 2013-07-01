@@ -57,6 +57,7 @@ extern Option optVerbose;
 
 extern int verboseRegister0(Session *null, va_list ignore);
 
+extern void verbose_at_exit(void);
 extern void verboseInit(const char *s);
 extern void verboseParse(const char *s);
 extern int verboseCommand(Session *sess);

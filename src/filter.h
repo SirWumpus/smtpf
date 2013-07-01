@@ -498,6 +498,7 @@ extern int 	filterDot(Session *sess);
 extern void	filterClose(Session *sess);
 */
 
+extern void filter_at_exit(void);
 extern void filterInit(void);
 extern void filterFini(void);
 extern void filterRegister(void);

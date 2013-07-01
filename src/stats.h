@@ -170,6 +170,7 @@ extern int  statsRegister(Stats *stat);
 extern void statsLock(void);
 extern void statsUnlock(void);
 extern void statsTimerTask(Timer *);
+extern void stats_at_exit(void);
 
 /*
  * Not mutex protected.
