@@ -403,7 +403,7 @@ typedef struct {
 } Message;
 
 #define CLIENT_IS_MX			0x00000001
-#define CLIENT_IS_LAN			0x00000002
+#define CLIENT_IS_LAN			//0x00000002	/* * deprecated */
 #define CLIENT_IS_RELAY			0x00000004
 #define CLIENT_IS_2ND_MX		0x00000008	/* Client is our secondary MX. */
 #define CLIENT_IS_FORGED		0x00000010	/* IP -> PTR name != A name -> IP */
@@ -421,11 +421,11 @@ typedef struct {
 #define CLIENT_NO_PTR			0x00010000	/* Has no PTR record. */
 #define CLIENT_NO_PTR_ERROR		0x00020000	/* Has no PTR record due to an error. */
 #define CLIENT_IS_EHLO_NO_HELO		0x00040000	/* Has sent EHLO and no HELO. */
-#define CLIENT_IS_SCHIZO		0x00080000	/* *  Different HELO/EHLO arguments used. */
-#define CLIENT_IS_GREY_EXEMPT		0x00100000	/* * Client exempt from grey-listing. */
+#define CLIENT_IS_SCHIZO		0x00080000	/* * informational */
+#define CLIENT_IS_GREY_EXEMPT		//0x00100000	/* * deprecated */
 #define CLIENT_PASSED_GREY		0x00200000	/* Client has previously passed grey-listing. */
 #define CLIENT_PIPELINING		0x00400000	/* Client sent next command before end of reply. */
-#define CLIENT_SMTP_LOWER_CASE		0x00800000	/* * SMTP command contains lower case */
+#define CLIENT_SMTP_LOWER_CASE		0x00800000	/* * informational */
 #define CLIENT_IO_ERROR			0x01000000
 #define CLIENT_RATE_LIMIT		0x02000000
 #define CLIENT_CONCURRENCY_LIMIT	0x04000000
@@ -433,12 +433,12 @@ typedef struct {
 #define CLIENT_IS_TRAP			0x10000000
 #define CLIENT_IS_TEMPFAIL		0x20000000
 #define CLIENT_HAS_AUTH			0x40000000	/* Has sucessfully authenticated. */
-#define CLIENT_HAS_QUIT			0x80000000
+#define CLIENT_HAS_QUIT			0x80000000	/* * informational */
 
 #define CLIENT_END_BIT			CLIENT_HAS_QUIT
 
-#define CLIENT_HOLY_TRINITY		(CLIENT_IS_LOCALHOST|CLIENT_IS_LAN|CLIENT_IS_RELAY)
-#define CLIENT_USUAL_SUSPECTS		(CLIENT_HOLY_TRINITY|CLIENT_IS_WHITE)
+#define CLIENT_TRUSTED			(CLIENT_IS_LOCALHOST|CLIENT_IS_RELAY)
+#define CLIENT_USUAL_SUSPECTS		(CLIENT_TRUSTED|CLIENT_IS_WHITE)
 
 #define CLIENT_SET(s, m)		FLAG_SET((s)->client.flags, m)
 #define CLIENT_CLEAR(s, m)		FLAG_CLEAR((s)->client.flags, m)

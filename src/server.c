@@ -125,6 +125,7 @@ void
 _atExitCleanUp(void)
 {
 	(void) close(pid_fd);
+	tld_at_exit();
 	filterFini();
 	statsFini();
 	cacheFini();
@@ -410,10 +411,6 @@ session_process(ServerSession *session)
 	if (isReservedIPv6(session->ipv6, IS_IP_LOCAL)) {
 		CLIENT_SET(sess, CLIENT_IS_LOCALHOST);
 		statsCount(&stat_connect_localhost);
-	}
-	if (isReservedIPv6(session->ipv6, IS_IP_LAN)) {
-		CLIENT_SET(sess, CLIENT_IS_LAN);
-		statsCount(&stat_connect_lan);
 	}
 	if (routeKnownClientAddr(sess)) {
 		CLIENT_SET(sess, CLIENT_IS_RELAY);

@@ -190,7 +190,7 @@ noPtr(Session *sess)
 	 * with a static IP.
 	 */
 	if (optClientPtrRequired.value
-	&& CLIENT_IS_SET(sess, CLIENT_HOLY_TRINITY|CLIENT_IS_MX|CLIENT_NO_PTR, CLIENT_NO_PTR)
+	&& CLIENT_IS_SET(sess, CLIENT_TRUSTED|CLIENT_IS_MX|CLIENT_NO_PTR, CLIENT_NO_PTR)
 #ifdef FILTER_SPF
 	&& sess->msg.spf_mail != SPF_PASS
 #endif
@@ -405,7 +405,7 @@ There is no option to turn this test off.
 	 * match the HELO address.
 	 */
 	if (optHeloIpMismatch.value
-	&& CLIENT_IS_SET(sess, CLIENT_IS_LAN|CLIENT_IS_HELO_IP, CLIENT_IS_HELO_IP)
+	&& CLIENT_IS_SET(sess, CLIENT_IS_HELO_IP, CLIENT_IS_HELO_IP)
 	&& !isReservedIPv6(helo_ipv6, IS_IP_LAN|IS_IP_THIS_NET)
 	&& memcmp(sess->client.ipv6, helo_ipv6, sizeof (helo_ipv6)) != 0) {
 		statsCount(&stat_helo_ip_mismatch);
@@ -438,7 +438,7 @@ heloTests(Session *sess)
 		syslog(LOG_DEBUG, LOG_MSG(426) "heloTests", LOG_ARGS(sess));
 
 	if (optRFC2606SpecialDomains.value
-	&& CLIENT_NOT_SET(sess, CLIENT_IS_LAN|CLIENT_IS_LOCALHOST)
+	&& CLIENT_NOT_SET(sess, CLIENT_IS_LOCALHOST)
 	&& isReservedTLD(sess->client.helo, IS_TLD_ANY_RESERVED & ~(IS_TLD_LOCAL|IS_TLD_LAN))) {
 		statsCount(&stat_bogus_helo);
 		return replyPushFmt(sess, SMTPF_DELAY|SMTPF_SESSION|SMTPF_DROP, "550 5.7.0 HELO %s from RFC2606 reserved domain" ID_MSG(427) CRLF, sess->client.helo, ID_ARG(sess));
@@ -452,7 +452,7 @@ See <a href="summary.html#opt_rfc2606_special_domains">rfc2606-special-domains</
 	&& ((CLIENT_ANY_SET(sess, CLIENT_IS_HELO_IP) && *sess->client.helo != '[')
 	/* Accept "domain.tld" as FQDN, but not the root domain eg. "some-name." or "." */
 	  || (dot = strchr(sess->client.helo, '.')) == NULL || dot[1] == '\0')) {
-		if (CLIENT_NOT_SET(sess, CLIENT_HOLY_TRINITY)) {
+		if (CLIENT_NOT_SET(sess, CLIENT_TRUSTED)) {
 			statsCount(&stat_rfc2821_strict_helo);
 			return replyPushFmt(sess, SMTPF_DELAY|SMTPF_SESSION|SMTPF_DROP, "550 5.7.0 HELO %s argument must be a FQDN or IP-domain literal" ID_MSG(428) CRLF, sess->client.helo, ID_ARG(sess));
 /*{REPLY
@@ -471,7 +471,7 @@ See <a href="summary.html#opt_rfc2821_strict_helo">rfc2821-strict-helo</a> optio
 	 * responsible for and the connection is not a relay and is
 	 * not a server from a domain we're responsible for, then
 	 * the client is falsely "claiming to be us".
-	 * 
+	 *
 	 * This works when combined with the CLIENT_IS_HELO_HOSTNAME
 	 * check / grey-list change that allowed us to use the HELO
 	 * arg as the client.name when there was no PTR.
@@ -482,7 +482,7 @@ See <a href="summary.html#opt_rfc2821_strict_helo">rfc2821-strict-helo</a> optio
    	 * allowed to HELO within the snert.com domain as a result.
 	 */
 	if (optHeloClaimsUs.value
-	&& CLIENT_NOT_SET(sess, CLIENT_HOLY_TRINITY)
+	&& CLIENT_NOT_SET(sess, CLIENT_TRUSTED)
 	&& routeKnownDomain(sess, sess->client.helo) && !routeKnownDomain(sess, sess->client.name)) {
 		statsCount(&stat_helo_claims_us);
 		return replyPushFmt(sess, SMTPF_DELAY|SMTPF_SESSION|SMTPF_DROP, "550 5.7.0 " CLIENT_FORMAT " claims to be us \"%s\"" ID_MSG(430) CRLF, CLIENT_INFO(sess), sess->client.helo, ID_ARG(sess));
@@ -522,7 +522,7 @@ heloIsPtr(Session *sess)
 	 * on "dynamic" or residential ADSL.
 	 */
 	if (optHeloIsPtr.value
-	&& CLIENT_IS_SET(sess, CLIENT_HOLY_TRINITY|CLIENT_IS_MX|CLIENT_IS_IP_IN_PTR, CLIENT_IS_IP_IN_PTR)
+	&& CLIENT_IS_SET(sess, CLIENT_TRUSTED|CLIENT_IS_MX|CLIENT_IS_IP_IN_PTR, CLIENT_IS_IP_IN_PTR)
 	&& TextInsensitiveCompare(sess->client.name, sess->client.helo) == 0
 #ifdef FILTER_SPF
 	&& sess->msg.spf_mail != SPF_PASS
@@ -611,7 +611,7 @@ supported.
 }*/
 	}
 
-	if (CLIENT_ANY_SET(sess, CLIENT_HOLY_TRINITY))
+	if (CLIENT_ANY_SET(sess, CLIENT_TRUSTED))
 		return SMTPF_CONTINUE;
 
 	/* Skip MX related tests for domains we route, because of split

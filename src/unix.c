@@ -124,6 +124,8 @@ atExitCleanUpOptions(void)
 	verbose_at_exit();
 	filter_at_exit();
 	stats_at_exit();
+
+	free(alt_sig_stack.ss_sp);
 }
 
 void

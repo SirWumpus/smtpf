@@ -1597,7 +1597,7 @@ statsCommand(Session *sess)
 	static const char window[] = "window";
 	static const char runtime[] = "runtime";
 
-	if (CLIENT_NOT_SET(sess, CLIENT_IS_LOCALHOST|CLIENT_IS_LAN))
+	if (CLIENT_NOT_SET(sess, CLIENT_IS_LOCALHOST))
 		return cmdUnknown(sess);
 
 	statsCount(&stat_admin_commands);

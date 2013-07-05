@@ -139,7 +139,7 @@ cmdUnknown(Session *sess)
 	 * XCLIENT
 	 */
  	&& (sess->input[0] != 'X' || sess->helo_state == stateHelo)
-	&& CLIENT_NOT_SET(sess, CLIENT_HOLY_TRINITY)) {
+	&& CLIENT_NOT_SET(sess, CLIENT_TRUSTED)) {
 		statsCount(&stat_smtp_drop_unknown);
 		rc = SMTPF_DROP;
 		goto error0;
@@ -2320,7 +2320,7 @@ cmdConnections(Session *sess)
 {
 	Reply *reply;
 
-	if (CLIENT_NOT_SET(sess, CLIENT_IS_LOCALHOST|CLIENT_IS_LAN))
+	if (CLIENT_NOT_SET(sess, CLIENT_IS_LOCALHOST))
 		return cmdOutOfSequence(sess);
 
 	statsCount(&stat_admin_commands);
@@ -2462,9 +2462,6 @@ cmdXclient(Session *sess)
 			}
 			if (isReservedIPv6(sess->client.ipv6, IS_IP_LOCAL)) {
 				CLIENT_SET(sess, CLIENT_IS_LOCALHOST);
-			}
-			if (isReservedIPv6(sess->client.ipv6, IS_IP_LAN)) {
-				CLIENT_SET(sess, CLIENT_IS_LAN);
 			}
 			if (routeKnownClientAddr(sess)) {
 				CLIENT_SET(sess, CLIENT_IS_RELAY);

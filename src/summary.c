@@ -63,7 +63,7 @@ static const char *message_flags[] = {
 
 static const char *client_flags[] = {
 	"mx,",
-	"lan,",
+	"lan,",			/* deprecated */
 	"relay,",
 	"2nd_mx,",
 	"forged,",
@@ -82,7 +82,7 @@ static const char *client_flags[] = {
 	"no_ptr_error,",
 	"ehlo_no_helo,",
 	"schizo,",
-	"exempt_grey_list,",
+	"exempt_grey_list,",	/* deprecated */
 	"passed_grey_list,",
 	"pipelining,",
 	"smtp_lower_case,",

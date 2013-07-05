@@ -154,7 +154,7 @@ siqData(Session *sess, va_list ignore)
 
 	if (VectorLength(servers) <= 0
 	|| sess->msg.mail->domain.length == 0
-	|| CLIENT_ANY_SET(sess, CLIENT_HOLY_TRINITY))
+	|| CLIENT_ANY_SET(sess, CLIENT_USUAL_SUSPECTS))
 		return SMTPF_CONTINUE;
 
 	MEMSET(&cached, 0, sizeof (cached));

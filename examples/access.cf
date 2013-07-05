@@ -7,6 +7,37 @@
 #length-connect:			25M
 
 #######################################################################
+# Private LAN historically assumed to be safe in previous versions.
+#######################################################################
+
+# Class A 10.0.0.0/8
+connect:10				OK
+
+# Class B 172.16.0.0/12
+connect:172.16				OK
+connect:172.17				OK
+connect:172.18				OK
+connect:172.19				OK
+connect:172.20				OK
+connect:172.21				OK
+connect:172.22				OK
+connect:172.23				OK
+connect:172.24				OK
+connect:172.25				OK
+connect:172.26				OK
+connect:172.27				OK
+connect:172.28				OK
+connect:172.29				OK
+connect:172.30				OK
+connect:172.31				OK
+
+# Class C 192.168.0.0/16
+connect:192.168				OK
+
+# Link Local (no DHCP) 169.254.0.0/16
+#connect:169.254			OK
+
+#######################################################################
 # Frequently seen URL domains that are known to be good or undesirable.
 #######################################################################
 

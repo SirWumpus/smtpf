@@ -774,7 +774,8 @@ checkClientIP(Session *sess)
 	/* Assume the client is forged or unconfirmed,
 	 * excluding localhost and the private LAN IPs.
 	 */
-	if (CLIENT_NOT_SET(sess, CLIENT_IS_LAN|CLIENT_IS_LOCALHOST))
+	if (CLIENT_NOT_SET(sess, CLIENT_IS_LOCALHOST)
+	&& !isReservedIPv6(sess->session->ipv6, IS_IP_LAN))
 		CLIENT_SET(sess, CLIENT_IS_FORGED);
 
 	/* Assume the client has one PTR record or if multihomed that

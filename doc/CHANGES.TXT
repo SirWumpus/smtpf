@@ -71,102 +71,6 @@ is no set schedule for releases.
 
 	redirects to http://plomixsoft.com
 
-   ?	Alternative to FastCGI: SocketCLI / filter-socket / socket-filter
-   	list option. The following protocol would be used.
-
-   	All commands, responses, and arguments are sent using network
-	strings. All command, response, and flag words are considered
-	case insensitive. All commands expect a response within 60
-	seconds, after which the connection is placed into an error
-	state, ignored, and closed at the end of session. There is no
-	welcome banner.
-
-
-	-- DEFINITIONS
-
-	ASCII formfeed octet (CTRL+L, 0x0C, \f) is used for separating
-		fields within a string or list. [Some thought was given
-		to using ASCII FS (0x1C) or RS (0x1E) codes, but "\f" is
-		a common character constant in many programming
-		languages that is easier to remember than an ASCII
-		code.]
-
-	$flag_list is a formfeed separated list of case-insensitive
-		tokens. Reserved tokens start with an underscore: _DROP,
-		_DELAY, _ALTER, _SAVE, _HOLD. A socket-filter client and
-		server(s) may pass arbitrary tokens between each other.
-		It provides an simple means of communicating state
-		information to downstream socket-filter servers.
-
-
-	>> CLIENT COMMANDS
-
-	OPEN $flag_list $protocol_version $smtp_client_ip Client
-		connection accept handler: Any response. The response
-		text must start with the server's version number. The
-		$protocol_version is a positive integer and this is
-		version "1".
-
-	INIT $flag_list $session_id
-		Session thread initialise handler: Any response.
-
-	RCVD $flag_list $string
-		SMTP input as received from the client: Any response.
-		Response flags may contain _SAVE, indicating that
-		message should be saved in a temporary file. It would be
-		the server's responibility to parse and determine state
-		for HELO, EHLO, AUTH, MAIL FROM, RCPT TO, DATA, RSET,
-		NOOP, VRFY, EXPN, QUIT.
-
-	SENT $flag_list $text
-		Last reply sent to client: Expect CONT. The command
-		text starts with an SMTP response code, may have an
-		extended response code, and a reason.
-
-	HEAD $flag_list $string
-		Single header handler: Expect CONT. Response flags may
-		contain _ALTER, in which case the response text is the
-		replacement header and/or extra headers. Multiple
-		headers are separated by a formfeed.
-
-	EHDR $flag_list
-		End of headers: Expect CONT. Response flags may contain
-		_ALTER, in which case the response text is one or more
-		headers to append to the list of headers. Multiple
-		headers are separated by a formfeed.
-
-	BODY $flag_list $chunk
-		Message body content: Expect CONT.
-
-	EBDY $flag_list
-		End of message body: Any response. Response flags may
-		contain _HOLD, indicating that message temp.file should
-		not be deleted.
-
-
-	<< SERVER RESPONSES
-
-	CONT $flag_list $text
-		Continue / acknowledge / don't care.
-
-	PASS $flag_list $text
-		Accept. Stop processing remaining filters and tests.
-		The text should contain an SMTP response code,
-		extended response code, and reason.
-
-	TEMP $flag_list $text
-		Temporary Failure. Flags may contain the _DROP to drop
-		the connection and/or _DELAY to delay the response when
-		+smtp-delay-checks. The text should contain an SMTP
-		response code, extended response code, and reason.
-
-
-	FAIL $flag_list $text
-		Reject. Flags may contain the _DROP to drop the
-		connection and/or _DELAY to delay the response when
-		+smtp-delay-checks. The text should contain an SMTP
-		response code, extended response code, and reason.
-
    ?	Improve readData.
 
    ?	Flags for RFC syntax errors and a way to have them appear in
@@ -227,13 +131,9 @@ is no set schedule for releases.
 
   !!	Access-map DISCARD action may be broken in access.c.
 
-   +	smtpf RESTART command
-
    +	STARTTLS proxy to local queue route like roundhouse.
 
    +	store stats for IP, HELO, MAIL domain (schzo test over long periods)
-
-  ++	hash module
 
   ++	timeout socket writes to clamd, spamd, et al.
 
@@ -293,6 +193,8 @@ is no set schedule for releases.
 
 --2.6.2--
 
+   *	Requires libsnert 1.75.22.
+
    !    On some high load systems, dropping the connection leaves closed
 	sockets in TIME_WAIT state. Applied some changes to reject and
 	wait for QUIT, instead of dropping a connection.
@@ -303,6 +205,19 @@ is no set schedule for releases.
 	~ concurrent-421-delay default now 15s;
 	~ rfc2821-line-length=1 rejects, 2 drops;
 	~ Rejected connections goto sink state, instead of dropping.
+
+   !	Reworked the use of socketSetLinger(): assume the client will
+	drop a connection more often than send QUIT, so set linger
+	timeout to zero by default and set a non-zero linger timeout if
+	we see QUIT.
+
+   !	Redefine CLIENT_HOLY_TRINITY (localhost, lan, relays) to
+   	CLIENT_TRUSTED (localhost, relays) and white list the private
+   	LANs in the default access.cf.
+
+   -	Deprecated CLIENT_IS_LAN and CLIENT_IS_GREY_EXEMPT flags.
+
+  !!	Memory leak fixes from found in previous LibSnert.
 
 --2.6.1--
 

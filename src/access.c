@@ -1008,7 +1008,7 @@ client name or IP address with a right-hand-side value of OK.
 See <a href="access-map.html#access_map">access-map</a>.
 }*/
 			}
-			if (CLIENT_NOT_SET(sess, CLIENT_HOLY_TRINITY))
+			if (CLIENT_NOT_SET(sess, CLIENT_TRUSTED))
 				statsCount(&stat_connect_wl);
 			CLIENT_SET(sess, CLIENT_IS_WHITE);
 			rc = SMTPF_ACCEPT;
@@ -1072,7 +1072,7 @@ See <a href="access-map.html#access_tags">access-map</a>.
 	 * the .localhost or .localdomain domain if you use it.
 	 */
 	else if (optRFC2606SpecialDomains.value
-	&& CLIENT_NOT_SET(sess, CLIENT_IS_LAN|CLIENT_IS_LOCALHOST) && isRFC2606(sess->client.name)) {
+	&& CLIENT_NOT_SET(sess, CLIENT_IS_LOCALHOST) && isRFC2606(sess->client.name)) {
 		rc = replyPushFmt(sess, SMTPF_DELAY|SMTPF_SESSION|SMTPF_DROP, "550 5.7.1 host " CLIENT_FORMAT " from RFC2606 reserved domain" ID_MSG(121) "\r\n", CLIENT_INFO(sess), ID_ARG(sess));
 /*{REPLY
 See <a href="summary.html#opt_rfc2606_special_domains">rfc2606-special-domains</a>.
@@ -1084,7 +1084,7 @@ See <a href="summary.html#opt_rfc2606_special_domains">rfc2606-special-domains</
 	 * Sendmail uses.
 	 */
 	else if (optRejectUnknownTLD.value
-	&& CLIENT_NOT_SET(sess, CLIENT_IS_LAN|CLIENT_IS_LOCALHOST)
+	&& CLIENT_NOT_SET(sess, CLIENT_IS_LOCALHOST)
 	&& *sess->client.name != '\0' && !hasValidTLD(sess->client.name)) {
 		rc = replyPushFmt(sess, SMTPF_DELAY|SMTPF_SESSION|SMTPF_DROP, "550 5.7.1 host " CLIENT_FORMAT " from unknown TLD" ID_MSG(122) "\r\n", CLIENT_INFO(sess), ID_ARG(sess));
 /*{REPLY
@@ -1763,11 +1763,9 @@ HELO/EHLO argument with a right-hand-side value of OK.
 See <a href="access-map.html#access_tags">access-map</a>.
 }*/
 			}
-			if (CLIENT_NOT_SET(sess, CLIENT_HOLY_TRINITY))
+			if (CLIENT_NOT_SET(sess, CLIENT_TRUSTED))
 				statsCount(&stat_helo_wl);
-#ifdef HELO_WHITELIST
 			CLIENT_SET(sess, CLIENT_IS_WHITE);
-#endif
 			rc = SMTPF_SKIP_REMAINDER;
 			break;
 

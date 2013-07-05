@@ -406,8 +406,8 @@ greyHeader(Session *sess, mcc_row *row, time_t *now)
 
 	(void) TimeStamp((time_t *) &row->created, timestamp, sizeof (timestamp));
 	(void) snprintf(
-		hdr, SMTP_TEXT_LINE_LENGTH, 
-		"%s: age=%lu (%.2lu:%.2lu:%.2lu) key=" MCC_FMT_K " at=\"%s\"\r\n", 
+		hdr, SMTP_TEXT_LINE_LENGTH,
+		"%s: age=%lu (%.2lu:%.2lu:%.2lu) key=" MCC_FMT_K " at=\"%s\"\r\n",
 		optGreyReportHeader.string, age, h, m, s, MCC_FMT_K_ARG(row), timestamp
 	);
 
@@ -556,7 +556,7 @@ greyCacheUpdate(Session *sess, Grey *grey, char *key, long *delay, int at_dot)
 			while (isspace(MCC_PTR_K(&id_row)[length-1]))
 				length--;
 			MCC_SET_K_SIZE(&id_row, length);
-		
+
 			*MCC_PTR_V(&id_row) = *MCC_PTR_V(&row);
 			MCC_SET_V_SIZE(&id_row, 1);
 
@@ -922,7 +922,7 @@ greyData(Session *sess, va_list args)
 	}
 
 	if (grey->period <= 0) {
-		CLIENT_SET(sess, CLIENT_IS_GREY_EXEMPT);
+		/* Client is exempt from grey listing. */
 		return SMTPF_CONTINUE;
 	}
 
