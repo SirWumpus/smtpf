@@ -114,7 +114,7 @@ ctasdOptn(Session *null, va_list ignore)
 	if (optCtasdStream.value != 1) {
 		optSaveData.value |= 2;
 		if (*optSaveDir.string == '\0')
-			optionSet(&optSaveDir, "/tmp");
+			optionSet(&optSaveDir, TMP_DIR);
 	}
 
 	return SMTPF_CONTINUE;

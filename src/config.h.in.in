@@ -138,6 +138,14 @@ extern "C" {
 # endif
 #endif
 
+#if !defined(TMP_DIR)
+# if defined(__WIN32__)
+#  define TMP_DIR			"./tmp"
+# else
+#  define TMP_DIR			"/tmp"
+# endif
+#endif
+
 #ifndef SAFE_PATH
 # if defined(__WIN32__)
 #  define SAFE_PATH			CF_DIR

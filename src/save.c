@@ -44,9 +44,9 @@ Option optSaveData	= { "save-data",	"-",		usage_save_data };
 static const char usage_save_dir[] =
   "A directory where to save output for diagnosis."
 ;
-Option optSaveDir	= { "save-dir",		WORK_DIR,	usage_save_dir };
+Option optSaveDir	= { "save-dir",		TMP_DIR,	usage_save_dir };
 
-Option optTrapDir	= { "trap-dir",		WORK_DIR,	usage_save_dir };
+Option optTrapDir	= { "trap-dir",		TMP_DIR,	usage_save_dir };
 
 typedef struct {
 	FILE *fp;

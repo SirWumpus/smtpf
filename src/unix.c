@@ -125,7 +125,9 @@ atExitCleanUpOptions(void)
 	filter_at_exit();
 	stats_at_exit();
 
+#if defined(HAVE_SIGALTSTACK) && !defined(__OpenBSD__)
 	free(alt_sig_stack.ss_sp);
+#endif
 }
 
 void
