@@ -482,7 +482,7 @@ See <a href="summary.html#opt_rfc2821_strict_helo">rfc2821-strict-helo</a> optio
    	 * allowed to HELO within the snert.com domain as a result.
 	 */
 	if (optHeloClaimsUs.value
-	&& CLIENT_NOT_SET(sess, CLIENT_TRUSTED)
+	&& CLIENT_NOT_SET(sess, CLIENT_USUAL_SUSPECTS|CLIENT_IS_HELO_HOSTNAME)
 	&& routeKnownDomain(sess, sess->client.helo) && !routeKnownDomain(sess, sess->client.name)) {
 		statsCount(&stat_helo_claims_us);
 		return replyPushFmt(sess, SMTPF_DELAY|SMTPF_SESSION|SMTPF_DROP, "550 5.7.0 " CLIENT_FORMAT " claims to be us \"%s\"" ID_MSG(430) CRLF, CLIENT_INFO(sess), sess->client.helo, ID_ARG(sess));

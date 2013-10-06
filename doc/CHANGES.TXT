@@ -191,6 +191,11 @@ is no set schedule for releases.
 		$result
 
 
+--2.6.3--
+
+   !	Modify the helo-claims-us test to allow access-map white listing
+	or CLIENT_IS_HELO_HOSTNAME to by-pass test.
+
 --2.6.2--
 
    *	Requires libsnert 1.75.22.
