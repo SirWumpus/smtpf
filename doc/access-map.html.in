@@ -629,10 +629,19 @@ The action words supported are:
 <tr valign="top"><td width="41%" class="value bdotted tline">OK</td><td width="59%" class="bdotted tline">White list, by-pass one or more tests, except anti-virus scanning</td></tr>
 <tr valign="top"><td width="41%" class="value bdotted">CONTENT</td><td width="59%" class="bdotted">White list as far as, but not including, the content filters;<br/>used only with <span class="tag">Connect:</span> or <span class="tag">Helo:</span>.</td></tr>
 <tr valign="top"><td width="41%" class="value bdotted">DISCARD<span class="value">:"log-comment"</span></td><td width="59%" class="bdotted">Accept and <u>discard</u> message skipping tests; <span class="note">use with care</span>. The <span class="value">:"log-comment"</span> is optional</td></tr>
-<tr valign="top"><td width="41%" class="value bdotted">IREJECT<span class="value">:"custom-reply"</span></td><td width="59%" class="bdotted">immediate REJECT, ignore <a href="summary.h#opt_smtp_delay_checks">smtp-delay-checks</a>; applies only to <span class="tag">Connect:</span>, <span class="tag">Connect:From:</span>, <span class="tag">From:</span>, and <span class="tag">Helo:</span>. <span class="value">:"custom-reply"</span> is optional</td></tr>
+<tr valign="top"><td width="41%" class="value bdotted">IREJECT<span class="value">:"custom-reply"</span></td><td width="59%" class="bdotted">Immediate REJECT, ignore <a href="summary.h#opt_smtp_delay_checks">smtp-delay-checks</a>; applies only to <span class="tag">Connect:</span>, <span class="tag">Connect:From:</span>, <span class="tag">From:</span>, and <span class="tag">Helo:</span>. <span class="value">:"custom-reply"</span> is optional</td></tr>
 <!-- DISABLED UNTIL NEXT BUG FIXED
 <tr valign="top"><td width="41%" class="value bdotted">NEXT</td><td width="59%" class="bdotted">Resume lookup, opposite of SKIP</td></tr>
 -->
+<tr valign="top"><td width="41%" class="value bdotted">PROTOCOL</td><td width="59%" class="bdotted">
+Similar to CONTENT, reject on pre-DATA tests, but ignore post-DATA ones, execpt for anti-virus.
+Useful for some mailing lists.
+Used with <span class="tag">Connect:</span>, <span class="tag">from:</span>,
+<span class="tag">to:</span>,
+<span class="tag">connect:from:</span>,
+<span class="tag">connect:to:</span>,
+or <span class="tag">from:to:</span>.
+</td></tr>
 <tr valign="top"><td width="41%" class="value bdotted">REJECT<span class="value">:"custom-reply"</span></td><td width="59%" class="bdotted">Black list, either reject or drop. The <span class="value">:"custom-reply"</span> is optional</td></tr>
 <tr valign="top"><td width="41%" class="value bdotted">REQUIRE</span></td><td width="59%" class="bdotted">The client is required to establish STARTTLS before the server will accept messages. Used only with <span class="tag">Tls-Connect:</span>, <span class="tag">Tls-From:</span>, and <span class="tag">Tls-To:</span>.</td></tr>
 <tr valign="top"><td width="41%" class="value bdotted">SAVE<span class="value">:"path"</span></td><td width="59%" class="bdotted">Save a copy of message if delivered and save message to <a href="summary.html#opt_save_dir">save-dir</a>, unles the optional <span class="value">:"path"</span> is specified</td></tr>

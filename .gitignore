@@ -31,6 +31,14 @@ doc/manual.shtml
 doc/smtpf.0
 doc/reply.html
 doc/syslog.html
+doc/BarricadeMX.html
+doc/access-map.html
+doc/access-map.html.in
+doc/glossary.html
+doc/install.html
+doc/license.html
+doc/runtime.html
+doc/summary.html
 examples/smtpf.cf
 examples/startup.sh
 package/FreeBSD/+COMMENT
