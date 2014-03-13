@@ -554,9 +554,6 @@ extern void filterClearAllContexts(Session *sess);
 #ifdef FILTER_FREEMAIL
 # include "freemail.h"
 #endif
-#ifdef FILTER_FOUR21
-# include "four21.h"
-#endif
 #ifdef FILTER_GREY
 # include "grey.h"
 #endif

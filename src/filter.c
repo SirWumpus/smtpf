@@ -127,9 +127,6 @@ FilterHandler filter_register_table	[] = {
 #ifdef FILTER_FREEMAIL
 	FILTER_HANDLER(freemailRegister),
 #endif
-#ifdef FILTER_FOUR21
-	FILTER_HANDLER(four21Register),
-#endif
 #ifdef FILTER_FPSCAND
 	FILTER_HANDLER(fpscandRegister),
 #endif
@@ -631,9 +628,6 @@ FilterHandler filter_connect_table	[] = {
 #ifdef FILTER_RBL
 	FILTER_HANDLER(dnswlConnect),
 	FILTER_HANDLER(dnsglConnect),
-#endif
-#ifdef FILTER_FOUR21
-	FILTER_HANDLER(four21Connect),
 #endif
 #ifdef FILTER_MISC
 	FILTER_HANDLER(noPtrConnect),
@@ -1278,9 +1272,6 @@ FilterHandler filter_dot_table	[] = {
 FilterHandler filter_close_table	[] = {
 	FILTER_TABLE_BEGIN(close),
 	FILTER_HANDLER(replyClose),
-#ifdef FILTER_FOUR21
-	FILTER_HANDLER(four21Close),
-#endif
 #ifdef FILTER_CONCURRENT
 	FILTER_HANDLER(concurrentClose),
 #endif
