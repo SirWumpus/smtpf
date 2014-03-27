@@ -300,10 +300,10 @@ error0:
 void
 lickeySendWarning(mcc_handle *mcc)
 {
-	int days;
 	long value;
 	char *mail;
 	mcc_row row;
+	intptr_t days;
 	pthread_t thread;
 	time_t expire, now;
 #if defined(HAVE_PTHREAD_ATTR_SETSTACKSIZE)
@@ -329,7 +329,7 @@ lickeySendWarning(mcc_handle *mcc)
 
 	/* As we get close to the end start nagging. */
 	if (days <= LICKEY_LAST_WARNING)
-		syslog(LOG_WARN, LOG_NUM(395) "%s-%s license key expires in less than %d day%s", _NAME, _VERSION, days, days <= 1 ? "" : "s");
+		syslog(LOG_WARN, LOG_NUM(395) "%s-%s license key expires in less than %ld day%s", _NAME, _VERSION, days, days <= 1 ? "" : "s");
 
 	/* Pick the primary receipient. */
 	if (lickeyClientMail.string != NULL && strchr(lickeyClientMail.string, '@') != NULL)
