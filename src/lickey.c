@@ -230,12 +230,13 @@ static void *
 lickeyMailWarning(void *data)
 {
 	Mail *mail;
-	int days, flags;
+	int flags;
+	intptr_t days;
 	Option **opt, *o;
 	char timestamp[32], sender[SMTP_PATH_LENGTH],  host[DOMAIN_SIZE];
 
 	/* This is a NO-NO, but I'm too lazy to allocate memory for an int. */
-	days = (int) data;
+	days = (intptr_t) data;
 
 	flags = SMTP_FLAG_TRY_ALL;
 	if (verb_info.option.value)
