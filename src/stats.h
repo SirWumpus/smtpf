@@ -90,9 +90,6 @@ extern Stats stat_rfc2821_command_length;
 extern Stats stat_smtp_command_non_ascii;
 extern Stats stat_smtp_drop_after;
 extern Stats stat_smtp_drop_unknown;
-#ifdef ENABLE_PRUNED_STATS
-extern Stats stat_smtp_enable_esmtp;
-#endif
 extern Stats stat_smtp_reject_delay;
 
 extern Stats stat_mail_count;

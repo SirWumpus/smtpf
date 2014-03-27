@@ -256,11 +256,10 @@ The client has sent HELO or EHLO more than once with different arguments each ti
 	(void) TextCopy(sess->client.helo, sizeof (sess->client.helo), sess->input + sizeof ("EHLO ")-1);
 
 	if (!optSmtpEnableEsmtp.value
+#ifdef HAVE_OPENSSL_SSL_H
 	&&  !(tls_get_flags(sess) & TLS_FLAG_ENABLE_EHLO)
-	&& CLIENT_NOT_SET(sess, CLIENT_USUAL_SUSPECTS|CLIENT_IS_GREY|CLIENT_PASSED_GREY|CLIENT_IS_BLACK|CLIENT_IS_LOCAL_BLACK)) {
-#ifdef ENABLE_PRUNED_STATS
-		statsCount(&stat_smtp_enable_esmtp);
 #endif
+	&& CLIENT_NOT_SET(sess, CLIENT_USUAL_SUSPECTS|CLIENT_IS_GREY|CLIENT_PASSED_GREY|CLIENT_IS_BLACK|CLIENT_IS_LOCAL_BLACK)) {
 		/* Offset the positive count in smtpReplyLog(). When
 		 * ESMTP is disabled there will more often than not
 		 * be an EHLO attempted, which should not be counted

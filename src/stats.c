@@ -172,9 +172,6 @@ Stats stat_rfc2821_command_length	= { STATS_TABLE_CONNECT, "rfc2821-command-leng
 Stats stat_smtp_command_non_ascii	= { STATS_TABLE_CONNECT, "smtp-command-non-ascii" };
 Stats stat_smtp_drop_after		= { STATS_TABLE_CONNECT, "smtp-drop-after" };
 Stats stat_smtp_drop_unknown		= { STATS_TABLE_CONNECT, "smtp-drop-unknown" };
-#ifdef ENABLE_PRUNED_STATS
-Stats stat_smtp_enable_esmtp		= { STATS_TABLE_CONNECT, "smtp-enable-esmtp" };
-#endif
 Stats stat_quit_after_ehlo		= { STATS_TABLE_CONNECT, "quit-after-ehlo" };
 Stats stat_quit_after_helo		= { STATS_TABLE_CONNECT, "quit-after-helo" };
 
@@ -1114,9 +1111,7 @@ statsRegister0(Session *sess, va_list ignore)
 	(void) statsRegister(&stat_smtp_command_non_ascii);
 	(void) statsRegister(&stat_smtp_drop_after);
 	(void) statsRegister(&stat_smtp_drop_unknown);
-#ifdef ENABLE_PRUNED_STATS
-	(void) statsRegister(&stat_smtp_enable_esmtp);
-#endif
+
 	/*** MAIL **************************************************************/
 
 	(void) statsRegister(&stat_mail_count);

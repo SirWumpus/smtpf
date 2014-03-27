@@ -24,15 +24,11 @@ datadir="${DESTDIR}@datadir@"
 mandir="${DESTDIR}@mandir@"
 
 sysconfdir="${DESTDIR}@sysconfdir@"
-if test -d $sysconfdir ; then
-	:
-else
+if test ! -d $sysconfdir ; then
 	sysconfdir="${DESTDIR}/etc"
 fi
 localstatedir="${DESTDIR}@localstatedir@"
-if test -d $localstatedir ; then
-	:
-else
+if test ! -d $localstatedir ; then
 	localstatedir="${DESTDIR}/var"
 fi
 
@@ -148,7 +144,7 @@ fi
 echo
 if test $startup_script = NO ; then
 	:
-elif test -f $startup_script -a ${DESTDIR:-no} = no; then
+elif test -f $startup_script -a ${DESTDIR:-no} = no ; then
 	echo "You already have a startup script installed:"
 	echo
 	echo "  $startup_script"
@@ -277,7 +273,7 @@ if test $UNAME = 'CYGWIN' ; then
 	$INSTALL -m 444 $INSTALL_WHEEL examples/extra/* $examples/extra
 	$INSTALL -m 444 $INSTALL_WHEEL examples/spamassassin/* $examples/spamassassin
 else
-	if test -d /var/cache ; then
+	if test $UNAME = 'Linux' -a -d /var/cache ; then
 		echo 'Creating.....' $localstatedir/cache/$TARNAME
 		$INSTALL -m 6770 $INSTALL_USER -d $localstatedir/cache/$TARNAME
 	elif test -d /var/db ; then
