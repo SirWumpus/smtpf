@@ -189,6 +189,10 @@ extern "C" {
 
 #undef OLD_KVM_CACHE_SUPPORT
 
+#ifndef CACHE_PORT
+#define CACHE_PORT			6920
+#endif
+
 #ifndef CACHE_MULTICAST_PORT
 #define CACHE_MULTICAST_PORT		6920
 #endif

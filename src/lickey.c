@@ -329,7 +329,7 @@ lickeySendWarning(mcc_handle *mcc)
 
 	/* As we get close to the end start nagging. */
 	if (days <= LICKEY_LAST_WARNING)
-		syslog(LOG_WARN, LOG_NUM(395) "%s-%s license key expires in less than %ld day%s", _NAME, _VERSION, days, days <= 1 ? "" : "s");
+		syslog(LOG_WARN, LOG_NUM(395) "%s-%s license key expires in less than %ld day%s", _NAME, _VERSION, (long)days, days <= 1 ? "" : "s");
 
 	/* Pick the primary receipient. */
 	if (lickeyClientMail.string != NULL && strchr(lickeyClientMail.string, '@') != NULL)
