@@ -102,8 +102,6 @@ com/snert/src/@PACKAGE_NAME@/src/filter.c
 com/snert/src/@PACKAGE_NAME@/src/filter.h
 com/snert/src/@PACKAGE_NAME@/src/freemail.c
 com/snert/src/@PACKAGE_NAME@/src/freemail.h
-com/snert/src/@PACKAGE_NAME@/src/four21.c
-com/snert/src/@PACKAGE_NAME@/src/four21.h
 com/snert/src/@PACKAGE_NAME@/src/greybody.c
 com/snert/src/@PACKAGE_NAME@/src/greycontent.c
 com/snert/src/@PACKAGE_NAME@/src/grey.c
