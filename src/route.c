@@ -481,12 +481,15 @@ routeCacheGetRcpt(Session *sess, char *key)
 static void
 routeCacheAddRcpt(Session *sess, char *key, SmtpfCode smtpf_code)
 {
+	time_t now;
 	mcc_row row;
 	mcc_handle *mcc = SESS_GET_MCC(sess);
 
+	(void) time(&now);
 	MEMSET(&row, 0, sizeof (row));
 	row.ttl = cacheGetTTL(smtpf_code);
-	row.expires = time(NULL) + row.ttl;
+	row.expires = now + row.ttl;
+	row.created = now;
 
 	mccSetKey(&row,  RCPT_TAG "%s", key);
 	TextLower((char *) MCC_PTR_K(&row), MCC_GET_K_SIZE(&row));
@@ -896,8 +899,11 @@ unplussed_rcpt:
 			rc = SMTPF_TEMPFAIL;
 			goto error2;
 		} else {
+			time_t now;
+			(void) time(&now);
 			dumb_host.ttl = cacheGetTTL(code);
-			dumb_host.expires = time(NULL) + dumb_host.ttl;
+			dumb_host.expires = now + dumb_host.ttl;
+			dumb_host.created = now;
 
 			mccSetKey(&dumb_host, DUMB_TAG "%s,%s", host, rcpt->domain.string);
 			mccSetValue(&dumb_host, "%d", code);

@@ -190,6 +190,22 @@ is no set schedule for releases.
 		$base64_argument
 		$result
 
+--2.6.4--
+
+   *	Requires libsnert 1.75.29.
+
+  !!    Libsnert Fix mccPutRowLocal() to always include the created
+	timestamp. The SQLite behaviour for "INSERT OR REPLACE" is NOT
+	the same as "INSERT" or "UPDATE"; missing columns during a REPLACE
+	are subject to any CREATE TABLE defaults. Reported by Steve
+	Freegard.
+
+	As a result, ensure that new MCC2 cache rows have the desired 
+	created timestamp applied and that existing rows (in most case)
+	don't touch it.
+
+	This impacted grey-listing by inadvertantly touching the 
+	created timestamp for grey-list temp.fail record. 
 
 --2.6.3--
 

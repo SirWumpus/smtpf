@@ -48,8 +48,8 @@ extern const char log_cache_get_error[];
 extern const char log_cache_put_error[];
 extern const char log_cache_delete_error[];
 
-#define LOG_CACHE_GET(p)		MCC_FMT_K_ARG(p), MCC_FMT_V_ARG(p)
-#define LOG_CACHE_PUT(p)		LOG_CACHE_GET(p)
+#define LOG_CACHE_GET(p)		MCC_FMT_K_ARG(p), MCC_FMT_V_ARG(p), MCC_FMT_E_ARG(p), MCC_FMT_C_ARG(p), MCC_FMT_TTL_ARG(p)
+#define LOG_CACHE_PUT(p)		MCC_FMT_K_ARG(p), MCC_FMT_V_ARG(p), MCC_FMT_E_ARG(p), MCC_FMT_C_ARG(p)
 #define LOG_CACHE_DELETE(p)		MCC_FMT_K_ARG(p)
 #define LOG_CACHE_GET_ERROR(p)		LOG_CACHE_DELETE(p)
 #define LOG_CACHE_PUT_ERROR(p)		LOG_CACHE_PUT(p)

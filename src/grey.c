@@ -1,7 +1,7 @@
 /*
  * grey.c
  *
- * Copyright 2006, 2007 by Anthony Howe. All rights reserved.
+ * Copyright 2006, 2014 by Anthony Howe. All rights reserved.
  */
 
 /***********************************************************************
@@ -430,13 +430,13 @@ greyCacheUpdate(Session *sess, Grey *grey, char *key, long *delay, int at_dot)
 		syslog(LOG_DEBUG, LOG_MSG(380) "greyCacheUpdate(key=%s, at_dot=%d)", LOG_ARGS(sess), key, at_dot);
 
 	ret = MCC_ERROR;
-	now = time(NULL);
+	(void) time(&now);
 	first_comma = NULL;
 	rc = SMTPF_CONTINUE;
 
 	MEMSET(&row, 0, sizeof (row));
-	mccSetKey(&row, "%s", key);
-	mccSetValue(&row, "%c", rc + '0');
+	length = mccSetKey(&row, "%s", key);
+	(void) mccSetValue(&row, "%c", rc + '0');
 
 	PTHREAD_MUTEX_LOCK(&grey_mutex);
 
@@ -469,13 +469,15 @@ greyCacheUpdate(Session *sess, Grey *grey, char *key, long *delay, int at_dot)
 		 */
 		ret = mccGetRow(mcc, &row);
 
-		/* Restore the grey key name in case we need
-		 * to delete, create, or update.
-		 */
-		MCC_SET_K_SIZE(&row, length);
-
+#ifdef IMMEDIATE_DELETE_GREY_KEY_RECORD
+/* Can leave it to expire. */
 		/* Did we find a grey host record? */
 		if (ret == MCC_OK) {
+			/* Restore the grey key name in case we need
+			 * to delete, create, or update.
+			 */
+			MCC_SET_K_SIZE(&row, length);
+
 			/* Then delete the grey key record. */
 			if (verb_cache.option.value)
 				syslog(LOG_DEBUG, log_cache_delete, LOG_ARGS(sess), LOG_CACHE_DELETE(&row), FILE_LINENO);
@@ -485,10 +487,12 @@ greyCacheUpdate(Session *sess, Grey *grey, char *key, long *delay, int at_dot)
 			/* Restore the grey host record. */
 			MCC_SET_K_SIZE(&row, first_comma - key);
 		}
+#endif
 	}
 
 	/* Find the grey key record if there is no grey host record. */
 	if (ret != MCC_OK) {
+		MCC_SET_K_SIZE(&row, length);
 		ret = mccGetRow(mcc, &row);
 	}
 
@@ -496,17 +500,23 @@ greyCacheUpdate(Session *sess, Grey *grey, char *key, long *delay, int at_dot)
 	case MCC_OK:
 		if (verb_cache.option.value)
 			syslog(LOG_DEBUG, log_cache_get, LOG_ARGS(sess), LOG_CACHE_GET(&row), FILE_LINENO);
+
+		/* mccGetRow() updated the row.ttl for us. Leave as is
+		 * to keep the same row.expires time. 
+	 	 */
 		break;
+
 	case MCC_ERROR:
 		syslog(LOG_ERR, log_cache_get_error, LOG_ARGS(sess), LOG_CACHE_GET_ERROR(&row), FILE_LINENO);
 		goto error1;
+
 	default:
 		/* We've not seen seen this tuple before. */
 		row.ttl = optGreyTempFailTTL.value;
 		row.expires = now + row.ttl;
 		row.created = now;
 
-		mccSetValue(&row, "%c", SMTPF_TEMPFAIL + '0');
+		(void) mccSetValue(&row, "%c", SMTPF_TEMPFAIL + '0');
 
 		/* When grey-content is applied; a temp.fail record is added
 		 * for each recipient at DATA, but the MD5 hash is not added
@@ -523,14 +533,14 @@ greyCacheUpdate(Session *sess, Grey *grey, char *key, long *delay, int at_dot)
 
 	rc = *MCC_PTR_V(&row) - '0';
 
-	/* For an new or existing grey-list record without a digest,
+	/* For a new or existing grey-list record without a digest,
 	 * append the current message's digest.
 	 */
 	if (at_dot && MCC_GET_V_SIZE(&row) == 1) {
 		row.ttl = optGreyTempFailTTL.value;
 		row.expires = now + row.ttl;
 
-		mccSetValue(&row, "%c %.32s %.32s", rc+'0', grey->digest, grey->digest);
+		(void) mccSetValue(&row, "%c %.32s %.32s", rc+'0', grey->digest, grey->digest);
 
 		if (sess->msg.msg_id != NULL) {
 			/* Exchange is a piece of crap. The MD5 of first message body
@@ -551,8 +561,10 @@ greyCacheUpdate(Session *sess, Grey *grey, char *key, long *delay, int at_dot)
 			MEMSET(&id_row, 0, sizeof (id_row));
 			id_row.ttl = cacheGetTTL(rc);
 			id_row.expires = now + id_row.ttl;
+			id_row.created = now;
 
-			length = snprintf((char *)MCC_PTR_K(&id_row), MCC_DATA_SIZE, "grey-msgid:%s", sess->msg.msg_id);
+			/* Set key, trim trailing white space. */
+			length = mccSetKey(&id_row, "grey-msgid:%s", sess->msg.msg_id);
 			while (isspace(MCC_PTR_K(&id_row)[length-1]))
 				length--;
 			MCC_SET_K_SIZE(&id_row, length);
@@ -591,7 +603,7 @@ greyCacheUpdate(Session *sess, Grey *grey, char *key, long *delay, int at_dot)
 				/* Exchange is a piece of crap. See note above. */
 				if (sess->msg.msg_id != NULL) {
 					MEMSET(&id_row, 0, sizeof (id_row));
-					length = snprintf((char *)MCC_PTR_K(&id_row), MCC_DATA_SIZE, "grey-msgid:%s", sess->msg.msg_id);
+					length = mccSetKey(&id_row, "grey-msgid:%s", sess->msg.msg_id);
 					while (isspace(MCC_PTR_K(&id_row)[length-1]))
 						length--;
 					MCC_SET_K_SIZE(&id_row, length);
@@ -607,6 +619,7 @@ greyCacheUpdate(Session *sess, Grey *grey, char *key, long *delay, int at_dot)
 						row.ttl = optGreyTempFailTTL.value;
 						row.expires = row.created + row.ttl;
 
+						MCC_SET_V_SIZE(&row, 34);
 						MCC_PTR_V(&row)[1] = ' ';
 						(void) memcpy(MCC_PTR_V(&row)+2, grey->digest, 32);
 
@@ -629,6 +642,7 @@ greyCacheUpdate(Session *sess, Grey *grey, char *key, long *delay, int at_dot)
 				/* Replace the last message seen hash with
 				 * the hash for this message.
 				 */
+				MCC_SET_V_SIZE(&row, 67);
 				MCC_PTR_V(&row)[34] = ' ';
 				(void) memcpy(MCC_PTR_V(&row)+35, grey->digest, 32);
 				break;
@@ -659,13 +673,14 @@ greyCacheUpdate(Session *sess, Grey *grey, char *key, long *delay, int at_dot)
 
 			rc = SMTPF_CONTINUE;
 		} else if (delay != NULL) {
-			*delay = row.created + grey->period  - now;
+			*delay = row.created + grey->period - now;
 		}
 		break;
 
 	default:
 		row.ttl = cacheGetTTL(rc);
 		row.expires = now + row.ttl;
+		row.created = now;
 		break;
 	}
 
@@ -1202,7 +1217,7 @@ and <a href="summary.html#opt_grey_temp_fail_period">grey-temp-fail-period</a> o
 		 * grey-content messages to be forever temp.failed and to
 		 * eventually expire from their retry queue. Since 450
 		 * appeared to have a different effect, we try that instead
-		 * to see if they pass those older messages, in particualr
+		 * to see if they pass those older messages, in particular
 		 * the original first message, in the same session.
 		 */
 		(void) replyPushFmt(sess, rc, delay <= 0 ? msg_450_try_again : msg_451_try_again, ID_ARG(sess));

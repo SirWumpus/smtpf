@@ -143,6 +143,7 @@ int
 siqData(Session *sess, va_list ignore)
 {
 	SIQ siq;
+	time_t now;
 	long length;
 	mcc_row cached;
 	const char *error = NULL;
@@ -170,8 +171,10 @@ siqData(Session *sess, va_list ignore)
 			sess->msg.mail->domain.string, (char **) VectorBase(servers)
 		);
 
+		(void) time(&now);
 		cached.ttl = siq_ctx->ttl;
-		cached.expires = time(NULL) + cached.ttl;
+		cached.expires = now + cached.ttl;
+		cached.created = now;
 
 		siq_ctx->flags = 0;
 		if (siq.hl)

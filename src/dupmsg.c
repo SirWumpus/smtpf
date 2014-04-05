@@ -117,9 +117,13 @@ dupmsgRset(Session *sess, va_list ignore)
 	first_rcpt = rcptFindFirstValid(sess);
 
 	if (smtpf_code != SMTPF_UNKNOWN && first_rcpt != NULL) {
+		time_t now;
+
+		(void) time(&now);
 		MEMSET(&row, 0, sizeof (row));
 		row.ttl = optDupMsgTTL.value;
-		row.expires = time(NULL) + row.ttl;
+		row.expires = now + row.ttl;
+		row.created = now;
 
 		mccSetKey(&row, DUPMSG_CACHE_TAG "%s,%s", ctx->digest_string, first_rcpt->address.string);
 		mccSetValue(&row, "%d %s", smtpf_code, sess->long_id);

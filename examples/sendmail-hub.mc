@@ -17,7 +17,7 @@ dnl
 dnl Outgoing mail from a workstation will appear to be from this mail hub.
 dnl
 
-MASQUERADE_AS(`snert.com')dnl
+MASQUERADE_AS(`snert.example')dnl
 FEATURE(local_no_masquerade)dnl
 FEATURE(`masquerade_envelope')dnl
 FEATURE(always_add_domain)dnl
@@ -27,13 +27,13 @@ dnl define(`confAUTH_MECHANISMS',   `PLAIN LOGIN')
 dnl TRUST_AUTH_MECH(`PLAIN LOGIN')    
 dnl FEATURE(`authinfo', `hash /etc/mail/authinfo')dnl
 
-dnl define(`CERT_DIR',              `/etc/ssl')
+dnl define(`CERT_DIR',              `/etc/openssl')
 dnl define(`confCACERT_PATH',       `CERT_DIR')
-dnl define(`confCACERT',            `CERT_DIR/certs/ca-roots.pem')
-dnl define(`confSERVER_CERT',       `CERT_DIR/certs/sendmail.pem')
-dnl define(`confSERVER_KEY',        `CERT_DIR/private/sendmail.key')
-dnl define(`confCLIENT_CERT',       `CERT_DIR/certs/sendmail.pem')
-dnl define(`confCLIENT_KEY',        `CERT_DIR/private/sendmail.key')
+dnl define(`confCACERT',            `CERT_DIR/cert.pem')
+dnl define(`confSERVER_CERT',       `CERT_DIR/certs/host.snert.example.crt')
+dnl define(`confSERVER_KEY',        `CERT_DIR/private/host.snert.example.key')
+dnl define(`confCLIENT_CERT',       `CERT_DIR/certs/host.snert.example.crt')
+dnl define(`confCLIENT_KEY',        `CERT_DIR/private/host.snert.example.key')
 
 dnl
 dnl Disable the Mail Submission Agent (MSA) and just use the
@@ -68,6 +68,20 @@ dnl
 
 define(`SMART_HOST', `relay:gw.snert.example.')dnl
 
+dnl Have the smart host relay mailer connect on a different port.
+dnl
+
+dnl define(`RELAY_MAILER_ARGS', `TCP $h 587')dnl
+dnl define(`ESMTP_MAILER_ARGS', `TCP $h 587')dnl
+
+dnl If you relay via the Mail Submission port 587, you'll need a host 
+dnl certificate and an account credentials on the smart host. Enable    
+dnl this to separate AuthInfo records into a more secure file than
+dnl access.db. See Bat Book 3e section 10.9.3.2.
+dnl 
+
+dnl FEATURE(`authinfo')dnl
+
 dnl Choice 3.
 dnl
 dnl Enable this line to forward all mail to a central hub or gateway.
@@ -79,6 +93,8 @@ dnl FEATURE(`nullclient', `mx.snert.example')dnl
 
 dnl Choice 4.
 dnl
+dnl Intended for testing. Using nullclient or msp preferred for mail
+dnl delivery. See Bat Book 3e section 24.9.22.
 dnl
 
 dnl define(`confCONNECT_ONLY_TO', `192.0.2.1')
@@ -91,9 +107,10 @@ dnl entry.
 dnl
 
 RELAY_DOMAIN(`127.0.0.1')dnl
-RELAY_DOMAIN(`192.168.1')dnl
+RELAY_DOMAIN(`192.168')dnl
+RELAY_DOMAIN(`10')dnl
 
-LOCAL_DOMAIN(`pizza.snert.com')dnl
+LOCAL_DOMAIN(`host.snert.example')dnl
 LOCAL_USER(`root')dnl
 
 dnl

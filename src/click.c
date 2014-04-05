@@ -219,9 +219,9 @@ int
 clickRcpt(Session *sess, va_list args)
 {
 	int length;
-	time_t when;
 	mcc_row row;
 	ParsePath *rcpt;
+	time_t when, now;
 	char buffer[CLICK_PREFIX_LENGTH+1];
 	mcc_handle *mcc = SESS_GET_MCC(sess);
 
@@ -267,9 +267,11 @@ clickRcpt(Session *sess, va_list args)
 	/* Sender has replied to the special recipient.
 	 * Add a white list entry to the cache.
 	 */
+	(void) time(&now);
 	statsCount(&stat_click_pass);
 	row.ttl = cacheGetTTL(SMTPF_ACCEPT);
-	row.expires = time(NULL) + row.ttl;
+	row.expires = now + row.ttl;
+	row.created = now;
 
 	*MCC_PTR_V(&row) = SMTPF_ACCEPT + '0';
 	MCC_SET_V_SIZE(&row, 1);

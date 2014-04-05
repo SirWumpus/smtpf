@@ -167,7 +167,7 @@ msgLimitCacheUpdate(Session *sess, MsgLimit *limit, const char *key)
 	PTHREAD_MUTEX_LOCK(&msglimit_mutex);
 
 	value = 0;
-	now = time(NULL);
+	(void) time(&now);
 	limit->count = -1;
 	MEMSET(&row, 0, sizeof (row));
 	mccSetKey(&row, MSG_LIMIT_CACHE_TAG "%s", key);
@@ -185,6 +185,7 @@ msgLimitCacheUpdate(Session *sess, MsgLimit *limit, const char *key)
 		goto error1;
 	case MCC_NOT_FOUND:
 		/* We've not seen seen this tuple before. */
+		row.created = now;
 		row.expires = 0;
 	}
 

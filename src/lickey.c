@@ -374,6 +374,7 @@ lickeySendWarning(mcc_handle *mcc)
 		return;
 
 	case MCC_NOT_FOUND:
+		row.created = now;
 		break;
 	}
 
