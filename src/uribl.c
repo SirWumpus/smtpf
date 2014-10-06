@@ -61,17 +61,6 @@ static const char usage_uri_dns_bl[] =
 "#"
 ;
 
-#ifdef CONFUSING
-static const char usage_uri_max_limit[] =
-  "Maximum number of URIs that a message may contain before being\n"
-"# rejected. Intended as a means to prevent DoS attacks that attempt to\n"
-"# flood the URI filter and/or the DNS server with excessive lookups.\n"
-"# Specify zero for unlimited.\n"
-"#"
-;
-Option optUriMaxLimit		= { "uri-max-limit",	"0",			usage_uri_max_limit };
-#endif
-
 static const char usage_uri_max_test[] =
   "Maximum number of unique URIs to check. Specify zero for unlimited.\n"
 "#"
@@ -297,9 +286,12 @@ Option optUriIpInPtr		= { "uri-ip-in-ptr",		"0",		usage_uri_ip_in_ptr };
 Stats stat_uri_ip_in_ptr	= { STATS_TABLE_MSG, 	"uri-ip-in-ptr"};
 #endif
 
-Option optUriIpInName		= { "uri-ip-in-name",		"-",		usage_uri_ip_in_name };
+#ifdef TO_BE_REMOVED
 Option optUriIpInNs		= { "_uri-ip-in-ns",		"-",		usage_uri_ip_in_ns };
 Option optUriNsNxDomain		= { "_uri-ns-nxdomain",		"-",		usage_uri_ns_nxdomain };
+#endif
+
+Option optUriIpInName		= { "uri-ip-in-name",		"-",		usage_uri_ip_in_name };
 Option optUriRejectUnknown	= { "uri-reject-unknown",	"-",		usage_uri_reject_unknown };
 Option optUriRejectOnTimeout	= { "uri-reject-on-timeout",	"-",		usage_uri_reject_on_timeout };
 Option optUriRequireDomain	= { "uri-require-domain",	"-",		usage_uri_require_domain };
@@ -332,9 +324,6 @@ Stats stat_uri_implicit			= { STATS_TABLE_MSG, 	"uri-implicit"};
 Stats stat_uri_ip_in_name		= { STATS_TABLE_MSG, 	"uri-ip-in-name"};
 Stats stat_uri_ip_in_ns			= { STATS_TABLE_MSG, 	"_uri-ip-in-ns"};
 Stats stat_uri_links_policy		= { STATS_TABLE_MSG, 	"uri-links-policy"};
-#ifdef CONFUSING
-Stats stat_uri_max_limit		= { STATS_TABLE_MSG, 	"uri-max-limit"};
-#endif
 Stats stat_uri_max_test			= { STATS_TABLE_MSG, 	"uri-max-test"};
 Stats stat_uri_ns_nxdomain		= { STATS_TABLE_MSG,	"_uri-ns-nxdomain" };
 Stats stat_uri_reject_on_timeout	= { STATS_TABLE_MSG, 	"uri-reject-on-timeout"};
@@ -356,9 +345,6 @@ typedef struct {
 	Vector uri_seen;
 	Vector uri_ns_seen;
 	Vector uri_mail_seen;
-#ifdef CONFUSING
-	unsigned uri_count;
-#endif
 	unsigned distinct_uri_tested;
 } Uribl;
 
@@ -432,6 +418,7 @@ uriCheckIp(Session *sess, const char *host)
 	}
 #endif
 
+#ifdef TO_BE_REMOVED
 	if ((optUriIpInNs.value || optUriNsNxDomain.value)
 	&& (list = pdqGet(sess->pdq, PDQ_CLASS_IN, PDQ_TYPE_NS, host, NULL)) != NULL) {
 		for (rr = list; rr != NULL; rr = rr->next) {
@@ -471,6 +458,7 @@ options.
 
 		pdqFree(list);
 	}
+#endif /* TO_BE_REMOVED */
 
 	list = pdqGet5A(sess->pdq, PDQ_CLASS_IN, host);
 	rcode = list == NULL ? PDQ_RCODE_ERRNO : list->type;
@@ -841,16 +829,15 @@ uriRegister(Session *sess, va_list ignore)
 	optionsRegister(&optUriCiteList,		0);
 	optionsRegister(&optUriDnsBL, 			1);
 	optionsRegister(&optUriIpInName,		0);
+#ifdef TO_BE_REMOVED
 	optionsRegister(&optUriIpInNs,			0);
+	optionsRegister(&optUriNsNxDomain, 		0);
+#endif
 #ifndef ENABLE_PDQ
 	optionsRegister(&optUriIpInPtr,			0);
 #endif
 	optionsRegister(&optUriLinksPolicy, 		0);
-#ifdef CONFUSING
-	optionsRegister(&optUriMaxLimit, 		0);
-#endif
 	optionsRegister(&optUriMaxTest, 		0);
-	optionsRegister(&optUriNsNxDomain, 		0);
 	optionsRegister(&optUriRejectOnTimeout,		0);
 	optionsRegister(&optUriRejectUnknown,		0);
 	optionsRegister(&optUriRequireDomain,		0);
@@ -891,9 +878,6 @@ uriRegister(Session *sess, va_list ignore)
 	(void) statsRegister(&stat_uri_ip_in_ptr);
 #endif
 	(void) statsRegister(&stat_uri_links_policy);
-#ifdef CONFUSING
-	(void) statsRegister(&stat_uri_max_limit);
-#endif
 	(void) statsRegister(&stat_uri_max_test);
 	(void) statsRegister(&stat_uri_ns_nxdomain);
 	(void) statsRegister(&stat_uri_reject_on_timeout);
@@ -968,9 +952,6 @@ uriblData(Session *sess, va_list ignore)
 
 	*sess->msg.reject = '\0';
 
-#ifdef CONFUSED
-	ctx->uri_count = 0;
-#endif
 	ctx->policy = '\0';
 	ctx->distinct_uri_tested = 0;
 	ctx->uri_data.session = sess;
@@ -1024,17 +1005,6 @@ uriblCheckUri(Session *sess, URI *uri)
 		if (1 < verb_uri.option.value)
 			syslog(LOG_DEBUG, LOG_MSG(892) "uriDecoded=%s uriHost=%s", LOG_ARGS(sess), uri->uriDecoded, uri->host);
 
-#ifdef CONFUSING
-		if (0 < optUriMaxLimit.value && optUriMaxLimit.value <= ctx->uri_count++) {
-			(void) snprintf(sess->msg.reject, sizeof (sess->msg.reject), "URI per message limit exceeded" ID_MSG(781) "\r\n", ID_ARG(sess));
-/*{REPLY
-See <a href="summary.html#opt_uri_max_limit">uri-max-limit</a> option.
-}*/
-			statsCount(&stat_uri_max_limit);
-			ctx->policy = 'r';
-			rc = SMTPF_REJECT;
-		} else
-#endif
 		if (0 < optUriMaxTest.value && optUriMaxTest.value <= ctx->distinct_uri_tested) {
 			statsCount(&stat_uri_max_test);
 			/* Break out of loop. */

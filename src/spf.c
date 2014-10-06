@@ -334,7 +334,7 @@ spfHeaders(Session *sess, va_list args)
 	length = snprintf(hdr, SMTP_TEXT_LINE_LENGTH, "Received-SPF: %s", spfResultString[sess->client.spf_helo]);
 	if (sess->client.spf_helo_error != NULL && *sess->client.spf_helo_error != '\0')
 		length += snprintf(hdr+length, SMTP_TEXT_LINE_LENGTH-length, " (%s)", sess->client.spf_helo_error);
-	length += snprintf(hdr+length, SMTP_TEXT_LINE_LENGTH-length, "; receiver=%s; client-ip=%s; helo=<%s>\r\n", sess->iface->name, sess->client.addr, sess->client.helo);
+	length += snprintf(hdr+length, SMTP_TEXT_LINE_LENGTH-length, "; receiver=%s; identity=helo; client-ip=%s; helo=%s\r\n", sess->iface->name, sess->client.addr, sess->client.helo);
 
 	if (VectorAdd(sess->msg.headers, hdr))
 		free(hdr);
@@ -345,7 +345,7 @@ spfHeaders(Session *sess, va_list args)
 	length = snprintf(hdr, SMTP_TEXT_LINE_LENGTH, "Received-SPF: %s", spfResultString[sess->msg.spf_mail]);
 	if (sess->msg.spf_mail_error != NULL && *sess->msg.spf_mail_error != '\0')
 		length += snprintf(hdr+length, SMTP_TEXT_LINE_LENGTH-length, " (%s)", sess->msg.spf_mail_error);
-	length += snprintf(hdr+length, SMTP_TEXT_LINE_LENGTH-length, "; receiver=%s; client-ip=%s; envelope-from=<%s>\r\n", sess->iface->name, sess->client.addr, sess->msg.mail->address.string);
+	length += snprintf(hdr+length, SMTP_TEXT_LINE_LENGTH-length, "; receiver=%s; identity=mailfrom; client-ip=%s; helo=%s; envelope-from=<%s>\r\n", sess->iface->name, sess->client.addr, sess->client.helo, sess->msg.mail->address.string);
 
 	if (VectorAdd(sess->msg.headers, hdr))
 		free(hdr);

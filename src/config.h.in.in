@@ -116,7 +116,8 @@ extern "C" {
 # if defined(__WIN32__)
 #  define PID_FILE			CF_DIR "/" _NAME ".pid"
 # else
-#  define PID_FILE			"/var/run/" _NAME "/" _NAME ".pid"
+/* Used to be /var/run/smptf/smtpf.pid, but some OSes wipe /var/run on reboot.  */
+#  define PID_FILE			"/var/run/" _NAME ".pid"
 # endif
 #endif
 
