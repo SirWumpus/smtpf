@@ -76,6 +76,7 @@ Option optGreyKey		= { "grey-key",			"ptr,mail,rcpt",	usage_grey_key };
 Option optGreyTempFailPeriod	= { "grey-temp-fail-period",	"600",			usage_grey_temp_fail_period };
 Option optGreyTempFailTTL	= { "grey-temp-fail-ttl",	"90000",		usage_grey_temp_fail_ttl };
 
+#ifdef ENABLE_GREY_CONTENT
 static const char usage_grey_content[] =
   "Content based grey listing. After all other content filters have passed\n"
 "# over a message and when the grey-list key tuple has not been previously\n"
@@ -96,6 +97,7 @@ static const char usage_grey_content_save[] =
 "#"
 ;
 Option optGreyContentSave	= { "grey-content-save",	"-",			usage_grey_content_save };
+#endif /* ENABLE_GREY_CONTENT */
 
 Option optGreyReportHeader = { "grey-report-header",	"X-Grey-Report", "The name of the grey report header. Empty string to disable." };
 
@@ -141,11 +143,13 @@ typedef struct {
 
 	FILE *fp;
 	long period;
+#ifdef ENABLE_GREY_CONTENT
 	char digest[33];
 	md5_state_t md5;
 	int skip_mime_part;
 	Mime *mime;
 	int state;
+#endif
 } Grey;
 
 static FilterContext grey_context;
@@ -221,6 +225,7 @@ mcc_hooks grey_cache_hooks = {
 	NULL
 };
 
+#ifdef ENABLE_GREY_CONTENT
 /***********************************************************************
  ***
  ***********************************************************************/
@@ -312,13 +317,16 @@ greyMimeInit(Grey *grey)
 
 	return 0;
 }
+#endif
 
-void
-greyInitOptions(void)
+int
+greyOptn(Session *null, va_list ignore)
 {
 	optGreyKey.value = setBitWord2(grey_key_words, optGreyKey.string, OPTION_LIST_DELIMS, 0);
 	optGreyTempFailTTL.value = strtol(optGreyTempFailTTL.string, NULL, 0);
 	optGreyTempFailPeriod.value = strtol(optGreyTempFailPeriod.string, NULL, 0);
+
+	return SMTPF_CONTINUE;
 }
 
 #if defined(FILTER_CLI) && defined(HAVE_PTHREAD_ATFORK)
@@ -347,8 +355,10 @@ greyRegister(Session *sess, va_list ignore)
 {
 	verboseRegister(&verb_grey);
 
+#ifdef ENABLE_GREY_CONTENT
 	optionsRegister(&optGreyContent,		0);
 	optionsRegister(&optGreyContentSave,		0);
+#endif
 	optionsRegister(&optGreyKey, 			0);
 	optionsRegister(&optGreyTempFailPeriod, 	0);
 	optionsRegister(&optGreyTempFailTTL, 		0);
@@ -357,9 +367,11 @@ greyRegister(Session *sess, va_list ignore)
 	(void) statsRegister(&stat_grey_accept);
 	(void) statsRegister(&stat_grey_tempfail);
 	(void) statsRegister(&stat_grey_reject);
+#ifdef ENABLE_GREY_CONTENT
 	(void) statsRegister(&stat_grey_content);
 	(void) statsRegister(&stat_grey_hash_mismatch);
 	(void) statsRegister(&stat_grey_hash_replaced);
+#endif
 	(void) statsRegister(&stat_grey_temp_expire);
 
 	grey_context = filterRegisterContext(sizeof (Grey));
@@ -377,9 +389,7 @@ greyInit(Session *null, va_list ignore)
 		exit(1);
 	}
 #endif
-	greyInitOptions();
-
-	return SMTPF_CONTINUE;
+	return greyOptn(null, ignore);
 }
 
 int
@@ -423,8 +433,11 @@ greyCacheUpdate(Session *sess, Grey *grey, char *key, long *delay, int at_dot)
 	int ret, rc, length;
 	time_t now;
 	char *first_comma;
-	mcc_row row, id_row;
+	mcc_row row;
 	mcc_handle *mcc = SESS_GET_MCC(sess);
+#ifdef ENABLE_GREY_CONTENT
+	mcc_row id_row;
+#endif
 
 	if (verb_trace.option.value)
 		syslog(LOG_DEBUG, LOG_MSG(380) "greyCacheUpdate(key=%s, at_dot=%d)", LOG_ARGS(sess), key, at_dot);
@@ -502,7 +515,7 @@ greyCacheUpdate(Session *sess, Grey *grey, char *key, long *delay, int at_dot)
 			syslog(LOG_DEBUG, log_cache_get, LOG_ARGS(sess), LOG_CACHE_GET(&row), FILE_LINENO);
 
 		/* mccGetRow() updated the row.ttl for us. Leave as is
-		 * to keep the same row.expires time. 
+		 * to keep the same row.expires time.
 	 	 */
 		break;
 
@@ -533,6 +546,7 @@ greyCacheUpdate(Session *sess, Grey *grey, char *key, long *delay, int at_dot)
 
 	rc = *MCC_PTR_V(&row) - '0';
 
+#ifdef ENABLE_GREY_CONTENT
 	/* For a new or existing grey-list record without a digest,
 	 * append the current message's digest.
 	 */
@@ -575,6 +589,7 @@ greyCacheUpdate(Session *sess, Grey *grey, char *key, long *delay, int at_dot)
 			(void) mccPutRow(mcc, &id_row);
 		}
 	}
+#endif
 
 	/* Is the tuple still being temporarily blocked? */
 	switch (rc) {
@@ -587,7 +602,7 @@ greyCacheUpdate(Session *sess, Grey *grey, char *key, long *delay, int at_dot)
 			 */
 			if (!at_dot && *optGreyReportHeader.string != '\0')
 				(void) greyHeader(sess, &row, &now);
-
+#ifdef ENABLE_GREY_CONTENT
 			if (optGreyContent.value && !at_dot) {
 				/* Wait until greyDot() to update the record.*/
 				rc = SMTPF_CONTINUE;
@@ -647,7 +662,7 @@ greyCacheUpdate(Session *sess, Grey *grey, char *key, long *delay, int at_dot)
 				(void) memcpy(MCC_PTR_V(&row)+35, grey->digest, 32);
 				break;
 			}
-
+#endif
 			if (verb_grey.option.value)
 				syslog(LOG_DEBUG, LOG_MSG(382) "grey pass key={" MCC_FMT_K "} age=%lu", LOG_ARGS(sess), MCC_FMT_K_ARG(&row), (unsigned long)(now - row.created));
 
@@ -692,8 +707,10 @@ greyCacheUpdate(Session *sess, Grey *grey, char *key, long *delay, int at_dot)
 		rc = SMTPF_CONTINUE;
 	}
 
+#ifdef ENABLE_GREY_CONTENT
 	if (optGreyContent.value && !at_dot && row.created == now)
 		rc = SMTPF_CONTINUE;
+#endif
 error1:
 	PTHREAD_MUTEX_UNLOCK(&grey_mutex);
 
@@ -845,57 +862,6 @@ greyMakeKey(Session *sess, long grey_key, ParsePath *rcpt, char *buffer, size_t 
 	return length;
 }
 
-#ifdef ENABLE_GREY_DNSBL_RESET
-int
-greyRcpt(Session *sess, va_list args)
-{
-	int length;
-	Grey *grey;
-	mcc_row row;
-	ParsePath *rcpt;
-	mcc_handle *mcc = SESS_GET_MCC(sess);
-
-	LOG_TRACE(sess, 385, greyRcpt);
-	grey = filterGetContext(sess, grey_context);
-
-	/* Have we already reset the grey temp. fail key this session? */
-	if (CLIENT_NOT_SET(sess, CLIENT_IS_BLACK))
-		return SMTPF_CONTINUE;
-
-	if (CLIENT_ALL_SET(sess, CLIENT_PASSED_GREY|CLIENT_IS_BLACK))
-		/* Client host IP was blacklisted after passing grey-listing. */
-		;
-	else {
-		PTHREAD_MUTEX_LOCK(&grey_mutex);
-		rcpt = va_arg(args, ParsePath *);
-		length = greyMakeKey(sess, optGreyKey.value, rcpt, (char *)MCC_PTR_K(&row), MCC_DATA_SIZE);
-		MCC_SET_K_SIZE(&row, length);
-
-		/* Does the temp. fail key exist? */
-		if (mccGetRow(mcc, &row) == MCC_OK && *MCC_PTR_V(&row) - '0' == SMTPF_TEMPFAIL) {
-			if (verb_cache.option.value)
-				syslog(LOG_DEBUG, log_cache_delete, LOG_ARGS(sess), LOG_CACHE_DELETE(&row), FILE_LINENO);
-			/* Then delete the grey temp. fail key. The
-			 * assumption is that a host on a DNS / URI BL
-			 * is a bad actor and any temp. fail period in
-			 * progress can be removed, forcing the host
-			 * to retry later.
-			 *
-			 * For hosts that have passed grey-listing or
-			 * grey-content, we leave the record untouched
-			 * since it could be a legit server that has
-			 * had a temporary misconfiguration or infection.
-			 */
-			if (mccDeleteRow(mcc, &row) == MCC_ERROR)
-				syslog(LOG_ERR, log_cache_delete_error, LOG_ARGS(sess), LOG_CACHE_DELETE_ERROR(&row), FILE_LINENO);
-		}
-		PTHREAD_MUTEX_UNLOCK(&grey_mutex);
-	}
-
-	return SMTPF_CONTINUE;
-}
-#endif
-
 int
 greyData(Session *sess, va_list args)
 {
@@ -916,8 +882,10 @@ greyData(Session *sess, va_list args)
 	}
 
 	grey->period = optGreyTempFailPeriod.value;
+#ifdef ENABLE_GREY_CONTENT
 	md5_init(&grey->md5);
 	grey->mime = NULL;
+#endif
 	grey->fp = NULL;
 
 	if (accessClient(sess, ACCESS_CONNECT, sess->client.name, sess->client.addr, NULL, &value, 1) != ACCESS_NOT_FOUND) {
@@ -941,8 +909,9 @@ greyData(Session *sess, va_list args)
 		return SMTPF_CONTINUE;
 	}
 
+#ifdef ENABLE_GREY_CONTENT
 	greyMimeInit(grey);
-
+#endif
 	if (optGreyKey.value & GREY_TUPLE_RCPT) {
 		rc = SMTPF_CONTINUE;
 
@@ -1023,12 +992,15 @@ greyRset(Session *sess, va_list ignore)
 		grey->fp = NULL;
 	}
 
+#ifdef ENABLE_GREY_CONTENT
 	mimeFree(grey->mime);
 	grey->mime = NULL;
+#endif
 
 	return SMTPF_CONTINUE;
 }
 
+#ifdef ENABLE_GREY_CONTENT
 int
 greyHeaders(Session *sess, va_list args)
 {
@@ -1107,49 +1079,6 @@ greyDot(Session *sess, va_list ignore)
 	if (!optGreyContent.value)
 		return SMTPF_CONTINUE;
 
-#ifdef ENABLE_GREY_DNSBL_RESET
-	if (MSG_ANY_SET(sess, MSG_IS_URIBL|MSG_IS_DNSBL)) {
-		if (CLIENT_ALL_SET(sess, CLIENT_PASSED_GREY))
-			/* URI was blacklisted after passing grey-listing. */
-			;
-		else {
-			int length;
-			mcc_row row;
-			mcc_handle *mcc = SESS_GET_MCC(sess);
-			PTHREAD_MUTEX_LOCK(&grey_mutex);
-
-			if (optGreyKey.value & GREY_TUPLE_RCPT) {
-				for (fwd = sess->msg.fwds; fwd != NULL; fwd = fwd->next) {
-					for (rcpt = fwd->rcpts; rcpt != NULL; rcpt = rcpt->next) {
-						length = greyMakeKey(sess, optGreyKey.value, rcpt->rcpt, (char *)MCC_PTR_K(&row), MCC_DATA_SIZE);
-						MCC_SET_K_SIZE(&row, length);
-
-						/* Does the temp. fail key exist? */
-						if (mccGetRow(mcc, &row) == MCC_OK && *MCC_PTR_V(&row) - '0' == SMTPF_TEMPFAIL) {
-							if (verb_cache.option.value)
-								syslog(LOG_DEBUG, log_cache_delete, LOG_ARGS(sess), LOG_CACHE_DELETE(&row), FILE_LINENO);
-							if (mccDeleteRow(mcc, &row) == MCC_ERROR)
-								syslog(LOG_ERR, log_cache_delete_error, LOG_ARGS(sess), LOG_CACHE_DELETE_ERROR(&row), FILE_LINENO);
-						}
-					}
-				}
-			} else {
-				length = greyMakeKey(sess, optGreyKey.value, NULL, (char *)MCC_PTR_K(&row), MCC_DATA_SIZE);
-				MCC_SET_K_SIZE(&row, length);
-
-				/* Does the temp. fail key exist? */
-				if (mccGetRow(mcc, &row) == MCC_OK && *MCC_PTR_V(&row) - '0' == SMTPF_TEMPFAIL) {
-					if (verb_cache.option.value)
-						syslog(LOG_DEBUG, log_cache_delete, LOG_ARGS(sess), LOG_CACHE_DELETE(&row), FILE_LINENO);
-					if (mccDeleteRow(mcc, &row) == MCC_ERROR)
-						syslog(LOG_ERR, log_cache_delete_error, LOG_ARGS(sess), LOG_CACHE_DELETE_ERROR(&row), FILE_LINENO);
-				}
-			}
-
-			PTHREAD_MUTEX_UNLOCK(&grey_mutex);
-		}
-	}
-#endif
 	if (grey->period <= 0)
 		return SMTPF_CONTINUE;
 
@@ -1227,6 +1156,7 @@ and <a href="summary.html#opt_grey_temp_fail_period">grey-temp-fail-period</a> o
 
 	return rc;
 }
+#endif
 
 int
 greyClose(Session *sess, va_list ignore)

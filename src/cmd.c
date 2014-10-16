@@ -2206,7 +2206,8 @@ cmdOption(Session *sess)
 
 	statsCount(&stat_admin_commands);
 
-	if (sizeof ("OPTN\r\n")-1 < sess->input_length) {
+	/* Argument after OPTN? */
+	if (sizeof ("OPTN ")-1 < sess->input_length) {
 		args = sess->input + sizeof ("OPTN")-1;
 		args += strspn(args, " \t-+");
 
@@ -2225,30 +2226,30 @@ then restart the @PACKAGE_NAME@ process.
 		}
 
 		(void) optionString(sess->input + sizeof ("OPTN ")-1, optTable, NULL);
-	}
+		(void) filterRun(sess, filter_optn_table, NULL);
+	} else {
+		/* Dump option settings. */
+		for (opt = optTable; *opt != NULL; opt++) {
+			o = *opt;
 
-	(void) filterRun(sess, filter_optn_table, NULL);
-
-	for (opt = optTable; *opt != NULL; opt++) {
-		o = *opt;
-
-		if (*o->name != '\0') {
-			if (o->initial == NULL) {
-				/* Action like -help/+help */
-			} else if ((*o->initial == '+' || *o->initial == '-') && o->initial[1] == '\0') {
-				/* Boolean +option or -option */
+			if (*o->name != '\0') {
+				if (o->initial == NULL) {
+					/* Action like -help/+help */
+				} else if ((*o->initial == '+' || *o->initial == '-') && o->initial[1] == '\0') {
+					/* Boolean +option or -option */
 #ifdef OPTN_SHOW_DEFAULTS
-				if (strcmp(o->initial, o->string) != 0)
-					reply = replyAppendFmt(reply, "214-2.0.0 #%s%s\r\n", o->initial, o->name);
+					if (strcmp(o->initial, o->string) != 0)
+						reply = replyAppendFmt(reply, "214-2.0.0 #%s%s\r\n", o->initial, o->name);
 #endif
-				reply = replyAppendFmt(reply, "214-2.0.0 %s%s\r\n", o->value ? "+" : "-", o->name);
-			} else {
-				/* Assignment option=value */
+					reply = replyAppendFmt(reply, "214-2.0.0 %s%s\r\n", o->value ? "+" : "-", o->name);
+				} else {
+					/* Assignment option=value */
 #ifdef OPTN_SHOW_DEFAULTS
-				if (strcmp(o->initial, o->string) != 0)
-					reply = replyAppendFmt(reply, "#%s=\"%s\"\r\n", o->name, o->initial);
+					if (strcmp(o->initial, o->string) != 0)
+						reply = replyAppendFmt(reply, "#%s=\"%s\"\r\n", o->name, o->initial);
 #endif
-				reply = replyAppendFmt(reply, "214-2.0.0 %s=\"%s\"\r\n", o->name, o->string);
+					reply = replyAppendFmt(reply, "214-2.0.0 %s=\"%s\"\r\n", o->name, o->string);
+				}
 			}
 		}
 	}

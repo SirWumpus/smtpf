@@ -410,6 +410,9 @@ FilterHandler filter_optn_table	[] = {
 #ifdef FILTER_CLI
 	FILTER_HANDLER(cliOptn),
 #endif
+#ifdef FILTER_GREY
+	FILTER_HANDLER(greyOptn),
+#endif
 #ifdef FILTER_MSG_LIMIT
 	FILTER_HANDLER(msgLimitOptn),
 #endif
@@ -901,9 +904,6 @@ FilterHandler filter_rcpt_table	[] = {
 	 */
 	FILTER_HANDLER(clickRcpt),
 #endif
-#if defined(FILTER_GREY) && defined(ENABLE_GREY_DNSBL_RESET)
-	FILTER_HANDLER(greyRcpt),
-#endif
 #ifdef FILTER_MISC
 	FILTER_HANDLER(rcptTestsRcpt),
 	FILTER_HANDLER(heloIsPtrRcpt),
@@ -1046,8 +1046,10 @@ FilterHandler filter_headers_table	[] = {
 #if defined(FILTER_P0F)
 	FILTER_HANDLER(p0fHeaders),
 #endif
-#ifdef FILTER_GREY
+#ifdef ENABLE_GREY_CONTENT
+# ifdef FILTER_GREY
 	FILTER_HANDLER(greyHeaders),
+# endif
 #endif
 #ifdef FILTER_CLAMD
 	FILTER_HANDLER(clamdHeaders),
@@ -1146,8 +1148,10 @@ FilterHandler filter_content_table	[] = {
 #ifdef FILTER_URIBL
 	FILTER_HANDLER(uriblContent),
 #endif
-#ifdef FILTER_GREY
+#ifdef ENABLE_GREY_CONTENT
+# ifdef FILTER_GREY
 	FILTER_HANDLER(greyContent),
+# endif
 #endif
 #ifdef FILTER_IXHASH
 	FILTER_HANDLER(ixhashContent),

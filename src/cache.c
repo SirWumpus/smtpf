@@ -561,8 +561,10 @@ cacheCommand(Session *sess)
 			 */
 			reply = replyAppendFmt(
 				reply,
-				"211 2.0.0 k=\"%.*s\" d=\"%.*s\" t=%lu c=0x%lx (%s) e=0x%lx (%s)\r\n",
-				LOG_CACHE_GET(&old_row), old_row.ttl,
+				"211 2.0.0 k=\"" MCC_FMT_K "\" d=\"" MCC_FMT_V "\" t=" MCC_FMT_TTL " c=" MCC_FMT_C " (%s) e=" MCC_FMT_E " (%s)\r\n",
+				MCC_FMT_K_ARG(&old_row),
+				MCC_FMT_V_ARG(&old_row),
+				old_row.ttl,
 				(long) old_row.created, cstamp,
 				(long) old_row.expires, estamp
 			);

@@ -190,6 +190,18 @@ is no set schedule for releases.
 		$base64_argument
 		$result
 
+--2.6.5--
+
+   !	Removed ENABLE_GREY_DNSBL_RESET code.
+
+   !	Disable grey-content option with #ifdef ENABLE_GREY_CONTENT
+
+   !	Fixed OPTN command handling of grey-key and other grey listing
+   	options.
+
+  !!	Fixed segmetation fault when formatting replies to CACHE
+  	GET/PUT/DELETE commands.
+
 --2.6.4--
 
    *	Requires libsnert 1.75.29.
@@ -200,12 +212,12 @@ is no set schedule for releases.
 	are subject to any CREATE TABLE defaults. Reported by Steve
 	Freegard.
 
-	As a result, ensure that new MCC2 cache rows have the desired 
+	As a result, ensure that new MCC2 cache rows have the desired
 	created timestamp applied and that existing rows (in most case)
 	don't touch it.
 
-	This impacted grey-listing by inadvertantly touching the 
-	created timestamp for grey-list temp.fail record. 
+	This impacted grey-listing by inadvertantly touching the
+	created timestamp for grey-list temp.fail record.
 
 --2.6.3--
 
