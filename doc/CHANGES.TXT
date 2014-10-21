@@ -190,6 +190,20 @@ is no set schedule for releases.
 		$base64_argument
 		$result
 
+--2.6.6--
+
+   *	Requires libsnert 1.75.37.
+
+  !!	Fix seg.fault in session_accept hook caused by out of memory on
+	malloc() during session_create hook and cleanup code failure to
+	NULL the session variable so as to abort the connection.  See
+	PTHREAD_FREE_PUSH macro.
+
+  !!	Fixed MCC2 mcc_listener_thread handling of PUT updates to preserve
+   	created timstamp from an existing key. Otherwise, grey listing
+   	temp. fail period keeps shifting within a cluster.  Reported by
+   	Steve Freegard for Tulsa.
+
 --2.6.5--
 
    !	Removed ENABLE_GREY_DNSBL_RESET code.
@@ -200,7 +214,7 @@ is no set schedule for releases.
    	options.
 
   !!	Fixed segmetation fault when formatting replies to CACHE
-  	GET/PUT/DELETE commands.
+  	GET/PUT/DELETE commands.  Reported by Steve Freegard for Tulsa.
 
 --2.6.4--
 
