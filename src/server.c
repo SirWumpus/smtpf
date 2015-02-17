@@ -386,8 +386,8 @@ session_process(ServerSession *session)
 #if !defined(__OpenBSD__) && !defined(__FreeBSD__)
 		_NAME " "
 #endif
-		"th=%u cn=%u cs=%lu",
-		numbers[0], numbers[1], connections_per_second
+		"th=%u cn=%u",
+		numbers[0], numbers[1]
 	);
 	PTHREAD_MUTEX_UNLOCK(&title_mutex);
 
@@ -436,8 +436,8 @@ session_process(ServerSession *session)
 #if !defined(__OpenBSD__) && !defined(__FreeBSD__)
 		_NAME " "
 #endif
-		"th=%u cn=%u cs=%lu",
-		numbers[0], numbers[1], connections_per_second
+		"th=%u cn=%u",
+		numbers[0], numbers[1]
 	);
 	PTHREAD_MUTEX_UNLOCK(&title_mutex);
 
