@@ -53,6 +53,7 @@ com/snert/src/@PACKAGE_NAME@/examples/access.cf
 com/snert/src/@PACKAGE_NAME@/examples/access-defaults.cf
 com/snert/src/@PACKAGE_NAME@/examples/route.cf
 com/snert/src/@PACKAGE_NAME@/examples/welcome.txt
+com/snert/src/@PACKAGE_NAME@/examples/netbsd.rcd.in
 com/snert/src/@PACKAGE_NAME@/examples/startup.sh.in
 com/snert/src/@PACKAGE_NAME@/examples/sendmail-hub.mc
 com/snert/src/@PACKAGE_NAME@/examples/smtpf.lua

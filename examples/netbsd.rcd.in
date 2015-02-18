@@ -1,0 +1,34 @@
+#!/bin/sh
+#
+# $NetBSD$
+#
+
+# PROVIDE: smtpf
+# REQUIRE: mail
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name="@PACKAGE_NAME@"
+
+prefix="@prefix@"
+exec_prefix="@exec_prefix@"
+sysconfdir="@sysconfdir@/${name}"
+localstatedir="@localstatedir@"
+sbindir="@sbindir@"
+
+rcvar=${name}
+command="${sbindir}/${name}"
+sig_stop="QUIT"
+pidfile="${localstatedir}/run/${name}.pid"
+
+start_precmd()
+{
+	if [ -f $sysconfdir/access.sq3 -a -f $sysconfdir/route.sq3 ]; then
+		:
+	else
+		( cd $sysconfdir; make )
+	fi
+}
+
+load_rc_config $name
+run_rc_command "$1"

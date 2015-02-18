@@ -129,15 +129,22 @@ hasCommand()
 if test -d /etc/init.d ; then
 	# Debian Linux
 	startup_script="${DESTDIR}/etc/init.d/$TARNAME"
+	startup_example="examples/startup.sh"
 elif test -d /etc/rc.d/init.d ; then
 	# Older Linux, System V structure?
 	startup_script="${DESTDIR}/etc/rc.d/init.d/$TARNAME"
+	startup_example="examples/startup.sh"
 elif test -d /usr/local/etc/rc.d ; then
 	# FreeBSD
-	startup_script="${DESTDIR}/usr/local/etc/rc.d/$TARNAME.sh"
+	startup_script="${DESTDIR}/usr/local/etc/rc.d/$TARNAME"
+	startup_example="examples/netbsd.rcd"
+elif test -d /etc/rc.d -a $UNAME = 'NetBSD' ; then
+	startup_script="${DESTDIR}/etc/rc.d/$TARNAME"
+	startup_example="examples/netbsd.rcd"
 else
-	# OpenBSD policy is for root to install startup scripts by hand.
-	# Also Cygwin/Mingw uses a different method.
+	# OpenBSD policy is for root to install startup scripts by hand
+	# and /etc/rc.d, while similar to NetBSD and FreeBSD, uses a
+	# different rc.subr API.  Cygwin/Mingw uses a different method.
 	startup_script='NO'
 fi
 
@@ -150,7 +157,7 @@ elif test -f $startup_script -a ${DESTDIR:-no} = no ; then
 	echo "  $startup_script"
 	echo
 
-	if cmp -s $startup_script examples/startup.sh ; then
+	if cmp -s $startup_script $startup_example ; then
 		echo "And its identical to the current distributiuon."
 		startup_script='NO'
 	else
@@ -163,7 +170,7 @@ elif test -f $startup_script -a ${DESTDIR:-no} = no ; then
 		done
 
 		if test "X$yn" = 'Xy' ; then
-			diff -u $startup_script examples/startup.sh | more
+			diff -u $startup_script $startup_example | more
 		fi
 
 		echo
@@ -177,7 +184,7 @@ elif test -f $startup_script -a ${DESTDIR:-no} = no ; then
 		done
 
 		if test "X$yn" = 'Xy' ; then
-			$INSTALL -m 555 $INSTALL_GROUP examples/startup.sh $startup_script
+			$INSTALL -m 555 $INSTALL_GROUP $startup_example $startup_script
 			if hasCommand chkconfig ; then
 				# Red Hat Linux
 				chkconfig --add ${TARNAME}
@@ -193,7 +200,7 @@ else
 	echo 'Creating...' `dirname $startup_script`
 	$INSTALL -m 755 $INSTALL_WHEEL -d `dirname $startup_script`
 	echo 'Installing...' $startup_script
-	$INSTALL -m 555 $INSTALL_GROUP examples/startup.sh $startup_script
+	$INSTALL -m 555 $INSTALL_GROUP $startup_example $startup_script
 
 	if test ${DESTDIR:-no} = no ; then
 		if hasCommand chkconfig ; then
@@ -302,6 +309,7 @@ else
 	$INSTALL -m 444 $INSTALL_WHEEL examples/*.mk $examples
 	$INSTALL -m 444 $INSTALL_WHEEL examples/*.sh $examples
 	$INSTALL -m 444 $INSTALL_GROUP examples/*.txt $examples
+	$INSTALL -m 444 $INSTALL_GROUP examples/*.rcd $examples
 	$INSTALL -m 444 $INSTALL_WHEEL examples/extra/* $examples/extra
 	$INSTALL -m 444 $INSTALL_WHEEL examples/spamassassin/* $examples/spamassassin
 fi
