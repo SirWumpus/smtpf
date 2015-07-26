@@ -1045,7 +1045,7 @@ error0:
 	return rc;
 }
 
-static void
+void
 FreeStub(void *entry)
 {
        /* Do nothing */

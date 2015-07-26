@@ -1060,6 +1060,9 @@ statsRegister0(Session *sess, va_list ignore)
 		exit(1);
 	}
 
+	extern void FreeStub(void *);
+	VectorSetDestroyEntry(stats, FreeStub);
+
 	/* This stats have no module. */
 
 	/*** General ***********************************************************/
