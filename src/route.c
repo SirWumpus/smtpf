@@ -1045,6 +1045,12 @@ error0:
 	return rc;
 }
 
+static void
+FreeStub(void *entry)
+{
+       /* Do nothing */
+}
+
 /*
  * Lookup the recipient's domain for a FORWARD list as to where this
  * message should go.
