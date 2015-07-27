@@ -41,7 +41,6 @@
 #include <com/snert/lib/sys/Time.h>
 #include <com/snert/lib/util/Token.h>
 #include <com/snert/lib/util/setBitWord.h>
-#include <com/snert/lib/util/ProcTitle.h>
 
 extern void rlimits(void);
 

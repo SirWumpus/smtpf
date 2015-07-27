@@ -383,7 +383,7 @@ session_process(ServerSession *session)
 
 	PTHREAD_MUTEX_LOCK(&title_mutex);
 	ProcTitleSet(
-#if !defined(__OpenBSD__) && !defined(__FreeBSD__)
+#if !defined(__NetBSD__) && !defined(__OpenBSD__) && !defined(__FreeBSD__)
 		_NAME " "
 #endif
 		"th=%u cn=%u",
@@ -433,7 +433,7 @@ session_process(ServerSession *session)
 	serverNumbers(session->server, numbers);
 	PTHREAD_MUTEX_LOCK(&title_mutex);
 	ProcTitleSet(
-#if !defined(__OpenBSD__) && !defined(__FreeBSD__)
+#if !defined(__NetBSD__) && !defined(__OpenBSD__) && !defined(__FreeBSD__)
 		_NAME " "
 #endif
 		"th=%u cn=%u",
