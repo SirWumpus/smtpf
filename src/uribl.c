@@ -629,9 +629,6 @@ uriblTestURI(Session *sess, URI *uri, int post_data)
 			goto ignore0;
 	}
 
-	/* Number of distinct URI tested. */
-	ctx->distinct_uri_tested++;
-
 	/* Be sure to apply the correct access lookup. */
 	if (0 < spanIP((unsigned char *)uri->host)) {
 		access = accessClient(sess, "body:", NULL, body_tag = uri->host, NULL, &value, 1);
@@ -666,6 +663,8 @@ See the <a href="access-map.html#access_tags">access-map</a> concerning the
 		}
 		goto ignore1;
 	default:
+		/* Number of distinct URI tested. */
+		ctx->distinct_uri_tested++;
 		break;
 	}
 
