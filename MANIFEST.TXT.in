@@ -61,6 +61,7 @@ com/snert/src/@PACKAGE_NAME@/examples/spamassassin/barricademx.cf
 com/snert/src/@PACKAGE_NAME@/examples/spamassassin/barricademx.pm
 com/snert/src/@PACKAGE_NAME@/examples/extra/bmx-antiphishingreply-update.pl
 com/snert/src/@PACKAGE_NAME@/examples/extra/bmx-uribl-update.pl
+com/snert/src/@PACKAGE_NAME@/examples/extra/bmx_trap_trainer.pl
 com/snert/src/@PACKAGE_NAME@/install.sh.in
 com/snert/src/@PACKAGE_NAME@/makefile.in
 com/snert/src/@PACKAGE_NAME@/MANIFEST.TXT.in

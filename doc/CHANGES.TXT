@@ -190,6 +190,17 @@ is no set schedule for releases.
 		$base64_argument
 		$result
 
+--2.6.7--
+
+   *	Requires libsnert 1.75.49
+
+   !	Do not count OK/REJECT URI towards uri-max-test count.
+
+   !	Change sesssion_accept() linger on close from 0 to LINGER_ON_CLOSE
+	to allow clients to collect last reply and reduce possible duplicates.
+
+   +	Added SMF's bmx_trap_trainer.pl script.
+
 --2.6.6--
 
    *	Requires libsnert 1.75.37.
