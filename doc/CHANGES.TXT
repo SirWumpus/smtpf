@@ -196,10 +196,13 @@ is no set schedule for releases.
 
    +	Add smtp-linger option in place of LINGER_ON_CLOSE.
 
-   !	Fix welcome banner when first line of multiline banner is empty, would
-	miss the SMTP/ESMTP tag.
+   !	Fix welcome banner when first line of multiline banner is empty,
+	would miss the SMTP/ESMTP tag.
 
    !	Update use of smtp2 API to account for HELO argument.
+
+   !	When -smtp-enable-esmtp, black listed hosts were still able to
+	use EHLO and get a successful response.
 
 --2.6.7--
 

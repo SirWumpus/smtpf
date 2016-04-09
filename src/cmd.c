@@ -259,7 +259,7 @@ The client has sent HELO or EHLO more than once with different arguments each ti
 #ifdef HAVE_OPENSSL_SSL_H
 	&&  !(tls_get_flags(sess) & TLS_FLAG_ENABLE_EHLO)
 #endif
-	&& CLIENT_NOT_SET(sess, CLIENT_USUAL_SUSPECTS|CLIENT_IS_GREY|CLIENT_PASSED_GREY|CLIENT_IS_BLACK|CLIENT_IS_LOCAL_BLACK)) {
+	&& CLIENT_NOT_SET(sess, CLIENT_USUAL_SUSPECTS|CLIENT_IS_GREY|CLIENT_PASSED_GREY)) {
 		/* Offset the positive count in smtpReplyLog(). When
 		 * ESMTP is disabled there will more often than not
 		 * be an EHLO attempted, which should not be counted
