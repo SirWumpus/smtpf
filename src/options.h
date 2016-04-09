@@ -102,6 +102,7 @@ extern Option optRFC2920Pipelining;
 extern Option optSmtpRejectFile;
 extern Option optSmtpReportHeader;
 extern Option optSmtpServerQueue;
+extern Option optSmtpLinger;
 extern Option optSmtpSlowReply;
 extern Option optSmtpStrictRelay;
 extern Option optSmtpWelcomeFile;

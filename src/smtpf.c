@@ -710,9 +710,9 @@ A stripped down single line welcome banner sent to only localhost, LAN, and rela
 
 	p = 0 < VectorLength(welcome_msg) ? (char **) VectorBase(welcome_msg) : welcome_default;
 	reply = replyFmt(
-		SMTPF_CONTINUE, "220%c%s %s" ID_MSG(633) CRLF,
+		SMTPF_CONTINUE, "220%c%s %s %sSMTP" ID_MSG(633) CRLF,
 		p[1] == NULL ? ' ' : '-', sess->iface->name,
-		*p, ID_ARG(sess)
+		*p, optSmtpEnableEsmtp.value ? "E" : "", ID_ARG(sess)
 	);
 /*{REPLY
 The first line of possible a multiline welcome banner.

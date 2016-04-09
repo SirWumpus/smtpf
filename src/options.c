@@ -202,6 +202,15 @@ static const char usage_smtp_server_queue[] =
 "#"
 ;
 
+static const char usage_smtp_linger[] =
+  "SMTP connection linger on close.  This setting tells the kernel how\n"
+"# many seconds to wait after a connection is closed before actually\n"
+"# termination to allow the client time to read the last message in\n"
+"# the buffer.\n"
+"#"
+;
+
+
 static const char usage_smtp_slow_reply[] =
   "Impose an throttling delay for all SMTP server replies. This option\n"
 "# will most likely result in increased concurrency, which is normal.\n"
@@ -323,6 +332,8 @@ static const char usage_smtp_keep_alive_timeout[] =
 "#"
 ;
 Option optSmtpKeepAliveTimeout	= { "smtp-keep-alive-timeout",	"60",		usage_smtp_keep_alive_timeout };
+
+Option optSmtpLinger		= { "smtp-linger", 		"3", 		usage_smtp_linger };
 
 Option optSmtpEnableEsmtp	= { "smtp-enable-esmtp",	"+",		usage_smtp_enable_esmtp };
 
@@ -584,6 +595,7 @@ optionsRegister0(Session *sess, va_list ignore)
 	optionsRegister(&optSmtpEnableEsmtp,		0);
 	optionsRegister(&optSmtpHeloSchizo,		0);
 	optionsRegister(&optSmtpKeepAliveTimeout,	0);
+	optionsRegister(&optSmtpLinger, 		1);
 	optionsRegister(&optRFC16528bitmime,		0);
 	optionsRegister(&optRFC2920Pipelining,		0);
 	optionsRegister(&optSmtpRejectFile, 		1);

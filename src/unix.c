@@ -133,11 +133,9 @@ atExitCleanUpOptions(void)
 void
 serverOptions(int argc, char **argv)
 {
-	int argi;
-
 	/* Parse command line options looking for a file= option. */
 	optionInit(optTable0, NULL);
-	argi = optionArrayL(argc, argv, optTable0, NULL);
+	(void) optionArrayL(argc, argv, optTable0, NULL);
 
 	/* Parse the option file followed by the command line options again. */
 	if (optFile0.string != NULL && *optFile0.string != '\0') {

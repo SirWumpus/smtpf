@@ -339,7 +339,7 @@ session_accept(ServerSession *session)
 	(void) socketSetNonBlocking(session->client, 1);
 
 	/* Assume the client connection will drop more often than send QUIT. */
-	(void) socketSetLinger(session->client, LINGER_ON_CLOSE);
+	(void) socketSetLinger(session->client, (int) optSmtpLinger.value);
 
 	switch ((unsigned)filterRun(data, filter_accept_table)) {
 	case SMTPF_DROP:
