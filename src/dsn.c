@@ -1,7 +1,7 @@
 /*
- * cmd.c
+ * dsn.c
  *
- * Copyright 2006, 2009 by Anthony Howe. All rights reserved.
+ * Copyright 2006, 2016 by Anthony Howe. All rights reserved.
  */
 
 /***********************************************************************
@@ -64,7 +64,7 @@ A forward host has rejected a message and a DSN has been sent,
 
 	/*** TODO add support for Errors-To: header ***/
 
-	if ((smtp = smtp2OpenMx(sess->msg.mail->domain.string, optSmtpConnectTimeout.value, optSmtpCommandTimeout.value, 1)) == NULL)
+	if ((smtp = smtp2OpenMx(sess->msg.mail->domain.string, optSmtpConnectTimeout.value, optSmtpCommandTimeout.value, 1, NULL)) == NULL)
 		return;
 
 	if (smtp2Mail(smtp, "") != SMTP_OK)
@@ -84,7 +84,7 @@ A forward host has rejected a message and a DSN has been sent,
 	if (*optSmtpDsnReplyTo.string != '\0')
 		(void) smtp2Printf(smtp, "Reply-To: <%s>" CRLF, optSmtpDsnReplyTo.string);
 
-	(void) smtp2Printf(smtp, "Message-ID: <%s@[%s]>" CRLF, smtp->id_string, smtp->local_ip);
+	(void) smtp2Printf(smtp, "Message-ID: <%s@%s>" CRLF, smtp->id_string, smtp->helo_host);
 	(void) smtp2Printf(smtp, "Subject: Mail delivery failed." CRLF);
 	(void) smtp2Printf(smtp, "MIME-Version: 1.0" CRLF);
 	/* RFC 3464 DSN Format */

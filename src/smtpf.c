@@ -1,7 +1,7 @@
 /*
  * smtpf.c
  *
- * Copyright 2006 by Anthony Howe. All rights reserved.
+ * Copyright 2006, 2016 by Anthony Howe. All rights reserved.
  *
  * Description
  * -----------
@@ -103,7 +103,7 @@ send_report_v(Session *sess, const char *subject, const char *fmt, va_list args)
 	smtp = NULL;
 	flags = SMTP_FLAG_LOG | (1 < verb_smtp.option.value ? SMTP_FLAG_DEBUG : 0);
 	for (table = (char **) VectorBase(hosts); *table != NULL; table++) {
-		if ((smtp = smtp2Open(*table, optSmtpConnectTimeout.value, optSmtpCommandTimeout.value, flags)) != NULL)
+		if ((smtp = smtp2Open(*table, optSmtpConnectTimeout.value, optSmtpCommandTimeout.value, flags, NULL)) != NULL)
 			break;
 	}
 
@@ -143,7 +143,7 @@ send_report_v(Session *sess, const char *subject, const char *fmt, va_list args)
 	TimeStamp(&smtp->start, buffer, sizeof (buffer));
 	(void) smtp2Printf(smtp, "Date: %s" CRLF, buffer);
 	(void) smtp2Printf(smtp, "From: \"%s\" <>" CRLF, _NAME);
-	(void) smtp2Printf(smtp, "Message-ID: <%s@[%s]>" CRLF, smtp->id_string, smtp->local_ip);
+	(void) smtp2Printf(smtp, "Message-ID: <%s@%s>" CRLF, smtp->id_string, smtp->helo_host);
 	(void) smtp2Printf(smtp, "Subject: %s" CRLF, subject);
 	(void) smtp2Print(smtp, CRLF, CRLF_LENGTH);
 

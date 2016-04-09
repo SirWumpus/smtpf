@@ -1,7 +1,7 @@
 /*
  * reply.c
  *
- * Copyright 2006, 2007 by Anthony Howe. All rights reserved.
+ * Copyright 2006, 2016 by Anthony Howe. All rights reserved.
  */
 
 /***********************************************************************
@@ -430,7 +430,7 @@ replySendLintReport(Session *sess, const char *report_rcpt)
 	/* Try to connect to one of the local routes. */
 	smtp = NULL;
 	for (table = (char **) VectorBase(hosts); *table != NULL; table++) {
-		if ((smtp = smtp2Open(*table, optSmtpConnectTimeout.value, optSmtpCommandTimeout.value, SMTP_FLAG_LOG)) != NULL)
+		if ((smtp = smtp2Open(*table, optSmtpConnectTimeout.value, optSmtpCommandTimeout.value, SMTP_FLAG_LOG, NULL)) != NULL)
 			break;
 	}
 
@@ -452,7 +452,7 @@ replySendLintReport(Session *sess, const char *report_rcpt)
 	(void) smtp2Printf(smtp, "To: <%s>" CRLF, report_rcpt);
 	(void) smtp2Printf(smtp, "From: \"%s\" <postmaster@%s>" CRLF, _NAME, sess->iface->name);
 
-	(void) smtp2Printf(smtp, "Message-ID: <%s@[%s]>" CRLF, smtp->id_string, smtp->local_ip);
+	(void) smtp2Printf(smtp, "Message-ID: <%s@%s>" CRLF, smtp->id_string, smtp->helo_host);
 	if (*sess->msg.id == '\0')
 		(void) smtp2Printf(smtp, "Subject: %s lint report session %s." CRLF, _NAME, sess->long_id);
 	else

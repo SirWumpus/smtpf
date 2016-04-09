@@ -244,7 +244,7 @@ lickeyMailWarning(void *data)
 	if (1 < verb_smtp.option.value)
 		flags |= SMTP_FLAG_DEBUG;
 
-	if ((mail = mailOpen(optSmtpConnectTimeout.value, optSmtpCommandTimeout.value, flags)) == NULL)
+	if ((mail = mailOpen(optSmtpConnectTimeout.value, optSmtpCommandTimeout.value, flags, NULL)) == NULL)
 		goto error0;
 
 	networkGetMyName(host);
@@ -266,7 +266,7 @@ lickeyMailWarning(void *data)
 	(void) mailPrintf(mail, "From: \"%s\" <%s>\r\n", lickeyClientName.string, lickeyClientMail.string);
 	(void) mailPrintf(mail, "Sender: \"%s\" <%s>\r\n", lickeyProcessName.string, sender);
 	(void) mailPrintf(mail, "Subject: %s license key expires in less than %d day%s\r\n", _NAME, days, days <= 1 ? "" : "s");
-	(void) mailPrintf(mail, "Message-ID: <%s@%s>\r\n", mail->list->id_string, mail->list->local_ip);
+	(void) mailPrintf(mail, "Message-ID: <%s@%s>\r\n", mail->list->id_string, mail->list->helo_host);
 	(void) mailPrintf(mail, "Priority: normal\r\n");
 	(void) mailPrintf(mail, "User-Agent: lickey-%s\r\n",  _VERSION);
 	(void) mailPrintf(mail, "\r\n");

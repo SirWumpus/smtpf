@@ -190,6 +190,17 @@ is no set schedule for releases.
 		$base64_argument
 		$result
 
+--2.6.8--
+
+   *	Requires libsnert 1.75.50
+
+   +	Add smtp-linger option in place of LINGER_ON_CLOSE.
+
+   !	Fix welcome banner when first line of multiline banner is empty, would
+	miss the SMTP/ESMTP tag.
+
+   !	Update use of smtp2 API to account for HELO argument.
+
 --2.6.7--
 
    *	Requires libsnert 1.75.49
