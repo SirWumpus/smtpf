@@ -1072,11 +1072,12 @@ the session "end" log line only.
 	}
 
 	if ((code = replySend(sess)) != SMTPF_CONTINUE) {
-		if (verb_info.option.value)
+		if (errno != ENOTTY && verb_info.option.value) {
 			syslog(
-				LOG_ERR, LOG_MSG(1031) "banner code=%d " CLIENT_FORMAT ": %s (%d)", 
+				LOG_ERR, LOG_MSG(1031) "banner code=%d " CLIENT_FORMAT ": %s (%d)",
 				LOG_ARGS(sess), code, CLIENT_INFO(sess), strerror(errno), errno
 			);
+		}
 	}
 
 	/* Black listed clients get less priority. */
@@ -1088,7 +1089,7 @@ the session "end" log line only.
 			sess->input_length = socketReadLine2(sess->client.socket, sess->input, sizeof (sess->input), 1);
 
 			if (sess->input_length < 0) {
-				if (verb_info.option.value) {
+				if (errno != 0 && verb_info.option.value) {
 					syslog(LOG_ERR, LOG_MSG(639) "client " CLIENT_FORMAT " I/O error: %s (%d)", LOG_ARGS(sess), CLIENT_INFO(sess), strerror(errno), errno);
 /*{LOG
 The client appears to have disconnected. A read error occured in the SMTP command loop.

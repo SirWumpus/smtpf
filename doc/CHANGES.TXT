@@ -190,6 +190,10 @@ is no set schedule for releases.
 		$base64_argument
 		$result
 
+--2.6.9--
+
+   !	Silence some redundant error messages.
+
 --2.6.8--
 
    *	Requires libsnert 1.75.50
