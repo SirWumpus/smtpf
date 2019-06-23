@@ -51,6 +51,8 @@
  ***
  ***********************************************************************/
 
+#if defined(ENABLE_LICKEY) || defined(TEST)
+
 int output_all_fields;
 
 /* Any default value that is an empty string "", is required to be set.
@@ -830,6 +832,8 @@ lickeyInit(Vector interfaces)
 
 	exit(3);
 }
+
+#endif /* defined(ENABLE_LICKEY) || defined(TEST) */
 
 #ifdef TEST
 #include <stdio.h>

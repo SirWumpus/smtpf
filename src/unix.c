@@ -119,7 +119,9 @@ See <a href="summary.html#opt_run_pid_file">run-pid-file</a> option.
 static void
 atExitCleanUpOptions(void)
 {
+#ifdef ENABLE_LICKEY
 	optionFreeL(optTable0, lickeyOptTable, NULL);
+#endif
 	options_at_exit();
 	verbose_at_exit();
 	filter_at_exit();

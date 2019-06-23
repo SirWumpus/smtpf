@@ -2262,8 +2262,9 @@ then restart the @PACKAGE_NAME@ process.
 int
 cmdLickey(Session *sess)
 {
-	Option **opt, *o;
 	Reply *reply = NULL;
+#ifdef ENABLE_LICKEY
+	Option **opt, *o;
 	extern Option *lickeyTable[];
 
 	statsCount(&stat_admin_commands);
@@ -2282,6 +2283,7 @@ cmdLickey(Session *sess)
 	/* Force a license key check, which may exit the program. */
 	lickeyInit(server.interfaces);
 
+#endif
 	reply = replyAppendFmt(reply, msg_end, ID_ARG(sess));
 
 	return replyPush(sess, reply);

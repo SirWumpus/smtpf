@@ -51,12 +51,19 @@ extern Stats stat_route_addresses;
 extern Stats stat_route_domains;
 extern Stats stat_route_unique_domains;
 
+#ifdef ENABLE_LICKEY
 extern void lickeyInit(Vector interfaces);
 extern void lickeyHasExpired(void);
 extern void lickeyRouteCount(void);
 extern void lickeySendWarning(mcc_handle *);
 extern int lickeyFileIsValid(const char *file, const char *ip);
 extern int lickeyStringIsValid(const char *string, const char *ip);
+#else
+#define lickeyInit(interfaces)
+#define lickeyHasExpired()
+#define lickeyRouteCount()
+#define lickeySendWarning(mcc)
+#endif
 
 /***********************************************************************
  ***

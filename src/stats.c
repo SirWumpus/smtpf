@@ -1067,11 +1067,12 @@ statsRegister0(Session *sess, va_list ignore)
 
 	/*** General ***********************************************************/
 
+#ifdef ENABLE_LICKEY
 	(void) statsRegister(&stat_route_accounts);
 	(void) statsRegister(&stat_route_addresses);
 	(void) statsRegister(&stat_route_domains);
 	(void) statsRegister(&stat_route_unique_domains);
-
+#endif
 #ifdef HAVE_GETLOADAVG
 	(void) statsRegister(&stat_high_load_avg_1);
 	(void) statsRegister(&stat_high_load_avg_5);
