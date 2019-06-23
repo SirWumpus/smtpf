@@ -34,6 +34,7 @@ connect:hotmail.com			CONTENT
 connect:yahoo.com			CONTENT
 connect:yahoogroups.com			CONTENT
 connect:brightmail.com			CONTENT
+connect:outbound.protection.outlook.com	CONTENT
 
 #######################################################################
 # These localhost domains and/or IP address could trigger URI BL
