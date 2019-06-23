@@ -66,6 +66,8 @@ Stats stat_click_pass		= { STATS_TABLE_RCPT, "click-pass" };
 Stats stat_click_fail		= { STATS_TABLE_RCPT, "click-fail" };
 Stats stat_click_ttl		= { STATS_TABLE_RCPT, "click-ttl" };
 
+Verbose verb_click		= { { "click", "-", "" } };
+
 typedef struct {
 	char reply[SMTP_REPLY_LINE_LENGTH+1];
 } Click;
@@ -137,6 +139,8 @@ clickMakeHash(Session *sess, time_t when, char *key, size_t length, char *buffer
 int
 clickRegister(Session *null, va_list ignore)
 {
+	verboseRegister(&verb_click);
+
 	optionsRegister(&optClickSecret, 0);
 	optionsRegister(&optClickTTL, 0);
 	optionsRegister(&optClickUrl, 0);
@@ -259,6 +263,9 @@ clickRcpt(Session *sess, va_list args)
 	 */
 	if (strncmp(rcpt->address.string, buffer, CLICK_PREFIX_LENGTH) != 0) {
 		statsCount(&stat_click_fail);
+		if (verb_click.option.value) {
+			syslog(LOG_DEBUG, LOG_NUM(000) "clickRcpt rcpt=<%s> key={" MCC_FMT_K "} hash=%s", rcpt->address.string, MCC_FMT_K_ARG(&row), buffer);
+		}
 		return replySetFmt(sess, SMTPF_REJECT, "550 5.7.1 recipient <%s> invalid" ID_MSG(245), rcpt->address.string, ID_ARG(sess));
 /*{REPLY
 }*/
