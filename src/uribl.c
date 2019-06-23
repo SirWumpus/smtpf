@@ -272,7 +272,6 @@ static const char usage_uri_ns_nxdomain[] =
   "Reject if a URI's NS host is in a non-existant domain."
 ;
 
-#ifndef ENABLE_PDQ
 static const char usage_uri_ip_in_ptr[] =
   "For each URI, lookup the host's IP addresses followed by each IP's\n"
 "# PTR record. Apply a pattern heuristic to each PTR record and reject\n"
@@ -284,12 +283,6 @@ static const char usage_uri_ip_in_ptr[] =
 
 Option optUriIpInPtr		= { "uri-ip-in-ptr",		"0",		usage_uri_ip_in_ptr };
 Stats stat_uri_ip_in_ptr	= { STATS_TABLE_MSG, 	"uri-ip-in-ptr"};
-#endif
-
-#ifdef TO_BE_REMOVED
-Option optUriIpInNs		= { "_uri-ip-in-ns",		"-",		usage_uri_ip_in_ns };
-Option optUriNsNxDomain		= { "_uri-ns-nxdomain",		"-",		usage_uri_ns_nxdomain };
-#endif
 
 Option optUriIpInName		= { "uri-ip-in-name",		"-",		usage_uri_ip_in_name };
 Option optUriRejectUnknown	= { "uri-reject-unknown",	"-",		usage_uri_reject_unknown };
@@ -417,48 +410,6 @@ uriCheckIp(Session *sess, const char *host)
 		goto error0;
 	}
 #endif
-
-#ifdef TO_BE_REMOVED
-	if ((optUriIpInNs.value || optUriNsNxDomain.value)
-	&& (list = pdqGet(sess->pdq, PDQ_CLASS_IN, PDQ_TYPE_NS, host, NULL)) != NULL) {
-		for (rr = list; rr != NULL; rr = rr->next) {
-			if (rr->section != PDQ_SECTION_ANSWER)
-				continue;
-
-			if (optUriIpInNs.value && rr->type == PDQ_TYPE_A
-			&& isIPv4InClientName(rr->name.string.value, ((PDQ_A *) rr)->address.ip.value+IPV6_OFFSET_IPV4)) {
-				snprintf(sess->msg.reject, sizeof (sess->msg.reject), "URI domain %s where NS %s contains IP %s in name" ID_MSG(741), host, rr->name.string.value, ((PDQ_A *) rr)->address.string.value, ID_ARG(sess));
-/*{REPLY
-See <a href="summary.html#opt_uri_ip_in_ns">uri-ip-in-ns</a>
-and <a href="summary.html#opt_uri_bl_policy">uri-bl-policy</a>
-options.
-}*/
-				if (0 < verb_uri.option.value)
-					syslog(LOG_DEBUG, LOG_MSG(742) "%s", LOG_ARGS(sess), sess->msg.reject);
-				ctx->policy = *optUriBlPolicy.string;
-				statsCount(&stat_uri_ip_in_ns);
-				rc = SMTPF_REJECT;
-				goto error0;
-			}
-
-			if (optUriNsNxDomain.value && rr->type == PDQ_TYPE_NS
-			&& isNxDomain(sess, ((PDQ_NS *) rr)->host.string.value) == SMTPF_REJECT) {
-				snprintf(sess->msg.reject, sizeof (sess->msg.reject), "URI domain %s where NS %s in non-existant domain" ID_MSG(743), host, ((PDQ_NS *) rr)->host.string.value, ID_ARG(sess));
-/*{REPLY
-See <a href="summary.html#opt_uri_ns_nxdomain">uri-ns-nxdomain</a>
-and <a href="summary.html#opt_uri_bl_policy">uri-bl-policy</a>
-options.
-}*/
-				ctx->policy = *optUriBlPolicy.string;
-				statsCount(&stat_uri_ns_nxdomain);
-				rc = SMTPF_REJECT;
-				goto error0;
-			}
-		}
-
-		pdqFree(list);
-	}
-#endif /* TO_BE_REMOVED */
 
 	list = pdqGet5A(sess->pdq, PDQ_CLASS_IN, host);
 	rcode = list == NULL ? PDQ_RCODE_ERRNO : list->type;
@@ -828,13 +779,7 @@ uriRegister(Session *sess, va_list ignore)
 	optionsRegister(&optUriCiteList,		0);
 	optionsRegister(&optUriDnsBL, 			1);
 	optionsRegister(&optUriIpInName,		0);
-#ifdef TO_BE_REMOVED
-	optionsRegister(&optUriIpInNs,			0);
-	optionsRegister(&optUriNsNxDomain, 		0);
-#endif
-#ifndef ENABLE_PDQ
 	optionsRegister(&optUriIpInPtr,			0);
-#endif
 	optionsRegister(&optUriLinksPolicy, 		0);
 	optionsRegister(&optUriMaxTest, 		0);
 	optionsRegister(&optUriRejectOnTimeout,		0);

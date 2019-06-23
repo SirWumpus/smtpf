@@ -266,11 +266,7 @@ spfRcpt(Session *sess, va_list args)
 		 * the DNS error corresponds to not found or undefined result,
 		 * then treat the test result as SPF_NONE.
 		 */
-#ifdef ENABLE_PDQ
 		if (sess->client.spf_helo_error == pdqRcodeName(PDQ_RCODE_UNDEFINED) || sess->client.spf_helo_error == pdqRcodeName(PDQ_RCODE_ERRNO))
-#else
-		if (sess->client.spf_helo_error == DnsErrorNotFound || sess->client.spf_helo_error == DnsErrorUndefined)
-#endif
 			break;
 		/*@fallthrough@*/
 
