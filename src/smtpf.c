@@ -280,7 +280,7 @@ addPtrOrIpSuffix(Session *sess, char *buffer, long size)
 	char *first_dot;
 	long tld_offset;
 
-	if (CLIENT_NOT_SET(sess, CLIENT_IS_IP_IN_PTR|CLIENT_IS_PTR_MULTIDOMAIN)
+	if (CLIENT_NOT_SET(sess, CLIENT_IS_PTR_MULTIDOMAIN)
 	&& (CLIENT_NOT_SET(sess, CLIENT_NO_PTR) || CLIENT_ANY_SET(sess, CLIENT_IS_HELO_HOSTNAME))
 	&& (first_dot = strchr(sess->client.name, '.')) != NULL
 	) {
