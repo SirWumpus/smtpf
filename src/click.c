@@ -264,7 +264,7 @@ clickRcpt(Session *sess, va_list args)
 	if (strncmp(rcpt->address.string, buffer, CLICK_PREFIX_LENGTH) != 0) {
 		statsCount(&stat_click_fail);
 		if (verb_click.option.value) {
-			syslog(LOG_DEBUG, LOG_NUM(000) "clickRcpt rcpt=<%s> key={" MCC_FMT_K "} hash=%s", rcpt->address.string, MCC_FMT_K_ARG(&row), buffer);
+			syslog(LOG_DEBUG, LOG_MSG(000) "clickRcpt rcpt=<%s> key={" MCC_FMT_K "} hash=%s", LOG_ARGS(sess), rcpt->address.string, MCC_FMT_K_ARG(&row), buffer);
 		}
 		return replySetFmt(sess, SMTPF_REJECT, "550 5.7.1 recipient <%s> invalid" ID_MSG(245), rcpt->address.string, ID_ARG(sess));
 /*{REPLY
