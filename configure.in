@@ -8,7 +8,7 @@ dnl The autoconf version I learned to deal with.
 AC_PREREQ(2.59)
 
 dnl Yes I wrote this mess.
-SNERT_INIT([],[Copyright 2006, 2016 by SnertSoft. All rights reserved.], [src/BUILD_ID.TXT])
+SNERT_INIT([],[Copyright 2006, 2022 by SnertSoft. All rights reserved.], [src/BUILD_ID.TXT])
 
 AC_SUBST(rel_incdir, '../../include')
 AC_SUBST(rel_libdir, '../../lib')

@@ -102,7 +102,7 @@ _clean_doc :
 
 _distclean : _clean _clean_doc
 	-rm -f examples/smtpf.cf examples/startup.sh
-	-rm -f config.log config.status install.sh makefile MANIFEST.TXT
+	-rm -f configure~ config.log config.status install.sh makefile MANIFEST.TXT
 	cd package/FreeBSD; make distclean
 	cd package/OpenBSD; make distclean
 
