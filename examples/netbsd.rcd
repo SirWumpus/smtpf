@@ -12,8 +12,8 @@ name="smtpf"
 
 prefix="/usr/local"
 exec_prefix="${prefix}"
-sysconfdir="/etc/${name}"
-localstatedir="/var"
+sysconfdir="${prefix}/etc/${name}"
+localstatedir="${prefix}/var"
 sbindir="${exec_prefix}/sbin"
 
 rcvar=${name}

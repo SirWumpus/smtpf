@@ -190,6 +190,12 @@ is no set schedule for releases.
 		$base64_argument
 		$result
 
+--2.6.10--
+
+   *	Requires libsnert 1.76.0+
+
+   !	Disable all AV support by default, except Clam AV.
+
 --2.6.9--
 
    !	Silence some redundant error messages.
