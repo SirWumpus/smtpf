@@ -318,10 +318,10 @@ echo 'Creating.....' $doc
 $INSTALL -m 755 -d $doc/Img
 
 echo 'Installing...' $doc
+$INSTALL -m 444 LICENSE.md $doc
 $INSTALL -m 444 doc/*.css $doc
 $INSTALL -m 444 doc/*html $doc
 $INSTALL -m 444 doc/mailto.js $doc
-$INSTALL -m 444 doc/LICENSE.TXT $doc
 $INSTALL -m 444 doc/Img/*.gif $doc/Img
 $INSTALL -m 444 doc/Img/*.jpg $doc/Img
 $INSTALL -m 444 doc/Img/*.png $doc/Img

@@ -36,9 +36,10 @@ doc/access-map.html
 doc/access-map.html.in
 doc/glossary.html
 doc/install.html
-doc/license.html
 doc/runtime.html
 doc/summary.html
+doc/route-map.html
+doc/smtpf-cf.html
 examples/smtpf.cf
 examples/startup.sh
 package/FreeBSD/+COMMENT

@@ -9,7 +9,6 @@ com/snert/src/@PACKAGE_NAME@/doc/Img/BarricadeMX.vsd
 com/snert/src/@PACKAGE_NAME@/doc/Img/BarricadeMX.jpg
 com/snert/src/@PACKAGE_NAME@/doc/Img/BarricadeMX.png
 com/snert/src/@PACKAGE_NAME@/doc/Img/BarricadeMX0.jpg
-com/snert/src/@PACKAGE_NAME@/doc/LICENSE.TXT
 com/snert/src/@PACKAGE_NAME@/doc/BarricadeMX.html
 com/snert/src/@PACKAGE_NAME@/doc/BarricadeMX.html.in
 com/snert/src/@PACKAGE_NAME@/doc/access-map.html
@@ -18,8 +17,6 @@ com/snert/src/@PACKAGE_NAME@/doc/glossary.html
 com/snert/src/@PACKAGE_NAME@/doc/glossary.html.in
 com/snert/src/@PACKAGE_NAME@/doc/install.html
 com/snert/src/@PACKAGE_NAME@/doc/install.html.in
-com/snert/src/@PACKAGE_NAME@/doc/license.html
-com/snert/src/@PACKAGE_NAME@/doc/license.html.in
 com/snert/src/@PACKAGE_NAME@/doc/reply.html
 com/snert/src/@PACKAGE_NAME@/doc/reply.html.in
 com/snert/src/@PACKAGE_NAME@/doc/reply-header.html
@@ -63,6 +60,7 @@ com/snert/src/@PACKAGE_NAME@/examples/extra/bmx-antiphishingreply-update.pl
 com/snert/src/@PACKAGE_NAME@/examples/extra/bmx-uribl-update.pl
 com/snert/src/@PACKAGE_NAME@/examples/extra/bmx_trap_trainer.pl
 com/snert/src/@PACKAGE_NAME@/install.sh.in
+com/snert/src/@PACKAGE_NAME@/LICENSE.md
 com/snert/src/@PACKAGE_NAME@/makefile.in
 com/snert/src/@PACKAGE_NAME@/MANIFEST.TXT.in
 com/snert/src/@PACKAGE_NAME@/src/.gdbinit
