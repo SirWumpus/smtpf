@@ -257,7 +257,7 @@ VERB +smtp -uri
 
 <p>
 The cache file is an SQLite3 database and can be manipulated using the supplied
-programs <code>sqlite3t</code> (our version build with thread support enabled) and <code>mcc</code>.
+programs <code>sqlite3</code> (or <code>sqlite3t</code> our version built with thread support enabled) and <code>mcc</code>.
 
 Manipulating the cache is particular useful when there are records that may be
 preventing one or more messages to pass. This can occur for example if you
@@ -267,12 +267,12 @@ because of a cache entry that has not yet expired.
 </p>
 
 <blockquote><pre>
-# sqlite3t /var/db/@PACKAGE_NAME@/cache.sq3
+# sqlite3 /var/db/@PACKAGE_NAME@/cache.sq3
 </pre></blockquote>
 
 <p>
-Using <code>sqlite3t</code> it is possible to add, remove, or modify cache entries
-using standard SQL commands. How to use <code>sqlite3t</code> and SQL in general
+Using <code>sqlite3</code> it is possible to add, remove, or modify cache entries
+using standard SQL commands. How to use <code>sqlite3</code> and SQL in general
 is beyond the scope of this document and not covered here.
 </p>
 
@@ -326,7 +326,7 @@ CREATE TABLE mcc (
 
 <p>
 Note that the above structure may change without notice.
-When using the <code>sqlite3t</code> command, all columns
+When using the <code>sqlite3</code> command, all columns
 are accessible, while with the <code>mcc</code> PUT command
 only the <code>k</code> and <code>d</code> can be altered
 since the client/server portions of the <code>mcc</code> protocol
@@ -390,18 +390,18 @@ Consider
 
 <p>
 The stats file is an SQLite3 database and can be manipulated using the supplied
-programs <code>sqlite3t</code> (our version build with thread support enabled).
+programs <code>sqlite3</code> (or <code>sqlite3t</code> our version built with thread support enabled).
 Generally it is not a good idea to manipulating the statistics file, but we
 describe it here for completeness.
 </p>
 
 <blockquote><pre>
-# sqlite3t /var/db/@PACKAGE_NAME@/stats.sq3
+# sqlite3 /var/db/@PACKAGE_NAME@/stats.sq3
 </pre></blockquote>
 
 <p>
-Using <code>sqlite3t</code> it is possible to add, remove, or modify records
-using standard SQL commands. How to use <code>sqlite3t</code> and SQL in general
+Using <code>sqlite3</code> it is possible to add, remove, or modify records
+using standard SQL commands. How to use <code>sqlite3</code> and SQL in general
 is beyond the scope of this document and not covered here.
 </p>
 
