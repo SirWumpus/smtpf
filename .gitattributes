@@ -1,0 +1,15 @@
+*.docx binary
+*.gif binary
+*.jbf binary
+*.jpg binary
+*.mng binary
+*.pdf binary
+*.png binary
+*.psp binary
+*.ttf binary
+*.TTF binary
+*.wsa binary
+configure -diff -merge
+config.guess -diff -merge
+config.sub -diff -merge
+erlang.mk -diff
