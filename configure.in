@@ -301,4 +301,45 @@ AC_MSG_RESULT([  run-group.........: $enable_run_group])
 AC_MSG_RESULT([  CFLAGS............: $CFLAGS])
 AC_MSG_RESULT([  LDFLAGS...........: $LDFLAGS])
 AC_MSG_RESULT([  LIBS..............: $LIBS])
+
+for feature in  \
+	enable_attachment \
+	enable_avastd \
+	enable_clamd \
+	enable_cli \
+	enable_click \
+	enable_concurrent \
+	enable_ctasd \
+	enable_digest \
+	enable_dnslists \
+	enable_dupmsg \
+	enable_emew \
+	enable_freemail \
+	enable_fpscand \
+	enable_grey \
+	enable_ixhash \
+	enable_lickey \
+	enable_misc \
+	enable_msglimit \
+	enable_null \
+	enable_p0f \
+	enable_pad \
+	enable_quit \
+	enable_sav \
+	enable_savdid \
+	enable_siq \
+	enable_size \
+	enable_spamd \
+	enable_spamd2 \
+	enable_spf \
+	enable_timelimit \
+	enable_uribl \
+	enable_save
+do
+	name=$(echo $feature | sed -e 's/enable_//')
+	eval value="\$$feature"
+	AS_IF([test "$value" = 'yes'], [features="$features $name"])
+done
+AC_MSG_RESULT([  FEATURES..........: $features])
+
 echo
