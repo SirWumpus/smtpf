@@ -42,6 +42,7 @@ doc/route-map.html
 doc/smtpf-cf.html
 examples/smtpf.cf
 examples/startup.sh
+examples/netbsd.rcd
 package/FreeBSD/+COMMENT
 package/FreeBSD/+CONTENTS
 package/FreeBSD/+DESC
