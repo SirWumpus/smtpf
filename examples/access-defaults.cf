@@ -37,6 +37,12 @@ connect:brightmail.com			CONTENT
 connect:outbound.protection.outlook.com	CONTENT
 
 #######################################################################
+# Block scanning services.
+#######################################################################
+
+connect:censys-scanner.com		IREJECT
+
+#######################################################################
 # These localhost domains and/or IP address could trigger URI BL
 # test records.
 #######################################################################
@@ -151,6 +157,7 @@ body:ibm.com				OK
 body:ientrymail.com			OK
 #body:incredimail.com			REJECT
 body:investorplace.com			OK
+body:instagram.com                      OK
 body:ivillage.com			OK
 body:joingevalia.com			OK
 body:juno.com				OK
