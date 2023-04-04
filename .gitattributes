@@ -1,15 +1,20 @@
+*.p4 linguist-language=Forth
+*.blk binary
 *.docx binary
 *.gif binary
 *.jbf binary
 *.jpg binary
 *.mng binary
+*.odp binary
 *.pdf binary
 *.png binary
 *.psp binary
 *.ttf binary
 *.TTF binary
 *.wsa binary
-configure -diff -merge
 config.guess -diff -merge
 config.sub -diff -merge
+configure -diff -merge linguist-generated
+makefile linguist-generated
+reference/** linguist-documentation
 erlang.mk -diff
