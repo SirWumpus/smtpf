@@ -9,9 +9,9 @@ BarricadeMX - An SMTP Filtering Proxy
 Build & Install From Source
 ---------------------------
 
-* Install `SQLite` from a package.  Prior to [LibSnert's](https://github.com/SirWumpus/libsnert) availability on GitHub, the old tarballs included SQLite, but GitHub tarballs do not, so it needs to be installed separately.
+* Install `SQLite` from a package.  Prior to [LibSnert's](https://github.com/SirWumpus/libsnert) availability on GitHub, the old `libsnert` tarballs included SQLite, but the GitHub `libsnert` repository does not, so it needs to be installed separately.
 
-* [Build LibSnert](https://github.com/SirWumpus/libsnert#configuration--build) first as instructed with the `./configure --without-sqlite3` option at least; it should find the pre-installed version of SQLite.
+* [Build LibSnert](https://github.com/SirWumpus/libsnert#configuration--build) first, do *not* disable `sqlite3` support; it should find the pre-installed version of SQLite.
 
 * Building `smtpf` should be:
 
