@@ -77,7 +77,9 @@ Option optHttpTimeout		= { "http-timeout",	"60",			"Socket timeout used when tes
 Option optUriBL			= { "uri-bl",		"",			usage_uri_bl };
 Option optUriDnsBL		= { "uri-dns-bl",	"",			usage_uri_dns_bl };
 Option optUriBlPolicy		= { "uri-bl-policy",	"reject",		usage_uri_bl_policy };
+#ifdef ENABLE_HTTP_ORIGIN
 Option optUriLinksPolicy	= { "uri-links-policy",	"none",			usage_uri_links_policy };
+#endif
 Option optUriMaxTest		= { "uri-max-test",	"10",			usage_uri_max_test };
 Option optUriSubDomains		= { "uri-sub-domains",	"-",			usage_uri_sub_domains };
 
@@ -666,6 +668,7 @@ options.
 		}
 	}
 
+#ifdef ENABLE_HTTP_ORIGIN
 	/* Test and follow redirections so verify that the link returns something valid. */
 	if (post_data && *optUriLinksPolicy.string != 'n' && (error = uriHttpOrigin(uri->uri, &origin)) == uriErrorLoop) {
 		snprintf(sess->msg.reject, sizeof (sess->msg.reject), "broken URL \"%s\": %s" ID_NUM(766), uri->uri, error);
@@ -677,6 +680,7 @@ See <a href="summary.html#opt_uri_links_policy">uri-links-policy</a> option.
 			statsCount(&stat_uri_links_policy);
 		goto error0;
 	}
+#endif
 
 	if (origin != NULL
 	&& origin->host != NULL
@@ -780,7 +784,9 @@ uriRegister(Session *sess, va_list ignore)
 	optionsRegister(&optUriDnsBL, 			1);
 	optionsRegister(&optUriIpInName,		0);
 	optionsRegister(&optUriIpInPtr,			0);
+#ifdef ENABLE_HTTP_ORIGIN
 	optionsRegister(&optUriLinksPolicy, 		0);
+#endif
 	optionsRegister(&optUriMaxTest, 		0);
 	optionsRegister(&optUriRejectOnTimeout,		0);
 	optionsRegister(&optUriRejectUnknown,		0);
