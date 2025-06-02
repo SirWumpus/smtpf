@@ -267,7 +267,7 @@ if test -f '../lib/version.sh' ; then
 		exit 1
 	fi
 
-	LIBS="${LIBS} ${HAVE_LIB_DB} ${LIBS_RT} ${LIBS_SQLITE3} ${HAVE_LIB_PTHREAD} ${LIBS_SSL} ${HAVE_LIB_WS2_32} ${HAVE_LIB_IPHLPAPI}"
+	LIBS="${LIBS} ${HAVE_LIB_DB} ${LIBS_SQLITE3} ${HAVE_LIB_PTHREAD} ${LIBS_SSL} ${HAVE_LIB_WS2_32} ${HAVE_LIB_IPHLPAPI}"
 else
 	snert_libsnert=no
 	echo

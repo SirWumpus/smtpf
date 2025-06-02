@@ -20,8 +20,8 @@ extern "C" {
 #define optTable		(Option **) VectorBase(optionTable)
 #define optTableRestart		(Option **) VectorBase(optionTableRestart)
 
-Vector optionTable;
-Vector optionTableRestart;
+extern Vector optionTable;
+extern Vector optionTableRestart;
 
 extern void optionsRegister(Option *option, int requires_restart);
 extern int optionsRegister0(Session *sess, va_list ignore);
