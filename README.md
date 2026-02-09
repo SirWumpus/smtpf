@@ -1,3 +1,6 @@
+Primary Repository https://codeberg.org/SirWumpus/smtpf
+
+
 BarricadeMX - An SMTP Filtering Proxy
 =====================================
 
